@@ -1,16 +1,3 @@
-# import colorsys
-# import copy
-# import math
-# import string
-# from typing import Optional
-#
-# import matplotlib
-# from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
-# from matplotlib import pyplot as plt
-# from pandas import DataFrame
-# from tensorflow.python.keras.preprocessing import image
-# from tensorflow.python.keras.utils.np_utils import to_categorical
-#
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
      DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
@@ -20,14 +7,12 @@ from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
 from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1, resize_frame
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
-from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
-    LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice, LayerEncodingChoice
-from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
-    LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
-from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
     CALLBACK_REGRESSION_TREASHOLD_VALUE
-
+from terra_ai.utils import autodetect_encoding
+from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
+    LayerNetChoice, LayerVideoFillModeChoice, LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, \
+    LayerScalerAudioChoice, LayerODDatasetTypeChoice
 
 import os
 import re
@@ -52,7 +37,6 @@ from pandas import DataFrame
 from tensorflow.python.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 from ast import literal_eval
-from sklearn.cluster import KMeans
 from pydub import AudioSegment
 from librosa import load as librosa_load
 from pydantic.color import Color
@@ -62,6 +46,7 @@ from tensorflow.keras import utils
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
+from tensorflow import random as tf_random
 
 
 def print_error(class_name: str, method_name: str, message: Exception):
@@ -155,18 +140,19 @@ class CreateArray(object):
     @staticmethod
     def instructions_text(text_list: list, **options) -> dict:
 
-        def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+        def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
 
-            with open(file_path, 'r', encoding='utf-8') as txt:
-                text = txt.read()
+            cur_text = autodetect_encoding(file_path)
 
             if open_symbol:
-                text = re.sub(open_symbol, f" {open_symbol}", text)
-                text = re.sub(close_symbol, f"{close_symbol} ", text)
+                cur_text = re.sub(op_symbol, f" {op_symbol}", cur_text)
+                cur_text = re.sub(cl_symbol, f"{cl_symbol} ", cur_text)
 
-            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+            cur_text = ' '.join(text_to_word_sequence(
+                cur_text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '})
+            )
 
-            return text
+            return cur_text
 
         def apply_pymorphy(text, morphy) -> str:
 
@@ -177,12 +163,10 @@ class CreateArray(object):
 
         txt_dict: dict = {}
         text: dict = {}
-        lower: bool = True
-        open_tags, close_tags = None, None
+        open_tags, close_tags = options.get('open_tags'), options.get('close_tags')
         open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-            # if open_tags:
             open_symbol = open_tags[0][0]
             close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
@@ -190,8 +174,7 @@ class CreateArray(object):
 
         for idx, text_row in enumerate(text_list):
             if os.path.isfile(str(text_row)):
-                text_file = read_text(file_path=text_row, lower=lower, del_symbols=options['filters'], split=' ',
-                                      open_symbol=open_symbol, close_symbol=close_symbol)
+                text_file = read_text(file_path=text_row, op_symbol=open_symbol, cl_symbol=close_symbol)
                 if text_file:
                     txt_dict[text_row] = text_file
             else:
@@ -216,19 +199,41 @@ class CreateArray(object):
                 txt_dict[key] = apply_pymorphy(value, pymorphy)
 
         for key, value in sorted(txt_dict.items()):
-            if options['text_mode'] == LayerTextModeChoice.completely:
-                text[';'.join([str(key), f'[0-{options["max_words"]}]'])] = ' '.join(
-                    value.split(' ')[:options['max_words']])
-            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-                max_length = len(value.split(' '))
+            value = value.split(' ')
+            if options['text_mode'] == 'completely':
+                iter_count = 0
+                adjust_flag = False
+                adjusted_length = options['length']
+                while not adjust_flag:
+                    adjust_length = options['length'] - len(
+                        text_to_word_sequence(' '.join(value[0: adjusted_length]), options['filters'], lower=False))
+                    adjusted_length += adjust_length
+                    if adjust_length == 0 or iter_count == 10:
+                        adjust_flag = True
+                    iter_count += 1
+                text[';'.join([str(key), f'[0-{adjusted_length}]'])] = ' '.join(value[0: adjusted_length])
+
+            elif options['text_mode'] == 'length_and_step':
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text[';'.join([str(key), f'[{cur_step}-{cur_step + length}]'])] = ' '.join(
-                        value.split(' ')[cur_step: cur_step + length])
-                    cur_step += options['step']
-                    if cur_step + options['length'] > max_length:
+                    adjusted_length = options['length']
+                    if cur_step + options['length'] < len(value):
+                        iter_count = 0
+                        adjust_flag = False
+                        while not adjust_flag:
+                            adjust_length = options['length'] - len(
+                                text_to_word_sequence(' '.join(value[cur_step: cur_step + adjusted_length]),
+                                                      options['filters'], lower=False))
+                            adjusted_length += adjust_length
+                            if adjust_length == 0 or iter_count == 10:
+                                adjust_flag = True
+                            iter_count += 1
+                    else:
                         stop_flag = True
+                    text[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = ' '.join(
+                        value[cur_step: cur_step + adjusted_length])
+                    cur_step += options['step'] + (adjusted_length - options['length'])
 
         instructions = {'instructions': text,
                         'parameters': {**options,
@@ -329,8 +334,7 @@ class CreateArray(object):
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
-            with open(file_path, 'r', encoding='utf-8') as txt:
-                text = txt.read()
+            text = autodetect_encoding(file_path)
 
             if open_symbol:
                 text = re.sub(open_symbol, f" {open_symbol}", text)
@@ -466,6 +470,49 @@ class CreateArray(object):
 
         instructions = {'instructions': paths_list,
                         'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_speech_2_text(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_text_2_speech(paths_list: list, **options: dict) -> dict:
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_noise(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_generator(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def instructions_discriminator(paths_list: list, **options):
+
+        lst = [None for _ in range(len(paths_list))]
+
+        instructions = {'instructions': lst, 'parameters': options}
 
         return instructions
 
@@ -765,6 +812,46 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def cut_speech_2_text(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_text_2_speech(path_list: int, dataset_folder=None, **options: dict) -> dict:
+
+        instructions = {'instructions': path_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_noise(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_generator(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_discriminator(lst: list, dataset_folder=None, **options) -> dict:
+
+        instructions = {'instructions': lst,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
         img = load_img(image_path)
@@ -887,34 +974,23 @@ class CreateArray(object):
     @staticmethod
     def create_segmentation(image_path: str, **options) -> dict:
 
-        def cluster_to_ohe(mask_image):
+        def image_to_ohe(img_array):
+            mask_ohe = []
+            for color in options['classes_colors']:
+                color_array = np.expand_dims(np.where((color[0] + options['mask_range'] >= img_array[:, :, 0]) &
+                                                      (img_array[:, :, 0] >= color[0] - options['mask_range']) &
+                                                      (color[1] + options['mask_range'] >= img_array[:, :, 1]) &
+                                                      (img_array[:, :, 1] >= color[1] - options['mask_range']) &
+                                                      (color[2] + options['mask_range'] >= img_array[:, :, 2]) &
+                                                      (img_array[:, :, 2] >= color[2] - options['mask_range']), 1, 0),
+                                             axis=2)
+                mask_ohe.append(color_array)
 
-            mask_image = mask_image.reshape(-1, 3)
-            km = KMeans(n_clusters=options['num_classes'])
-            km.fit(mask_image)
-            labels = km.labels_
-            cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
-            cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
-            cl_mask = cl_mask.reshape(options['height'], options['width'], cl_mask.shape[-1])
-            mask_ohe = np.zeros((options['height'], options['width']))
-            for k, color in enumerate(options['classes_colors']):
-                rgb = Color(color).as_rgb_tuple()
-                mask = np.zeros((options['height'], options['width']))
-                for j, cl_rgb in enumerate(cl_cent):
-                    if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
-                            rgb[1] in range(cl_rgb[1] - options['mask_range'], cl_rgb[1] + options['mask_range']) and \
-                            rgb[2] in range(cl_rgb[2] - options['mask_range'], cl_rgb[2] + options['mask_range']):
-                        mask = cl_mask[:, :, j]
-                if k == 0:
-                    mask_ohe = mask
-                else:
-                    mask_ohe = np.dstack((mask_ohe, mask))
-
-            return mask_ohe
+            return np.concatenate(np.array(mask_ohe), axis=2).astype(np.uint8)
 
         img = load_img(path=image_path, target_size=(options['height'], options['width']))
         array = np.array(img)
-        array = cluster_to_ohe(array)
+        array = image_to_ohe(array)
 
         instructions = {'instructions': array,
                         'parameters': options}
@@ -1123,6 +1199,22 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_speech_2_text(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_text_2_speech(zero: int, **options):
+
+        instructions = {'instructions': np.array([zero]),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def create_raw(item, **options) -> dict:
         if isinstance(item, str):
             try:
@@ -1143,7 +1235,33 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def preprocess_image(array: np.ndarray, **options):
+    def create_generator(item=None, **options):
+
+        interpolation_noise = tf_random.normal(shape=options['shape'])
+        instructions = {'instructions': interpolation_noise.numpy(), 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_discriminator(item=None, **options):
+
+        if item is None:
+            item = np.array([1])
+
+        instructions = {'instructions': item, 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_noise(item=None, **options):
+
+        interpolation_noise = tf_random.normal(shape=options['shape'])
+        instructions = {'instructions': interpolation_noise.numpy(), 'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def preprocess_image(array: np.ndarray, **options) -> tuple:
 
         def augmentation_image(image_array, coords, augmentation_dict):
 
@@ -1253,7 +1371,7 @@ class CreateArray(object):
     def preprocess_text(text: str, **options) -> np.ndarray:
 
         array = []
-        text = text.split(' ')
+        text = text_to_word_sequence(text, filters=options['filters'], lower=False, split=' ')
         words_to_add = []
 
         if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
@@ -1274,6 +1392,8 @@ class CreateArray(object):
                 words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
                                 range((options['length']) - len(array))]
             array += words_to_add
+        elif len(array) > options['length']:
+            array = array[:options['length']]
 
         array = np.array(array)
 
@@ -1334,66 +1454,31 @@ class CreateArray(object):
         return zero
 
     @staticmethod
+    def preprocess_speech_2_text(zero: int, **options):
+
+        return zero
+
+    @staticmethod
+    def preprocess_text_2_speech(zero: int, **options):
+
+        return zero
+
+    @staticmethod
     def preprocess_raw(array: np.ndarray, **options) -> np.ndarray:
 
         return array
 
     @staticmethod
-    def postprocess_results(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
-                            threashold=0.1) -> dict:
-        print('postprocess_results', options.data.architecture)
-        return_data = {}
-        if options.data.architecture == ArchitectureChoice.ImageClassification:
-            return_data = ImageClassificationCallback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path
-            )
-        elif options.data.architecture == ArchitectureChoice.TextClassification:
-            return_data = TextClassificationCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.DataframeClassification:
-            return_data = DataframeClassificationCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.AudioClassification:
-            return_data = AudioClassificationCallback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path
-            )
-        elif options.data.architecture == ArchitectureChoice.VideoClassification:
-            return_data = VideoClassificationCallback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path
-            )
-        elif options.data.architecture == ArchitectureChoice.TimeseriesTrend:
-            return_data = TimeseriesTrendCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.ImageSegmentation:
-            return_data = ImageSegmentationCallback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path
-            )
-        elif options.data.architecture == ArchitectureChoice.TextSegmentation:
-            return_data = TextSegmentationCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.DataframeRegression:
-            return_data = DataframeRegressionCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.Timeseries:
-            return_data = TimeseriesCallback.postprocess_deploy(
-                array=array, options=options
-            )
-        elif options.data.architecture == ArchitectureChoice.YoloV3:
-            return_data = YoloV3Callback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path,
-                sensitivity=sensitivity, threashold=threashold
-            )
-        elif options.data.architecture == ArchitectureChoice.YoloV4:
-            return_data = YoloV4Callback.postprocess_deploy(
-                array=array, options=options, save_path=save_path, dataset_path=dataset_path,
-                sensitivity=sensitivity, threashold=threashold
-            )
-        else:
-            pass
-        return return_data
+    def preprocess_generator(array: np.ndarray, **options) -> np.ndarray:
 
+        return array
+
+    @staticmethod
+    def preprocess_discriminator(array: np.ndarray, **options) -> np.ndarray:
+
+        return array
+
+    @staticmethod
+    def preprocess_noise(array: np.ndarray, **options):
+
+        return array

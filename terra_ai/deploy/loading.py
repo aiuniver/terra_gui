@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import requests
@@ -8,7 +9,7 @@ from django.conf import settings as django_settings
 
 from .. import progress, settings
 from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
-from ..exceptions.deploy import RequestAPIException, RsyncException
+from ..exceptions.deploy import RequestAPIException
 
 from ..progress import utils as progress_utils
 
@@ -41,7 +42,9 @@ def upload(source: Path, data: dict):
         zip_destination = progress_utils.pack(
             progress_name, DEPLOY_PREPARE_TITLE, source
         )
-        data.update({"file": {"path": zip_destination.name}})
+        destination = Path(f"{zip_destination.absolute()}.zip")
+        os.rename(zip_destination, destination)
+        data.update({"file": {"path": destination.absolute()}})
         upload_data = StageUploadData(**data)
         upload_response = requests.post(
             settings.DEPLOY_URL,
@@ -74,6 +77,7 @@ def upload(source: Path, data: dict):
                     json=complete_data.native(),
                     headers={"Content-Type": "application/json"},
                 )
+                os.remove(destination)
                 if complete_response.ok:
                     progress.pool(
                         progress_name,
@@ -83,8 +87,10 @@ def upload(source: Path, data: dict):
                 else:
                     raise RequestAPIException()
             else:
+                os.remove(destination)
                 raise RequestAPIException()
         else:
+            os.remove(destination)
             raise RequestAPIException()
     except Exception as error:
-        progress.pool(progress_name, error=str(RsyncException(str(error))))
+        progress.pool(progress_name, finished=True, error=error)

@@ -1,35 +1,50 @@
 <template>
-  <at-modal v-model="dialog" width="800">
-    <div slot="header" style="text-align: center">
-      <span>{{ title }}</span>
+  <at-modal v-model="dialog" width="800" class="logging-modal">
+    <div slot="header">
+      <span class="logging-modal__title">{{ title }}</span>
+    </div>
+    <div class="t-tags">
+      <template v-for="tag of tags">
+        <div
+          :key="tag"
+          :class="['t-tags__tag', { 't-tags__tag--active': !selected.includes(tag) }]"
+          @click="onChange(tag)"
+        >
+          {{ tag }}
+        </div>
+      </template>
     </div>
     <div class="t-logging">
       <div class="t-logging__item">
         <div class="t-logging__date">Время</div>
-        <div class="t-logging__error">Ошибка</div>
+        <div class="t-logging__type">Тип</div>
+        <div class="t-logging__error">Название</div>
       </div>
       <scrollbar>
-        <template v-for="({ date, error }, i) of errors">
-          <div class="t-logging__item" :key="'errors_' + i">
-            <div class="t-logging__date">{{ date | formatDate }}</div>
-            <div class="t-logging__error" @click="$emit('error', { error, date })">{{ error }}</div>
-          </div>
-        </template>
+        <div>
+          <template v-for="(error, i) of filter">
+            <div class="t-logging__item" :key="'errors_' + i">
+              <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
+              <div class="t-logging__type">{{ error.level }}</div>
+              <div class="t-logging__error" @click="click(error)">
+                {{ error.title }}
+              </div>
+            </div>
+          </template>
+          <p v-if="!filter.length" class="t-logging__empty">Ничего не выбрано</p>
+        </div>
       </scrollbar>
     </div>
-    <div slot="footer">
-      <!-- <div class="copy-buffer">
-        <i :class="['t-icon', 'icon-clipboard']" :title="'copy'" @click="Copy"></i>
-        <p v-if="copy" class="success">Код скопирован в буфер обмена</p>
-        <p v-else>Скопировать в буфер обмена</p>
-      </div> -->
-    </div>
+    <div slot="footer"></div>
   </at-modal>
 </template>
 
 <script>
+import { mapActions } from 'vuex';
+import filter from '@/mixins/datasets/filters';
 export default {
   name: 'CopyModal',
+  mixins: [filter],
   props: {
     errors: {
       type: Array,
@@ -43,30 +58,30 @@ export default {
   },
   data: () => ({
     copy: false,
+    selected: [],
   }),
   methods: {
-    Copy() {
-      let element = this.$refs['message-modal-copy'],
-        range,
-        selection;
-
-      try {
-        selection = window.getSelection();
-        range = document.createRange();
-        range.selectNodeContents(element);
-        selection.removeAllRanges();
-        selection.addRange(range);
-        console.log(selection);
-
-        this.copy = true;
-
-        document.execCommand('copy');
-      } catch (e) {
-        console.error('Fallback: Oops, unable to copy', e);
+    ...mapActions({
+      getLogs: 'logging/get',
+    }),
+    click(error) {
+      this.$emit('error', error);
+    },
+    onChange(tag) {
+      if (this.selected.includes(tag)) {
+        this.selected = this.selected.filter(i => i !== tag);
+      } else {
+        this.selected.push(tag);
       }
     },
   },
   computed: {
+    tags() {
+      return [...new Set(this.errors.map(i => i.level))];
+    },
+    filter() {
+      return this.errors.filter(item => !this.selected.includes(item.level));
+    },
     dialog: {
       set(value) {
         this.$emit('input', value);
@@ -79,22 +94,19 @@ export default {
       },
     },
   },
-  filters: {
-    formatDate: value => {
-      const date = new Date(value);
-      return date.toLocaleString(['ru-RU'], {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+  watch: {
+    dialog() {
+      this.getLogs();
     },
   },
 };
 </script>
 
 <style scoped lang="scss">
+.logging-modal {
+  &__title {
+  }
+}
 .t-logging {
   height: 300px;
   background: #0e1621;
@@ -103,31 +115,46 @@ export default {
   padding: 10px;
   &__item {
     display: flex;
+    align-items: center;
     border-bottom: 1px solid #4d5c6a;
+    width: 100%;
   }
   &__date {
-    width: 130px;
+    width: 100px;
+    height: 100%;
+  }
+  &__type {
+    width: 70px;
+  }
+  &__empty {
+    text-align: center;
+    margin-top: 50px;
   }
   &__error {
+    flex: 1 1 auto;
+    white-space: pre-wrap;
     cursor: pointer;
+    // width: 586px;
+    // overflow: hidden;
     &:hover {
       opacity: 0.7;
     }
   }
 }
-
-.copy-buffer {
+.t-tags {
   display: flex;
-  align-items: center;
-  p {
-    margin-left: 15px;
-    font-size: 0.85rem;
-    &.success {
-      color: #3eba31;
-    }
-  }
-  .icon-clipboard {
+  margin-bottom: 10px;
+  &__tag {
+    color: #a7bed3;
+    border: 1px solid #6c7883;
+    background-color: #242f3d;
+    border-radius: 4px;
+    padding: 0 15px;
+    margin-right: 5px;
     cursor: pointer;
+    &--active {
+      border-color: #65b9f4;
+    }
   }
 }
 </style>

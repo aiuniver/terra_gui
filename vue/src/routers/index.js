@@ -59,7 +59,7 @@ const router = new Router({
       name: 'Cascades',
       meta: { 
         title: 'Каскады', //process.env.NODE_ENV === 'development' ? 'Каскады' : null,
-        access: false,
+        access: true,
         text: `Для перехода на страницу каскадов необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Cascades'),
@@ -69,10 +69,20 @@ const router = new Router({
       name: 'Deploy',
       meta: { 
         title: 'Деплой',
-        access: false,
+        access: true,
         text: `Для перехода на страницу деплоя необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Deploy'),
+    },
+    {
+      path: '/servers',
+      name: 'Servers',
+      meta: { 
+        title: 'Серверы',
+        access: true,
+        text: '', 
+      },
+      component: () => import('@/views/Servers'),
     },
     {
       path: '/profile',

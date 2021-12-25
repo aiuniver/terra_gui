@@ -8,6 +8,7 @@ def main(**params):
     def fun(acc):
         acc *= 100
         acc = np.array(acc)
+        # print(acc.shape)
         if len(acc) == 1:
             acc = acc[0]
         else:

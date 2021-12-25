@@ -4,65 +4,85 @@ from .base import TerraBaseException
 
 
 class CascadesMessages(dict, Enum):
-    Undefined = {"ru": "Неопределенная ошибка проектирования каскада",
-                 "eng": "Undefined error of cascade project"}
+    Undefined = {
+        "ru": "Неопределенная ошибка проектирования каскада",
+        "eng": "Undefined error of cascade project",
+    }
     # Connection
-    BlockNotConnectedToMainPart = {"ru": "Блок не подключен к основной части каскада или подключен неверно",
-                                   "eng": "Block is not connected to main part of cascade"}
+    BlockNotConnectedToMainPart = {
+        "ru": "Блок не подключен к основной части каскада или подключен неверно",
+        "eng": "Block is not connected to main part of cascade",
+    }
 
-    RequiredBlockIsMissing = {"ru": "Отсутствует обязательный блок %s",
-                              "eng": "Required block is missing %s"}
+    RequiredBlockIsMissing = {
+        "ru": "Отсутствует обязательный блок %s",
+        "eng": "Required block is missing %s",
+    }
 
     # Parameters
-    BadParameters = {"ru": "Проверьте следующие параметры: %s",
-                     "eng": "Check the following parameters: %s"}
+    BadParameters = {
+        "ru": "Проверьте следующие параметры: %s",
+        "eng": "Check the following parameters: %s",
+    }
 
-    CanTakeOneOfTheFollowingValues = {"ru": "%s can take one of the following values: %s",
-                                      "eng": "%s can take one of the following values: %s"}
+    CanTakeOneOfTheFollowingValues = {
+        "ru": "%s can take one of the following values: %s",
+        "eng": "%s can take one of the following values: %s",
+    }
 
     # Input dimension
-    IncorrectQuantityInputDimensions = {"ru": "Ожидаемое количество входов: %s, однако принято: %s",
-                                        "eng": "Expected %s input dimensions but got %s"}
+    IncorrectQuantityInputDimensions = {
+        "ru": "Ожидаемое количество входов: %s, однако принято: %s",
+        "eng": "Expected %s input dimensions but got %s",
+    }
 
     # Data types
     DatasetDataDoesNotMatchInputData = {
         "ru": "Тип данных датасета: %s не соответствует типу данных входного блока: %s",
-        "eng": "Dataset data type: %s does not match the input block data type: %s"
+        "eng": "Dataset data type: %s does not match the input block data type: %s",
     }
 
     InputDataDoesNotMatchModelData = {
         "ru": "Тип данных входного блока: %s не соответствует типу данных модели: %s",
-        "eng": "Input block data type: %s does not match the model data type: %s"
+        "eng": "Input block data type: %s does not match the model data type: %s",
     }
 
     UsedDataDoesNotMatchBlockData = {
         "ru": "Тип данных блока: %s не соответствует типу используемых в каскаде данных: %s",
-        "eng": "Block data type: %s does not match the type of data used in the cascade: %s"
+        "eng": "Block data type: %s does not match the type of data used in the cascade: %s",
     }
 
     BindCountNotEnough = {
         "ru": "Недостаточно входящих связей: необходимо %s. Возможны связи с блоками: %s",
-        "eng": "Not enough incoming connections: %s is needed. Connections with blocks are possible: %s"
+        "eng": "Not enough incoming connections: %s is needed. Connections with blocks are possible: %s",
     }
 
     BindCountExceeding = {
         "ru": "Превышение количества входящих связей: необходимо %s. Возможны связи с блоками: %s",
-        "eng": "Exceeding the number of incoming links: %s is needed. Connections with blocks are possible: %s"
+        "eng": "Exceeding the number of incoming links: %s is needed. Connections with blocks are possible: %s",
     }
 
     ForbiddenBindExceeding = {
         "ru": "Не разрешенная связь с блоком %s. Возможны связи с блоками: %s",
-        "eng": "Not allowed communication with the block %s. Connections with blocks are possible: %s"
+        "eng": "Not allowed communication with the block %s. Connections with blocks are possible: %s",
     }
 
     RequiredBindExceeding = {
         "ru": "Отсутствует обязательная связь с блоком %s",
-        "eng": "There is no mandatory connection with the block %s"
+        "eng": "There is no mandatory connection with the block %s",
     }
 
     BindInappropriateDataType = {
         "ru": "Тип данных блока %s не совпадает с типом данных каскада %s",
-        "eng": "The data type of the %s block does not match the data type of the cascade %s"
+        "eng": "The data type of the %s block does not match the data type of the cascade %s",
+    }
+    CascadeAlreadyExists = {
+        "ru": "Каскад `%s` уже существует",
+        "eng": "Cascade `%s` already exists",
+    }
+    TypeMismatch = {
+        "ru": "Тип исходного файла не соответствует типу входа каскада: вход `%s`, файл `%s`.",
+        "eng": "The source file type does not match the cascade input type: input '%s`, file `%s'.",
     }
 
 
@@ -82,6 +102,14 @@ class BadParametersException(CascadesException):
 
     def __init__(self, __params, **kwargs):
         super().__init__(str(__params), **kwargs)
+
+
+class CascadeAlreadyExistsException(CascadesException):
+    class Meta:
+        message = CascadesMessages.CascadeAlreadyExists
+
+    def __init__(self, __name, **kwargs):
+        super().__init__(str(__name), **kwargs)
 
 
 class CanTakeOneOfTheFollowingValuesException(CascadesException):
@@ -170,3 +198,11 @@ class RequiredBlockMissingException(CascadesException):
 
     def __init__(self, __expected, **kwargs):
         super().__init__(str(__expected), **kwargs)
+
+
+class TypeMismatchException(TerraBaseException):
+    class Meta:
+        message: dict = CascadesMessages.TypeMismatch
+
+    def __init__(self, __input_type: str, __file_type: str, **kwargs):
+        super().__init__(str(__input_type), str(__file_type), **kwargs)

@@ -157,7 +157,7 @@ class PretrainedModelPoolingChoice(str, Enum):
 class YOLOModeChoice(str, Enum):
     YOLOv3 = "YOLOv3"
     YOLOv4 = "YOLOv4"
-    YOLOv5 = "YOLOv5"
+    # YOLOv5 = "YOLOv5"
 
     @staticmethod
     def values() -> list:
@@ -185,7 +185,7 @@ class VAELatentRegularizerChoice(str, Enum):
 
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
-    terra_custom_layers = "terra_ai.customLayers"
+    terra_custom_layers = "terra_ai.custom_objects.customLayers"
     tensorflow_keras_layers_preprocessing = (
         "tensorflow.keras.layers.experimental.preprocessing"
     )

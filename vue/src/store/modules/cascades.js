@@ -157,8 +157,10 @@ export default {
       return data
     },
     async createModel ({ dispatch, commit }, data) {
+      const res = await dispatch('axios', { url: '/cascades/save/', data }, { root: true });
+      commit('SET_STATUS', { save: Boolean(res?.error) });
       commit('SET_STATUS', { update: false });
-      return await dispatch('axios', { url: '/cascades/create/', data }, { root: true });
+      return res;
     },
     async getImageModel ({ dispatch }, preview) {
       return await dispatch('axios', {
@@ -245,11 +247,6 @@ export default {
     },
     async startProgress ({ dispatch }) {
       return await dispatch('axios', { url: '/cascades/start/progress/' }, { root: true });
-    },
-    async save ({ commit, dispatch }) {
-      const res = await dispatch('axios', { url: '/cascades/save/' }, { root: true });
-      commit('SET_STATUS', { save: Boolean(res?.error) });
-      return res;
     },
     async validate ({ commit, dispatch }) {
       const res = await dispatch('axios', { url: '/cascades/validate/' }, { root: true });

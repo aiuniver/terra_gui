@@ -53,6 +53,14 @@ class LayerTrackerData(LayerBaseData, types.Tracker.ParametersData):
     pass
 
 
+class LayerSpeech2TextData(LayerBaseData, types.Speech2Text.ParametersData):
+    pass
+
+
+class LayerText2SpeechData(LayerBaseData, types.Text2Speech.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(

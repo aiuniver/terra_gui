@@ -1,16 +1,17 @@
 from . import cascade_input, cascade_output, general_fucntions, service
 from .cascade import CascadeElement, CascadeOutput, BuildModelCascade, CompleteCascade, CascadeBlock
-
 from .common import decamelize, yolo_decode, type2str
 import json
 import os
 from tensorflow.keras import Model
 from tensorflow.keras.layers import Input
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import load_model, model_from_json
 from collections import OrderedDict
 import sys
 from inspect import signature
 import itertools
+import importlib
+import importlib.util
 
 
 def make_processing(preprocess_list):
@@ -37,20 +38,56 @@ def make_processing(preprocess_list):
                 else:
                     out.append(element)
         return out
+
     return fun
 
 
 def json2model_cascade(path: str):
     weight = None
     model = None
+    custom_object = None
+    model_tf_format = False
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
         elif weight is None and i[-3:] == '.h5':
             weight = i
-        elif i[-4:] == '.trm':
+        elif i == 'trained_model.trm':
             model = i
-    model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
+            model_tf_format = True
+        elif i[-4:] == '.trm' and 'model_json' in i:
+            model = i
+        elif i[-4:] == '.trm' and 'custom_obj_json' in i:
+            custom_object = i
+
+    def __get_json_data(path_model_json, path_custom_obj_json):
+        with open(path_model_json) as json_file:
+            data = json.load(json_file)
+
+        with open(path_custom_obj_json) as json_file:
+            custom_dict = json.load(json_file)
+
+        return data, custom_dict
+
+    def __set_custom_objects(custom_dict):
+        custom_object = {}
+        for k, v in custom_dict.items():
+            try:
+                package_ = "terra_ai.custom_objects"
+                if not importlib.util.find_spec(v, package=package_):
+                    package_ = "custom_objects"
+                custom_object[k] = getattr(importlib.import_module(f".{v}", package=package_), k)
+            except:
+                continue
+        return custom_object
+
+    if model_tf_format:
+        model = load_model(os.path.join(path, model), compile=False, custom_objects=None)
+    else:
+        model_data, custom_dict = __get_json_data(os.path.join(path, model), os.path.join(path, custom_object))
+        custom_object = __set_custom_objects(custom_dict)
+
+        model = model_from_json(model_data, custom_objects=custom_object)
     model.load_weights(os.path.join(path, weight))
 
     dataset_path = os.path.join(path, "dataset.json")
@@ -106,31 +143,31 @@ def json2model_cascade(path: str):
         output_types.append(type2str(signature(postprocessing).return_annotation))
 
     else:
-        for inp in config['outputs'].keys():
-            if config['outputs'][inp]['task'] not in ['Timeseries', 'TimeseriesTrend']:
-                for inp, param in config['columns'][inp].items():
-                    with open(os.path.join(dataset_data_path, "instructions", "parameters", inp + '.json')) as cfg:
+        for out in config['outputs'].keys():
+            if config['outputs'][out]['task'] not in ['Timeseries', 'TimeseriesTrend']:
+                for key, cur_param in config['columns'][out].items():
+                    with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                         spec_config = json.load(cfg)
 
-                    param.update(spec_config)
+                    cur_param.update(spec_config)
                     try:
-                        task = decamelize(param['task'])
+                        task = decamelize(cur_param['task'])
                         type_module = getattr(general_fucntions, task)
-                        postprocessing.append(getattr(type_module, 'main')(**param,
+                        postprocessing.append(getattr(type_module, 'main')(**cur_param,
                                                                            dataset_path=dataset_data_path,
-                                                                           key=inp))
+                                                                           key=key))
                         output_types.append(task)
                     except:
                         postprocessing.append(None)
             else:
                 param = {}
-                for key, cur_param in config['columns'][inp].items():
+                for key, cur_param in config['columns'][out].items():
                     param[key] = cur_param
                     with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
                         param[key].update(json.load(cfg))
                 param = {'columns': param, 'dataset_path': dataset_data_path,
-                         'shape': config['outputs'][inp]['shape']}
-                task = decamelize(config['outputs'][inp]['task'])
+                         'shape': config['outputs'][out]['shape']}
+                task = decamelize(config['outputs'][out]['task'])
                 type_module = getattr(general_fucntions, task)
                 postprocessing.append(getattr(type_module, 'main')(**param))
                 output_types.append(task)
@@ -220,6 +257,8 @@ def create_model(**params):
 
 
 def create_function(**params):
+    if "params" not in params.keys():
+        params['params'] = {}
     function = getattr(general_fucntions, decamelize(params['task']))
     function = CascadeElement(
         getattr(function, params['name'])(**params['params']),

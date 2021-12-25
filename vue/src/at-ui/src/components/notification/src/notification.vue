@@ -7,7 +7,7 @@
         'at-notification--with-message': message,
         'at-notification--hover': !showClose
       }"
-      :style="{ top: top ? top + 'px' : 'auto' }"
+      :style="{ bottom: top ? top + 'px' : 'auto' }"
       v-show="isShow"
       @click="!showClose && handleClose()"
       @mouseleave="startTimer"

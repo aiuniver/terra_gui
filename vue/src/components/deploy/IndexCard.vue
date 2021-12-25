@@ -1,48 +1,87 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="type == 'ImageClassification'">
+      <div v-if="type == 'image_classification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '224px', height: '80px' }">{{ ClassificationResult }}</TextCard>
+          <TextCard :style="{ width: '224px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'TextClassification'">
+      <div v-if="type == 'video_classification'">
+        <div class="card__original">
+          <TableVideo :value="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '300px', height: '80px' }">
+            <div class="video_classification">
+              <template v-for="{ name, value } of getData">
+                <div class="video_classification__item" :key="name">{{ `${name}: ${value}%` }}</div>
+              </template>
+            </div>
+          </TextCard>
+        </div>
+      </div>
+      <div v-if="type == 'text_classification'">
         <div class="card__original">
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult}}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
         </div>
       </div>
-      <div v-if="type == 'TextSegmentation'">
+      <div v-if="type == 'text_segmentation'">
         <div class="card__original segmentation__original" :style="{ height: '324px' }">
           <scrollbar :ops="ops">
             <TableTextSegmented
-              v-bind="{value: card.format, tags_color: {segmentationLayer}, layer: 'segmentationLayer', block_width: '598px'}"
-              :key="RandId"
+              v-bind="{
+                value: card.format,
+                tags_color: { segmentationLayer },
+                layer: 'segmentationLayer',
+                block_width: '598px',
+              }"
             />
           </scrollbar>
         </div>
         <div class="card__result">
-          <SegmentationTags
-            :style="{ width: '600px', height: '50px' }"
-            :tags="segmentationLayer"
-          />
+          <SegmentationTags :style="{ width: '600px', height: '50px' }" :tags="segmentationLayer" />
         </div>
       </div>
-      <div v-if="type == 'AudioClassification'">
+      <div v-if="type == 'audio_classification'">
         <div class="card__original">
-          <AudioCard :value="card.source" :update="RandId" />
+          <AudioCard :value="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ ClassificationResult }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
+        </div>
+      </div>
+      <div v-if="type == 'text_to_audio'">
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '200px' }">
+            <scrollbar :ops="ops">
+              {{ card.source }}
+            </scrollbar>
+          </TextCard>
+        </div>
+        <div class="card__original">
+          <AudioCard :value="card.predict" :key="card.source" />
+        </div>
+      </div>
+      <div v-if="type == 'audio_to_text'">
+        <div class="card__original">
+          <AudioCard :value="card.source" :key="card.predict" />
+        </div>
+        <div class="card__result">
+          <TextCard :style="{ width: '600px', height: '200px' }">
+            <scrollbar :ops="ops">
+              {{ card.predict }}
+            </scrollbar>
+          </TextCard>
         </div>
       </div>
 
-      <div v-if="type == 'ImageSegmentation'">
+      <div v-if="type == 'image_segmentation'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
@@ -50,7 +89,7 @@
           <ImgCard :imgUrl="card.segment" />
         </div>
       </div>
-      <div v-if="type == 'VideoObjectDetection'">
+      <div v-if="type == 'video_object_detection'">
         <div class="card__original">
           <TableVideo :value="card.source" />
         </div>
@@ -58,7 +97,7 @@
           <TableVideo :value="card.predict" />
         </div>
       </div>
-      <div v-if="type == 'YoloV3' || type == 'YoloV4'">
+      <div v-if="type == 'object_detection'">
         <div class="card__original">
           <TableImage size="large" :value="card.source" />
         </div>
@@ -66,49 +105,57 @@
           <TableImage size="large" :value="card.predict" />
         </div>
       </div>
-      <div class="card__graphic" v-if="type == 'Timeseries'">
-        <GraphicCard v-bind="card" :key="'graphic_' + index"/>
+      <div class="card__graphic" v-if="type == 'time_series'">
+        <GraphicCard v-bind="card" :key="'graphic_' + index" />
       </div>
-      <div class="card__graphic" v-if="type == 'TimeseriesTrend'">
-        
+      <div class="card__graphic" v-if="type == 'time_series_trend'">
         <div class="card__original">
-          <!-- <GraphicCard v-bind="card" :key="'grapрhic_' + index"/> -->
-          <GraphicCardPredict :data="card.predict" :key="'grapрhic_' + index"/>
+          <GraphicCardPredict :data="card.predict" />
         </div>
         <div class="card__result">
-          <GraphicCardSource :data="card.source" :key="'grвыaphic_' + index"/>
+          <GraphicCardSource :data="card.source" />
         </div>
       </div>
     </div>
-    <div class="card__reload"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+    <div class="card__reload">
+      <button class="btn-reload" @click="reload">
+        <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+      </button>
+    </div>
   </div>
 </template>
-
 <script>
-import ImgCard from './cards/ImgCard';
-import TableVideo from './cards/TableVideo';
-import TextCard from './cards/TextCard';
-import AudioCard from './cards/AudioCard';
-import TableTextSegmented from "../training/main/prediction/components/TableTextSegmented";
-import SegmentationTags from "./cards/SegmentationTags";
-import GraphicCard from "./cards/GraphicCard";
-import GraphicCardSource from "./cards/GraphicCardSource";
-import GraphicCardPredict from "./cards/GraphicCardPredict";
-import { mapGetters } from 'vuex';
+// ImageSegmentation = "image_segmentation"
+// ImageClassification = "image_classification"
+// TextSegmentation = "text_segmentation"
+// TextClassification = "text_classification"
+// AudioClassification = "audio_classification"
+// VideoClassification = "video_classification"
+// DataframeRegression = "table_data_regression"
+// DataframeClassification = "table_data_classification"
+// Timeseries = "time_series"
+// TimeseriesTrend = "time_series_trend"
+// VideoObjectDetection = "video_object_detection"
+// YoloV3 = "object_detection"
+// YoloV4 = "object_detection"
+// YoloV5 = "object_detection"
+// GoogleTTS = "text_to_audio"
+// Wav2Vec = "audio_to_text"
+// TinkoffAPI = "audio_to_text"
+
 export default {
   name: 'IndexCard',
   components: {
-    ImgCard,
-    TableVideo,
-    TextCard,
-    GraphicCard,
-    GraphicCardSource,
-    GraphicCardPredict,
-    AudioCard,
-    TableTextSegmented,
-    SegmentationTags,
+    ImgCard: () => import('@/components/deploy/cards/ImgCard'),
+    TableVideo: () => import('@/components/deploy/cards/TableVideo'),
+    TextCard: () => import('@/components/deploy/cards/TextCard'),
+    GraphicCard: () => import('@/components/deploy/cards/GraphicCard'),
+    GraphicCardSource: () => import('@/components/deploy/cards/GraphicCardSource'),
+    GraphicCardPredict: () => import('@/components/deploy/cards/GraphicCardPredict'),
+    AudioCard: () => import('@/components/deploy/cards/AudioCard'),
+    TableTextSegmented: () => import('../training/main/prediction/components/TableTextSegmented'),
+    SegmentationTags: () => import('@/components/deploy/cards/SegmentationTags'),
     TableImage: () => import('@/components/training/main/prediction/components/TableImage'),
-
   },
   data: () => ({
     ops: {
@@ -123,29 +170,30 @@ export default {
       type: Object,
       default: () => ({}),
     },
-    index: [String, Number],
-    color_map: {
+    colorMap: {
       type: Array,
-      default: () => ([]),
-    }
+      default: () => [],
+    },
+    index: {
+      type: [String, Number],
+      required: true,
+    },
+    defaultLayout: {
+      type: Object,
+      default: () => ({}),
+    },
+    type: {
+      type: String,
+      default: '',
+    },
   },
 
   methods: {
-    ReloadCard() {
-      this.$emit('reload', [this.index.toString()]);
+    async reload() {
+      this.$emit('reload', String(this.index));
     },
-    GraphicData(){
-
-    }
   },
   computed: {
-    ...mapGetters({
-      graphicData: 'deploy/getGraphicData',
-      defaultLayout: 'deploy/getDefaultLayout',
-      origTextStyle: 'deploy/getOrigTextStyle',
-      type: 'deploy/getDeployType',
-      RandId: 'deploy/getRandId',
-    }),
     layout() {
       const layout = this.defaultLayout;
       if (this.char) {
@@ -155,29 +203,29 @@ export default {
       }
       return layout;
     },
-    segmentationLayer(){
-      let layer = {}
-      for(let i in this.color_map){
-        if(this.color_map[i][0].includes("p")) continue;
-        let tag = this.color_map[i][0].slice(1, this.color_map[i][0].length-1);
-        layer[tag] = this.color_map[i][2];
+    segmentationLayer() {
+      const layer = {};
+      for (let i in this.colorMap) {
+        if (this.colorMap[i][0].includes('p')) continue;
+        const tag = this.colorMap[i][0].slice(1, this.colorMap[i][0].length - 1);
+        layer[tag] = this.colorMap[i][2];
       }
-      // console.log(layer);
-      return layer
+      return layer;
     },
-    ClassificationResult() {
+    classificationResult() {
       let text = this.card.data;
       let prepareText = '';
       text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
-      for (let i = 0; i < text.length; i++) {
-        prepareText = prepareText + `${text[i][0]} - ${text[i][1]}% \n`;
-      }
+      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}%`;
       return prepareText;
     },
+    getData() {
+      const arr = this.card?.data || [];
+      const text = arr.map(i => ({ name: i[0], value: i[1] }));
+
+      return text;
+    },
   },
-  mounted() {
-    console.log(this.card)
-  }
 };
 </script>
 
@@ -214,10 +262,18 @@ export default {
 .card__table {
   width: 100%;
 }
-.segmentation{
-  &__original{
+.segmentation {
+  &__original {
     border: 1px solid #6c7883;
     border-radius: 4px;
+  }
+}
+.video_classification {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    flex: 1 1 45%;
   }
 }
 </style>

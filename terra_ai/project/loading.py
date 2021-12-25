@@ -1,10 +1,11 @@
 import json
+import os
 import shutil
-import tempfile
 
 from pathlib import Path
 
 from .. import progress, settings
+from ..utils import get_tempfile
 from ..data.datasets.dataset import DatasetLoadData
 from ..datasets import loading as datasets_loading
 from ..progress import utils as progress_utils
@@ -18,11 +19,12 @@ PROJECT_LOAD_NAME = "project_load"
 def load(dataset_path: Path, source: Path, destination: Path):
     progress.pool.reset(PROJECT_LOAD_NAME, finished=False)
     try:
-        zip_filepath = tempfile.NamedTemporaryFile()
-        shutil.copy(source, zip_filepath.name)
+        zip_filepath = get_tempfile(False)
+        shutil.copy(source, zip_filepath)
         unpacked = progress_utils.unpack(
-            PROJECT_LOAD_NAME, PROJECT_LOAD_TITLE % source.name, Path(zip_filepath.name)
+            PROJECT_LOAD_NAME, PROJECT_LOAD_TITLE % source.name, zip_filepath
         )
+        os.remove(zip_filepath)
         shutil.rmtree(destination, ignore_errors=True)
         shutil.move(unpacked, destination)
 
@@ -42,4 +44,4 @@ def load(dataset_path: Path, source: Path, destination: Path):
             )
 
     except Exception as error:
-        progress.pool(PROJECT_LOAD_NAME, finished=True, error=str(error))
+        progress.pool(PROJECT_LOAD_NAME, finished=True, error=error)

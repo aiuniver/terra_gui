@@ -242,9 +242,9 @@ class Voc:
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
-            xml = open(filename, "r")
-
+            xml = open(filename, "r", encoding='utf-8')
             tree = Et.parse(xml)
+            xml.close()
             root = tree.getroot()
 
             xml_size = root.find("size")
@@ -717,12 +717,13 @@ def get_od_names(creation_data):
             elif out.parameters.model_type == LayerODDatasetTypeChoice.Voc:
                 (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(out.parameters.sources_paths[0])))
                 for filename in filenames:
-                    xml = open(os.path.join(dir_path, filename), "r")
+                    xml = open(os.path.join(dir_path, filename), "r", encoding='utf-8')
                     tree = Et.parse(xml)
                     root = tree.getroot()
                     objects = root.findall("object")
                     for _object in objects:
                         names_list.append(_object.find("name").text)
+                    xml.close()
                 names_list = sorted(set(names_list))
 
             elif out.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
@@ -732,6 +733,7 @@ def get_od_names(creation_data):
                     for line in txt:
                         elements = line.split(" ")
                         names_list.append(elements[0])
+                    txt.close()
                 names_list = sorted(set(names_list))
 
             elif out.parameters.model_type == LayerODDatasetTypeChoice.Udacity:
@@ -903,11 +905,11 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
         if crop.shape[1] > width:
             width = crop.shape[1]
 
-    for dir in os.listdir(tmp_directory):
-        for im_name in os.listdir(os.path.join(tmp_directory, dir)):
-            img = cv2.imread(os.path.join(tmp_directory, dir, im_name), cv2.IMREAD_UNCHANGED)
+    for directory in os.listdir(tmp_directory):
+        for im_name in os.listdir(os.path.join(tmp_directory, directory)):
+            img = cv2.imread(os.path.join(tmp_directory, directory, im_name), cv2.IMREAD_UNCHANGED)
             resized_im = resize_frame(img, (height, width), frame_mode)
-            cv2.imwrite(os.path.join(tmp_directory, dir, im_name), resized_im)
+            cv2.imwrite(os.path.join(tmp_directory, directory, im_name), resized_im)
 
     tracker_table = pd.DataFrame({'img_1': ims1,
                                   'img_2': ims2,

@@ -1,5 +1,6 @@
 import colorsys
 import os
+# import time
 
 import matplotlib
 import numpy as np
@@ -7,14 +8,17 @@ from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
-    fill_graph_front_structure, fill_graph_plot_data, print_error
+    fill_graph_front_structure, fill_graph_plot_data, set_preset_count
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
+# noinspection PyTypeChecker,PyUnresolvedReferences
 class BaseObjectDetectionCallback:
+    name = 'BaseObjectDetectionCallback'
+
     def __init__(self):
-        self.name = 'BaseObjectDetectionCallback'
         pass
 
     @staticmethod
@@ -40,22 +44,23 @@ class BaseObjectDetectionCallback:
                 coord = options.dataframe.get('val').iloc[index, 1].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
                 bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
-                # print('\n bboxes_gt', bboxes_gt)
                 classes_gt = to_categorical(
                     classes_gt, num_classes=len(options.data.outputs.get(2).classes_names)
                 )
                 bboxes_gt = np.concatenate(
                     [bboxes_gt[:, 1:2] * scale_h, bboxes_gt[:, 0:1] * scale_w,
                      bboxes_gt[:, 3:4] * scale_h, bboxes_gt[:, 2:3] * scale_w], axis=-1).astype('int')
-                # print(bboxes_gt)
                 conf_gt = np.expand_dims(np.ones(len(bboxes_gt)), axis=-1)
                 _bb = np.concatenate([bboxes_gt, conf_gt, classes_gt], axis=-1)
                 bb.append(_bb)
             for channel in range(len(options.data.outputs.keys())):
                 y_true[channel] = bb
             return y_true, None
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_yolo_y_pred(array, options, sensitivity: float = 0.15, threashold: float = 0.1):
@@ -69,15 +74,22 @@ class BaseObjectDetectionCallback:
                     boxes = BaseObjectDetectionCallback().get_predict_boxes(
                         array=np.expand_dims(ex, axis=0),
                         name_classes=name_classes,
-                        bb_size=i,
                         sensitivity=sensitivity,
                         threashold=threashold
                     )
                     channel_boxes.append(boxes)
                 y_pred[i] = channel_boxes
             return y_pred
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
+    @staticmethod
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        return inverse_array
 
     @staticmethod
     def bboxes_iou(boxes1, boxes2):
@@ -94,8 +106,11 @@ class BaseObjectDetectionCallback:
             union_area = boxes1_area + boxes2_area - inter_area
             ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
             return ious
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def non_max_suppression_fast(boxes: np.ndarray, scores: np.ndarray, sensitivity: float = 0.15):
@@ -112,9 +127,7 @@ class BaseObjectDetectionCallback:
             classes = np.argmax(scores, axis=-1)
             idxs = np.argsort(classes)[..., ::-1]
             mean_iou = []
-            count = 0
             while len(idxs) > 0:
-                count += 1
                 last = len(idxs) - 1
                 i = idxs[last]
                 pick.append(i)
@@ -127,28 +140,23 @@ class BaseObjectDetectionCallback:
                 overlap = (w * h) / area[idxs[:last]]
                 mean_iou.append(overlap)
                 idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > sensitivity)[0])))
-            # print('\n-- non_max_suppression_fast', count, boxes.shape, boxes[0], scores[0])
             return pick, mean_iou
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def get_predict_boxes(array, name_classes: list, bb_size: int = 1, sensitivity: float = 0.15,
-                          threashold: float = 0.1):
+    def get_predict_boxes(array, name_classes: list, sensitivity: float = 0.15, threashold: float = 0.1):
         """
         Boxes for 1 example
         """
         method_name = 'get_predict_boxes'
         try:
             num_classes = len(name_classes)
-            anchors = np.array([[10, 13], [16, 30], [33, 23],
-                                [30, 61], [62, 45], [59, 119],
-                                [116, 90], [156, 198], [373, 326]])
-            anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
-            level_anchor = bb_size
-            num_anchors = len(anchors[anchor_mask[level_anchor]])
-            grid_shape = array.shape[1:3]
-            feats = np.reshape(array, (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+            num_anchors = 3
+            feats = np.reshape(array, (-1, array.shape[1], array.shape[2], num_anchors, num_classes + 5))
             xy_param = feats[..., :2]
             wh_param = feats[..., 2:4]
             conf_param = feats[..., 4:5]
@@ -182,8 +190,11 @@ class BaseObjectDetectionCallback:
             _conf_param = (_scores_out / _class_param_out)[:, :1]
             pick, _ = BaseObjectDetectionCallback().non_max_suppression_fast(_boxes_out, _scores_out, sensitivity)
             return np.concatenate([_boxes_out[pick], _conf_param[pick], _scores_out[pick]], axis=-1)
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def plot_boxes(true_bb, pred_bb, img_path, name_classes, colors, image_id, add_only_true=False, plot_true=True,
@@ -295,8 +306,6 @@ class BaseObjectDetectionCallback:
                                     label=label, label_size=label_size,
                                     dash_mode=False, show_label=True)
                     del draw
-                # save_true_path = ''
-                # return_true_path = ""
                 if return_mode == 'deploy':
                     save_true_path = os.path.join(
                         save_path, "deploy_presets", f"{return_mode}_od_true_image_{image_id}.webp")
@@ -309,8 +318,11 @@ class BaseObjectDetectionCallback:
                 return return_predict_path, return_true_path
             if return_mode == 'callback':
                 return save_predict_path, save_true_path
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_yolo_example_statistic(true_bb, pred_bb, name_classes, sensitivity=0.25):
@@ -403,8 +415,11 @@ class BaseObjectDetectionCallback:
                 'total_metric': (total_conf + total_class + total_overlap) / 3 / count if count else 0.
             }
             return compat
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_example_idx_to_show(array: dict, true_array: dict, name_classes: list, box_channel,
@@ -477,8 +492,11 @@ class BaseObjectDetectionCallback:
             else:
                 example_idx = np.random.randint(0, len(true_array.get(box_channel)), count)
             return example_idx, box_channel
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_object_detection(predict_array, true_array, image_path: str, colors: list,
@@ -528,7 +546,6 @@ class BaseObjectDetectionCallback:
                         true_bb=true_array, pred_bb=predict_array, name_classes=name_classes,
                         sensitivity=sensitivity
                     )
-                    # print('\nbox_stat', box_stat)
                     data["stat"]["Общая точность"] = {
                         "type": "str",
                         "data": [{
@@ -588,8 +605,11 @@ class BaseObjectDetectionCallback:
                             ]
                         }
                 return data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_od_deploy(array, options, save_path: str = "", dataset_path: str = "", sensitivity=0.15,
@@ -606,12 +626,13 @@ class BaseObjectDetectionCallback:
             colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
             image_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
 
+            count = set_preset_count(len_array=len(y_pred[0]), preset_percent=DEPLOY_PRESET_PERCENT)
             example_idx, bb = BaseObjectDetectionCallback().prepare_example_idx_to_show(
                 array=y_pred,
                 true_array=y_true,
                 name_classes=options.data.outputs.get(list(options.data.outputs.keys())[0]).classes_names,
                 box_channel=None,
-                count=int(len(y_pred[0]) * DEPLOY_PRESET_PERCENT / 100),
+                count=count,
                 choice_type='best',
                 sensitivity=sensitivity,
                 get_optimal_channel=True
@@ -631,8 +652,11 @@ class BaseObjectDetectionCallback:
                 )
                 return_data[bb].append({"source": return_source, "predict": save_predict_path})
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_box_square(bbs, imsize=(416, 416)):
@@ -645,8 +669,11 @@ class BaseObjectDetectionCallback:
                 return square / len(bbs) / np.prod(imsize) * 100
             else:
                 return 0.
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def plot_bb_colormap(class_bb: dict, colors: list, name_classes: list, data_type: str,
@@ -675,8 +702,11 @@ class BaseObjectDetectionCallback:
             link_dict['all_classes'] = img_save_path
             matplotlib.image.imsave(img_save_path, template)
             return link_dict
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
@@ -712,8 +742,11 @@ class BaseObjectDetectionCallback:
                     save_path=preset_path, imgsize=(imsize[0], imsize[1])
                 )
             return dataset_balance
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_intermediate_result(options, yolo_interactive_config, y_pred, y_true, example_idx,
@@ -754,10 +787,12 @@ class BaseObjectDetectionCallback:
                         return_data[f"{idx + 1}"]['statistic_values'] = data.get('stat')
                     else:
                         return_data[f"{idx + 1}"]['statistic_values'] = {}
-            # print('\nget_intermediate_result', return_data)
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_statistic_data_request(yolo_interactive_config, options, y_true, y_pred) -> list:
@@ -804,15 +839,12 @@ class BaseObjectDetectionCallback:
                 for item in example_stat['recognize']['unrecognize']:
                     class_matrix[line_names.index(item['class_name'])][-1] += 1
             for class_name in name_classes:
-                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100,
-                                                           2).item() if \
-                    class_accuracy_hist[class_name] else 0.
-                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100,
-                                                            2).item() if \
-                    class_coord_accuracy[class_name] else 0.
+                class_accuracy_hist[class_name] = np.round(np.mean(class_accuracy_hist[class_name]) * 100, 2).item() \
+                    if class_accuracy_hist[class_name] else 0.
+                class_coord_accuracy[class_name] = np.round(np.mean(class_coord_accuracy[class_name]) * 100, 2).item() \
+                    if class_coord_accuracy[class_name] else 0.
                 class_loss_hist[class_name] = np.round(np.mean(class_loss_hist[class_name]) * 100, 2).item() if \
-                    class_loss_hist[
-                        class_name] else 0.
+                    class_loss_hist[class_name] else 0.
             object_matrix = [[object_tt, object_tf], [object_ft, 0]]
             class_matrix_percent = []
             for i in class_matrix:
@@ -886,8 +918,11 @@ class BaseObjectDetectionCallback:
                 )
             )
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -903,13 +938,14 @@ class BaseObjectDetectionCallback:
                             dict_to_sort=dataset_balance.get("output").get(class_type).get(data_type),
                             mode=interactive_config.data_balance.sorted.name
                         )
+                        type_name = 'Тренировочная' if data_type == 'train' else 'Проверочная'
+                        cls_name = 'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'
                         preset[data_type] = fill_graph_front_structure(
                             _id=_id,
                             _type='histogram',
                             type_data=data_type,
-                            graph_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                       f"{'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'}",
-                            short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                            graph_name=f"{type_name} выборка - {cls_name}",
+                            short_name=f"{type_name} - "
                                        f"{'присутсвие' if class_type == 'class_count' else 'пространство'}",
                             x_label="Название класса",
                             y_label="Значение",
@@ -941,14 +977,19 @@ class BaseObjectDetectionCallback:
                             _id += 1
                         return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(BaseObjectDetectionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseObjectDetectionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
 class YoloV3Callback(BaseObjectDetectionCallback):
+    name = 'YoloV3Callback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'YoloV3Callback'
+        pass
 
     @staticmethod
     def get_y_true(options, dataset_path):
@@ -993,9 +1034,11 @@ class YoloV3Callback(BaseObjectDetectionCallback):
 
 
 class YoloV4Callback(BaseObjectDetectionCallback):
+    name = 'YoloV4Callback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'YoloV4Callback'
+        pass
 
     @staticmethod
     def get_y_true(options, dataset_path):

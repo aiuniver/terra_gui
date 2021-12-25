@@ -19,6 +19,10 @@ class DeployTypeChoice(str, Enum):
     VideoObjectDetection = "VideoObjectDetection"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
+    YoloV5 = "YoloV5"
+    GoogleTTS = "GoogleTTS"
+    Wav2Vec = "Wav2Vec"
+    TinkoffAPI = "TinkoffAPI"
 
     @property
     def demo(self) -> str:
@@ -39,6 +43,10 @@ class DeployTypeDemoChoice(str, Enum):
     VideoObjectDetection = "video_object_detection"
     YoloV3 = "object_detection"
     YoloV4 = "object_detection"
+    YoloV5 = "object_detection"
+    GoogleTTS = "text_to_audio"
+    Wav2Vec = "audio_to_text"
+    TinkoffAPI = "audio_to_text"
 
 
 class DeployTypePageChoice(str, Enum):

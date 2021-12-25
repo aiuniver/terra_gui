@@ -140,8 +140,6 @@ class BlockFunctionGroupChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     ObjectDetection = "ObjectDetection"
 
-    # Tracker = "Tracker"
-
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, BlockFunctionGroupChoice))
@@ -183,16 +181,25 @@ class BlockCustomTypeChoice(str, Enum):
 class BlockServiceGroupChoice(str, Enum):
     Tracking = "Tracking"
     ObjectDetection = "ObjectDetection"
+    SpeechToText = "SpeechToText"
+    TextToSpeech = "TextToSpeech"
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, BlockCustomGroupChoice))
+        return list(map(lambda item: item.value, BlockServiceGroupChoice))
 
 
 class BlockServiceTypeChoice(str, Enum):
     Sort = "Sort"
     BiTBasedTracker = "BiTBasedTracker"
     YoloV5 = "YoloV5"
+    DeepSort = "DeepSort"
+    # GoogleSTT = "GoogleSTT"
+    GoogleTTS = "GoogleTTS"
+    Wav2Vec = "Wav2Vec"
+    # Google = "Google"
+    TinkoffAPI = "TinkoffAPI"
+    FilterClasses = "FilterClasses"
 
     @staticmethod
     def values() -> list:
@@ -221,6 +228,18 @@ class BlockServiceYoloV5VersionChoice(str, Enum):
         return list(map(lambda item: item.value, BlockServiceYoloV5VersionChoice))
 
 
+class BlockServiceGoogleTTSLanguageChoice(str, Enum):
+    ru = "ru"
+    en = "en"
+    fr = "fr"
+    pt = "pt"
+    es = "es"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BlockServiceGoogleTTSLanguageChoice))
+
+
 class BlocksBindChoice(Enum):
     Model = (
         "Model",
@@ -237,6 +256,9 @@ class BlocksBindChoice(Enum):
                 BlockFunctionTypeChoice.MaskedImage,
                 BlockFunctionTypeChoice.PutTag,
                 BlockServiceTypeChoice.YoloV5,
+                BlockServiceTypeChoice.GoogleTTS,
+                BlockServiceTypeChoice.Wav2Vec,
+                BlockServiceTypeChoice.TinkoffAPI,
             ),
         ),
         tuple(),
@@ -244,15 +266,38 @@ class BlocksBindChoice(Enum):
 
     Sort = (
         "Sort",
-        (BlockFunctionTypeChoice.PostprocessBoxes,),
+        (
+            (BlockFunctionTypeChoice.PostprocessBoxes,
+             BlockServiceTypeChoice.FilterClasses,
+             BlockServiceTypeChoice.YoloV5,
+             ),
+        ),
         (LayerInputTypeChoice.Image,),
     )
     BiTBasedTracker = (
         "BiTBasedTracker",
-        (BlockFunctionTypeChoice.PostprocessBoxes, BlockGroupChoice.InputData),
+        (
+            (BlockFunctionTypeChoice.PostprocessBoxes,
+             BlockServiceTypeChoice.FilterClasses,
+             BlockServiceTypeChoice.YoloV5,
+             ),
+            BlockGroupChoice.InputData,),
+        (LayerInputTypeChoice.Image,),
+    )
+    DeepSort = (
+        "DeepSort",
+        (
+            (BlockFunctionTypeChoice.PostprocessBoxes,
+             BlockServiceTypeChoice.FilterClasses,
+             BlockServiceTypeChoice.YoloV5,
+             ),
+            BlockGroupChoice.InputData,),
         (LayerInputTypeChoice.Image,),
     )
     YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image,))
+    GoogleTTS = ("GoogleTTS", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Text,))
+    Wav2Vec = ("Wav2Vec", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Audio,))
+    TinkoffAPI = ("TinkoffAPI", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Audio,))
     ChangeType = (
         "ChangeType",
         tuple(),
@@ -296,11 +341,18 @@ class BlocksBindChoice(Enum):
         (
             (
                 BlockFunctionTypeChoice.PostprocessBoxes,
-                BlockCustomTypeChoice.Sort,
+                BlockServiceTypeChoice.Sort,
                 BlockServiceTypeChoice.BiTBasedTracker,
+                BlockServiceTypeChoice.DeepSort,
+                BlockServiceTypeChoice.FilterClasses,
             ),
             BlockGroupChoice.InputData,
         ),
+        (LayerInputTypeChoice.Image,),
+    )
+    FilterClasses = (
+        "FilterClasses",
+        (BlockServiceTypeChoice.YoloV5,),
         (LayerInputTypeChoice.Image,),
     )
 
@@ -372,6 +424,13 @@ class FunctionParamsChoice(Enum):
         ("max_age", "distance_threshold", "metric"),
     )
     YoloV5 = (BlockServiceTypeChoice.YoloV5, ("version", "render_img"))
+    FilterClasses = (BlockServiceTypeChoice.FilterClasses, ("filter_classes",))
+    DeepSort = (BlockServiceTypeChoice.DeepSort, ("model_path", "max_dist", "min_confidence", "nms_max_overlap",
+                                                  "max_iou_distance", "deep_max_age", "n_init", "nn_budget"))
+    GoogleTTS = (BlockServiceTypeChoice.GoogleTTS, ("language",))
+    Wav2Vec = (BlockServiceTypeChoice.Wav2Vec, ("",))
+    TinkoffAPI = (BlockServiceTypeChoice.TinkoffAPI, ("api_key", "secret_key", "max_alternatives", "do_not_perform_vad",
+                  "profanity_filter", "enable_automatic_punctuation","expiration_time", "endpoint"))
 
     def __init__(self, name, parameters):
         self._name = name

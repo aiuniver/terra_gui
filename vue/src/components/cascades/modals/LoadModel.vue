@@ -164,24 +164,24 @@ export default {
       if (!this.loading) {
         this.loading = true;
         this.modelDownload = true;
-        const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
-          model: this.model,
-        });
+        // const { success: successValidate, data } = await this.$store.dispatch('datasets/validateDatasetOrModel', {
+        //   model: this.model,
+        // });
 
-        if (successValidate && data) {
-          this.$Modal.confirm({
-            title: 'Внимание!',
-            content: data,
-            width: 300,
-            callback: async action => {
-              if (action == 'confirm') {
-                await this.onChoice({ reset_dataset: true });
-              }
-            },
-          });
-        } else {
+        // if (successValidate && data) {
+        //   this.$Modal.confirm({
+        //     title: 'Внимание!',
+        //     content: data,
+        //     width: 300,
+        //     callback: async action => {
+        //       if (action == 'confirm') {
+        //         await this.onChoice({ reset_dataset: true });
+        //       }
+        //     },
+        //   });
+        // } else {
           await this.onChoice();
-        }
+        // }
         this.$emit('input', false);
         this.loading = false;
         this.modelDownload = false;

@@ -50,7 +50,7 @@
       @cleanError="cleanError"
       @change="change"
     />
-    <t-field v-if="type === 'select'" :inline="true" :label="label">
+    <t-field v-if="type === 'select'" :label="label">
       <t-select-new
         :value="getValue"
         :label="label"
@@ -64,6 +64,16 @@
         @change="change"
       />
     </t-field>
+    <MegaMultiSelect
+      v-if="type === 'multiselect'"
+      :value="getValue"
+      :label="label"
+      :list="list"
+      :parse="parse"
+      :name="name"
+      class="t-mege-multi-select"
+      @parse="change"
+    />
     <t-field v-if="type === 'auto_complete'" :label="label">
       <t-auto-complete-new-two :value="getValue" :list="list" :parse="parse" :name="name" all @parse="change" />
     </t-field>
@@ -81,8 +91,12 @@
 </template>
 
 <script>
+import MegaMultiSelect from '@/components/global/forms/MegaMultiSelect';
 export default {
   name: 't-auto-field-cascade',
+  components: {
+    MegaMultiSelect,
+  },
   props: {
     type: String,
     value: [String, Boolean, Number, Array],
@@ -107,9 +121,9 @@ export default {
     getValue() {
       let val;
       if (this.type === 'select') {
-        val = this.list.find(item => item.value === this.parameters?.[this.name])?.value ?? this.value
+        val = this.list.find(item => item.value === this.parameters?.[this.name])?.value ?? this.value;
       } else {
-        val = this.parameters?.[this.name] ?? this.value
+        val = this.parameters?.[this.name] ?? this.value;
       }
       return val;
     },
@@ -137,7 +151,7 @@ export default {
   },
   methods: {
     change({ value, name }) {
-      const block = this.$store.getters['cascades/getBlock']
+      const block = this.$store.getters['cascades/getBlock'];
       setTimeout(() => {
         this.$store.dispatch('cascades/selectBlock', block);
       }, 10);
@@ -153,11 +167,11 @@ export default {
     },
   },
   created() {
-    // console.log(this.type)
+    // console.log(this.type);
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, mounted: true, parse: this.parse });
-    console.log(this.name, this.getValue , this.value);
+    // console.log(this.name, this.getValue , this.value);
     // this.valueIn = null;
     this.$nextTick(() => {
       this.valueIn = this.getValue;
@@ -165,3 +179,12 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.t-mege-multi-select {
+  width: 50%;
+  .t-mega-select__body {
+    height: 200px;
+  }
+}
+</style>

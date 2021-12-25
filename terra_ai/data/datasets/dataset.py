@@ -1,180 +1,5 @@
-"""
-## Структура данных датасетов
-
-### **Датасет**
-```
-In [1]: from terra_ai.data.datasets.dataset import DatasetData
-
-In [2]: source = {
-   ...:     "alias": "cars",
-   ...:     "name": "Cars",
-   ...:     "date": "2021-06-26T09:30:24+00:00",
-   ...:     "size": {
-   ...:         "value": "324133875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...: }
-
-In [3]: data = DatasetData(**source)
-
-In [4]: data
-Out[4]: DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])
-
-In [5]: data.dict()
-Out[5]:
-{'alias': 'cars',
- 'name': 'Cars',
- 'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
- 'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
- 'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-  {'alias': 'segmentation', 'name': 'Segmentation'}]}
-
-In [6]: data.json()
-Out[6]: '{"alias": "cars", "name": "Cars", "size": {"value": 324133875, "short": 309.1181516647339, "unit": "\\u041c\\u0431"}, "date": "2021-06-26T09:30:24+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}'
-
-In [7]: print(data.json(indent=2, ensure_ascii=False))
-{
-  "alias": "cars",
-  "name": "Cars",
-  "size": {
-    "value": 324133875,
-    "short": 309.1181516647339,
-    "unit": "Мб"
-  },
-  "date": "2021-06-26T09:30:24+00:00",
-  "tags": [
-    {
-      "alias": "tensorflow_keras",
-      "name": "Tensorflow.keras"
-    },
-    {
-      "alias": "segmentation",
-      "name": "Segmentation"
-    }
-  ]
-}
-```
-
-### **Список датасетов**
-```
-In [1]: from terra_ai.data.datasets.dataset import DatasetsList
-
-In [2]: source = {
-   ...:     "alias": "cars",
-   ...:     "name": "Cars",
-   ...:     "date": "2021-06-26T09:30:24+00:00",
-   ...:     "size": {
-   ...:         "value": "324133875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...:     "alias": "kvartiri",
-   ...:     "name": "Квартиры",
-   ...:     "date": "2020-12-09T15:34:03+00:00",
-   ...:     "size": {
-   ...:         "value": "32241733875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...: }
-
-In [3]: data = DatasetsList(source)
-
-In [4]: data
-Out[4]:
-[DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')]),
- DatasetData(alias='kvartiri', name='Квартиры', size=FileSizeData(value=32241733875, short=30.02745460253209, unit='Гб'), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])]
-
-In [5]: data.dict()
-Out[5]:
-[{'alias': 'cars',
-  'name': 'Cars',
-  'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
-  'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
-  'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-   {'alias': 'segmentation', 'name': 'Segmentation'}]},
- {'alias': 'kvartiri',
-  'name': 'Квартиры',
-  'size': {'value': 32241733875, 'short': 30.02745460253209, 'unit': 'Гб'},
-  'date': datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc),
-  'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-   {'alias': 'segmentation', 'name': 'Segmentation'}]}]
-
-In [6]: data.json()
-Out[6]: '[{"alias": "cars", "name": "Cars", "size": {"value": 324133875, "short": 309.1181516647339, "unit": "\\u041c\\u0431"}, "date": "2021-06-26T09:30:24+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}, {"alias": "kvartiri", "name": "\\u041a\\u0432\\u0430\\u0440\\u0442\\u0438\\u0440\\u044b", "size": {"value": 32241733875, "short": 30.02745460253209, "unit": "\\u0413\\u0431"}, "date": "2020-12-09T15:34:03+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}]'
-
-In [7]: print(data.json(indent=2, ensure_ascii=False))
-[
-  {
-    "alias": "cars",
-    "name": "Cars",
-    "size": {
-      "value": 324133875,
-      "short": 309.1181516647339,
-      "unit": "Мб"
-    },
-    "date": "2021-06-26T09:30:24+00:00",
-    "tags": [
-      {
-        "alias": "tensorflow_keras",
-        "name": "Tensorflow.keras"
-      },
-      {
-        "alias": "segmentation",
-        "name": "Segmentation"
-      }
-    ]
-  },
-  {
-    "alias": "kvartiri",
-    "name": "Квартиры",
-    "size": {
-      "value": 32241733875,
-      "short": 30.02745460253209,
-      "unit": "Гб"
-    },
-    "date": "2020-12-09T15:34:03+00:00",
-    "tags": [
-      {
-        "alias": "tensorflow_keras",
-        "name": "Tensorflow.keras"
-      },
-      {
-        "alias": "segmentation",
-        "name": "Segmentation"
-      }
-    ]
-  }
-]
-```
-"""
-
 import os
+import re
 import json
 
 from pathlib import Path, PureWindowsPath
@@ -185,29 +10,65 @@ from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
-from .tags import TagsList
-from .extra import (
+from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
+from terra_ai.data.extra import FileSizeData
+from terra_ai.data.exceptions import TrdsConfigFileNotFoundException
+from terra_ai.data.datasets.tags import TagsList
+from terra_ai.data.datasets.extra import (
     DatasetGroupChoice,
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
 )
-from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
-from ..extra import FileSizeData
-from ..exceptions import TrdsConfigFileNotFoundException
-from ..modeling.model import ModelDetailsData
-from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
-from ..modeling.layers.extra import ActivationChoice
-from ..presets.models import EmptyModelDetailsData
-from ..presets.datasets import OutputLayersDefaults
-from ... import settings
+from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.extra import LayerTypeChoice, LayerGroupChoice
+from terra_ai.data.modeling.layers.extra import ActivationChoice
 from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.presets.datasets import OutputLayersDefaults, DatasetsGroups
+
+from terra_ai.exceptions.datasets import (
+    DatasetUndefinedGroupException,
+    DatasetNotFoundInGroupException,
+    DatasetUndefinedConfigException,
+)
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASETS_LOADED_DIR
 
 
 class DatasetLoadData(BaseMixinData):
     path: DirectoryPath
     group: DatasetGroupChoice
     alias: str
+
+    @validator("alias")
+    def _validate_alias(cls, value: str, values) -> str:
+        group = values.get("group")
+
+        if group in (DatasetGroupChoice.keras, DatasetGroupChoice.terra):
+            groups = list(
+                filter(lambda item: item.get("alias") == group.name, DatasetsGroups)
+            )
+            if not len(groups):
+                raise DatasetUndefinedGroupException(group.value)
+            dataset_match = list(
+                filter(
+                    lambda item: item.get("alias") == value,
+                    groups[0].get("datasets", []),
+                )
+            )
+            if not len(dataset_match):
+                raise DatasetNotFoundInGroupException(value, group.value)
+
+        elif group in (DatasetGroupChoice.custom,):
+            dataset_path = Path(values.get("path"), f"{value}.{DATASET_EXT}")
+            if not dataset_path.is_dir():
+                raise DatasetNotFoundInGroupException(value, group.value)
+
+            config_path = Path(dataset_path, DATASET_CONFIG)
+            if not config_path.is_file():
+                raise DatasetUndefinedConfigException(value, group.value)
+
+        return value
 
 
 class CustomDatasetConfigData(BaseMixinData):
@@ -226,7 +87,7 @@ class CustomDatasetConfigData(BaseMixinData):
 
     @validator("config", always=True)
     def _validate_config(cls, value: dict, values) -> dict:
-        config_path = Path(values.get("path"), settings.DATASET_CONFIG)
+        config_path = Path(values.get("path"), DATASET_CONFIG)
         if not config_path.is_file():
             raise TrdsConfigFileNotFoundException(
                 values.get("path").name, config_path.name
@@ -289,8 +150,8 @@ class DatasetData(AliasMixinData):
     use_generator: bool = False
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: Optional[TagsList] = TagsList()
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    inputs: Optional[Dict[PositiveInt, DatasetInputsData]] = {}
+    outputs: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
     columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
 
@@ -308,23 +169,32 @@ class DatasetData(AliasMixinData):
 
     @property
     def training_available(self) -> bool:
-        return self.architecture != ArchitectureChoice.Tracker
+        return self.architecture not in (
+            ArchitectureChoice.Tracker,
+            ArchitectureChoice.Speech2Text,
+            ArchitectureChoice.Text2Speech,
+        )
 
     @property
     def sources(self) -> List[str]:
         out = []
         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
         for column in sources.columns:
-            if column.split("_")[-1].title() in ["Image", "Text", "Audio", "Video"]:
-                out = list(
-                    map(
-                        lambda item: str(
-                            Path(self.path, PureWindowsPath(item).as_posix())
-                        ),
-                        sources[column].to_list(),
+            match = re.findall(r"^([\d]+_)(.+)$", column)
+            if not match:
+                continue
+            _title = match[0][1].title()
+            if _title in ["Image", "Text", "Audio", "Video"]:
+                out = sources[column].to_list()
+                if _title != "Text":
+                    out = list(
+                        map(
+                            lambda item: str(
+                                Path(self.path, PureWindowsPath(item).as_posix())
+                            ),
+                            out,
+                        )
                     )
-                )
-        print(out)
         return out
 
     @property
@@ -458,20 +328,20 @@ class DatasetInfo(BaseMixinData):
     @property
     def dataset(self) -> Optional[DatasetData]:
         if not self.__dataset__:
-            with open(
-                Path(
-                    settings.DATASETS_LOADED_DIR,
-                    self.group.name,
-                    self.alias,
-                    settings.DATASET_CONFIG,
-                )
-            ) as config_ref:
-                self.__dataset__ = DatasetData(
-                    path=Path(
-                        settings.DATASETS_LOADED_DIR,
-                        self.group.name,
-                        self.alias,
-                    ),
-                    **json.load(config_ref)
-                )
+            config_path = Path(
+                DATASETS_LOADED_DIR,
+                self.group.name,
+                self.alias,
+                DATASET_CONFIG,
+            )
+            if config_path.is_file():
+                with open(config_path) as config_ref:
+                    self.__dataset__ = DatasetData(
+                        path=Path(
+                            DATASETS_LOADED_DIR,
+                            self.group.name,
+                            self.alias,
+                        ),
+                        **json.load(config_ref),
+                    )
         return self.__dataset__

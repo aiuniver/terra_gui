@@ -1,5 +1,4 @@
 import colorsys
-import copy
 import os
 from typing import Optional
 
@@ -11,16 +10,20 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, print_error, segmentation_metric, sequence_length_calculator
+    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count
 from terra_ai.data.datasets.dataset import DatasetOutputsData
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
+from terra_ai.logging import logger
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 class BaseSegmentationCallback:
+    name = 'BaseSegmentationCallback'
+
     def __init__(self):
-        self.name = 'BaseSegmentationCallback'
+        pass
 
     @staticmethod
     def get_x_array(options):
@@ -29,15 +32,17 @@ class BaseSegmentationCallback:
             x_val = None
             inverse_x_val = None
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_y_true(options, dataset_path):
         method_name = 'get_y_true'
         try:
             y_true = {"train": {}, "val": {}}
-            # y_true = {"val": {}}
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
@@ -45,31 +50,21 @@ class BaseSegmentationCallback:
                         y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
                     else:
                         y_true[data_type][f"{out}"] = []
-                        # ccc = 1
                         for _, y_val in options.dataset[data_type].batch(1):
                             y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                            # print(ccc, y_val.get(f'{out}').shape)
-                            # ccc += 1
                         y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
-                        # print('\ny_true[data_type][f"{out}"]', y_true[data_type][f"{out}"].shape)
             return y_true, inverse_y_true
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
 
     @staticmethod
-    def get_y_pred(y_true, y_pred, options):
-        method_name = 'get_y_pred'
-        try:
-            reformat_pred = {}
-            inverse_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-            return reformat_pred, inverse_pred
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+    def get_inverse_array(array: dict, options, type="output"):
+        inverse_array = {"train": {}, "val": {}}
+        return inverse_array
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, options, output: int, count: int,
@@ -133,28 +128,33 @@ class BaseSegmentationCallback:
                 example_idx = np.random.randint(0, len(true_array), count)
 
             return example_idx
-        except Exception as e:
-            print_error(BaseSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
+# noinspection PyUnresolvedReferences
 class ImageSegmentationCallback(BaseSegmentationCallback):
+    name = 'ImageSegmentationCallback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'ImageSegmentationCallback'
-        # print(f'Callback {self.name} is called')
+        pass
 
     @staticmethod
     def postprocess_initial_source(options, input_id: int, example_id: int, dataset_path: str, preset_path: str,
-                                   save_id: int = None, return_mode='deploy'):
+                                   save_id: int = None, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get('val').iat[example_id, column_idx[0]]
+                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -173,8 +173,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                 img.save(source, 'webp')
                 data = [{"title": "Изображение", "value": source, "color_mark": None }]
                 return data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_segmentation(predict_array: np.ndarray, true_array: Optional[np.ndarray],
@@ -270,8 +273,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         }
                     )
                 return data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -285,12 +291,13 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = ImageSegmentationCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = []
                 data = []
@@ -324,8 +331,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     )
                     _id += 1
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -367,8 +377,11 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                     dataset_balance[f"{out}"]["presence_balance"][data_type] = class_count
                     dataset_balance[f"{out}"]["square_balance"][data_type] = class_percent
             return dataset_balance
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -378,6 +391,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -395,15 +409,16 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                             example_id=example_idx[idx],
                             dataset_path=dataset_path,
                             preset_path=preset_path,
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'image', 'data': data,
                         }
                     for out in options.data.outputs.keys():
                         data = ImageSegmentationCallback().postprocess_segmentation(
-                            predict_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            predict_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
                             colors=class_colors,
                             output_id=out,
@@ -423,41 +438,51 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
+    def statistic_data_request(interactive_config, options, y_true: dict, inverse_y_true: dict,
+                               y_pred: dict, inverse_y_pred: dict, raw_y_pred=None) -> list:
         method_name = 'statistic_data_request'
         try:
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
-                cm, cm_percent = get_confusion_matrix(
-                    np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
-                        np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
-                    np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
-                        np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
-                    get_percent=True
-                )
-                return_data.append(
-                    fill_heatmap_front_structure(
-                        _id=_id,
-                        _type="heatmap",
-                        graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                        short_name=f"{out} - Confusion matrix",
-                        x_label="Предсказание",
-                        y_label="Истинное значение",
-                        labels=options.data.outputs.get(out).classes_names,
-                        data_array=cm,
-                        data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    num_classes = options.data.outputs.get(out).num_classes
+                    cm, cm_percent = get_segmentation_confusion_matrix(
+                        y_true=to_categorical(np.argmax(y_true.get(data_type).get(f'{out}'), axis=-1),
+                                              num_classes=num_classes).astype('int'),
+                        y_pred=to_categorical(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1),
+                                              num_classes=num_classes).astype('int'),
+                        num_classes=num_classes,
+                        get_percent=True
                     )
-                )
-                _id += 1
+                    return_data.append(
+                        fill_heatmap_front_structure(
+                            _id=_id,
+                            _type="heatmap",
+                            graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                            short_name=f"{out} - Confusion matrix - {type_name}",
+                            x_label="Предсказание",
+                            y_label="Истинное значение",
+                            labels=options.data.outputs.get(out).classes_names,
+                            data_array=cm,
+                            data_percent_array=cm_percent,
+                        )
+                    )
+                    _id += 1
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -474,13 +499,15 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                 dict_to_sort=dataset_balance.get(f"{out}").get(class_type).get(data_type),
                                 mode=interactive_config.data_balance.sorted.name
                             )
+                            data_name = 'Тренировочная' if data_type == 'train' else 'Проверочная'
+                            class_name = 'баланс присутсвия' if class_type == 'presence_balance' \
+                                else 'процент пространства'
                             preset[data_type] = fill_graph_front_structure(
                                 _id=_id,
                                 _type='histogram',
                                 type_data=data_type,
-                                graph_name=f"Выход {out} - {'Тренировочная' if data_type == 'train' else 'Проверочная'} выборка - "
-                                           f"{'баланс присутсвия' if class_type == 'presence_balance' else 'процент пространства'}",
-                                short_name=f"{'Тренировочная' if data_type == 'train' else 'Проверочная'} - "
+                                graph_name=f"Выход {out} - {data_name} выборка - {class_name}",
+                                short_name=f"{out} - {data_name} - "
                                            f"{'присутсвие' if class_type == 'presence_balance' else 'пространство'}",
                                 x_label="Название класса",
                                 y_label="Значение",
@@ -507,29 +534,34 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                                 _id += 1
                             return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(ImageSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
 
+# noinspection PyTypeChecker
 class TextSegmentationCallback(BaseSegmentationCallback):
+    name = 'TextSegmentationCallback'
+
     def __init__(self):
         super().__init__()
-        self.name = 'ImageSegmentationCallback'
-        # print(f'Callback {self.name} is called')
+        pass
 
     @staticmethod
-    def postprocess_initial_source(options, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             column_idx = []
             for inp in options.data.inputs.keys():
-                for column_name in options.dataframe.get('val').columns:
+                for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
-                        column_idx.append(options.dataframe.get('val').columns.tolist().index(column_name))
+                        column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
             data = []
             source = ""
             for column in column_idx:
-                source = options.dataframe.get('val').iat[example_id, column]
+                source = options.dataframe.get(data_type).iat[example_id, column]
                 if return_mode == 'deploy':
                     break
                 if return_mode == 'callback':
@@ -545,8 +577,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 return source
             if return_mode == 'callback':
                 return data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_text_segmentation(pred_array: np.ndarray, options: DatasetOutputsData, dataframe: DataFrame,
@@ -608,17 +643,16 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     classes_names[name] = options.classes_names[i]
 
             if return_mode == 'deploy':
-                initinal_text = dataframe.iat[example_id, 0]
+                initial_text = dataframe.iat[example_id, 0]
                 text_segmentation = text_colorization(
-                    text=initinal_text, label_array=pred_array, tag_list=dataset_tags
+                    text=initial_text, label_array=pred_array, tag_list=dataset_tags
                 )
-
                 data = [('<p1>', '<p1>', (200, 200, 200))]
                 for tag in colors.keys():
                     data.append(
                         (tag, classes_names[tag], colors[tag])
                     )
-                return initinal_text, text_segmentation, data
+                return initial_text, text_segmentation, data
 
             if return_mode == 'callback':
                 data = {"y_true": {}, "y_pred": {}, "tags_color": {}, "stat": {}}
@@ -656,13 +690,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
                             data["stat"]["data"].append({'title': cls, 'value': "-", 'color_mark': None})
                         elif np.sum(y_true[:, idx]) == 0:
-                            data["stat"]["data"].append({'title': cls, 'value': "0.0%", 'color_mark': 'wrong'})
+                            data["stat"]["data"].append({'title': f"{cls}", 'value': "0.0%", 'color_mark': 'wrong'})
                             count += 1
                         else:
                             class_recall = np.sum(y_true[:, idx] * y_pred[:, idx]) * 100 / np.sum(y_true[:, idx])
                             data["stat"]["data"].append(
                                 {
-                                    'title': cls,
+                                    'title': f"{cls}",
                                     'value': f"{np.round(class_recall, 1)} %",
                                     'color_mark': 'success' if class_recall >= 90 else 'wrong'
                                 }
@@ -679,11 +713,14 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         mean_color_mark = None
                         mean_stat = '-'
                     data["stat"]["data"].insert(
-                        0, {'title': "Средняя точность", 'value': mean_stat, 'color_mark': mean_color_mark}
+                        0, {'title': 'Средняя точность', 'value': mean_stat, 'color_mark': mean_color_mark}
                     )
                 return data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
@@ -696,13 +733,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = TextSegmentationCallback().prepare_example_idx_to_show(
                     array=postprocess_array,
                     true_array=true_array[:len(array)],
                     options=options,
                     output=output_id,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100),
-                    choice_type=ExampleChoiceTypeChoice.best,
+                    count=count,
                 )
                 return_data[output_id] = {"color_map": None, "data": []}
                 output_column = list(options.instructions.get(output_id).keys())[0]
@@ -718,10 +755,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     return_data[output_id]["data"].append(
                         {"source": source, "format": segment}
                     )
-                return_data[output_id]["color_map"] = colors
+                    return_data[output_id]["color_map"] = colors
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -744,7 +784,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     phrase_count = {}
                     total_mean_length = []
                     for cl in classes:
-                        class_count[classes_names[cl]] =  np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
+                        class_count[classes_names[cl]] = np.sum(y_true.get(data_type).get(f"{out}")[..., cl]).item()
                         class_percent[classes_names[cl]] = np.round(
                             np.sum(y_true.get(data_type).get(f"{out}")[..., cl]) * 100
                             / np.prod(y_true.get(data_type).get(f"{out}")[..., cl].shape)).item()
@@ -762,8 +802,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     dataset_balance[f"{out}"]["phrase_class_length"][data_type] = phrase_length
                     dataset_balance[f"{out}"]["phrase_class_count"][data_type] = phrase_count
             return dataset_balance
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -773,6 +816,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -790,7 +834,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                                 example_id=example_idx[idx],
                                 dataset_path=dataset_path,
                                 preset_path=preset_path,
-                                return_mode='callback'
+                                return_mode='callback',
+                                data_type=data_type
                             )
                             return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                                 'type': 'text', 'data': data,
@@ -798,10 +843,10 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     for out in options.data.outputs.keys():
                         output_col = list(options.instructions.get(out).keys())[0]
                         data = TextSegmentationCallback().postprocess_text_segmentation(
-                            pred_array=y_pred.get(f'{out}')[example_idx[idx]],
-                            true_array=y_true.get('val').get(f'{out}')[example_idx[idx]],
+                            pred_array=y_pred.get(data_type).get(f'{out}')[example_idx[idx]],
+                            true_array=y_true.get(data_type).get(f'{out}')[example_idx[idx]],
                             options=options.data.outputs.get(out),
-                            dataframe=options.dataframe.get('val'),
+                            dataframe=options.dataframe.get(data_type),
                             example_id=example_idx[idx],
                             dataset_params=options.instructions.get(out).get(output_col),
                             return_mode='callback',
@@ -819,8 +864,11 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
@@ -831,52 +879,58 @@ class TextSegmentationCallback(BaseSegmentationCallback):
             _id = 1
             for out in interactive_config.statistic_data.output_id:
                 encoding = options.data.outputs.get(out).encoding
-                if encoding == LayerEncodingChoice.ohe:
-                    cm, cm_percent = get_confusion_matrix(
-                        np.argmax(y_true.get("val").get(f"{out}"), axis=-1).reshape(
-                            np.prod(np.argmax(y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
-                        np.argmax(y_pred.get(f'{out}'), axis=-1).reshape(
-                            np.prod(np.argmax(y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
-                        get_percent=True
-                    )
-                    return_data.append(
-                        fill_heatmap_front_structure(
-                            _id=_id,
-                            _type="heatmap",
-                            graph_name=f"Выходной слой «{out}» - Confusion matrix",
-                            short_name=f"{out} - Confusion matrix",
-                            x_label="Предсказание",
-                            y_label="Истинное значение",
-                            labels=options.data.outputs.get(out).classes_names,
-                            data_array=cm,
-                            data_percent_array=cm_percent,
+                for data_type in y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    if encoding == LayerEncodingChoice.ohe:
+                        cm, cm_percent = get_confusion_matrix(
+                            np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).reshape(
+                                np.prod(np.argmax(y_true.get(data_type).get(f"{out}"), axis=-1).shape)).astype('int'),
+                            np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).reshape(
+                                np.prod(np.argmax(y_pred.get(data_type).get(f'{out}'), axis=-1).shape)).astype('int'),
+                            get_percent=True
                         )
-                    )
-                    _id += 1
-                elif encoding == LayerEncodingChoice.multi:
-                    report = get_classification_report(
-                        y_true=y_true.get("val").get(f"{out}").reshape(
-                            (np.prod(y_true.get("val").get(f"{out}").shape[:-1]),
-                             y_true.get("val").get(f"{out}").shape[-1])
-                        ),
-                        y_pred=np.where(y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
-                            (np.prod(y_pred.get(f"{out}").shape[:-1]), y_pred.get(f"{out}").shape[-1])
-                        ),
-                        labels=options.data.outputs.get(out).classes_names
-                    )
-                    return_data.append(
-                        fill_table_front_structure(
-                            _id=_id,
-                            graph_name=f"Выходной слой «{out}» - Отчет по классам",
-                            plot_data=report
+                        return_data.append(
+                            fill_heatmap_front_structure(
+                                _id=_id,
+                                _type="heatmap",
+                                graph_name=f"Выход «{out}» - Confusion matrix - {type_name} выборка",
+                                short_name=f"{out} - Confusion matrix - {type_name}",
+                                x_label="Предсказание",
+                                y_label="Истинное значение",
+                                labels=options.data.outputs.get(out).classes_names,
+                                data_array=cm,
+                                data_percent_array=cm_percent,
+                            )
                         )
-                    )
-                    _id += 1
-                else:
-                    pass
+                        _id += 1
+                    elif encoding == LayerEncodingChoice.multi:
+                        report = get_classification_report(
+                            y_true=y_true.get(data_type).get(f"{out}").reshape(
+                                (np.prod(y_true.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_true.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            y_pred=np.where(y_pred.get(data_type).get(f"{out}") >= 0.9, 1, 0).reshape(
+                                (np.prod(y_pred.get(data_type).get(f"{out}").shape[:-1]),
+                                 y_pred.get(data_type).get(f"{out}").shape[-1])
+                            ),
+                            labels=options.data.outputs.get(out).classes_names
+                        )
+                        return_data.append(
+                            fill_table_front_structure(
+                                _id=_id,
+                                graph_name=f"Выход «{out}» - Отчет по классам - {type_name} выборка",
+                                plot_data=report
+                            )
+                        )
+                        _id += 1
+                    else:
+                        pass
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -929,6 +983,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             _id += 1
                     return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(TextSegmentationCallback().name, method_name, e)
-
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                TextSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc

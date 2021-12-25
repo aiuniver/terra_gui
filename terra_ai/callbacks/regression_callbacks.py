@@ -2,17 +2,20 @@ import numpy as np
 import pandas as pd
 
 from terra_ai.callbacks.utils import sort_dict, get_y_true, get_distribution_histogram, get_correlation_matrix, \
-    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, print_error, \
-    round_loss_metric
+    get_scatter, fill_graph_front_structure, fill_graph_plot_data, fill_heatmap_front_structure, round_loss_metric, \
+    set_preset_count
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
+from terra_ai.logging import logger
 from terra_ai.settings import CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
+import terra_ai.exceptions.callbacks as exception
 
 
 class DataframeRegressionCallback:
+    name = 'DataframeRegressionCallback'
+
     def __init__(self):
-        self.name = 'DataframeRegressionCallback'
-        # print(f'Callback {self.name} is called')
+        pass
 
     @staticmethod
     def get_x_array(options):
@@ -23,14 +26,17 @@ class DataframeRegressionCallback:
                 x_val = options.X.get("val")
             else:
                 x_val = {}
-                for inp in options.dataset['val'].keys():
+                for inp in options.data.inputs.keys():
                     x_val[inp] = []
                     for x_val_, _ in options.dataset['val'].batch(1):
                         x_val[inp].extend(x_val_.get(f'{inp}').numpy())
                     x_val[inp] = np.array(x_val[inp])
             return x_val, inverse_x_val
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def get_y_true(options, dataset_path):
@@ -59,43 +65,46 @@ class DataframeRegressionCallback:
                         inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
                     inverse_y_true[data_type][f"{out}"] = inverse_y[:, 1:]
             return y_true, inverse_y_true
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
 
     @staticmethod
-    def get_y_pred(y_true: dict, y_pred, options):
-        method_name = 'get_y_pred'
+    def get_inverse_array(array: dict, options):
+        method_name = 'get_inverse_array'
         try:
-            reformat_pred = {}
-            inverse_y_pred = {}
-            for idx, out in enumerate(y_true.get('val').keys()):
-                if len(y_true.get('val').keys()) == 1:
-                    reformat_pred[out] = y_pred
-                else:
-                    reformat_pred[out] = y_pred[idx]
-                preprocess_dict = options.preprocessing.preprocessing.get(int(out))
-                inverse_y = np.zeros_like(reformat_pred.get(out)[:, 0:1])
-                for i, column in enumerate(preprocess_dict.keys()):
-                    if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                        _options = {int(out): {column: reformat_pred.get(out)[:, i:i + 1]}}
-                        inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
-                    else:
-                        inverse_col = reformat_pred.get(out)[:, i:i + 1]
-                    inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
-                inverse_y_pred[out] = inverse_y[:, 1:]
-
-            return reformat_pred, inverse_y_pred
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+            inverse_array = {}
+            for data_type in array.keys():
+                inverse_array[data_type] = {}
+                for idx, out in enumerate(array.get(data_type).keys()):
+                    preprocess_dict = options.preprocessing.preprocessing.get(int(out))
+                    inverse_y = np.zeros_like(array.get(data_type).get(out)[:, 0:1])
+                    for i, column in enumerate(preprocess_dict.keys()):
+                        if type(preprocess_dict.get(column)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(out): {column: array.get(data_type).get(out)[:, i:i + 1]}}
+                            inverse_col = options.preprocessing.inverse_data(_options).get(int(out)).get(column)
+                        else:
+                            inverse_col = array.get(data_type).get(out)[:, i:i + 1]
+                        inverse_y = np.concatenate([inverse_y, inverse_col], axis=-1)
+                    inverse_array[data_type][out] = inverse_y[:, 1:]
+            return inverse_array
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
-    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy'):
+    def postprocess_initial_source(options, input_id: int, example_id: int, return_mode='deploy', data_type='val'):
         method_name = 'postprocess_initial_source'
         try:
             data = []
             source = []
             for col_name in options.data.columns.get(input_id).keys():
-                value = options.dataframe.get('val')[col_name].to_list()[example_id]
+                value = options.dataframe.get(data_type)[col_name].to_list()[example_id]
                 if return_mode == 'deploy':
                     source.append(value)
                 if return_mode == 'callback':
@@ -110,14 +119,16 @@ class DataframeRegressionCallback:
                 return source
             if return_mode == 'callback':
                 return data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
-            # print(1)
             return_data = {}
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
@@ -125,17 +136,17 @@ class DataframeRegressionCallback:
                     postprocess_array = array[i]
                 else:
                     postprocess_array = array
+                count = set_preset_count(len_array=len(postprocess_array), preset_percent=DEPLOY_PRESET_PERCENT)
                 example_idx = DataframeRegressionCallback().prepare_example_idx_to_show(
                     array=postprocess_array[:len(array)],
                     true_array=true_array[:len(array)],
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                    count=count
                 )
                 return_data[output_id] = {'preset': [], 'label': []}
                 source_col = []
                 for inp in options.data.inputs.keys():
                     source_col.extend(list(options.data.columns.get(inp).keys()))
                 preprocess = options.preprocessing.preprocessing.get(output_id)
-                # print(preprocess)
                 for idx in example_idx:
                     row_list = []
                     for inp_col in source_col:
@@ -144,20 +155,20 @@ class DataframeRegressionCallback:
                     channel_inverse_col = []
                     for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
                         channel_inverse_col = []
-                        # print('\n--ch, col', idx, ch, col)
                         if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
                             _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
                             inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
                             inverse_col = inverse_col.squeeze().astype('float').tolist()
                         else:
                             inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
-                        # print('inverse_col', inverse_col)
                         channel_inverse_col.append(round_loss_metric(inverse_col))
-                    return_data[output_id]['label'].append(channel_inverse_col)  #[0]
-            # print('return_data', return_data)
+                    return_data[output_id]['label'].append(channel_inverse_col)  # [0]
             return return_data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
@@ -193,8 +204,11 @@ class DataframeRegressionCallback:
                         "matrix": matrix
                     }
             return dataset_balance
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -204,6 +218,7 @@ class DataframeRegressionCallback:
         try:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
+                data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
@@ -218,7 +233,8 @@ class DataframeRegressionCallback:
                             options=options,
                             input_id=inp,
                             example_id=example_idx[idx],
-                            return_mode='callback'
+                            return_mode='callback',
+                            data_type=data_type
                         )
                         return_data[f"{idx + 1}"]['initial_data'][f"Входной слой «{inp}»"] = {
                             'type': 'str', 'data': data,
@@ -227,8 +243,8 @@ class DataframeRegressionCallback:
                     for out in options.data.outputs.keys():
                         data = DataframeRegressionCallback().postprocess_regression(
                             column_names=list(options.data.columns.get(out).keys()),
-                            inverse_y_true=inverse_y_true.get('val').get(f"{out}")[example_idx[idx]],
-                            inverse_y_pred=inverse_y_pred.get(f"{out}")[example_idx[idx]],
+                            inverse_y_true=inverse_y_true.get(data_type).get(f"{out}")[example_idx[idx]],
+                            inverse_y_pred=inverse_y_pred.get(data_type).get(f"{out}")[example_idx[idx]],
                             show_stat=interactive_config.intermediate_result.show_statistic,
                             return_mode='callback'
                         )
@@ -241,8 +257,11 @@ class DataframeRegressionCallback:
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
             return return_data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def statistic_data_request(interactive_config, inverse_y_true, y_pred, inverse_y_pred, options=None,
@@ -252,51 +271,67 @@ class DataframeRegressionCallback:
             return_data = []
             _id = 1
             for out in interactive_config.statistic_data.output_id:
-                y_true = inverse_y_true.get("val").get(f'{out}').squeeze()
-                y_pred = inverse_y_pred.get(f'{out}').squeeze()
-                x_scatter, y_scatter = get_scatter(y_true, y_pred)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='scatter',
-                        graph_name=f"Выходной слой «{out}» - Скаттер",
-                        short_name=f"{out} - Скаттер",
-                        x_label="Истинные значения",
-                        y_label="Предсказанные значения",
-                        plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    x_scatter, y_scatter = get_scatter(y_true, y_pred)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='scatter',
+                            graph_name=f"Выход «{out}» - Скаттер - {type_name} выборка",
+                            short_name=f"{out} - Скаттер - {type_name}",
+                            x_label="Истинные значения",
+                            y_label="Предсказанные значения",
+                            plot_data=[fill_graph_plot_data(x=x_scatter, y=y_scatter)],
+                        )
                     )
-                )
-                _id += 1
-                deviation = (y_pred - y_true) * 100 / y_true
-                x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение абсолютной ошибки',
-                        short_name=f"{out} - Распределение MAE",
-                        x_label="Абсолютная ошибка",
-                        y_label="Значение",
-                        plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                    _id += 1
+
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    deviation = (y_pred - y_true) * 100 / y_true
+                    x_mae, y_mae = get_distribution_histogram(np.abs(deviation), categorical=False)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выход «{out}» - Распределение абсолютной ошибки - {type_name} выборка',
+                            short_name=f"{out} - Распределение MAE - {type_name}",
+                            x_label="Абсолютная ошибка",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=x_mae, y=y_mae)],
+                        )
                     )
-                )
-                _id += 1
-                x_me, y_me = get_distribution_histogram(deviation, categorical=False)
-                return_data.append(
-                    fill_graph_front_structure(
-                        _id=_id,
-                        _type='bar',
-                        graph_name=f'Выходной слой «{out}» - Распределение ошибки',
-                        short_name=f"{out} - Распределение ME",
-                        x_label="Ошибка",
-                        y_label="Значение",
-                        plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                    _id += 1
+
+                for data_type in inverse_y_true.keys():
+                    type_name = "Тренировочная" if data_type == 'train' else "Проверочная"
+                    y_true = inverse_y_true.get(data_type).get(f'{out}').squeeze()
+                    y_pred = inverse_y_pred.get(data_type).get(f'{out}').squeeze()
+                    deviation = (y_pred - y_true) * 100 / y_true
+                    x_me, y_me = get_distribution_histogram(deviation, categorical=False)
+                    return_data.append(
+                        fill_graph_front_structure(
+                            _id=_id,
+                            _type='bar',
+                            graph_name=f'Выход «{out}» - Распределение ошибки - {type_name} выборка',
+                            short_name=f"{out} - Распределение ME - {type_name}",
+                            x_label="Ошибка",
+                            y_label="Значение",
+                            plot_data=[fill_graph_plot_data(x=x_me, y=y_me)],
+                        )
                     )
-                )
-                _id += 1
+                    _id += 1
             return return_data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
@@ -353,8 +388,11 @@ class DataframeRegressionCallback:
                             _id += 1
                         return_data.append(preset)
             return return_data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int, options=None, output=None,
@@ -406,8 +444,11 @@ class DataframeRegressionCallback:
             else:
                 example_idx = np.random.randint(0, len(true_array), count)
             return example_idx
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def postprocess_regression(column_names: list, inverse_y_true: np.ndarray, inverse_y_pred: np.ndarray,
@@ -449,5 +490,8 @@ class DataframeRegressionCallback:
                             }
                         )
                 return data
-        except Exception as e:
-            print_error(DataframeRegressionCallback().name, method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                DataframeRegressionCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc

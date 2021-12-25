@@ -91,6 +91,7 @@
     height: 130px;
     position:relative;
     border:2px solid;
+    border-width: 3px!important;
     box-sizing:border-box;
     border-radius:4px;
     padding:10px;
@@ -147,7 +148,7 @@
     padding:0 10px;
     position:absolute;
     left:0;
-    bottom:-31px;
+    bottom:-34px;
 }
 .card-extra > .wrapper {
     height:30px;

@@ -7,6 +7,7 @@ from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.cascades.blocks.extra import BlocksBindChoice, BlockServiceTypeChoice
 from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.exceptions import cascades as exceptions
+from terra_ai.logging import logger
 
 
 class CascadeValidator:
@@ -22,8 +23,15 @@ class CascadeValidator:
                 result = self._check_bind_and_data(cascade_data=cascade_data, model_data_type=model_data_type)
             else:
                 result = self._add_error(errors={}, block_id=1,
-                                         error=str(exceptions.RequiredBlockMissingException(BlockGroupChoice.Model)))
-        print(result)
+                                         error=str(exceptions.RequiredBlockMissingException(
+                                             ", или ".join([BlockGroupChoice.Model.value,
+                                                           BlockServiceTypeChoice.YoloV5.value,
+                                                           BlockServiceTypeChoice.GoogleTTS.value,
+                                                           BlockServiceTypeChoice.Wav2Vec.value,
+                                                           BlockServiceTypeChoice.TinkoffAPI.value
+                                                           ])
+                                         )))
+        logger.info("Валидация каскада завершена", extra={"type": "success"})
         return result
 
     @staticmethod
@@ -43,6 +51,7 @@ class CascadeValidator:
 
     def _check_bind_and_data(self, cascade_data: CascadeDetailsData, model_data_type: str):
         bind_errors = dict()
+        # print('cascade_data', cascade_data)
         blocks = cascade_data.blocks
         named_map = self._create_bind_named_map(cascade_data=cascade_data)
         video_by_frame = False
@@ -172,7 +181,8 @@ class CascadeValidator:
     @staticmethod
     def _search_block_instead_of_model(cascade_data: CascadeDetailsData):
         for block in cascade_data.blocks:
-            if block.parameters.main.type == BlockServiceTypeChoice.YoloV5:
+            if block.parameters.main.type in [BlockServiceTypeChoice.YoloV5, BlockServiceTypeChoice.GoogleTTS,
+                                              BlockServiceTypeChoice.Wav2Vec, BlockServiceTypeChoice.TinkoffAPI]:
                 type_ = BlocksBindChoice.checked_block(input_block=block.parameters.main.type).data_type
                 return True, type_
         return False, None

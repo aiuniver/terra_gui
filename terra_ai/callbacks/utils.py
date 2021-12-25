@@ -9,7 +9,9 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
-# from terra_ai.data.training.extra import BalanceSortedChoice
+from terra_ai.data.datasets.extra import DatasetGroupChoice
+from terra_ai.data.training.extra import ArchitectureChoice
+import terra_ai.exceptions.callbacks as exception
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -159,12 +161,12 @@ loss_metric_config = {
         "DiceCoef": {
             "log_name": "dice_coef",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedDiceCoef": {
             "log_name": "balanced_dice_coef",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "FalseNegatives": {
             "log_name": "false_negatives",
@@ -219,7 +221,7 @@ loss_metric_config = {
         "PercentMAE": {
             "log_name": "percent_mae",
             "mode": "min",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "Poisson": {
             "log_name": "poisson",
@@ -239,27 +241,27 @@ loss_metric_config = {
         "RecallPercent": {
             "log_name": "recall_percent",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedRecall": {
             "log_name": "balanced_recall",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedPrecision": {
             "log_name": "balanced_precision",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "BalancedFScore": {
             "log_name": "balanced_f_score",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "FScore": {
             "log_name": "f_score",
             "mode": "max",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
@@ -304,7 +306,7 @@ loss_metric_config = {
         "UnscaledMAE": {
             "log_name": "unscaled_mae",
             "mode": "min",
-            "module": "terra_ai.training.customlosses"
+            "module": "terra_ai.custom_objects.customlosses"
         },
         "mAP50": {
             "log_name": "mAP50",
@@ -319,16 +321,72 @@ loss_metric_config = {
     }
 }
 
-MODULE_NAME = 'module /callbacks/utils.py'
+MODULE_NAME = '/callbacks/utils.py'
 MAX_TS_GRAPH_COUNT = 200
 MAX_HISTOGRAM_BINS = 50
 MAX_INTERMEDIATE_GRAPH_LENGTH = 50
 
+BASIC_ARCHITECTURE = [
+    ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification, ArchitectureChoice.ImageSegmentation,
+    ArchitectureChoice.TextSegmentation, ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend
+]
+YOLO_ARCHITECTURE = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
+CLASS_ARCHITECTURE = [
+    ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend, ArchitectureChoice.ImageSegmentation,
+    ArchitectureChoice.TextSegmentation, ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+    ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4
+]
+CLASSIFICATION_ARCHITECTURE = [
+    ArchitectureChoice.ImageClassification, ArchitectureChoice.TimeseriesTrend,
+    ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
+    ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
+]
 
-def print_error(class_name: str, method_name: str, message: Exception):
-    return print(f'\n_________________________________________________\n'
-                 f'Error in class {class_name} method {method_name}: {message}'
-                 f'\n_________________________________________________\n')
+
+# def print_error(class_name: str, method_name: str, message: Exception):
+#     return print(f'\n_________________________________________________\n'
+#                  f'Error in class {class_name} method {method_name}: {message}'
+#                  f'\n_________________________________________________\n')
+
+
+def reformat_fit_array(array: dict, train_idx: list = None):
+    method_name = 'reformat_fit_array'
+    try:
+        # print(method_name)
+        reformat_true = {}
+        for data_type in array.keys():
+            reformat_true[data_type] = {}
+            for out in array.get(data_type).keys():
+                if data_type == "train" and train_idx.index(0):
+                    separator = train_idx.index(0)
+                    reformat_true[data_type][out] = np.concatenate(
+                        [array[data_type][out][separator:], array[data_type][out][:separator]], axis=0)
+                else:
+                    reformat_true[data_type][out] = array[data_type][out]
+        return reformat_true
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def class_metric_list(options):
+    method_name = '_class_metric_list'
+    try:
+        class_graphics = {}
+        for out in options.data.outputs.keys():
+            if options.data.architecture in CLASS_ARCHITECTURE:
+                class_graphics[out] = True
+            else:
+                class_graphics[out] = False
+        return class_graphics
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
@@ -346,26 +404,33 @@ def class_counter(y_array, classes_names: list, ohe=True):
         for y in y_array:
             class_dict[classes_names[y]] += 1
         return class_dict
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def sequence_length_calculator(array):
     """ run length encoding. Partial credit to R rle function.
         Multi datatype arrays catered for including non Numpy
         returns: tuple (runlengths, startpositions, values) """
-    array = np.asarray(array)  # force numpy
-    n = len(array)
-    if n == 0:
-        return None
-    else:
-        y = array[1:] != array[:-1]
-        i = np.append(np.where(y), n - 1)
-        z = np.diff(np.append(-1, i))
-        sequence = z * array[i]
-        while 0 in sequence:
-            sequence = np.delete(sequence, list(sequence).index(0))
-        return list(sequence)
+    method_name = 'sequence_length_calculator'
+    try:
+        array = np.asarray(array)  # force numpy
+        n = len(array)
+        if n == 0:
+            return None
+        else:
+            y = array[1:] != array[:-1]
+            i = np.append(np.where(y), n - 1)
+            z = np.diff(np.append(-1, i))
+            sequence = z * array[i]
+            while 0 in sequence:
+                sequence = np.delete(sequence, list(sequence).index(0))
+            return list(sequence)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
 
 
 def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
@@ -377,7 +442,6 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
             mab = (a * b).mean()
             sa = a.std()
             sb = b.std()
-
             val = 1
             if sa > 0 and sb > 0:
                 val = (mab - ma * mb) / (sa * sb)
@@ -389,20 +453,18 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
                 auto_corr_true.append(get_auto_corr(y_true, y_true))
             else:
                 auto_corr_true.append(get_auto_corr(y_true[:-i], y_true[i:]))
-
         auto_corr_pred = []
         for i in range(depth):
             if i == 0:
                 auto_corr_pred.append(get_auto_corr(y_true, y_pred))
             else:
                 auto_corr_pred.append(get_auto_corr(y_true[:-i], y_pred[i:]))
-            # print(i, auto_corr_pred[-1])
-
         x_axis = np.arange(depth).astype('int').tolist()
-        # print('\nauto_corr_true, auto_corr_pred', auto_corr_true, auto_corr_pred)
         return x_axis, auto_corr_true, auto_corr_pred
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def round_list(x: list) -> list:
@@ -415,8 +477,10 @@ def round_list(x: list) -> list:
             else:
                 update_x.append(np.round(data, -int(math.floor(math.log10(abs(data))) - 2)).item())
         return update_x
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def sort_dict(dict_to_sort: dict, mode: str = 'alphabetic'):
@@ -442,8 +506,10 @@ def sort_dict(dict_to_sort: dict, mode: str = 'alphabetic'):
             return tuple(sorted_keys), tuple(sorted_values)
         else:
             return tuple(dict_to_sort.keys()), tuple(dict_to_sort.values())
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
@@ -453,8 +519,10 @@ def dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         intersection = np.sum(y_true * y_pred, axis=axis)
         union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
         return (2.0 * intersection + smooth) / (union + smooth)
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
@@ -469,8 +537,33 @@ def get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
                 for j in range(len(cm[i])):
                     cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return cm.astype('float').tolist(), cm_percent.astype('float').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def get_segmentation_confusion_matrix(y_true, y_pred, num_classes: int, get_percent=True):
+    method_name = 'get_segmentation_confusion_matrix'
+    try:
+        cm = []
+        cm_percent = [] if get_percent else None
+        for i in range(num_classes):
+            class_cm = []
+            class_cm_percent = []
+            total_cls_count = np.count_nonzero(y_true[..., i] == 1)
+            for j in range(num_classes):
+                overlap = np.count_nonzero(y_true[..., i] + y_pred[..., j] == 2)
+                class_cm.append(int(overlap))
+                class_cm_percent.append(round(float(overlap * 100 / total_cls_count), 1))
+            cm.append(class_cm)
+            if get_percent:
+                cm_percent.append(class_cm_percent)
+        return cm, cm_percent
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_classification_report(y_true, y_pred, labels):
@@ -499,8 +592,10 @@ def get_classification_report(y_true, y_pred, labels):
                 }
             )
         return return_stat
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_error_distribution(y_true, y_pred, absolute=True):
@@ -510,8 +605,10 @@ def get_error_distribution(y_true, y_pred, absolute=True):
         if absolute:
             error = np.abs(error)
         return get_distribution_histogram(error, categorical=False)
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_time_series_graphic(data, make_short=False):
@@ -527,8 +624,10 @@ def get_time_series_graphic(data, make_short=False):
             return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
         else:
             return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_correlation_matrix(data_frame: DataFrame):
@@ -539,8 +638,10 @@ def get_correlation_matrix(data_frame: DataFrame):
         for lbl in list(corr.columns):
             labels.append(lbl.split("_", 1)[-1])
         return labels, np.array(np.round(corr, 2)).astype('float').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_scatter(y_true, y_pred):
@@ -568,8 +669,10 @@ def get_distribution_histogram(data_series, categorical=True):
                 new_x.append(np.mean([x_labels[i], x_labels[i + 1]]))
             new_x = np.array(new_x)
             return new_x.astype('float').tolist(), bar_values.astype('int').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def clean_data_series(data_series: list, mode="mono"):
@@ -591,10 +694,13 @@ def clean_data_series(data_series: list, mode="mono"):
             return sort['y_true'].to_list(), sort['y_pred'].to_list()
         else:
             return None
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
+# noinspection PyUnresolvedReferences
 def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, save_path: str):
     method_name = 'get_image_class_colormap'
     try:
@@ -604,11 +710,12 @@ def get_image_class_colormap(array: np.ndarray, colors: list, class_id: int, sav
             np.array(colors[class_id]) if np.sum(np.array(colors[class_id])) > 50 else np.array((255, 255, 255)),
             np.array((0, 0, 0))
         )
-        # array = (np.sum(array, axis=0) / len(array)).astype("uint8")
-        array = (np.sum(array, axis=0) * 255 / np.sum(array, axis=0).max()).astype("uint8")
+        array = (np.sum(array, axis=0) / len(array)).astype("uint8")
         matplotlib.image.imsave(save_path, array)
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def round_loss_metric(x: float):
@@ -624,11 +731,13 @@ def round_loss_metric(x: float):
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
         else:
             return np.round(x, -int(math.floor(math.log10(abs(x))) - 2)).item()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def fill_graph_plot_data(x: list, y: list, label=None):
+def fill_graph_plot_data(x, y, label=None):
     return {'label': label, 'x': x, 'y': y}
 
 
@@ -650,7 +759,7 @@ def fill_graph_front_structure(_id: int, _type: str, graph_name: str, short_name
 
 
 def fill_heatmap_front_structure(_id: int, _type: str, graph_name: str, short_name: str,
-                                 x_label: str, y_label: str, labels: list, data_array: list,
+                                 x_label: str, y_label: str, labels: list, data_array: list = None,
                                  type_data: str = None, data_percent_array: list = None,
                                  progress_state: str = None):
     return {
@@ -683,8 +792,10 @@ def get_y_true(options, output_id):
                 y_true.extend(y_val.get(f'{output_id}').numpy())
             y_true = np.array(y_true)
         return y_true
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def reformat_metrics(metrics: dict) -> dict:
@@ -700,8 +811,10 @@ def reformat_metrics(metrics: dict) -> dict:
                     metric_name = metric_name[:-end]
                 output[out].append(camelize(metric_name))
         return output
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def prepare_metric_obj(metrics: dict) -> dict:
@@ -717,8 +830,10 @@ def prepare_metric_obj(metrics: dict) -> dict:
                     metric_name = metric_name[:-end]
                 metrics_obj[out][camelize(metric_name)] = metric
         return metrics_obj
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def prepare_loss_obj(losses: dict) -> dict:
@@ -731,8 +846,10 @@ def prepare_loss_obj(losses: dict) -> dict:
                 losses.get(out)
             )
         return loss_obj
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def get_classes_colors(options):
@@ -749,8 +866,10 @@ def get_classes_colors(options):
                 colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
                 colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
         return colors
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
 def segmentation_metric(true_array, pred_array):
@@ -768,20 +887,37 @@ def segmentation_metric(true_array, pred_array):
             stat += metric
         stat = stat / true_array.shape[-1]
         return stat
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
 
 
-def get_time_series_graphic(data, make_short=False):
-    method_name = 'get_time_series_graphic'
+def get_dataset_length(options):
+    method_name = 'get_dataset_length'
+    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
-        if make_short and len(data) > MAX_TS_GRAPH_COUNT:
-            union = int(len(data) // MAX_TS_GRAPH_COUNT)
-            short_data = []
-            for i in range(int(len(data) / union)):
-                short_data.append(round_loss_metric(np.mean(data[union * i:union * i + union]).item()))
-            return np.arange(len(short_data)).astype('int').tolist(), np.array(short_data).astype('float').tolist()
-        else:
-            return np.arange(len(data)).astype('int').tolist(), np.array(data).astype('float').tolist()
-    except Exception as e:
-        print_error(f"None ({MODULE_NAME})", method_name, e)
+        train_length, val_length = 0, 0
+        if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \
+                options.data.group != DatasetGroupChoice.keras:
+            return len(options.dataframe.get('train')), len(options.dataframe.get('val'))
+        for x in options.dataset.get('train').batch(2 ** 10):
+            train_length += list(x[0].values())[0].shape[0]
+        for x in options.dataset.get('val').batch(2 ** 10):
+            val_length += list(x[0].values())[0].shape[0]
+        return train_length, val_length
+    except Exception as error:
+        raise exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def set_preset_count(len_array: int, preset_percent: int) -> int:
+    if int(len_array * preset_percent / 100) >= 100:
+        return 100
+    elif int(len_array * preset_percent / 100) >= 10:
+        return 10
+    elif len_array >= 10:
+        return 10
+    else:
+        return len_array

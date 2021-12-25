@@ -132,7 +132,10 @@ dmypy.json
 
 /datasets/
 /TerraAI/
+/Project/
+/Usage/
 
+package-lock.json
 /package-lock.json
 /.prettierrc
 /rsa.key
@@ -149,5 +152,4 @@ desktop.ini
 /terra_ai/test2.py
 /test-model.py
 /terra_ai/training/testing_files/
-
 /terra_ai/training/guinn_backup.py

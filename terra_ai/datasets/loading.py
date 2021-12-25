@@ -1,17 +1,12 @@
 import os
 import sys
-import uuid
 import json
 import shutil
 import base64
-import tempfile
-import requests
 
 from pathlib import Path
 from typing import List, Callable
-from pydantic import ValidationError
 from pydantic.networks import HttpUrl
-from pydantic.errors import PathNotExistsError
 
 from .. import progress, settings
 from ..data.datasets.creation import SourceData
@@ -26,15 +21,16 @@ from ..data.presets.datasets import DatasetsGroups
 from ..exceptions.datasets import (
     DatasetSourceLoadUndefinedMethodException,
     DatasetChoiceUndefinedMethodException,
-    UnknownDatasetException,
+    DatasetNotFoundInGroupException,
 )
+from ..utils import get_tempdir
 from ..progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
-DATASET_CHOICE_TITLE = "Загрузка датасета %s.%s"
-DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета %s.%s"
-DATASET_CHOICE_TERRA_URL = "https://storage.googleapis.com/terra_ai/DataSets/Numpy/"
+DATASET_CHOICE_TITLE = "Загрузка датасета `%s.%s`"
+DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета `%s.%s`"
+DATASET_CHOICE_TERRA_URL = f"{settings.GOOGLE_STORAGE_URL}DataSets/Numpy/"
 
 
 os.makedirs(settings.DATASETS_SOURCE_DIR, exist_ok=True)
@@ -43,27 +39,13 @@ for item in DatasetGroupChoice:
     os.makedirs(Path(settings.DATASETS_LOADED_DIR, item.name), exist_ok=True)
 
 
-@progress.threading
-def __load_from_url(folder: Path, url: HttpUrl):
-    # Получение папки датасета
+def __load_from_url(progress_name: str, folder: Path, url: HttpUrl):
     folder_name = base64.b64encode(url.encode("UTF-8")).decode("UTF-8")
     dataset_path = Path(folder, folder_name)
 
-    # Сброс прогресс-бара
-    progress_name = "dataset_source_load"
-
-    # Что делаем, если папка датасета уже существует
     if dataset_path.exists():
         shutil.rmtree(dataset_path, ignore_errors=True)
-    #     progress.pool(
-    #         progress_name,
-    #         percent=100,
-    #         data=dataset_path.absolute(),
-    #         finished=True,
-    #     )
-    #     return
 
-    # Запускаем загрузку
     try:
         zipfile_path = progress_utils.download(
             progress_name, DOWNLOAD_SOURCE_TITLE, url
@@ -73,51 +55,49 @@ def __load_from_url(folder: Path, url: HttpUrl):
         )
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
-        progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
-    except (Exception, requests.exceptions.ConnectionError) as error:
-        progress.pool(progress_name, error=str(error))
+        progress.pool(progress_name, finished=True, data=dataset_path.absolute())
+    except Exception as error:
+        progress.pool(progress_name, finished=True, error=error)
 
 
-@progress.threading
-def __load_from_googledrive(folder: Path, zipfile_path: Path):
-    # Получение папки датасета
+def __load_from_googledrive(progress_name: str, folder: Path, zipfile_path: Path):
     folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]
     dataset_path = Path(folder, folder_name)
 
-    # Имя прогресс-бара
-    progress_name = "dataset_source_load"
-
-    # Что делаем, если папка датасета уже существует
     if dataset_path.exists():
         shutil.rmtree(dataset_path, ignore_errors=True)
-    #     progress.pool(
-    #         progress_name,
-    #         percent=100,
-    #         data=dataset_path.absolute(),
-    #         finished=True,
-    #     )
-    #     return
 
-    # Запускаем загрузку
     try:
         zip_destination = progress_utils.unpack(
             progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
         )
         shutil.move(zip_destination, dataset_path)
-        progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
+        progress.pool(progress_name, finished=True, data=dataset_path.absolute())
     except Exception as error:
-        progress.pool(progress_name, error=str(error))
+        progress.pool(progress_name, finished=True, error=error)
 
 
+@progress.threading
 def source(strict_object: SourceData):
-    __method_name = f"__load_from_{strict_object.mode.lower()}"
-    __method = getattr(sys.modules.get(__name__), __method_name, None)
-    if __method:
-        mode_folder = Path(settings.DATASETS_SOURCE_DIR, strict_object.mode.lower())
-        os.makedirs(mode_folder, exist_ok=True)
-        __method(mode_folder, strict_object.value)
-    else:
-        raise DatasetSourceLoadUndefinedMethodException(strict_object.mode.value)
+    progress_name = "dataset_source_load"
+    progress.pool.reset(progress_name, message=DOWNLOAD_SOURCE_TITLE)
+    try:
+        __method_name = f"__load_from_{strict_object.mode.lower()}"
+        __method = getattr(sys.modules.get(__name__), __method_name, None)
+        if __method:
+            mode_folder = Path(settings.DATASETS_SOURCE_DIR, strict_object.mode.lower())
+            os.makedirs(mode_folder, exist_ok=True)
+            __method(progress_name, mode_folder, strict_object.value)
+        else:
+            progress.pool(
+                progress_name,
+                finished=True,
+                error=DatasetSourceLoadUndefinedMethodException(
+                    strict_object.mode.value
+                ),
+            )
+    except Exception as error:
+        progress.pool(progress_name, finished=True, error=error)
 
 
 def _choice_from_keras(
@@ -150,7 +130,7 @@ def _choice_from_keras(
         progress.pool(
             progress_name,
             finished=True,
-            error=str(UnknownDatasetException(DatasetGroupChoice.keras.value, name)),
+            error=DatasetNotFoundInGroupException(name, DatasetGroupChoice.keras.value),
         )
 
 
@@ -172,22 +152,18 @@ def _choice_from_terra(
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zipfile_path,
         )
-        data = CustomDatasetConfigData(path=Path(zip_destination))
-        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
-        shutil.copytree(data.path, zip_dirpath)
-        os.chmod(zip_dirpath, 0o755)
-        zip_filepath = Path(zip_dirpath, "dataset.zip")
-        unpacked = progress_utils.unpack(
+        os.remove(zipfile_path)
+        data = CustomDatasetConfigData(path=zip_destination)
+        zip_filepath = Path(zip_destination, "dataset.zip")
+        progress_utils.unpack(
             progress_name,
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
             zip_filepath,
+            zip_destination,
         )
         os.remove(zip_filepath)
-        for item in os.listdir(unpacked):
-            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination, ignore_errors=True)
-        os.rename(zip_dirpath, destination)
-        shutil.rmtree(unpacked)
+        os.rename(zip_destination, destination)
         config_path = Path(destination, settings.DATASET_CONFIG)
         if config_path.is_file():
             with open(config_path) as config_ref:
@@ -205,29 +181,16 @@ def _choice_from_terra(
                 finished=True,
             )
         else:
+            shutil.rmtree(destination, ignore_errors=True)
             progress.pool(
                 progress_name,
                 finished=True,
-                error=str(
-                    UnknownDatasetException(DatasetGroupChoice.terra.value, name)
+                error=DatasetNotFoundInGroupException(
+                    name, DatasetGroupChoice.terra.value
                 ),
             )
-    except ValidationError as error:
-        for item in error.args[0]:
-            if isinstance(item.exc, PathNotExistsError):
-                progress.pool(
-                    progress_name,
-                    finished=True,
-                    error=str(
-                        UnknownDatasetException(DatasetGroupChoice.terra.value, name)
-                    ),
-                )
-                return
-        progress.pool(progress_name, finished=True, error=str(error))
-    except (Exception, requests.exceptions.ConnectionError) as error:
-        progress.pool(progress_name, finished=True, error=str(error))
     except Exception as error:
-        progress.pool(progress_name, finished=True, error=str(error))
+        progress.pool(progress_name, finished=True, error=error)
 
 
 def _choice_from_custom(
@@ -242,22 +205,20 @@ def _choice_from_custom(
         data = CustomDatasetConfigData(
             path=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
-        zip_dirpath = Path(tempfile.gettempdir(), str(uuid.uuid4()))
-        shutil.copytree(data.path, zip_dirpath)
-        os.chmod(zip_dirpath, 0o755)
-        zip_filepath = Path(zip_dirpath, "dataset.zip")
-        unpacked = progress_utils.unpack(
+        zip_destination = get_tempdir(False)
+        shutil.copytree(data.path, zip_destination)
+        zip_filepath = Path(zip_destination, "dataset.zip")
+        progress_utils.unpack(
             progress_name,
             DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.custom.value, name),
             zip_filepath,
+            zip_destination,
         )
         os.remove(zip_filepath)
-        for item in os.listdir(unpacked):
-            shutil.move(str(Path(unpacked, item).absolute()), zip_dirpath)
         shutil.rmtree(destination, ignore_errors=True)
-        os.rename(zip_dirpath, destination)
-        shutil.rmtree(unpacked)
-        if Path(destination, settings.DATASET_CONFIG).is_file():
+        os.rename(zip_destination, destination)
+        config_path = Path(destination, settings.DATASET_CONFIG)
+        if config_path.is_file():
             progress.pool(
                 progress_name,
                 percent=100,
@@ -268,27 +229,16 @@ def _choice_from_custom(
                 finished=True,
             )
         else:
+            shutil.rmtree(destination, ignore_errors=True)
             progress.pool(
                 progress_name,
                 finished=True,
-                error=str(
-                    UnknownDatasetException(DatasetGroupChoice.custom.value, name)
+                error=DatasetNotFoundInGroupException(
+                    name, DatasetGroupChoice.custom.value
                 ),
             )
-    except ValidationError as error:
-        for item in error.args[0]:
-            if isinstance(item[0].exc, PathNotExistsError):
-                progress.pool(
-                    progress_name,
-                    finished=True,
-                    error=str(
-                        UnknownDatasetException(DatasetGroupChoice.custom.value, name)
-                    ),
-                )
-                return
-        progress.pool(progress_name, finished=True, error=str(error))
     except Exception as error:
-        progress.pool(progress_name, finished=True, error=str(error))
+        progress.pool(progress_name, finished=True, error=error)
 
 
 def _run_choice_method(
@@ -331,13 +281,13 @@ def choice_no_thread(
     _method = getattr(
         sys.modules.get(__name__), f"_choice_from_{dataset_choice.group.name}", None
     )
+    progress.pool.reset(
+        progress_name,
+        message=DATASET_CHOICE_TITLE
+        % (dataset_choice.group.value, dataset_choice.alias),
+        finished=False,
+    )
     if _method:
-        progress.pool.reset(
-            progress_name,
-            message=DATASET_CHOICE_TITLE
-            % (dataset_choice.group.value, dataset_choice.alias),
-            finished=False,
-        )
         _run_choice_method(
             method=_method,
             progress_name=progress_name,
@@ -346,7 +296,11 @@ def choice_no_thread(
             set_finished=True,
         )
     else:
-        raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+        progress.pool(
+            progress_name,
+            finished=True,
+            error=DatasetChoiceUndefinedMethodException(dataset_choice.group.value),
+        )
 
 
 @progress.threading
@@ -356,8 +310,9 @@ def choice(
     choice_no_thread(progress_name, dataset_choice, reset_model)
 
 
-@progress.threading
-def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+def multiload_no_thread(
+    progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs
+):
     progress.pool.reset(progress_name, finished=False)
     for dataset_choice in datasets_load_data:
         _method = getattr(
@@ -378,7 +333,12 @@ def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **k
                 set_finished=False,
             )
         else:
-            raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
+            progress.pool(
+                progress_name,
+                finished=True,
+                error=DatasetChoiceUndefinedMethodException(dataset_choice.group.value),
+            )
+            return
     progress.pool(
         progress_name,
         finished=True,
@@ -386,3 +346,8 @@ def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **k
         message="",
         data={"datasets": datasets_load_data, "kwargs": kwargs},
     )
+
+
+@progress.threading
+def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
+    multiload_no_thread(progress_name, datasets_load_data, **kwargs)

@@ -1,12 +1,9 @@
 <template>
-  <div class="params">
-    <div v-if="false" class="params__overlay" key="fdgtr">
-      <LoadSpiner :text="'Запуск обучения...'" />
-    </div>
+  <div class="params" :key="'key_update-' + updateKey">
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
-          <at-collapse :value="collapse" @on-change="onchange" :key="key">
+          <at-collapse :value="collapse">
             <at-collapse-item
               v-for="({ visible, name, fields }, key) of params"
               v-show="visible && key !== 'server'"
@@ -25,42 +22,37 @@
                     :inline="false"
                     @change="parse"
                   />
-                  <t-button @click="handleDownload" :key="'key' + i" :disabled="isLoad">Загрузить</t-button>
+                  <t-button @click="onStart" :key="'key' + i" :disabled="overlayStatus">Подготовить</t-button>
                 </template>
               </div>
             </at-collapse-item>
           </at-collapse>
         </div>
-        <div class="params__items" v-if="load">
+        <div class="params__items" v-if="paramsDownloaded.isParamsSettingsLoad">
           <div class="params-container pa-5">
             <div class="t-input">
               <label class="label" for="deploy[deploy]">Название папки</label>
               <div class="t-input__label">
-                https://srv1.demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
+                {{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}
               </div>
-              <input
-                v-model="deploy"
-                class="t-input__input"
-                type="text"
-                id="deploy[deploy]"
-                name="deploy[deploy]"
-                @blur="$emit('blur', $event.target.value)"
-              />
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
             </div>
+            <Autocomplete2 :list="list" :name="'deploy[server]'" label="Сервер" @focus="focus" @change="selected" />
+
             <Checkbox
               :label="'Перезаписать с таким же названием папки'"
               :type="'checkbox'"
-              parse="deploy[overwrite]"
-              name="deploy[overwrite]"
+              parse="replace"
+              name="replace"
               class="pd__top"
-              @change="UseReplace"
+              @change="onChange"
             />
             <Checkbox
               :label="'Использовать пароль для просмотра страницы'"
-              parse="deploy[use_password]"
-              name="deploy[use_password]"
+              parse="replace"
+              name="use_sec"
               :type="'checkbox'"
-              @change="UseSec"
+              @change="onChange"
             />
             <div class="password" v-if="use_sec">
               <div class="t-input">
@@ -87,24 +79,20 @@
                 <p>Пароль должен содержать не менее 6 символов</p>
               </div>
             </div>
-            <t-button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</t-button>
-            <div class="loader" v-if="DataLoading">
-              <div class="loader__title">Дождитесь окончания загрузки</div>
-              <div class="loader__progress">
-                <load-spiner></load-spiner>
-              </div>
-            </div>
-            <div class="req-ans" v-if="DataSent">
+            <t-button :disabled="send_disabled" @click="sendDeployData" v-if="!paramsDownloaded.isSendParamsDeploy">
+              Загрузить
+            </t-button>
+            <div class="req-ans" v-if="paramsDownloaded.isSendParamsDeploy">
               <div class="answer__success">Загрузка завершена!</div>
               <div class="answer__label">Ссылка на сформированную загрузку</div>
               <div class="answer__url">
-                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
+                <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="copy(moduleList.url)"></i>
                 <a :href="moduleList.url" target="_blank">
-                  {{ moduleList.url }}sdfasadfasdfasgdfhasiofhusduifhasiodcfuisfhoadsifisdhfiosdup
+                  {{ moduleList.url }}
                 </a>
               </div>
             </div>
-            <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
+            <ModuleList v-if="paramsDownloaded.isSendParamsDeploy" :moduleList="moduleList.api_text" />
           </div>
         </div>
       </div>
@@ -113,138 +101,80 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 import Checkbox from '@/components/forms/Checkbox';
+import Autocomplete2 from '@/components/forms/Autocomplete2';
 import ModuleList from './ModuleList';
-import LoadSpiner from '../../forms/LoadSpiner';
-import { debounce } from '@/utils/core/utils';
-// import ser from '@/assets/js/myserialize';
+import { DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS } from '@/components/deploy/config/const-params';
+
 export default {
   name: 'Settings',
   components: {
     Checkbox,
     ModuleList,
-    LoadSpiner,
+    Autocomplete2,
+  },
+  props: {
+    params: {
+      type: [Object, Array],
+      default: () => ({}),
+    },
+    moduleList: {
+      type: Object,
+      default: () => ({}),
+    },
+    projectData: {
+      type: [Array, Object],
+      default: () => [],
+    },
+    userData: {
+      type: [Object, Array],
+      default: () => {},
+    },
+    paramsDownloaded: {
+      type: Object,
+      default: () => ({}),
+    },
+    overlayStatus: {
+      type: Boolean,
+      default: false,
+    },
   },
   data: () => ({
-    debounce: null,
-    collapse: ['type', 'server'],
-    load: false,
-    key: '1212',
-    downloadSettings: {},
-    trainSettings: {},
+    updateKey: 0,
+    collapse: DEPLOY_COLLAPS,
     deploy: '',
+    server: '',
     replace: false,
     use_sec: false,
     sec: '',
     sec_accept: '',
-    DataSent: false,
-    DataLoading: false,
     passwordShow: false,
     parameters: {},
-    ops: {
-      scrollPanel: {
-        scrollingX: false,
-        scrollingY: true,
-      },
-    },
+    list: [],
   }),
   computed: {
-    ...mapGetters({
-      params: 'deploy/getParams',
-      height: 'settings/height',
-      moduleList: 'deploy/getModuleList',
-      projectData: 'projects/getProject',
-      userData: 'projects/getUser',
-    }),
-    state: {
-      set(value) {
-        this.$store.dispatch('deploy/setStateParams', value);
-      },
-      get() {
-        return this.$store.getters['deploy/getStateParams'];
-      },
-    },
     checkCorrect() {
-      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect';
+      return this.sec == this.sec_accept ? DEPLOY_ICONS_PASSWORD[0] : DEPLOY_ICONS_PASSWORD[1];
     },
     send_disabled() {
-      if (this.DataLoading) {
-        return true;
-      }
-      if (this.use_sec) {
-        if (this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
-      } else {
-        if (this.deploy.length != 0) return false;
-      }
+      if (this.use_sec && this.sec == this.sec_accept && this.sec.length > 5 && this.deploy.length != 0) return false;
+      else if (this.deploy.length != 0) return false;
       return true;
     },
     isLoad() {
-      const type = this.parameters?.type || '';
-      const name = this.parameters?.name || '';
-      return !(name && type);
+      return !(!!this.parameters.type && !!this.parameters.name);
     },
   },
   methods: {
-    async handleDownload() {
-      const type = this.parameters?.type || '';
-      const name = this.parameters?.name || '';
-      if (type && name) {
-        const res = await this.$store.dispatch('deploy/DownloadSettings', { type, name });
-        if (res?.success) {
-          this.$store.dispatch('settings/setOverlay', true);
-          this.debounce(true);
-        }
-      }
-    },
-    async progressGet() {
-      const res = await this.$store.dispatch('deploy/progress', {});
-      console.log(res);
-      if (res && res?.data) {
-        const { finished, message, percent } = res.data;
-        this.$store.dispatch('messages/setProgressMessage', message);
-        this.$store.dispatch('messages/setProgress', percent);
-        if (!finished) {
-          this.debounce(true);
-        } else {
-          this.$store.dispatch('settings/setOverlay', false);
-          this.$store.dispatch('projects/get');
-          this.load = true;
-        }
-      }
-      if (res?.error) {
-        this.$store.dispatch('settings/setOverlay', false);
-      }
-    },
-    parse({ id, value, name, root }) {
-      console.log(id, value, name, root);
+    parse({ value, name }) {
+      if (name === 'type') this.parameters['name'] = null;
       this.parameters[name] = value;
       this.parameters = { ...this.parameters };
-
-      // ser(this.trainSettings, parse, value);
-      // this.trainSettings = { ...this.trainSettings };
-      // if (!mounted && changeable) {
-      //   // this.$store.dispatch('trainings/update', this.trainSettings);
-      //   // this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
-      // } else {
-      //   if (value) {
-      //     this.state = { [`${parse}`]: value };
-      //   }
-      // }
     },
-    onchange(e) {
-      console.log(e);
-      // console.log(this.collapse);
+    onChange({ name, value }) {
+      this[name] = value;
     },
-    click() {
-      console.log();
-    },
-    Percents(number) {
-      let loading = document.querySelector('.progress-bar > .loading');
-      loading.style.width = number + '%';
-      loading.find('span').value = number;
-    },
-    Copy(text) {
+    copy(text) {
       var textArea = document.createElement('textarea');
       textArea.value = text;
 
@@ -264,64 +194,35 @@ export default {
 
       document.body.removeChild(textArea);
     },
-    UseSec(data) {
-      this.use_sec = data.value;
+    onStart() {
+      this.$emit('downloadSettings', this.parameters);
+      this.focus();
     },
-    UseReplace(data) {
-      this.replace = data.value;
+    async focus() {
+      const res = await this.$store.dispatch('servers/ready');
+      if (res.data) this.list = res?.data || [];
+      console.log(res);
     },
-    async progress() {
-      let answer = await this.$store.dispatch('deploy/CheckProgress');
-      console.log(answer);
-      if (!answer) {
-        // this.Percents(30);
-        this.getProgress();
-      } else {
-        this.DataLoading = false;
-        this.DataSent = true;
-        this.$emit('overlay', this.DataLoading);
-      }
+    selected({ value }) {
+      this.server = value;
     },
-    getProgress() {
-      setTimeout(this.progress, 2000);
-    },
-    async SendData() {
-      let data = {
+    async sendDeployData() {
+      const data = {
         deploy: this.deploy,
+        server: this.server,
         replace: this.replace,
         use_sec: this.use_sec,
       };
-
       if (this.use_sec) data['sec'] = this.sec;
-
-      const res = await this.$store.dispatch('deploy/SendDeploy', data);
-      console.log(res);
-      if (res) {
-        const { error, success } = res;
-        console.log(error, success);
-        if (!error && success) {
-          this.DataLoading = true;
-          this.$emit('overlay', this.DataLoading);
-          this.getProgress();
-        }
-      }
+      this.$emit('sendParamsDeploy', data);
     },
   },
-  created() {
-    this.debounce = debounce(status => {
-      if (status) {
-        this.progressGet();
-      }
-    }, 1000);
-    // this.debounce(this.isLearning);
-  },
   beforeDestroy() {
-    this.debounce(false);
-    this.$store.dispatch('deploy/clear');
+    this.$emit('clear');
   },
   watch: {
     params() {
-      this.key = 'dsdsdsd';
+      this.updateKey++;
     },
   },
 };

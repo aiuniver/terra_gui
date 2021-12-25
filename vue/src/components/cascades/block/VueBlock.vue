@@ -2,7 +2,7 @@
   <div class="t-block-cascades" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-cascades__header', group, { selected: selected }, { error: !!error }]">
       <div class="t-block-cascades__header--title" :title="name">{{ `${id}) ${group}: ${name}` }}</div>
-      <div class="t-block-cascades__header--parametr" :title="parametr">{{ }}</div>
+      <div class="t-block-cascades__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
     <div class="t-block-cascades__base"></div>
     <div v-if="error" v-show="hover || selected" class="t-block-cascades__error">
@@ -84,7 +84,7 @@ export default {
       default: () => {},
     },
     shape: Object,
-    bind: Object
+    bind: Object,
   },
   data: () => ({
     hover: false,
@@ -99,8 +99,24 @@ export default {
       return this.errors?.[this.id] || '';
     },
     parametr() {
-      const parametr = Object.values(this.parameters?.main || {}).filter(item => item);
-      return this.group === 'input' ? this.shape?.input?.join(' ') || '' : parametr.join(' ');
+      const { type, group, path } = this.parameters.main;
+      const b = this.group;
+      if (b === 'Service') {
+        return `${group} ${type || ''}`;
+      }
+      if (b === 'Model') {
+        return `${path}`;
+      }
+      if (b === 'InputData') {
+        return `${type}`;
+      }
+      if (b === 'OutputData') {
+        return `${type}`;
+      }
+      if (b === 'Function') {
+        return `${group} ${type || ''}`;
+      }
+      return '';
     },
     styleHover() {
       const len = this.iconsFilter.length;

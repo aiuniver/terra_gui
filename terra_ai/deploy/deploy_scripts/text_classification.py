@@ -15,6 +15,7 @@ def predict(input_path):
     return print(out)
 
 
+
 if __name__ in ["__main__", "script"]:
     from cascades.create import json2cascade
 else:

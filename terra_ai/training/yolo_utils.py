@@ -8,10 +8,17 @@ import colorsys
 from tensorflow.keras.preprocessing.image import load_img
 import os
 
-from terra_ai.callbacks.utils import print_error
+from tensorflow.python.keras import Model
+
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.datasets.utils import resize_bboxes
 
+import terra_ai.exceptions.callbacks as exception
+
 ### DETECTION ###
+from terra_ai.logging import logger
+
+MODULE_NAME = '/training/yolo_utils.py'
 
 
 def detect_image(Yolo, original_image, output_path, input_size=416, show=False, CLASSES=None,
@@ -28,10 +35,6 @@ def detect_image(Yolo, original_image, output_path, input_size=416, show=False, 
         image_data = original_image[np.newaxis, ...].astype(np.float32)
 
         pred_bbox = Yolo.predict(image_data)
-        # print(len(pred_bbox))
-        # print(pred_bbox[0].shape)
-        # print(pred_bbox[1].shape)
-        # print(pred_bbox[2].shape)
         if train:
             pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
 
@@ -56,8 +59,11 @@ def detect_image(Yolo, original_image, output_path, input_size=416, show=False, 
             cv2.destroyAllWindows()
 
         return image
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def draw_bbox(image, bboxes, CLASSES, show_label=True, show_confidence=True,
@@ -68,7 +74,6 @@ def draw_bbox(image, bboxes, CLASSES, show_label=True, show_confidence=True,
         num_classes = len(NUM_CLASS)
         image_h, image_w, _ = image.shape
         hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
-        # print("hsv_tuples", hsv_tuples)
         colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
         colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
 
@@ -98,9 +103,9 @@ def draw_bbox(image, bboxes, CLASSES, show_label=True, show_confidence=True,
                 try:
                     label = "{}".format(NUM_CLASS[class_ind]) + score_str
                 except KeyError:
-                    print("You received KeyError, this might be that you are trying to use yolo original weights")
-                    print(
-                        "while using custom classes, if using custom model in configs.py set YOLO_CUSTOM_WEIGHTS = True")
+                    logger.warning("You received KeyError, this might be that you are trying "
+                                   "to use yolo original weights while using custom classes, if using custom model"
+                                   " in configs.py set YOLO_CUSTOM_WEIGHTS = True")
 
                 # get text size
                 (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_COMPLEX_SMALL,
@@ -114,8 +119,11 @@ def draw_bbox(image, bboxes, CLASSES, show_label=True, show_confidence=True,
                             fontScale, Text_colors, bbox_thick, lineType=cv2.LINE_AA)
 
         return image
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def bboxes_iou(boxes1, boxes2):
@@ -136,8 +144,11 @@ def bboxes_iou(boxes1, boxes2):
         ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
 
         return ious
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
@@ -180,8 +191,11 @@ def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
                 cls_bboxes = cls_bboxes[score_mask]
 
         return best_bboxes
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
@@ -198,10 +212,7 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
         pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                     pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
         # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-        if isinstance(original_image, tuple) or (original_image == None):
-            org_h, org_w = input_size, input_size
-        else:
-            org_h, org_w = original_image.shape[:2]
+        org_h, org_w = np.squeeze(original_image).shape[:2]
         resize_ratio = min(input_size / org_w, input_size / org_h)
 
         dw = (input_size - resize_ratio * org_w) / 2
@@ -228,8 +239,11 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
         coors, scores, classes = pred_coor[mask], scores[mask], classes[mask]
 
         return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 ### LOSSES ###
@@ -253,8 +267,11 @@ def bbox_iou(boxes1, boxes2):
         union_area = boxes1_area + boxes2_area - inter_area
 
         return 1.0 * inter_area / union_area
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def bbox_giou(boxes1, boxes2):
@@ -295,8 +312,11 @@ def bbox_giou(boxes1, boxes2):
         giou = iou - 1.0 * (enclose_area - union_area) / enclose_area
 
         return giou
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 # testing (should be better than giou)
@@ -317,7 +337,7 @@ def bbox_ciou(boxes1, boxes2):
         iou = bbox_iou(boxes1, boxes2)
 
         u = (boxes1[..., 0] - boxes2[..., 0]) * (boxes1[..., 0] - boxes2[..., 0]) + (
-                    boxes1[..., 1] - boxes2[..., 1]) * (
+                boxes1[..., 1] - boxes2[..., 1]) * (
                     boxes1[..., 1] - boxes2[..., 1])
         d = u / c
 
@@ -329,8 +349,11 @@ def bbox_ciou(boxes1, boxes2):
         ciou_term = d + alpha * ar_loss
 
         return iou - ciou_term
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOLO_IOU_LOSS_THRESH=0.5):
@@ -396,8 +419,11 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
                         labels=label_prob_cls, logits=conv_raw_prob_cls), axis=[1, 2, 3, 4]))
 
         return giou_loss, conf_loss, prob_loss, prob_loss_cls
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 ### CREATE AND FIT MODEL ###
@@ -422,29 +448,13 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
         output_size = conv_shape[1]
 
         conv_output = tf.reshape(conv_output, (batch_size, output_size, output_size, 3, 5 + NUM_CLASS))
+        conv_raw_dxdy, conv_raw_dwdh, conv_raw_conf, conv_raw_prob = \
+            tf.split(conv_output, (2, 2, 1, NUM_CLASS), axis=-1)
 
-        # conv_raw_dxdy = conv_output[:, :, :, :, 0:2] # offset of center position
-        # conv_raw_dwdh = conv_output[:, :, :, :, 2:4] # Prediction box length and width offset
-        # conv_raw_conf = conv_output[:, :, :, :, 4:5] # confidence of the prediction box
-        # conv_raw_prob = conv_output[:, :, :, :, 5: ] # category probability of the prediction box
-        conv_raw_dxdy, conv_raw_dwdh, conv_raw_conf, conv_raw_prob = tf.split(conv_output, (2, 2, 1, NUM_CLASS),
-                                                                              axis=-1)
-
-        # next need Draw the grid. Where output_size is equal to 13, 26 or 52
-        # y = tf.range(output_size, dtype=tf.int32)
-        # y = tf.expand_dims(y, -1)
-        # y = tf.tile(y, [1, output_size])
-        # x = tf.range(output_size,dtype=tf.int32)
-        # x = tf.expand_dims(x, 0)
-        # x = tf.tile(x, [output_size, 1])
         xy_grid = tf.meshgrid(tf.range(output_size), tf.range(output_size))
         xy_grid = tf.expand_dims(tf.stack(xy_grid, axis=-1), axis=2)  # [gx, gy, 1, 2]
         xy_grid = tf.tile(tf.expand_dims(xy_grid, axis=0), [batch_size, 1, 1, 3, 1])
         xy_grid = tf.cast(xy_grid, tf.float32)
-
-        # xy_grid = tf.concat([x[:, :, tf.newaxis], y[:, :, tf.newaxis]], axis=-1)
-        # xy_grid = tf.tile(xy_grid[tf.newaxis, :, :, tf.newaxis, :], [batch_size, 1, 1, 3, 1])
-        # y_grid = tf.cast(xy_grid, tf.float32)
 
         # Calculate the center position of the prediction box:
         pred_xy = (tf.sigmoid(conv_raw_dxdy) + xy_grid) * STRIDES[i]
@@ -457,12 +467,15 @@ def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
 
         # calculating the predicted probability category box object
         return tf.concat([pred_xywh, pred_conf, pred_prob], axis=-1)
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 # @tf.autograph.experimental.do_not_convert
-def create_yolo(model, input_size=416, channels=3, training=False, classes=None, version='v3'):
+def create_yolo(model, input_size=416, channels=3, training=False, classes=None, version='v3') -> tf.keras.Model:
     method_name = 'create_yolo'
     try:
         if classes is None:
@@ -474,15 +487,20 @@ def create_yolo(model, input_size=416, channels=3, training=False, classes=None,
         output_tensors = []
         for i, conv_tensor in enumerate(conv_tensors):
             pred_tensor = decode(conv_tensor, num_class, i, version)
-            if training: output_tensors.append(conv_tensor)
+            if training:
+                output_tensors.append(conv_tensor)
             output_tensors.append(pred_tensor)
         yolo = tf.keras.Model(model.inputs, output_tensors)
         return yolo
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
 
 class CustomModelYolo(keras.Model):
+    name = "CustomModelYolo"
 
     def __init__(self, yolo, dataset, classes, train_epochs, train_batch, warmup_epoch=2, lr_init=1e-4,
                  lr_end=1e-6, iou_thresh=0.5):
@@ -504,13 +522,9 @@ class CustomModelYolo(keras.Model):
         self.total_steps = self.train_epochs * self.steps_per_epoch
 
     def compile(self, optimizer, loss):
-        method_name = 'compile'
-        try:
-            super(CustomModelYolo, self).compile()
-            self.optimizer = optimizer
-            self.loss_fn = loss
-        except Exception as e:
-            print_error("CustomModelYolo", method_name, e)
+        super(CustomModelYolo, self).compile()
+        self.optimizer = optimizer
+        self.loss_fn = loss
 
     @tf.function
     def change_lr(self):
@@ -523,8 +537,11 @@ class CustomModelYolo(keras.Model):
                     (1 + tf.cos((self.global_steps.value() - self.warmup_steps) /
                                 (self.total_steps - self.warmup_steps) * np.pi)))
             return lr
-        except Exception as e:
-            print_error("CustomModelYolo", method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                CustomModelYolo.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @tf.function
     def train_step(self, data):
@@ -578,8 +595,11 @@ class CustomModelYolo(keras.Model):
             out_info.update(target_out)
 
             return out_info
-        except Exception as e:
-            print_error("CustomModelYolo", method_name, e)
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                CustomModelYolo.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @tf.function
     def test_step(self, data):
@@ -591,9 +611,6 @@ class CustomModelYolo(keras.Model):
             prob_loss_cls = {}
             pred_out = {}
             target_out = {}
-
-            # optimizing process
-            grid = 3  # if not TRAIN_YOLO_TINY else 2
 
             for i, key in enumerate(target.keys()):
                 conv, pred = pred_result[i * 2], pred_result[i * 2 + 1]
@@ -650,10 +667,6 @@ def voc_ap(rec, prec):
             matlab:  for i=numel(mpre)-1:-1:1
                                     mpre(i)=max(mpre(i),mpre(i+1));
         """
-        # matlab indexes start in 1 but python in 0, so I have to do:
-        #   range(start=(len(mpre) - 2), end=0, step=-1)
-        # also the python function range excludes the end, resulting in:
-        #   range(start=(len(mpre) - 2), end=-1, step=-1)
         for i in range(len(mpre) - 2, -1, -1):
             mpre[i] = max(mpre[i], mpre[i + 1])
         """
@@ -673,38 +686,20 @@ def voc_ap(rec, prec):
         for i in i_list:
             ap += ((mrec[i] - mrec[i - 1]) * mpre[i])
         return ap, mrec, mpre
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc
 
-# def resize_bboxes(coords, orig_x, orig_y, out_size = 416):
-#     x_scale = orig_x / out_size
-#     y_scale = orig_y / out_size
-#     real_boxes = []
-#     if x_scale == 1 and y_scale == 1:
-#         for coord in coords.split(' '):
-#             real_boxes.append([literal_eval(num) for num in coord.split(',')])
-#     else:
-#         for coord in coords.split(' '):
-#             tmp = []
-#             for i, num in enumerate(coord.split(',')):
-#                 if i in [0, 2]:
-#                     tmp_value = int(literal_eval(num) / x_scale) - 1
-#                     scale_value = orig_x if tmp_value > orig_x else tmp_value
-#                     tmp.append(scale_value)
-#                 elif i in [1, 3]:
-#                     tmp_value = int(literal_eval(num) / y_scale) - 1
-#                     scale_value = orig_y if tmp_value > orig_y else tmp_value
-#                     tmp.append(scale_value)
-#                 else:
-#                     tmp.append(literal_eval(num))
-#             real_boxes.append(tmp)
-#     return real_boxes
 
-def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_SIZE=416, TRAIN_CLASSES=None,
-            pred=None, dataset_path=''):
+def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25, iou_threshold: object = None,
+            TEST_INPUT_SIZE: int = 416, TRAIN_CLASSES: list = None,
+            pred: np.ndarray = None, dataset_path: str = '') -> dict:
     method_name = 'get_mAP'
     tt1 = time.time()
     try:
+        logger.info(f"Расчет метрики mAP50...", extra={"type": "info"})
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -716,7 +711,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
         id_ground_truth = {}
         for index in range(len(dataset.dataframe.get("val"))):
 
-            true_bbox = dataset.dataframe.get("val").iloc[index, 1] #.split(' ')
+            true_bbox = dataset.dataframe.get("val").iloc[index, 1]  # .split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
             bbox_data_gt = np.array(resize_bboxes('stretch', true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
@@ -746,8 +741,10 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
             id_ground_truth[str(index)] = bounding_boxes
 
-        # for cls in NUM_CLASS:
-        #     if gt_counter_per_class.get(cls) is None:
+        for cls in NUM_CLASS:
+            if gt_counter_per_class.get(cls) is None:
+                logger.warning(f"Внимание! Класс {cls} не представлен в проверочной выборке!",
+                               extra={"type": "warning"})
         #         gt_counter_per_class[cls] = 1
         gt_classes = list(gt_counter_per_class.keys())
 
@@ -770,13 +767,10 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
         else:
-            for inp, out, serv in dataset.dataset['val'].batch(1).take(-1):
-                original_image = inp['1'].numpy()[0]
-                image_data = inp['1'].numpy()
-                original_image_shape.append(original_image.shape)
+            for inp, out, serv in dataset.dataset['val'].batch(1):
                 t1 = time.time()
 
-                pred_bbox = Yolo.predict(image_data)
+                pred_bbox = Yolo(inp)
                 pred_bbox = [pred_bbox[1], pred_bbox[3], pred_bbox[5]]
                 t2 = time.time()
                 times.append(t2 - t1)
@@ -787,16 +781,16 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
 
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
-
         ap_dictionary = {}
+        warnings = []
         for i_iou in iou_threshold:
-
-            json_pred = [[] for i in range(n_classes)]
+            json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
             len_bbox = 0
             for i_image, pred_bbox in enumerate(predict):
-
-                bboxes = postprocess_boxes(pred_bbox, original_image_shape[i_image], TEST_INPUT_SIZE, score_threshold)
+                tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[i_image, 0]))
+                tmp_im = np.array(tmp_im)
+                bboxes = postprocess_boxes(pred_bbox, tmp_im, TEST_INPUT_SIZE, score_threshold)
                 bboxes = nms(bboxes, i_iou, method='nms')
                 len_bbox += len(bboxes)
                 for bbox in bboxes:
@@ -810,7 +804,12 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
                     try:
                         json_pred[gt_classes.index(class_name)].append(
                             {"confidence": str(score), "file_id": str(i_image), "bbox": str(bbox)})
-                    except Exception:
+                    except Exception as error:
+                        # msg = f'module yolo_utils, {method_name}, json_pred[gt_classes.index(class_name)].append, ' \
+                        #    f'{error}'
+                        # if msg not in warnings:
+                        #     logger.warning(msg)
+                        #     warnings.append(msg)
                         continue
             for class_name in gt_classes:
                 json_pred[gt_classes.index(class_name)].sort(key=lambda x: float(x['confidence']), reverse=True)
@@ -849,7 +848,7 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
                                 # compute overlap (IoU) = area of intersection / area of union
                                 ua = (bb[2] - bb[0] + 1) * (bb[3] - bb[1] + 1) + (bbgt[2] - bbgt[0]
                                                                                   + 1) * (
-                                                 bbgt[3] - bbgt[1] + 1) - iw * ih
+                                             bbgt[3] - bbgt[1] + 1) - iw * ih
                                 ov = iw * ih / ua
                                 if ov > ovmax:
                                     ovmax = ov
@@ -893,8 +892,10 @@ def get_mAP(Yolo, dataset, score_threshold=0.25, iou_threshold=None, TEST_INPUT_
             ap_dictionary[f"val_mAP{int(i_iou * 100)}"] = mAP * 100
         ap_dictionary["val_fps"] = fps
         tt2 = time.time()
-        # print('tt2-tt1', tt2-tt1)
+        logger.debug(f'Расчет метрики mAP завершен. Время расчета: {round(tt2 - tt1, 2)} сек')
         return ap_dictionary
-    except Exception as e:
-        print_error("module yolo_utils", method_name, e)
-
+    except Exception as error:
+        exc = exception.ErrorInModuleInMethodException(
+            MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
+        # logger.error(exc)
+        raise exc

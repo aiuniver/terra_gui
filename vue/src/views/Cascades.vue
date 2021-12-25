@@ -46,22 +46,19 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = true// = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
       this.create = false;
       this.$store.dispatch('cascades/addBlock', { type, position });
     },
-    async saveModel() {
+    async save() {
       this.imageModel = null;
       this.dialogSaveModel = true;
       let image = await this.$refs.container.getImages();
       const { data = null } = await this.$store.dispatch('cascades/getImageModel', image.slice(22));
       if (data) this.imageModel = data;
-    },
-    async save() {
-      await this.$store.dispatch('cascades/save', {});
     },
     async start() {
       this.dialogDatasets = true
@@ -72,7 +69,7 @@ export default {
       await this.$store.dispatch('cascades/validate', {});
     },
     async clearModel() {
-      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить модель?' });
+      const action = await this.$store.dispatch('dialogs/confirm', { ctx: this, content: 'Очистить каскад?' });
       if (action == 'confirm') {
         await this.$store.dispatch('cascades/clearModel');
       }

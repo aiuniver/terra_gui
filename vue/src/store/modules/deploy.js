@@ -9,7 +9,7 @@ export default {
     graphicData: temp.data,
     defaultLayout: defLayout,
     origTextStyle: originaltextStyle,
-    Cards: [],
+    cards: [],
     deployType: '',
     moduleList: {
       api_text: "",
@@ -24,7 +24,7 @@ export default {
       state.moduleList = { ...state.moduleList, ...value };
     },
     SET_CARDS (state, value) {
-      state.Cards = value;
+      state.cards = value;
     },
     SET_BASE (state, value) {
       state.form = value;
@@ -33,8 +33,8 @@ export default {
       state.deployType = value;
     },
     SET_BLOCK_CARDS (state, { value, id }) {
-      state.Cards[id].data = value;
-      state.Cards = { ...state.Cards }
+      state.cards[id].data = value;
+      state.cards = { ...state.cards }
     },
     SET_STATE_PARAMS (state, value) {
       state.stateParams = { ...value };
@@ -42,43 +42,35 @@ export default {
   },
   actions: {
     parseStruct ({ commit }, { form }) {
-      // console.log(form, interactive, progress, state)
       if (form) commit("SET_BASE", form)
     },
-    async SendDeploy ({ dispatch }, data) {
-      return await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
+    async uploadData ({ dispatch }, data) {
+      return await dispatch('axios', { url: '/deploy/upload/', data }, { root: true });
     },
-    async CheckProgress ({ commit, dispatch }) {
-      const { data } = await dispatch('axios', { url: '/deploy/upload/progress/' }, { root: true });
-      if (data.finished) {
-        commit("SET_MODULE_LIST", data.data);
-      }
-      return data.finished;
+    async progressUpload ({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/deploy/upload/progress/' }, { root: true });
+      if (res?.data?.finished) commit("SET_MODULE_LIST", res.data.data);
+      return res;
     },
-    async DownloadSettings ({ dispatch }, data) {
-      const res = await dispatch('axios', { url: '/deploy/get/', data }, { root: true });
-      return res
+    async getData ({ dispatch }, data) {
+      return await dispatch('axios', { url: '/deploy/get/', data }, { root: true });
     },
-    async progress ({ dispatch, commit }, data) {
+    async progressData ({ dispatch, commit }, data) {
       const res = await dispatch('axios', { url: '/deploy/get/progress/', data }, { root: true });
       if (res) {
-        const { data, error } = res;
-        if (data) {
-          if (data?.finished) {
-            commit("SET_DEPLOY", data?.data?.data || {});
-            commit("deploy/SET_CARDS", data?.data?.data?.data || [], { root: true });
-            commit("SET_DEPLOY_TYPE", data?.data?.type || []);
+        if (res?.data) {
+          if (res.data?.finished) {
+            console.log(res.data?.data?.data?.data)
+            commit("SET_DEPLOY", res.data?.data?.data || {});
+            commit("SET_CARDS", res.data?.data?.data?.data || []);
+            commit("SET_DEPLOY_TYPE", res.data?.data?.type || []);
           }
-        }
-        if (error) {
-          dispatch('messages/setMessage', { error: error }, { root: true });
-          dispatch('logging/setError', JSON.stringify(error, null, 2), { root: true });
         }
       }
       return res
     },
-    async ReloadCard ({ commit, dispatch }, values) {
-      const { data } = await dispatch('axios', { url: '/deploy/reload/', data: values }, { root: true });
+    async reloadCard ({ commit, dispatch }, indexes) {
+      const { data } = await dispatch('axios', { url: '/deploy/reload/', data: indexes }, { root: true });
       commit("SET_CARDS", data.data.data);
       commit("SET_DEPLOY", data.data);
     },
@@ -92,25 +84,14 @@ export default {
     },
   },
   getters: {
-    getParams ({ form }) {
-      console.log(form)
-      return form || {}
-    },
-    getStateParams ({ stateParams }) {
-      return stateParams || {}
-    },
+    getParams: ({ form }) => form || {},
+    getStateParams: ({ stateParams }) => stateParams || {},
     getModuleList: ({ moduleList }) => moduleList,
     getDeploy: ({ deploy }) => deploy,
     getGraphicData: ({ graphicData }) => graphicData,
     getDefaultLayout: ({ defaultLayout }) => defaultLayout,
     getOrigTextStyle: ({ origTextStyle }) => origTextStyle,
-    getCards: ({ Cards }) => Cards,
+    getCards: ({ cards }) => cards || [],
     getDeployType: ({ deployType }) => deployType,
-    getRandId: ({ Cards }) => {
-      let id = Cards;
-      let crypto = require("crypto");
-      id = crypto.randomBytes(20).toString('hex');
-      return id;
-    }
   }
 }

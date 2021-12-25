@@ -1,19 +1,21 @@
-from apps.plugins.project import data_path
+from terra_ai.settings import TERRA_PATH
 
-from terra_ai.agent import agent_exchange
-from terra_ai.agent.exceptions import FailedGetModelException
+from apps.api import decorators
+from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.common.serializers import ValidateDatasetModelSerializer
+from apps.api.logging import logs_catcher
 
-from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 
-from .serializers import ValidateDatasetModelSerializer
+class LogsAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            list(filter(lambda item: item.get("type") is not None, logs_catcher.logs))
+        )
 
 
 class ValidateDatasetModelAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        serializer = ValidateDatasetModelSerializer(data=request.data)
-        if not serializer.is_valid():
-            return BaseResponseErrorFields(serializer.errors)
-
+    @decorators.serialize_data(ValidateDatasetModelSerializer)
+    def post(self, request, serializer, **kwargs):
         dataset_load = serializer.validated_data.get("dataset")
         model_load = serializer.validated_data.get("model")
 
@@ -21,18 +23,15 @@ class ValidateDatasetModelAPIView(BaseAPIView):
         model = None
 
         if dataset_load:
-            datasets = agent_exchange("datasets_info", path=data_path.datasets)
+            datasets = self.terra_exchange("datasets_info", path=TERRA_PATH.datasets)
             dataset = datasets.get(dataset_load.get("group")).datasets.get(
                 dataset_load.get("alias")
             )
             model = request.project.model
 
         if model_load:
-            try:
-                model = agent_exchange("model_get", value=model_load.get("value"))
-                dataset = request.project.dataset
-            except FailedGetModelException as error:
-                return BaseResponseErrorFields(error.args)
+            model = self.terra_exchange("model_get", value=model_load.get("value"))
+            dataset = request.project.dataset
 
         if not dataset or not len(model.layers):
             validated = True

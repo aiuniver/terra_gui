@@ -26,11 +26,21 @@ const actions = {
     });
 
     commit('SET_DATASETS', datasets);
+  },
+  selectDataset({ state, commit }, dataset){
+    const updatedDatasets = state.datasets.map(item => {
+      return {
+        ...item,
+        active: dataset.alias === item.alias
+      }
+    })
+    commit('SET_DATASETS', updatedDatasets)
   }
 }
 
 const getters = {
   getDatasets: ({ datasets }) => datasets,
+  choiceDataset: ({ datasets }) => datasets.find(item => item.active) || {}
 }
 
 

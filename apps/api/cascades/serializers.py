@@ -35,4 +35,13 @@ class StartItemSerializer(serializers.Serializer):
 
 
 class StartSerializer(serializers.Serializer):
+    example_count = serializers.IntegerField(
+        min_value=0, allow_null=True, required=False
+    )
     sources = serializers.DictField(child=StartItemSerializer())
+
+
+class SaveSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    image = serializers.CharField()
+    overwrite = serializers.BooleanField(default=False)

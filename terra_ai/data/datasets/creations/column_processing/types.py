@@ -23,8 +23,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerTypeProcessingClassificationChoice,
-    LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -34,8 +33,20 @@ class ParametersBaseData(BaseMixinData):
 
 
 class ParametersImageData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик изображений.
+    Inputs:
+        width: int - ширина изображений (пикс)
+        height: int - высота изображений (пикс)
+        image_mode: str - режим обработки изображений. Варианты: 'stretch', 'fit', 'cut'
+        net: str - режим обработки массивов. Варианты: 'convolutional', 'linear'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'terra_image_scaler'
+    """
+
     width: PositiveInt
     height: PositiveInt
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
@@ -43,6 +54,21 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersTextData(ParametersBaseData):
+
+    """
+    Обработчик текстовых данных.
+    Inputs:
+        filters: str - символы, подлежащие удалению. По умолчанию: –—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff
+        text_mode: str - режим обработки текстов. Варианты: 'completely', 'length_and_step'.
+        max_words: int - \x1B[3mОПЦИОНАЛЬНО при text_mode==completely.\x1B[0m Максимальное количество слов, учитываемое
+         из каждого текстового файла.
+        length: int - \x1B[3mОПЦИОНАЛЬНО при text_mode==length_and_step.\x1B[0m Длина последовательности слов.
+        step: int - \x1B[3mОПЦИОНАЛЬНО при text_mode==length_and_step.\x1B[0m Шаг последовательности слов.
+        pymorphy: bool - перевод слов в инфинитив. По умолчанию: False
+        prepare_method: str - режим формирования массивов. Варианты: 'embedding', 'bag_of_words', 'word_to_vec'
+        word_to_vec_size: int - \x1B[3mОПЦИОНАЛЬНО при prepare_method==word_to_vec.\x1B[0m Размер Word2Vec пространства.
+    """
+
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     text_mode: LayerTextModeChoice = LayerTextModeChoice.completely
     max_words: Optional[PositiveInt]
@@ -75,6 +101,24 @@ class ParametersTextData(ParametersBaseData):
 
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик аудиофайлов.
+    Inputs:
+        sample_rate: int - частота дискретизации при открытии файлов
+        audio_mode: str - режим обработки аудиофайлов. Варианты: 'completely', 'length_and_step'
+        max_seconds: int - \x1B[3mОПЦИОНАЛЬНО при audio_mode==completely.\x1B[0m Максимальное количество секунд,
+        учитываемое из каждого аудиофайла
+        length: int - \x1B[3mОПЦИОНАЛЬНО при audio_mode==length_and_step.\x1B[0m Длина последовательности аудиоряда (сек)
+        step: int - \x1B[3mОПЦИОНАЛЬНО при audio_mode==length_and_step.\x1B[0m Шаг последовательности аудиоряда (сек)
+        fill_mode: str - заполнение при недостаточной длине аудиофайла. Варианты: 'last_millisecond', 'loop'
+        parameter: str - параметры обработки. Варианты: 'audio_signal', 'chroma_stft', 'mfcc', 'rms',
+        'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff', 'zero_crossing_rate'
+        resample: str - режим ресемпла аудиофайлов (влияет на скорость обработки файлов).
+        Варианты: 'kaiser_best', 'kaiser_fast', 'scipy'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler', 'standard_scaler'
+    """
+
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice = LayerAudioModeChoice.completely
     max_seconds: Optional[PositiveFloat]
@@ -96,6 +140,21 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик видеофайлов.
+    Inputs:
+        width: int - ширина видеокадра (пикс)
+        height: int - высота видеокадра (пикс)
+        frame_mode: str - режим обработки кадров. Варианты: 'stretch', 'fit', 'cut'
+        video_mode: str - режим обработки кадров. Варианты: 'completely', 'length_and_step'
+        max_frames: int - \x1B[3mОПЦИОНАЛЬНО при video_mode==completely.\x1B[0m Количество кадров для каждого видеофайла
+        length: int - \x1B[3mОПЦИОНАЛЬНО при video_mode==length_and_step.\x1B[0m Длина окна выборки (кол-во кадров)
+        step: int - \x1B[3mОПЦИОНАЛЬНО при video_mode==length_and_step.\x1B[0m Шаг окна выборки (кол-во кадров)
+        fill_mode: str - режим обработки аудиофайлов. Варианты: 'last_frames', 'loop', 'average_value'
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'min_max_scaler'
+    """
+
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.last_frames
@@ -117,6 +176,13 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик числовых значений.
+    Inputs:
+        scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
+    """
+
     scaler: LayerScalerDefaultChoice
     length: int = 0
     depth: int = 0
@@ -133,6 +199,14 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "классификация".
+    Inputs:
+        type_processing: str - режим обработки кадров. Варианты: 'categorical', 'ranges'. По умолчанию: 'categorical'
+        ranges: int - \x1B[3mОПЦИОНАЛЬНО при type_processing==ranges.\x1B[0m Диапазоны разбивки на классы.
+    """
+
     one_hot_encoding: bool = True
     type_processing: Optional[
         LayerTypeProcessingClassificationChoice
@@ -152,10 +226,26 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик типа задачи "регрессия".
+    Inputs:
+        scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
+    """
+
     scaler: LayerScalerRegressionChoice
 
 
 class ParametersSegmentationData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "сегментация".
+    Inputs:
+        mask_range: int - диапазон для каждого из RGB каналов.
+        classes_names: list - названия классов
+        classes_colors: list - цвета классов в формате RGB
+    """
+
     mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
@@ -169,7 +259,52 @@ class ParametersSegmentationData(ParametersBaseData):
         return value
 
 
+class ParametersTextSegmentationData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "сегментация текстов".
+    Inputs:
+        open_tags: str - открывающие теги (через пробел)
+        close_tags: str - закрывающие теги (через пробел)
+    """
+
+    open_tags: str
+    close_tags: str
+
+    sources_paths: Optional[list]
+    filters: Optional[str]
+    text_mode: Optional[LayerTextModeChoice]
+    max_words: Optional[PositiveInt]
+    length: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+
+    # def __init__(self\, **data):
+    #     data.update({"cols_names": None})
+    #     super().__init__(**data)
+
+    # @validator("text_mode")
+    # def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
+    #     if value == LayerTextModeChoice.completely:
+    #         cls.__fields__["max_words"].required = True
+    #     elif value == LayerTextModeChoice.length_and_step:
+    #         cls.__fields__["length"].required = True
+    #         cls.__fields__["step"].required = True
+    #     return value
+
+
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
+
+    """
+    Обработчик видеофайлов.
+    Inputs:
+        length: int - ***
+        step: int - ***
+        trend: bool - ***
+        trend_limit: bool - \x1B[3mОПЦИОНАЛЬНО при trend==True.\x1B[0m ***
+        depth: int - \x1B[3mОПЦИОНАЛЬНО при ***==***.\x1B[0m ***
+        scaler: str - тип скейлера. Варианты: 'no_scaler', 'standard_scaler', 'min_max_scaler'
+    """
+
     length: PositiveInt
     step: PositiveInt
     trend: bool
@@ -196,3 +331,33 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
             cls.__fields__["depth"].required = True
             cls.__fields__["scaler"].required = True
         return value
+
+
+class ParametersGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "GAN".
+    """
+
+    pass
+
+
+class ParametersCGANData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersGeneratorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersDiscriminatorData(ParametersBaseData):
+    shape: tuple
+
+
+class ParametersNoiseData(ParametersBaseData):
+    shape: tuple
