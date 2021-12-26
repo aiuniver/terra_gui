@@ -88,7 +88,7 @@ class ModelValidator:
 
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
-        logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
         logger.info("Компиляция керас-кода модели...")
         self._plan_separation()
         self.keras_code = ""
@@ -170,7 +170,7 @@ class ModelValidator:
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         logger.info("Валидация модели...", extra={'type': "info"})
         self._model_validation()
         if self.valid:
@@ -214,7 +214,7 @@ class ModelValidator:
 
     def get_keras_model(self):
         self._plan_separation()
-        logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
+        # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
         if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
@@ -303,7 +303,7 @@ class ModelValidator:
         return _layer_str
 
     def _build_model_plan(self):
-        logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
         logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
@@ -330,7 +330,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about cycles
             valid, bool:            True if no cycles, otherwise False
         """
-        logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_cycles_check.__name__}")
         edges = get_edges(self.model_plan)
         di_graph = nx.DiGraph(edges)
         for cycle in nx.simple_cycles(di_graph):
@@ -348,7 +348,7 @@ class ModelValidator:
             val_dictionary, dict:   with or without comments about separation
             valid, bool:            True if no separation, otherwise False
         """
-        logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_full_connection_check.__name__}")
         edges = get_edges(model_plan=self.model_plan, full_connection=True)
         di_graph = nx.DiGraph(edges)
         sub_graphs = sorted(
@@ -375,7 +375,7 @@ class ModelValidator:
             self.model_idxs = sub_graphs
 
     def _get_model_links(self) -> None:
-        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         (self.start_row, self.up_links, self.down_links, self.all_indexes, self.end_row) = get_links(self.model_plan)
 
     @staticmethod
@@ -384,7 +384,7 @@ class ModelValidator:
 
     def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
-        logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_input_shape_check.__name__}")
         input_layers = {}
         for layer in self.model_plan:
             if layer[0] in self.input_shape.keys():
@@ -406,7 +406,7 @@ class ModelValidator:
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
-        logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
+        # logger.debug(f"{self.name}, {self._get_output_shape_check.__name__}")
         if self.output_shape:
             outputs = []
             for layer in self.model_plan:
@@ -432,7 +432,7 @@ class ModelValidator:
 
     def _model_validation(self) -> dict:
         """Full model validation"""
-        logger.debug(f"{self.name}, {self._model_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._model_validation.__name__}")
         # check for cycles
         logger.info("Проверка наличия циклических структур...")
         self._get_cycles_check()
@@ -494,7 +494,7 @@ class ModelValidator:
         return self.val_dictionary
 
     def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
-        logger.debug(f"{self.name}, {self._layer_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._layer_validation.__name__}")
         self.validator.set_state(
             layer_type=layer[1],
             shape=layer_input_shape,
@@ -507,7 +507,7 @@ class ModelValidator:
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
         """block modeling"""
-        logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
+        # logger.debug(f"{self.name}, {self._custom_block_validation.__name__}")
         _, _, down_links, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
@@ -547,7 +547,7 @@ class ModelValidator:
         return block_output, block_comment
 
     def _plan_separation(self):
-        logger.debug(f"{self.name}, {self._plan_separation.__name__}")
+        # logger.debug(f"{self.name}, {self._plan_separation.__name__}")
         self._get_full_connection_check()
         # logger.debug(f'self.model_idxs - {self.model_idxs}')
         if len(self.model_idxs) == 1:
@@ -585,7 +585,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        logger.debug(f"{self.name}, {self.set_state.__name__}")
+        # logger.debug(f"{self.name}, {self.set_state.__name__}")
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -598,7 +598,7 @@ class LayerValidation:
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
         if error:
             return [None], error
@@ -654,7 +654,7 @@ class LayerValidation:
         """check each not default parameter from check_dict by setting it in base_dict
         revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
-        logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
+        # logger.debug(f"{self.name}, {self.get_problem_parameter.__name__}")
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
             if val_dict.get(param) != check_dict.get(param):
@@ -692,7 +692,7 @@ class LayerValidation:
 
     def parameters_validation(self):
         """Parameter control comparing with default"""
-        logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.parameters_validation.__name__}")
         if isinstance(self.def_parameters, str):
             return self.def_parameters
         problem_params = {}
@@ -726,7 +726,7 @@ class LayerValidation:
 
     def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
-        logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.primary_layer_validation.__name__}")
         comment = self.position_validation()
         if comment:
             return comment
@@ -741,7 +741,7 @@ class LayerValidation:
 
     def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
-        logger.debug(f"{self.name}, {self.position_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.position_validation.__name__}")
         if None in self.inp_shape:
             exc = str(exceptions.InputShapeEmptyException())
             logger.warning(f"Слой {self.layer_type}: {exc}")
@@ -773,7 +773,7 @@ class LayerValidation:
 
     def input_dimension_validation(self) -> Optional[str]:
         """Dimension compatibility of first_shape shape"""
-        logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
@@ -826,7 +826,7 @@ class LayerValidation:
     # @property
     def specific_parameters_validation(self) -> str:
         """Validate specific layer parameters or its combination"""
-        logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
+        # logger.debug(f"{self.name}, {self.specific_parameters_validation.__name__}")
         # initializer identity
         for key in self.layer_parameters.keys():
             if self.layer_parameters.get(key) == "identity" and len(self.inp_shape[0]) != 2:
