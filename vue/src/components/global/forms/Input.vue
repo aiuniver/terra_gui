@@ -189,7 +189,7 @@ export default {
     height: 24px;
     font-size: 12px;
     line-height: 24px;
-    width: 109px;
+    width: 100px;
     & .small {
       height: 24px;
       // width: 24px;

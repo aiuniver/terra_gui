@@ -116,7 +116,7 @@ def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
     # logger.debug(f"Validator module, {get_layer_info.__name__}")
     params_dict = layer_strict.parameters.merged
     if layer_strict.type == LayerTypeChoice.PretrainedYOLO:
-        print('layer_strict.parameters.weight_path', str(layer_strict.parameters.weight_path))
+        # print('layer_strict.parameters.weight_path', str(layer_strict.parameters.weight_path))
         params_dict['save_weights'] = layer_strict.parameters.weight_path
     if layer_strict.group == LayerGroupChoice.input or layer_strict.group == LayerGroupChoice.output:
         params_dict["name"] = f"{layer_strict.id}"
@@ -129,7 +129,7 @@ def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
         layer_strict.type.value,
         params_dict,
         [-1] if not layer_strict.bind.up else [-1 if i is None else i for i in layer_strict.bind.up],
-        [i for i in layer_strict.bind.down],
+        [i for i in sorted(layer_strict.bind.down)],
     )
 
 
