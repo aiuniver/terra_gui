@@ -129,7 +129,7 @@ def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
         layer_strict.type.value,
         params_dict,
         [-1] if not layer_strict.bind.up else [-1 if i is None else i for i in layer_strict.bind.up],
-        [i for i in layer_strict.bind.down],
+        [i for i in sorted(layer_strict.bind.down)],
     )
 
 
