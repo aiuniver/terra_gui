@@ -703,44 +703,12 @@ class GANTerraModel(BaseTerraModel):
         # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__discriminator_loss.__name__}")
         real_loss = loss_func(tf.ones_like(real_output), real_output)
         fake_loss = loss_func(tf.zeros_like(fake_output), fake_output)
-        total_loss = (real_loss + fake_loss) / 2
+        total_loss = real_loss + fake_loss
         return total_loss, real_loss, fake_loss
 
     @staticmethod
     def __generator_loss(loss_func, fake_output):
-        # logger.debug(f'__generator_loss loss_func {loss_func}')
-        # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__generator_loss.__name__}")
         return loss_func(tf.ones_like(fake_output), fake_output)
-
-    @staticmethod
-    def __gradient_penalty(batch_size, real_images, fake_images, discriminator):
-        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__gradient_penalty.__name__}")
-        """ Calculates the gradient penalty.
-
-        This loss is calculated on an interpolated image
-        and added to the discriminator loss.
-        """
-        if real_images.shape[0] > fake_images.shape[0]:
-            while real_images.shape[0] > fake_images.shape[0]:
-                fake_images = tf.concat([fake_images, fake_images], axis=0)
-        if real_images.shape[0] <= fake_images.shape[0]:
-            fake_images = fake_images[:real_images.shape[0]]
-
-        alpha = tf.random.normal([batch_size, 1, 1, 1], 0.0, 1.0)
-        diff = fake_images - real_images
-        interpolated = real_images + alpha * diff
-
-        with tf.GradientTape() as gp_tape:
-            gp_tape.watch(interpolated)
-            # 1. Get the discriminator output for this interpolated image.
-            pred = discriminator(interpolated)
-
-        # 2. Calculate the gradients w.r.t to this interpolated image.
-        grads = gp_tape.gradient(pred, [interpolated])[0]
-        # 3. Calculate the norm of the gradients.
-        norm = tf.sqrt(tf.reduce_sum(tf.square(grads), axis=[1, 2, 3]))
-        gp = tf.reduce_mean((norm - 1.0) ** 2)
-        return gp
 
     def set_optimizer(self, params: TrainingDetailsData):
         logger.debug(f"{GANTerraModel.name}, {GANTerraModel.set_optimizer.__name__}")
@@ -750,8 +718,6 @@ class GANTerraModel(BaseTerraModel):
             parameters = params.base.optimizer.parameters.main.native()
             parameters.update(params.base.optimizer.parameters.extra.native())
             return optimizer_object(**parameters)
-            # self.generator_optimizer = optimizer_object(**parameters)
-            # self.discriminator_optimizer = optimizer_object(**parameters)
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
@@ -760,27 +726,21 @@ class GANTerraModel(BaseTerraModel):
 
     @tf.function
     def __train_step(self, images, gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
-        logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__train_step.__name__}")
+        # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__train_step.__name__}")
         images = tf.cast(images, dtype='float32')
         noise_shape = [gen_batch]
         noise_shape.extend(list(self.noise))
         noise = tf.random.normal(noise_shape)
-
-        # gp_weight = tf.convert_to_tensor(gp_weight, dtype='float32')
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.generator(noise, training=True)
+
             real_output = self.discriminator(images, training=True)
             fake_output = self.discriminator(generated_images, training=True)
+
             gen_loss = self.__generator_loss(loss_func=self.generator_loss_func, fake_output=fake_output)
             disc_loss, disc_real_loss, disc_fake_loss = self.__discriminator_loss(
                 loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
-            # if grad_penalty:
-            #     gp = self.__gradient_penalty(
-            #         batch_size=dis_batch, real_images=images, fake_images=generated_images,
-            #         discriminator=self.discriminator)
-            #     disc_loss = tf.add(disc_loss, gp * gp_weight)
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
-        # disc_loss = tf.convert_to_tensor(disc_loss, dtype='float32')
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
         self.generator_optimizer.apply_gradients(
             zip(gradients_of_generator, self.generator.trainable_variables))
@@ -795,28 +755,13 @@ class GANTerraModel(BaseTerraModel):
             self.train_length = len(dataset.dataframe.get('train'))
             self.generator_optimizer = self.set_optimizer(params=params)
             self.discriminator_optimizer = self.set_optimizer(params=params)
-            # yolo_parameters = self.__create_yolo_parameters(params=params, dataset=dataset)
-            # num_class = yolo_parameters.get("parameters").get("num_class")
-            # classes = yolo_parameters.get("parameters").get("classes")
-            # global_steps = tf.Variable(1, trainable=False, dtype=tf.int64)
             loss_dict = self._prepare_loss_dict(params)
             self.generator_loss_func = loss_dict.get('generator')
             self.discriminator_loss_func = loss_dict.get('discriminator')
             logger.debug(f'loss_dict - {loss_dict}')
-
             self.set_optimizer(params=params)
-
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
-            # num_batches = self.train_length if self.train_length % params.base.batch == 0 \
-            #     else (self.train_length // params.base.batch + 1) * params.base.batch
-            # target_shape = [num_batches]
-            # target_shape, seed_shape = [params.base.batch * 10], [10]
-            # target_shape.extend(list(self.generator.outputs[0].shape[1:]))
-            # seed_shape.extend(list(self.generator.outputs[0].shape[1:]))
-            # train_pred = np.zeros(target_shape).astype('float32')
-            # seed_pred = np.zeros(seed_shape).astype('float32')
-
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
@@ -824,33 +769,25 @@ class GANTerraModel(BaseTerraModel):
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 current_idx = 0
-                cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 1, 0, 0, 0, 0
+                cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                    cur_step += 1
                     # logger.debug(f"Batch {cur_step}: start...")
                     results = self.__train_step(images=image_data.get(self.discriminator.inputs[0].name),
                                                 gen_batch=params.base.batch,
                                                 dis_batch=params.base.batch)
-                    # generated_images, gen_loss, disc_loss, disc_real_loss, disc_fake_loss
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
                     disc_fake_loss += results[3].numpy()
-                    if cur_step % 10:
+                    if cur_step % 1 == 0:
                         logger.debug(f"Batch {cur_step}: "
-                                     f"gen_loss={round(gen_loss / cur_step, 3)}, "
-                                     f"disc_loss={round(disc_loss / cur_step, 3)}, "
-                                     f"disc_real_loss={round(disc_real_loss / cur_step, 3)}, "
-                                     f"disc_fake_loss={round(disc_fake_loss / cur_step, 3)}")
+                                     f"gen_loss={round(results[0].numpy(), 3)}, "
+                                     f"disc_loss={round(results[1].numpy(), 3)}, "
+                                     f"disc_real_loss={round(results[2].numpy(), 3)}, "
+                                     f"disc_fake_loss={round(results[3].numpy(), 3)}")
 
-                    # length = results[0].shape[0]
-                    # for i in range(len(train_pred)):
-                    # train_pred[current_idx: current_idx + length] = results[0].numpy()
-                    # logger.debug(f"Batch {cur_step}: finish add array")
-                    # current_idx += length
-                    # if cur_step == 10:
-                    #     break
-                    cur_step += 1
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
                         self.callback.on_train_batch_end(
@@ -861,11 +798,12 @@ class GANTerraModel(BaseTerraModel):
                             }
                         )
                     else:
-                        self.callback.on_train_batch_end(batch=cur_step - 1)
+                        self.callback.on_train_batch_end(batch=cur_step)
+
                     if self.callback.stop_training:
                         break
 
-                logger.info(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...", extra={"type": "info"})
+                logger.info(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...", extra={"type": "info"})
                 self.save_weights()
                 if self.callback.stop_training:
                     logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "success"})
