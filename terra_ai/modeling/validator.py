@@ -524,6 +524,7 @@ class LayerValidation:
         """Validate given layer parameters and return output shape and possible error comment"""
         # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
+        # logger.debug(f'Layer {self.layer_type} - primary_layer_validation: {error}')
         if error:
             return [None], error
         else:
@@ -538,8 +539,14 @@ class LayerValidation:
                         return self.inp_shape, None
                     elif self.module_type == ModuleTypeChoice.keras_pretrained_model:
                         params.pop("trainable")
+                        # print(params)
+                        params['weights'] = None
                         if params.get("name"):
                             params.pop("name")
+                        output_shape = [
+                            tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
+                                self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
+                        ]
                     elif self.layer_type == LayerTypeChoice.PretrainedYOLO:
                         # print(self.inp_shape)
                         params['use_weights'] = False
