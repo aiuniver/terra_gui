@@ -56,7 +56,7 @@
       </div>
       <div v-if="type == 'audio_classification'">
         <div class="card__original">
-          <AudioCard :value="card.source" />
+          <AudioCard :value="card.source" :key="card.source"/>
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">
