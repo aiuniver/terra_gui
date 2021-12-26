@@ -35,7 +35,10 @@ class DataList(DataBaseList):
 
     def reload(self, indexes: List[int] = None):
         if indexes is None:
-            indexes = list(range(DEPLOY_PRESET_COUNT))
+            range_count = (
+                DEPLOY_PRESET_COUNT if DEPLOY_PRESET_COUNT <= len(self) else len(self)
+            )
+            indexes = list(range(range_count))
         indexes = list(filter(self._positive_int_filter, indexes))
         indexes = list(map(int, indexes))
         if not len(self):
