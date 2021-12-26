@@ -700,6 +700,9 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
     tt1 = time.time()
     try:
         logger.info(f"Расчет метрики mAP50...", extra={"type": "info"})
+        image_mode = dataset.instructions[1]['1_image']['image_mode'] if \
+            dataset.instructions[1]['1_image'].get('image_mode') is not None else 'stretch'
+        print('image_mode', image_mode)
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -713,7 +716,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
 
             true_bbox = dataset.dataframe.get("val").iloc[index, 1]  # .split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
-            bbox_data_gt = np.array(resize_bboxes('stretch', true_bbox, tmp_im.width, tmp_im.height))
+            bbox_data_gt = np.array(resize_bboxes(image_mode, true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
             if len(bbox_data_gt) == 0:
