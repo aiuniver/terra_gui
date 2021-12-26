@@ -51,7 +51,7 @@
           {{ 'Обновить' }}
         </t-button>
         <br />
-        <t-field inline label="Автообновление">
+        <t-field inline label="Автообновление" :key="'autoupdate' + autoupdate">
           <t-checkbox-new v-model="autoupdate" small @change="show" />
         </t-field>
       </div>
