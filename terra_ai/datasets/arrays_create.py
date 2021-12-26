@@ -177,9 +177,9 @@ class CreateArray(object):
             if options['text_mode'] == 'completely':
                 iter_count = 0
                 adjust_flag = False
-                adjusted_length = options['length']
+                adjusted_length = length
                 while not adjust_flag:
-                    adjust_length = options['length'] - len(
+                    adjust_length = length - len(
                         text_to_word_sequence(' '.join(value[0: adjusted_length]), options['filters'], lower=False))
                     adjusted_length += adjust_length
                     if adjust_length == 0 or iter_count == 10:
@@ -191,12 +191,12 @@ class CreateArray(object):
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    adjusted_length = options['length']
-                    if cur_step + options['length'] < len(value):
+                    adjusted_length = length
+                    if cur_step + length < len(value):
                         iter_count = 0
                         adjust_flag = False
                         while not adjust_flag:
-                            adjust_length = options['length'] - len(
+                            adjust_length = length - len(
                                 text_to_word_sequence(' '.join(value[cur_step: cur_step + adjusted_length]),
                                                       options['filters'], lower=False))
                             adjusted_length += adjust_length
@@ -207,7 +207,7 @@ class CreateArray(object):
                         stop_flag = True
                     text[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = ' '.join(
                         value[cur_step: cur_step + adjusted_length])
-                    cur_step += options['step'] + (adjusted_length - options['length'])
+                    cur_step += options['step'] + (adjusted_length - length)
 
         instructions = {'instructions': text,
                         'parameters': {**options,
