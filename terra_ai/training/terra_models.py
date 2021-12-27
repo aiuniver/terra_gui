@@ -781,12 +781,12 @@ class GANTerraModel(BaseTerraModel):
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
                     disc_fake_loss += results[3].numpy()
-                    if cur_step % 1 == 0:
-                        logger.debug(f"Batch {cur_step}: "
-                                     f"gen_loss={round(results[0].numpy(), 3)}, "
-                                     f"disc_loss={round(results[1].numpy(), 3)}, "
-                                     f"disc_real_loss={round(results[2].numpy(), 3)}, "
-                                     f"disc_fake_loss={round(results[3].numpy(), 3)}")
+                    # if cur_step % 10 == 0:
+                    #     logger.debug(f"Batch {cur_step}: "
+                    #                  f"gen_loss={round(results[0].numpy(), 3)}, "
+                    #                  f"disc_loss={round(results[1].numpy(), 3)}, "
+                    #                  f"disc_real_loss={round(results[2].numpy(), 3)}, "
+                    #                  f"disc_fake_loss={round(results[3].numpy(), 3)}")
 
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
