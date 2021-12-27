@@ -37,7 +37,10 @@ export default {
         if (res) {
           const { error, logs, success } = res;
           // if (success) dispatch('messages/setMessage', '');
-          if (error && !success) dispatch('logging/setError', error);
+          if (error && !success) {
+            dispatch('logging/setError', error);
+            dispatch('settings/setOverlay', false);
+          }
           if (logs && logs.length) dispatch('logging/setLogs', logs);
         }
         return res;

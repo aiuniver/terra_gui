@@ -1,6 +1,8 @@
 <template>
   <div class="text-card">
-    <slot></slot>
+    <scrollbar :ops="ops">
+      <slot></slot>
+    </scrollbar>
   </div>
 </template>
 

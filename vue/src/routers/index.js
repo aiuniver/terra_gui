@@ -78,8 +78,8 @@ const router = new Router({
       path: '/servers',
       name: 'Servers',
       meta: { 
-        title: process.env.NODE_ENV === 'development' ? 'Серверы' : null,
-        // title: 'Серверы',
+        // title: process.env.NODE_ENV === 'development' ? 'Серверы' : null,
+        title: 'Серверы',
         access: true,
         text: '', 
       },

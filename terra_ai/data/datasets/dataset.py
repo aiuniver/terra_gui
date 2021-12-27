@@ -2,6 +2,7 @@ import os
 import re
 import json
 
+from copy import deepcopy
 from pathlib import Path, PureWindowsPath
 from pandas import read_csv
 from datetime import datetime
@@ -9,6 +10,7 @@ from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
+from dict_recursive_update import recursive_update
 
 from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from terra_ai.data.extra import FileSizeData
@@ -218,21 +220,21 @@ class DatasetData(AliasMixinData):
                 )
             layers.append(_data)
         for _id, layer in self.outputs.items():
-            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
-                layer.datatype, {}
+            output_layer_defaults = self._update_model_links(
+                deepcopy(
+                    OutputLayersDefaults.get(layer.task, {}).get(layer.datatype, {})
+                ),
+                layer,
             )
-            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
-            units = layer.num_classes
-            params = {
-                "activation": activation,
+            parameters_common = {
+                "activation": ActivationChoice.relu.name,
+                "units": layer.num_classes,
+                "filters": layer.num_classes,
             }
-            if units:
-                params.update(
-                    {
-                        "units": units,
-                        "filters": units,
-                    }
-                )
+            parameters = {
+                "main": deepcopy(parameters_common),
+                "extra": deepcopy(parameters_common),
+            }
             _data = {
                 "id": _id,
                 "name": layer.name,
@@ -240,20 +242,24 @@ class DatasetData(AliasMixinData):
                 "group": LayerGroupChoice.output,
                 "shape": {"output": [layer.shape]},
                 "task": layer.task,
-                "parameters": {
-                    "main": params,
-                    "extra": params,
-                },
+                "num_classes": layer.num_classes,
+                "parameters": recursive_update(
+                    parameters, output_layer_defaults.get("parameters", {})
+                ),
             }
-            if layer.num_classes:
-                _data.update(
-                    {
-                        "num_classes": layer.num_classes,
-                    }
-                )
             layers.append(_data)
         data.update({"layers": layers})
         return ModelDetailsData(**data)
+
+    def _update_model_links(self, data: dict, layer) -> dict:
+        for _key, _value in data.items():
+            if isinstance(_value, dict):
+                data.update({_key: self._update_model_links(_value, layer)})
+            elif isinstance(_value, str):
+                match = re.match(r"^@(.+)", _value)
+                if match:
+                    data.update({_key: getattr(layer, match.group(1))})
+        return data
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
