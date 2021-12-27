@@ -38,51 +38,101 @@ OutputLayersDefaults = {
     LayerOutputTypeChoice.Classification: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.Segmentation: {
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "2D": {
             "type": LayerTypeChoice.Conv2D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "3D": {
             "type": LayerTypeChoice.Conv3D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.TextSegmentation: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.sigmoid.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.sigmoid.value,
+                }
+            },
         },
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.sigmoid.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.sigmoid.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.Regression: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
         }
     },
     LayerOutputTypeChoice.Timeseries: {
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
         },
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
+        },
+    },
+    LayerOutputTypeChoice.ObjectDetection: {
+        "3D": {
+            "type": LayerTypeChoice.Reshape.value,
+            "parameters": {
+                "main": {
+                    "target_shape": "@shape",
+                },
+            },
         },
     },
     LayerOutputTypeChoice.ObjectDetection: {
