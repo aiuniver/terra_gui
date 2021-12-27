@@ -4,6 +4,7 @@
 
 import os
 import cv2
+import numpy
 import pandas
 import base64
 
@@ -125,7 +126,7 @@ class FileManagerItem(BaseMixinData):
         if self.type != FileManagerTypeChoice.csv:
             return None
         dataframe = pandas.read_csv(self.path, nrows=5)
-        data = dataframe.values.tolist()
+        data: list = numpy.where(dataframe.isnull(), None, dataframe).tolist()
         data.insert(0, list(dataframe.columns))
         return data
 

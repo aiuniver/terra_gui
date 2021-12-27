@@ -1,4 +1,3 @@
-from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
@@ -154,11 +153,12 @@ class CreateDataset(object):
     @staticmethod
     def preprocess_creation_data(creation_data):
 
+        noise_flag = False
         for inp in range(len(creation_data.inputs)):
             for worker_name, worker_params in creation_data.columns_processing.items():
                 if creation_data.columns_processing[worker_name].type == 'Image':
                     shape = (worker_params.parameters.height, worker_params.parameters.width, 3)
-                elif creation_data.columns_processing[worker_name].type == 'GAN':
+                elif creation_data.columns_processing[worker_name].type == 'GAN' and not noise_flag:
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
                         **{"type": "Noise", "parameters": {'shape': (100,)}})
@@ -171,6 +171,7 @@ class CreateDataset(object):
                                'cols_names': {list(output_copy.parameters.cols_names.keys())[0]: [new_worker_id]},
                                'sources_paths': output_copy.parameters.sources_paths}})
                     )
+                    noise_flag = True
                     break
 
         for out in creation_data.outputs:
