@@ -28,6 +28,7 @@ from tensorflow import minimum as tf_minimum
 from tensorflow import random as tf_random
 
 
+
 class CreateArray(object):
 
     @staticmethod
