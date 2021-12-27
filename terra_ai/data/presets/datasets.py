@@ -135,11 +135,6 @@ OutputLayersDefaults = {
             },
         },
     },
-    LayerOutputTypeChoice.ObjectDetection: {
-        "3D": {
-            "type": LayerTypeChoice.Reshape.value,
-        },
-    },
 }
 
 
