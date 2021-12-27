@@ -722,7 +722,7 @@ class BaseObjectDetectionCallback:
                 for cl in range(len(name_classes)):
                     class_bb[data_type][cl] = []
                 for index in range(len(options.dataframe[data_type])):
-                    y_true = options.dataframe.get(data_type).iloc[index, 1].split(' ')
+                    y_true = options.dataframe.get(data_type)['val']['2_object_detection'][index].split(' ')
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
                     bboxes_gt = np.concatenate(

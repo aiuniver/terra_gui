@@ -702,7 +702,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
         logger.info(f"Расчет метрики mAP50...", extra={"type": "info"})
         image_mode = dataset.instructions[1]['1_image']['image_mode'] if \
             dataset.instructions[1]['1_image'].get('image_mode') is not None else 'stretch'
-        print('image_mode', image_mode)
+        # print('image_mode', image_mode)
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
