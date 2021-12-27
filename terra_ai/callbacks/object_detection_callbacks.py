@@ -36,12 +36,12 @@ class BaseObjectDetectionCallback:
             model_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
             for index in range(len(options.dataframe['val'])):
                 image_path = os.path.join(
-                    dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
+                    dataset_path, options.dataframe['val']['1_image'][index])
                 img = Image.open(image_path)
                 real_size = img.size
                 scale_w = model_size[0] / real_size[0]
                 scale_h = model_size[1] / real_size[1]
-                coord = options.dataframe.get('val').iloc[index, 1].split(' ')
+                coord = options.dataframe.get('val')['2_object_detection'][index].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
                 bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
                 classes_gt = to_categorical(
@@ -764,7 +764,7 @@ class BaseObjectDetectionCallback:
                         'statistic_values': {}
                     }
                     image_path = os.path.join(
-                        dataset_path, options.dataframe.get('val').iat[example_idx[idx], 0])
+                        dataset_path, options.dataframe.get('val')['1_image'][example_idx[idx]])
                     out = yolo_interactive_config.intermediate_result.box_channel
                     data = BaseObjectDetectionCallback().postprocess_object_detection(
                         predict_array=y_pred.get(out)[example_idx[idx]],
