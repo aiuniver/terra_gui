@@ -28,10 +28,8 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
-import logging
 import h5py
 from math import ceil
-from PIL import Image
 from itertools import repeat
 from pathlib import Path
 from typing import Union
@@ -749,10 +747,11 @@ class CreateDataset(object):
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
                     data_to_pass = self.dataframe['train'].iloc[0, 1]
-                    tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                     self.dataframe['train'].iloc[0, 0]))
-                    data.parameters.update([('orig_x', tmp_im.width),
-                                            ('orig_y', tmp_im.height)])
+                    # tmp_im = Image.open(os.path.join(self.paths.basepath,
+                    #                                  self.dataframe['train'].iloc[0, 0]))
+                    tmp_im = self.dataframe['train'].iloc[0, 0].split(';')[1].split(',')
+                    data.parameters.update([('orig_x', int(tmp_im[0])),
+                                            ('orig_y', int(tmp_im[1]))])
                 else:
                     data_to_pass = data.instructions[0]
                 array = np.array([1])
@@ -1014,10 +1013,13 @@ class CreateDataset(object):
                                 #     tmp_data.append(self.augmentation[split]['1_image'][i])
                                 # else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
-                                tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                                 self.dataframe[split].iloc[i, 0]))
-                                parameters_to_pass.update([('orig_x', tmp_im.width),
-                                                           ('orig_y', tmp_im.height)])
+                                tmp_im = self.dataframe['train'].iloc[1, 0].split(';')[1].split(',')
+                                # data.parameters.update([('orig_x', tmp_im[0]),
+                                #                         ('orig_y', tmp_im[1])])
+                                # tmp_im = Image.open(os.path.join(self.paths.basepath,
+                                #                                  self.dataframe[split].iloc[i, 0]))
+                                parameters_to_pass.update([('orig_x', int(tmp_im[0])),
+                                                           ('orig_y', int(tmp_im[1]))])
                             else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
                             # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
