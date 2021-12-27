@@ -5,12 +5,14 @@
 from typing import Optional, List
 from pydantic import validator
 from pydantic.types import PositiveInt
+from dict_recursive_update import recursive_update
 
 from terra_ai.data.modeling.layer import LayersList
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, Base64Type
 from .extra import LayerBindPositionChoice, LayerGroupChoice
+from .layer import LayerData
 
 
 class LinkData(BaseMixinData):
@@ -176,15 +178,25 @@ class ModelBaseDetailsData(AliasMixinData):
 
         for index, layer in enumerate(self.inputs):
             layer_init = dataset_model.inputs.get(layer.id)
-            layer.shape = layer_init.shape
-            layer.task = layer_init.task
-            layer.num_classes = layer_init.num_classes
+            layer_init_dict = layer_init.native()
+            layer_dict = layer.native()
+            layer_init_dict.pop("id")
+            layer_init_dict.pop("bind")
+            layer_init_dict.pop("position")
+            self.layers.append(
+                LayerData(**recursive_update(layer_dict, layer_init_dict))
+            )
 
         for index, layer in enumerate(self.outputs):
             layer_init = dataset_model.outputs.get(layer.id)
-            layer.shape = layer_init.shape
-            layer.task = layer_init.task
-            layer.num_classes = layer_init.num_classes
+            layer_init_dict = layer_init.native()
+            layer_dict = layer.native()
+            layer_init_dict.pop("id")
+            layer_init_dict.pop("bind")
+            layer_init_dict.pop("position")
+            self.layers.append(
+                LayerData(**recursive_update(layer_dict, layer_init_dict))
+            )
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)

@@ -17,11 +17,16 @@ class DataBaseList(List):
     def __init__(self, *args):
         if len(args) > 1:
             self.path_deploy = args[1]
+        initial_data = list(args[0])
         self.preset = [None] * (
-            DEPLOY_PRESET_COUNT if DEPLOY_PRESET_COUNT <= len(args[0]) else len(args[0])
+            DEPLOY_PRESET_COUNT
+            if DEPLOY_PRESET_COUNT <= len(initial_data)
+            else len(initial_data)
         )
         super().__init__(
-            list(map(lambda item: self.Meta.source(**item), args[0])) if args else []
+            list(map(lambda item: self.Meta.source(**item), initial_data))
+            if args
+            else []
         )
 
     def preset_update(self, data):
