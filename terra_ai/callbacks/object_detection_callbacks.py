@@ -639,7 +639,7 @@ class BaseObjectDetectionCallback:
             )
             return_data[bb] = []
             for ex in example_idx:
-                img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
+                img_path = os.path.join(dataset_path, options.dataframe['val']['1_image'][ex])
                 img = Image.open(img_path)
                 img = img.convert('RGB')
                 source = os.path.join(save_path, "deploy_presets", f"deploy_od_initial_data_{ex}_box_{bb}.webp")
