@@ -702,7 +702,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
         logger.info(f"Расчет метрики mAP50...", extra={"type": "info"})
         image_mode = dataset.instructions[1]['1_image']['image_mode'] if \
             dataset.instructions[1]['1_image'].get('image_mode') is not None else 'stretch'
-        print('image_mode', image_mode)
+        # print('image_mode', image_mode)
         if TRAIN_CLASSES is None:
             TRAIN_CLASSES = []
         if iou_threshold is None:
@@ -714,8 +714,8 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
         id_ground_truth = {}
         for index in range(len(dataset.dataframe.get("val"))):
 
-            true_bbox = dataset.dataframe.get("val").iloc[index, 1]  # .split(' ')
-            tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[index, 0]))
+            true_bbox = dataset.dataframe.get("val").get('2_object_detection')[index]  # .split(' ')
+            tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[index]))
             bbox_data_gt = np.array(resize_bboxes(image_mode, true_bbox, tmp_im.width, tmp_im.height))
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
@@ -791,7 +791,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
             class_predictions = {}
             len_bbox = 0
             for i_image, pred_bbox in enumerate(predict):
-                tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").iloc[i_image, 0]))
+                tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[i_image]))
                 tmp_im = np.array(tmp_im)
                 bboxes = postprocess_boxes(pred_bbox, tmp_im, TEST_INPUT_SIZE, score_threshold)
                 bboxes = nms(bboxes, i_iou, method='nms')
