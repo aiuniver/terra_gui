@@ -212,7 +212,10 @@ def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
         pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
                                     pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
         # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
-        org_h, org_w = np.squeeze(original_image).shape[:2]
+        if original_image is not None:
+            org_h, org_w = np.squeeze(original_image).shape[:2]
+        else:
+            org_h, org_w = input_size, input_size
         resize_ratio = min(input_size / org_w, input_size / org_h)
 
         dw = (input_size - resize_ratio * org_w) / 2
@@ -692,7 +695,7 @@ def voc_ap(rec, prec):
         raise exc
 
 
-def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25, iou_threshold: object = None,
+def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.05, iou_threshold: object = None,
             TEST_INPUT_SIZE: int = 416, TRAIN_CLASSES: list = None,
             pred: np.ndarray = None, dataset_path: str = '') -> dict:
     method_name = 'get_mAP'
@@ -790,8 +793,9 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
             class_predictions = {}
             len_bbox = 0
             for i_image, pred_bbox in enumerate(predict):
-                tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[i_image]))
-                tmp_im = np.array(tmp_im)
+                # tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[i_image]))
+                # tmp_im = np.array(tmp_im)
+                tmp_im = None
                 bboxes = postprocess_boxes(pred_bbox, tmp_im, TEST_INPUT_SIZE, score_threshold)
                 bboxes = nms(bboxes, i_iou, method='nms')
                 len_bbox += len(bboxes)
