@@ -427,7 +427,6 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
 
 
 ### CREATE AND FIT MODEL ###
-
 def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
     method_name = 'decode'
     try:
@@ -785,7 +784,7 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                 ms = sum(times) / len(times) * 1000
                 fps = 1000 / ms
         ap_dictionary = {}
-        warnings = []
+        # warnings = []
         for i_iou in iou_threshold:
             json_pred = [[] for _ in range(n_classes)]
             class_predictions = {}
