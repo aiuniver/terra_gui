@@ -214,13 +214,13 @@ class BaseObjectDetectionCallback:
                 resized_coord = np.concatenate([resized_coord, boxes[:, 4:]], axis=-1)
                 return resized_coord
 
-            print(f"\nscale_w, scale_h: {scale_w, scale_h, real_size}\n")
-            print(f"true_bb: {true_bb}\n")
-            print(f"pred_bb: {pred_bb}\n")
+            # print(f"\nscale_w, scale_h: {scale_w, scale_h, real_size}\n")
+            # print(f"true_bb: {true_bb}\n")
+            # print(f"pred_bb: {pred_bb}\n")
             true_bb = resize_bb(true_bb, scale_w, scale_h)
             pred_bb = resize_bb(pred_bb, scale_w, scale_h)
-            print(f"resize_true_bb: {true_bb}\n")
-            print(f"resize_pred_bb: {pred_bb}\n")
+            # print(f"resize_true_bb: {true_bb}\n")
+            # print(f"resize_pred_bb: {pred_bb}\n")
 
             def draw_box(draw, box, color, thickness, label=None, label_size=None,
                          dash_mode=False, show_label=False):
