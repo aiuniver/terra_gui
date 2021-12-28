@@ -36,12 +36,12 @@ class BaseObjectDetectionCallback:
             model_size = options.data.inputs.get(list(options.data.inputs.keys())[0]).shape[:2]
             for index in range(len(options.dataframe['val'])):
                 image_path = os.path.join(
-                    dataset_path, options.dataframe['val'][options.dataframe['val'].columns[0]][index])
+                    dataset_path, options.dataframe['val']['1_image'][index])
                 img = Image.open(image_path)
                 real_size = img.size
                 scale_w = model_size[0] / real_size[0]
                 scale_h = model_size[1] / real_size[1]
-                coord = options.dataframe.get('val').iloc[index, 1].split(' ')
+                coord = options.dataframe.get('val')['2_object_detection'][index].split(' ')
                 bbox_data_gt = np.array([list(map(int, box.split(','))) for box in coord])
                 bboxes_gt, classes_gt = bbox_data_gt[:, :4].astype('float'), bbox_data_gt[:, 4]
                 classes_gt = to_categorical(
@@ -251,7 +251,7 @@ class BaseObjectDetectionCallback:
                 return draw
 
             font = ImageFont.load_default()
-            thickness = (image.size[0] + image.size[1]) // 300
+            thickness = (image.size[0] + image.size[1]) // 300 if (image.size[0] + image.size[1]) > 800 else 2
             image_pred = image.copy()
             if plot_true:
                 classes = np.argmax(true_bb[:, 5:], axis=-1)
@@ -639,7 +639,7 @@ class BaseObjectDetectionCallback:
             )
             return_data[bb] = []
             for ex in example_idx:
-                img_path = os.path.join(dataset_path, options.dataframe['val'].iat[ex, 0])
+                img_path = os.path.join(dataset_path, options.dataframe['val']['1_image'][ex])
                 img = Image.open(img_path)
                 img = img.convert('RGB')
                 source = os.path.join(save_path, "deploy_presets", f"deploy_od_initial_data_{ex}_box_{bb}.webp")
@@ -722,7 +722,7 @@ class BaseObjectDetectionCallback:
                 for cl in range(len(name_classes)):
                     class_bb[data_type][cl] = []
                 for index in range(len(options.dataframe[data_type])):
-                    y_true = options.dataframe.get(data_type).iloc[index, 1].split(' ')
+                    y_true = options.dataframe.get(data_type)['2_object_detection'][index].split(' ')
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
                     bboxes_gt = np.concatenate(
@@ -764,7 +764,7 @@ class BaseObjectDetectionCallback:
                         'statistic_values': {}
                     }
                     image_path = os.path.join(
-                        dataset_path, options.dataframe.get('val').iat[example_idx[idx], 0])
+                        dataset_path, options.dataframe.get('val')['1_image'][example_idx[idx]])
                     out = yolo_interactive_config.intermediate_result.box_channel
                     data = BaseObjectDetectionCallback().postprocess_object_detection(
                         predict_array=y_pred.get(out)[example_idx[idx]],
