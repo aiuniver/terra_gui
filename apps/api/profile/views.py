@@ -19,7 +19,11 @@ class SaveAPIView(BaseAPIView):
             }
         )
 
-        response = requests.post(f"{settings.TERRA_API_URL}/update/", json=data)
+        response = requests.post(
+            f"{settings.TERRA_API_URL}/update/",
+            json=data,
+            cookies={"sessionid": settings.USER_SESSION},
+        )
         response_data = response.json()
         if not response_data.get("success"):
             raise ValueError("Не удалось обновить данные пользователя")
@@ -35,7 +39,11 @@ class UpdateTokenAPIView(BaseAPIView):
             "user_token": settings.USER_TOKEN,
         }
 
-        response = requests.post(f"{settings.TERRA_API_URL}/update_token/", json=data)
+        response = requests.post(
+            f"{settings.TERRA_API_URL}/update_token/",
+            json=data,
+            cookies={"sessionid": settings.USER_SESSION},
+        )
         response_data = response.json()
         if not response_data.get("new_token"):
             raise ValueError("Не удалось обновить токен пользователя")
