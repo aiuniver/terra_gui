@@ -18,7 +18,6 @@ class SaveAPIView(BaseAPIView):
                 "user_token": settings.USER_TOKEN,
             }
         )
-
         response = requests.post(
             f"{settings.TERRA_API_URL}/update/",
             json=data,
@@ -26,7 +25,7 @@ class SaveAPIView(BaseAPIView):
         )
         response_data = response.json()
         if not response_data.get("success"):
-            raise ValueError("Не удалось обновить данные пользователя")
+            raise ValueError(response_data.get("error"))
 
         update_env_file(**serializer.validated_data)
         return BaseResponseSuccess()
