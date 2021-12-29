@@ -747,8 +747,6 @@ class CreateDataset(object):
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
                     data_to_pass = self.dataframe['train'].iloc[0, 1]
-                    # tmp_im = Image.open(os.path.join(self.paths.basepath,
-                    #                                  self.dataframe['train'].iloc[0, 0]))
                     tmp_im = self.dataframe['train'].iloc[0, 0].split(';')[1].split(',')
                     data.parameters.update([('orig_x', int(tmp_im[0])),
                                             ('orig_y', int(tmp_im[1]))])
@@ -1013,11 +1011,7 @@ class CreateDataset(object):
                                 #     tmp_data.append(self.augmentation[split]['1_image'][i])
                                 # else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
-                                tmp_im = self.dataframe['train'].iloc[1, 0].split(';')[1].split(',')
-                                # data.parameters.update([('orig_x', tmp_im[0]),
-                                #                         ('orig_y', tmp_im[1])])
-                                # tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                #                                  self.dataframe[split].iloc[i, 0]))
+                                tmp_im = self.dataframe['train'].iloc[i, 0].split(';')[1].split(',')
                                 parameters_to_pass.update([('orig_x', int(tmp_im[0])),
                                                            ('orig_y', int(tmp_im[1]))])
                             else:
