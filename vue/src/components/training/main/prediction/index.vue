@@ -35,10 +35,10 @@
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-field inline label="Выводить промежуточные результаты">
+        <t-field inline label="Выводить промежуточные результаты" :key="'show_results' + show_results">
           <t-checkbox-new v-model="show_results" small @change="show" />
         </t-field>
-        <t-field inline label="Показать статистику">
+        <t-field inline label="Показать статистику" :key="'show_statistic' + show_statistic">
           <t-checkbox-new v-model="show_statistic" small @change="show" />
         </t-field>
         <!-- <t-field inline label="Фиксация колонок">
@@ -51,7 +51,7 @@
           {{ 'Обновить' }}
         </t-button>
         <br />
-        <t-field inline label="Автообновление">
+        <t-field inline label="Автообновление" :key="'autoupdate' + autoupdate">
           <t-checkbox-new v-model="autoupdate" small @change="show" />
         </t-field>
       </div>
@@ -59,7 +59,7 @@
     <div class="predictions__body">
       <PredictTable v-if="isEmpty" :predict="predictData" :fixation="fixation" :update="predictUpdate" />
       <div v-else class="predictions__overlay">
-        <LoadSpiner v-if="start && isLearning" text="Загрузка данных..." />
+        <LoadSpiner v-if="isStart && isLearning" text="Загрузка данных..." />
       </div>
     </div>
   </div>
@@ -114,8 +114,12 @@ export default {
     isLearning() {
       return ['addtrain', 'training'].includes(this.status);
     },
+    isStart() {
+      // return this.settings.show_results;
+      return this.settings.show_results && this.autoupdate;
+    },
     isEmpty() {
-      return Object.keys(this.predictData).length;
+      return Boolean(Object.keys(this.predictData).length);
     },
     sortOutput() {
       return this.outputs.map(item => {
@@ -170,7 +174,7 @@ export default {
   methods: {
     async show() {
       if (this.isError) return;
-      this.start = this.settings.show_results;
+      // this.start = this.settings.show_results;
       const data = {
         autoupdate: this.autoupdate,
         example_choice_type: this.example_choice_type,
@@ -190,6 +194,14 @@ export default {
       this[key] = this.settings[key];
     }
     this.start = this.settings.show_results && this.autoupdate;
+  },
+  watch: {
+    settings(value) {
+      for (let key in value) {
+        this[key] = value[key];
+      }
+      console.warn(value['show_results']);
+    },
   },
 };
 </script>

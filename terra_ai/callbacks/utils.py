@@ -9,6 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.metrics import classification_report, confusion_matrix
 
+from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 import terra_ai.exceptions.callbacks as exception
 from terra_ai.utils import camelize
@@ -445,6 +446,7 @@ def get_autocorrelation_graphic(y_true, y_pred, depth=10) -> (list, list, list):
             if sa > 0 and sb > 0:
                 val = (mab - ma * mb) / (sa * sb)
             return val
+
         auto_corr_true = []
         for i in range(depth):
             if i == 0:
@@ -893,11 +895,14 @@ def segmentation_metric(true_array, pred_array):
 
 def get_dataset_length(options):
     method_name = 'get_dataset_length'
+    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
         train_length, val_length = 0, 0
+        if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \
+                options.data.group != DatasetGroupChoice.keras:
+            return len(options.dataframe.get('train')), len(options.dataframe.get('val'))
         for x in options.dataset.get('train').batch(2 ** 10):
             train_length += list(x[0].values())[0].shape[0]
-        val_length = 0
         for x in options.dataset.get('val').batch(2 ** 10):
             val_length += list(x[0].values())[0].shape[0]
         return train_length, val_length
@@ -905,3 +910,14 @@ def get_dataset_length(options):
         raise exception.ErrorInModuleInMethodException(
             MODULE_NAME, method_name, str(error)).with_traceback(error.__traceback__)
         # print_error(f"None ({MODULE_NAME})", method_name, e)
+
+
+def set_preset_count(len_array: int, preset_percent: int) -> int:
+    if int(len_array * preset_percent / 100) >= 100:
+        return 100
+    elif int(len_array * preset_percent / 100) >= 10:
+        return 10
+    elif len_array >= 10:
+        return 10
+    else:
+        return len_array

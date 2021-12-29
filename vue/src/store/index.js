@@ -35,16 +35,17 @@ export default {
       try {
         const { data: res } = await axios({ method, url: '/api/v1' + url, data });
         if (res) {
-          const { error, logs } = res;
+          const { error, logs, success } = res;
           // if (success) dispatch('messages/setMessage', '');
-          if (error) dispatch('logging/setError', error);
+          if (error && !success) {
+            dispatch('logging/setError', error);
+            dispatch('settings/setOverlay', false);
+          }
           if (logs && logs.length) dispatch('logging/setLogs', logs);
         }
         return res;
       } catch (error) {
         console.error({ error: JSON.stringify(error, null, 2) })
-        // dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-        // dispatch('logging/setError', JSON.stringify(error, null, 2));
         dispatch('settings/setOverlay', false);
         return null;
       }

@@ -6,12 +6,21 @@ import os
 
 from pathlib import Path
 
-from django.conf import settings as django_settings
-
+from .data.settings import GlobalSettings
 from .data.path import TerraPathData, ProjectPathData
+from . import settings_load
 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+try:
+    from django.conf import settings as global_settings
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+except ImportError:
+    settings_load()
+    global_settings = GlobalSettings(
+        TERRA_PATH=os.environ.get("TERRA_PATH"),
+        PROJECT_PATH=os.environ.get("PROJECT_PATH"),
+    )
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
@@ -26,24 +35,24 @@ os.makedirs(WEIGHT_PATH, exist_ok=True)
 # Terra paths
 TERRA_PATH = TerraPathData(
     **{
-        "base": Path(django_settings.TERRA_PATH).absolute(),
-        "sources": Path(django_settings.TERRA_PATH, "datasets", "sources").absolute(),
-        "datasets": Path(django_settings.TERRA_PATH, "datasets").absolute(),
-        "modeling": Path(django_settings.TERRA_PATH, "modeling").absolute(),
-        "training": Path(django_settings.TERRA_PATH, "training").absolute(),
-        "projects": Path(django_settings.TERRA_PATH, "projects").absolute(),
+        "base": Path(global_settings.TERRA_PATH).absolute(),
+        "sources": Path(global_settings.TERRA_PATH, "datasets", "sources").absolute(),
+        "datasets": Path(global_settings.TERRA_PATH, "datasets").absolute(),
+        "modeling": Path(global_settings.TERRA_PATH, "modeling").absolute(),
+        "training": Path(global_settings.TERRA_PATH, "training").absolute(),
+        "projects": Path(global_settings.TERRA_PATH, "projects").absolute(),
     }
 )
 
 # Project paths
 PROJECT_PATH = ProjectPathData(
     **{
-        "base": Path(django_settings.PROJECT_PATH).absolute(),
-        "datasets": Path(django_settings.PROJECT_PATH, "datasets").absolute(),
-        "modeling": Path(django_settings.PROJECT_PATH, "modeling").absolute(),
-        "training": Path(django_settings.PROJECT_PATH, "training").absolute(),
-        "cascades": Path(django_settings.PROJECT_PATH, "cascades").absolute(),
-        "deploy": Path(django_settings.PROJECT_PATH, "deploy").absolute(),
+        "base": Path(global_settings.PROJECT_PATH).absolute(),
+        "datasets": Path(global_settings.PROJECT_PATH, "datasets").absolute(),
+        "modeling": Path(global_settings.PROJECT_PATH, "modeling").absolute(),
+        "training": Path(global_settings.PROJECT_PATH, "training").absolute(),
+        "cascades": Path(global_settings.PROJECT_PATH, "cascades").absolute(),
+        "deploy": Path(global_settings.PROJECT_PATH, "deploy").absolute(),
     }
 )
 

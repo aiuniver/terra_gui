@@ -1,182 +1,8 @@
-"""
-## Структура данных датасетов
-
-### **Датасет**
-```
-In [1]: from terra_ai.data.datasets.dataset import DatasetData
-
-In [2]: source = {
-   ...:     "alias": "cars",
-   ...:     "name": "Cars",
-   ...:     "date": "2021-06-26T09:30:24+00:00",
-   ...:     "size": {
-   ...:         "value": "324133875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...: }
-
-In [3]: data = DatasetData(**source)
-
-In [4]: data
-Out[4]: DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])
-
-In [5]: data.dict()
-Out[5]:
-{'alias': 'cars',
- 'name': 'Cars',
- 'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
- 'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
- 'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-  {'alias': 'segmentation', 'name': 'Segmentation'}]}
-
-In [6]: data.json()
-Out[6]: '{"alias": "cars", "name": "Cars", "size": {"value": 324133875, "short": 309.1181516647339, "unit": "\\u041c\\u0431"}, "date": "2021-06-26T09:30:24+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}'
-
-In [7]: print(data.json(indent=2, ensure_ascii=False))
-{
-  "alias": "cars",
-  "name": "Cars",
-  "size": {
-    "value": 324133875,
-    "short": 309.1181516647339,
-    "unit": "Мб"
-  },
-  "date": "2021-06-26T09:30:24+00:00",
-  "tags": [
-    {
-      "alias": "tensorflow_keras",
-      "name": "Tensorflow.keras"
-    },
-    {
-      "alias": "segmentation",
-      "name": "Segmentation"
-    }
-  ]
-}
-```
-
-### **Список датасетов**
-```
-In [1]: from terra_ai.data.datasets.dataset import DatasetsList
-
-In [2]: source = {
-   ...:     "alias": "cars",
-   ...:     "name": "Cars",
-   ...:     "date": "2021-06-26T09:30:24+00:00",
-   ...:     "size": {
-   ...:         "value": "324133875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...:     "alias": "kvartiri",
-   ...:     "name": "Квартиры",
-   ...:     "date": "2020-12-09T15:34:03+00:00",
-   ...:     "size": {
-   ...:         "value": "32241733875",
-   ...:     },
-   ...:     "tags": [
-   ...:         {
-   ...:             "alias": "tensorflow_keras",
-   ...:             "name": "Tensorflow.keras",
-   ...:         },
-   ...:         {
-   ...:             "alias": "segmentation",
-   ...:             "name": "Segmentation",
-   ...:         },
-   ...:     ],
-   ...: }
-
-In [3]: data = DatasetsList(source)
-
-In [4]: data
-Out[4]:
-[DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')]),
- DatasetData(alias='kvartiri', name='Квартиры', size=FileSizeData(value=32241733875, short=30.02745460253209, unit='Гб'), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])]
-
-In [5]: data.dict()
-Out[5]:
-[{'alias': 'cars',
-  'name': 'Cars',
-  'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
-  'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
-  'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-   {'alias': 'segmentation', 'name': 'Segmentation'}]},
- {'alias': 'kvartiri',
-  'name': 'Квартиры',
-  'size': {'value': 32241733875, 'short': 30.02745460253209, 'unit': 'Гб'},
-  'date': datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc),
-  'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
-   {'alias': 'segmentation', 'name': 'Segmentation'}]}]
-
-In [6]: data.json()
-Out[6]: '[{"alias": "cars", "name": "Cars", "size": {"value": 324133875, "short": 309.1181516647339, "unit": "\\u041c\\u0431"}, "date": "2021-06-26T09:30:24+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}, {"alias": "kvartiri", "name": "\\u041a\\u0432\\u0430\\u0440\\u0442\\u0438\\u0440\\u044b", "size": {"value": 32241733875, "short": 30.02745460253209, "unit": "\\u0413\\u0431"}, "date": "2020-12-09T15:34:03+00:00", "tags": [{"alias": "tensorflow_keras", "name": "Tensorflow.keras"}, {"alias": "segmentation", "name": "Segmentation"}]}]'
-
-In [7]: print(data.json(indent=2, ensure_ascii=False))
-[
-  {
-    "alias": "cars",
-    "name": "Cars",
-    "size": {
-      "value": 324133875,
-      "short": 309.1181516647339,
-      "unit": "Мб"
-    },
-    "date": "2021-06-26T09:30:24+00:00",
-    "tags": [
-      {
-        "alias": "tensorflow_keras",
-        "name": "Tensorflow.keras"
-      },
-      {
-        "alias": "segmentation",
-        "name": "Segmentation"
-      }
-    ]
-  },
-  {
-    "alias": "kvartiri",
-    "name": "Квартиры",
-    "size": {
-      "value": 32241733875,
-      "short": 30.02745460253209,
-      "unit": "Гб"
-    },
-    "date": "2020-12-09T15:34:03+00:00",
-    "tags": [
-      {
-        "alias": "tensorflow_keras",
-        "name": "Tensorflow.keras"
-      },
-      {
-        "alias": "segmentation",
-        "name": "Segmentation"
-      }
-    ]
-  }
-]
-```
-"""
-
 import os
+import re
 import json
 
+from copy import deepcopy
 from pathlib import Path, PureWindowsPath
 from pandas import read_csv
 from datetime import datetime
@@ -184,6 +10,7 @@ from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
+from dict_recursive_update import recursive_update
 
 from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from terra_ai.data.extra import FileSizeData
@@ -262,7 +89,7 @@ class CustomDatasetConfigData(BaseMixinData):
 
     @validator("config", always=True)
     def _validate_config(cls, value: dict, values) -> dict:
-        config_path = Path(values.get("path"), settings.DATASET_CONFIG)
+        config_path = Path(values.get("path"), DATASET_CONFIG)
         if not config_path.is_file():
             raise TrdsConfigFileNotFoundException(
                 values.get("path").name, config_path.name
@@ -349,6 +176,103 @@ class DatasetData(AliasMixinData):
         _path = data.get("path")
         if _path:
             self.set_path(_path)
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def training_available(self) -> bool:
+        return self.architecture not in (
+            ArchitectureChoice.Tracker,
+            ArchitectureChoice.Speech2Text,
+            ArchitectureChoice.Text2Speech,
+        )
+
+    @property
+    def sources(self) -> List[str]:
+        out = []
+        sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
+        for column in sources.columns:
+            match = re.findall(r"^([\d]+_)(.+)$", column)
+            if not match:
+                continue
+            _title = match[0][1].title()
+            if _title in ["Image", "Text", "Audio", "Video"]:
+                out = sources[column].to_list()
+                if _title != "Text":
+                    out = list(
+                        map(
+                            lambda item: str(
+                                Path(self.path, PureWindowsPath(item).as_posix())
+                            ),
+                            out,
+                        )
+                    )
+        return out
+
+    @property
+    def model(self) -> ModelDetailsData:
+        data = {**EmptyModelDetailsData}
+        layers = []
+        for _id, layer in self.inputs.items():
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": LayerTypeChoice.Input,
+                "group": LayerGroupChoice.input,
+                "shape": {"input": [layer.shape]},
+                "task": layer.task,
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
+        for _id, layer in self.outputs.items():
+            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
+                layer.datatype, {}
+            )
+            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
+            units = layer.num_classes
+            params = {
+                "activation": activation,
+            }
+            if units:
+                params.update(
+                    {
+                        "units": units,
+                        "filters": units,
+                    }
+                )
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
+                "group": LayerGroupChoice.output,
+                "shape": {"output": [layer.shape]},
+                "task": layer.task,
+                "parameters": {
+                    "main": params,
+                    "extra": params,
+                },
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
+        data.update({"layers": layers})
+        return ModelDetailsData(**data)
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"training_available": self.training_available})
+        return data
 
     def set_path(self, value):
         self._path = Path(value)

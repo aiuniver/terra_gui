@@ -141,14 +141,14 @@ class ModelValidator:
     def get_validated(self):
         """Returns all necessary info about modeling"""
         # logger.debug(f"{self.name}, {self.get_validated.__name__}")
-        logger.info("Валидация модели...")
+        logger.info("Валидация модели...", extra={'type': "info"})
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
-            logger.info("Валидация модели прошла успешно")
+            logger.info("Валидация модели прошла успешно", extra={'type': "success"})
         else:
             self.keras_code = None
-            logger.info("Модель не валидна")
+            logger.warning("Модель не прошла валидацию", extra={'type': "warning"})
         for idx, layer in enumerate(self.filled_model.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
@@ -419,10 +419,10 @@ class ModelValidator:
                 self.val_dictionary[layer[0]] = comment
             if layer[1] == LayerTypeChoice.PretrainedYOLO:
                 if output_shape[0]:
-                    for i, down_link in enumerate(self.down_links[layer[0]]):
+                    for i, down_link in enumerate(sorted(self.down_links[layer[0]])):
                         self.layer_input_shapes[down_link].append(output_shape[i])
                 else:
-                    for down_link in self.down_links[layer[0]]:
+                    for down_link in sorted(self.down_links[layer[0]]):
                         self.layer_input_shapes[down_link].append(output_shape[0])
             else:
                 for down_link in self.down_links[layer[0]]:
@@ -524,6 +524,7 @@ class LayerValidation:
         """Validate given layer parameters and return output shape and possible error comment"""
         # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         error = self.primary_layer_validation()
+        # logger.debug(f'Layer {self.layer_type} - primary_layer_validation: {error}')
         if error:
             return [None], error
         else:
@@ -538,8 +539,14 @@ class LayerValidation:
                         return self.inp_shape, None
                     elif self.module_type == ModuleTypeChoice.keras_pretrained_model:
                         params.pop("trainable")
+                        # print(params)
+                        params['weights'] = None
                         if params.get("name"):
                             params.pop("name")
+                        output_shape = [
+                            tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
+                                self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
+                        ]
                     elif self.layer_type == LayerTypeChoice.PretrainedYOLO:
                         # print(self.inp_shape)
                         params['use_weights'] = False
@@ -1254,7 +1261,7 @@ class ModelCreator:
 if __name__ == "__main__":
     model_plan = [
         (1, 'Input', {'name': '1'}, [-1], [5]),
-        (5, 'PretrainedYOLO', {'num_classes': 13, 'name': 'PretrainedYOLO_5'}, [1], [2, 3, 4]),
+        (5, 'PretrainedYOLO', {'num_classes': 13, 'name': 'PretrainedYOLO_5', 'use_weights': False}, [1], [2, 3, 4]),
         (2, 'Reshape', {'target_shape': [52, 52, 3, 18], 'name': '2'}, [5], []),
         (3, 'Reshape', {'target_shape': [26, 26, 3, 18], 'name': '3'}, [5], []),
         (4, 'Reshape', {'target_shape': [13, 13, 3, 18], 'name': '4'}, [5], [])]

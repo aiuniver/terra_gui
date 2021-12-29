@@ -17,9 +17,16 @@ class DataBaseList(List):
     def __init__(self, *args):
         if len(args) > 1:
             self.path_deploy = args[1]
-        self.preset = [None] * DEPLOY_PRESET_COUNT
+        initial_data = list(args[0])
+        self.preset = [None] * (
+            DEPLOY_PRESET_COUNT
+            if DEPLOY_PRESET_COUNT <= len(initial_data)
+            else len(initial_data)
+        )
         super().__init__(
-            list(map(lambda item: self.Meta.source(**item), args[0])) if args else []
+            list(map(lambda item: self.Meta.source(**item), initial_data))
+            if args
+            else []
         )
 
     def preset_update(self, data):
@@ -34,17 +41,23 @@ class DataBaseList(List):
             )
         )
 
-    @staticmethod
-    def _positive_int_filter(value) -> int:
+    def _positive_int_filter(self, value) -> int:
         try:
             value = int(value)
         except ValueError:
             return False
-        return value in list(range(DEPLOY_PRESET_COUNT))
+        return value in list(
+            range(
+                DEPLOY_PRESET_COUNT if DEPLOY_PRESET_COUNT <= len(self) else len(self)
+            )
+        )
 
     def reload(self, indexes: List[int] = None):
         if indexes is None:
-            indexes = list(range(DEPLOY_PRESET_COUNT))
+            range_count = (
+                DEPLOY_PRESET_COUNT if DEPLOY_PRESET_COUNT <= len(self) else len(self)
+            )
+            indexes = list(range(range_count))
         indexes = list(filter(self._positive_int_filter, indexes))
         indexes = list(map(int, indexes))
         if not len(self):

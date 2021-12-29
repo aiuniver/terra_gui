@@ -33,6 +33,8 @@ class CascadeRunner:
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]], example_count):
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
+        type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
+        sources = sources.get(inputs_ids[0])
         if not example_count:
             example_count = len(sources)
         if example_count > len(sources):
@@ -55,8 +57,6 @@ class CascadeRunner:
             if not os.path.exists(presets_path):
                 os.makedirs(presets_path, exist_ok=True)
 
-            type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
-            # print('type_', type_)
             if model:
                 dataset_path = os.path.join(training_path, model, "model", "dataset.json")
                 if not os.path.exists(dataset_path):
@@ -79,7 +79,6 @@ class CascadeRunner:
 
             main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
-            sources = sources.get(inputs_ids[0])
             logger.info("Сборка каскада завершена", extra={"type": "success"})
             logger.info("Идет подготовка примеров", extra={"type": "info"})
             presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
@@ -95,7 +94,7 @@ class CascadeRunner:
                 json.dump(out_data, config)
 
             logger.info("Подготовка примеров выполнена.",
-                        extra={"type": "success", "details": f"Подготовлено примеров: {len(sources)}"})
+                        extra={"type": "success", "details": f"Подготовлено примеров: {example_count}"})
             progress.pool("cascade_start", message=f"Работа каскада завершена.", percent=100, finished=True)
             return cascade_config
         except Exception as error:

@@ -43,51 +43,101 @@ OutputLayersDefaults = {
     LayerOutputTypeChoice.Classification: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.Segmentation: {
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "2D": {
             "type": LayerTypeChoice.Conv2D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
         "3D": {
             "type": LayerTypeChoice.Conv3D.value,
-            "activation": ActivationChoice.softmax.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.softmax.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.TextSegmentation: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.sigmoid.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.sigmoid.value,
+                }
+            },
         },
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.sigmoid.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.sigmoid.value,
+                }
+            },
         },
     },
     LayerOutputTypeChoice.Regression: {
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
         }
     },
     LayerOutputTypeChoice.Timeseries: {
         "1D": {
             "type": LayerTypeChoice.Conv1D.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
         },
         "DIM": {
             "type": LayerTypeChoice.Dense.value,
-            "activation": ActivationChoice.linear.value,
+            "parameters": {
+                "main": {
+                    "activation": ActivationChoice.linear.value,
+                }
+            },
+        },
+    },
+    LayerOutputTypeChoice.ObjectDetection: {
+        "3D": {
+            "type": LayerTypeChoice.Reshape.value,
+            "parameters": {
+                "main": {
+                    "target_shape": "@shape",
+                },
+            },
         },
     },
 }
@@ -1015,7 +1065,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "video",
+                "alias": "video_new",
                 "name": "Видео",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1023,7 +1073,7 @@ DatasetsGroups = [
                         "datatype": "3D",
                         "dtype": "float64",
                         "name": "Input 1",
-                        "shape": (64, 100, 120, 3),
+                        "shape": (100, 128, 160, 3),
                         "task": LayerInputTypeChoice.Video.value,
                         "num_classes": 5,
                         "classes_names": [
@@ -1274,7 +1324,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "chess_v4",
+                "alias": "chess_v4_new",
                 "name": "Шахматы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1370,7 +1420,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "milk_v4",
+                "alias": "milk_v4_new",
                 "name": "Молоко v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1586,7 +1636,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "trash_v4",
+                "alias": "trash_v4_new",
                 "name": "Подводный мусор v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -1682,7 +1732,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "bus_split",
+                "alias": "bus_split_new",
                 "name": "Автобусы v4 (генератор)",
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
@@ -3829,7 +3879,7 @@ DatasetsGroups = [
                         "shape": (1323000,),
                         "task": LayerInputTypeChoice.Audio.value,
                         "num_classes": 1,
-                        "classes_names": ['audio'],
+                        "classes_names": ["audio"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -3841,7 +3891,7 @@ DatasetsGroups = [
                         "shape": (1,),
                         "task": LayerOutputTypeChoice.Speech2Text.value,
                         "num_classes": 1,
-                        "classes_names": ['audio'],
+                        "classes_names": ["audio"],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -3864,12 +3914,14 @@ DatasetsGroups = [
                         "shape": (1000,),
                         "task": LayerInputTypeChoice.Text.value,
                         "num_classes": 6,
-                        "classes_names": ['Бредбери',
-                                          'Булгаков',
-                                          'ОГенри',
-                                          'Саймак',
-                                          'Стругацкие',
-                                          'Фрай'],
+                        "classes_names": [
+                            "Бредбери",
+                            "Булгаков",
+                            "ОГенри",
+                            "Саймак",
+                            "Стругацкие",
+                            "Фрай",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
@@ -3881,12 +3933,14 @@ DatasetsGroups = [
                         "shape": (1,),
                         "task": LayerOutputTypeChoice.Text2Speech.value,
                         "num_classes": 6,
-                        "classes_names": ['Бредбери',
-                                          'Булгаков',
-                                          'ОГенри',
-                                          'Саймак',
-                                          'Стругацкие',
-                                          'Фрай'],
+                        "classes_names": [
+                            "Бредбери",
+                            "Булгаков",
+                            "ОГенри",
+                            "Саймак",
+                            "Стругацкие",
+                            "Фрай",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     }
                 },
