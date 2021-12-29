@@ -19,5 +19,5 @@ class Keys(str, Enum):
 def update_env_file(**kwargs):
     for key, value in kwargs.items():
         key = getattr(Keys, key).value
-        settings[key] = value
+        setattr(settings, key, value)
         dotenv.set_key(env_file, key, value)
