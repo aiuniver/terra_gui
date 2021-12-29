@@ -758,7 +758,7 @@ class GANTerraModel(BaseTerraModel):
             loss_dict = self._prepare_loss_dict(params)
             self.generator_loss_func = loss_dict.get('generator')
             self.discriminator_loss_func = loss_dict.get('discriminator')
-            logger.debug(f'loss_dict - {loss_dict}')
+            # logger.debug(f'loss_dict - {loss_dict}')
             self.set_optimizer(params=params)
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
@@ -768,7 +768,6 @@ class GANTerraModel(BaseTerraModel):
                 # logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
-                current_idx = 0
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
