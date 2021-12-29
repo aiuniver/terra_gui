@@ -432,10 +432,10 @@ class YoloTerraModel(BaseTerraModel):
                 output_array = out
             for array in output_array.values():
                 train_target_shape, val_target_shape = [self.train_length], [self.val_length]
-                train_target_shape.extend(list(array.shape[1:]))
+                # train_target_shape.extend(list(array.shape[1:]))
                 val_target_shape.extend(list(array.shape[1:]))
-                train_pred.append(np.zeros(train_target_shape))
-                train_true.append(np.zeros(train_target_shape))
+                # train_pred.append(np.zeros(train_target_shape))
+                # train_true.append(np.zeros(train_target_shape))
                 val_pred.append(np.zeros(val_target_shape))
                 val_true.append(np.zeros(val_target_shape))
 
@@ -448,7 +448,7 @@ class YoloTerraModel(BaseTerraModel):
                 train_loss_cls = {}
                 for cls in range(num_class):
                     train_loss_cls[classes[cls]] = 0.
-                current_idx = 0
+                # current_idx = 0
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
@@ -465,12 +465,12 @@ class YoloTerraModel(BaseTerraModel):
                     for cls in range(num_class):
                         train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
 
-                    true_array = list(target1.values())
-                    length = results[6][0].shape[0]
-                    for i in range(len(train_pred)):
-                        train_pred[i][current_idx: current_idx + length] = results[6][i].numpy()
-                        train_true[i][current_idx: current_idx + length] = true_array[i].numpy()
-                    current_idx += length
+                    # true_array = list(target1.values())
+                    # length = results[6][0].shape[0]
+                    # for i in range(len(train_pred)):
+                    #     train_pred[i][current_idx: current_idx + length] = results[6][i].numpy()
+                    #     train_true[i][current_idx: current_idx + length] = true_array[i].numpy()
+                    # current_idx += length
                     cur_step += 1
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict, обработка проверочной выборки...")
