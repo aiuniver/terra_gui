@@ -31,6 +31,7 @@
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
     <LoggingModal v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
+    <ErrorModal v-model="dialogLog" v-bind="logError" />
     <ErrorModal v-model="dialogError" v-bind="error" />
   </div>
 </template>
@@ -45,6 +46,8 @@ export default {
   data: () => ({
     dialogError: false,
     dialogErrors: false,
+    dialogLog: false,
+    logError: {},
     text: '',
     key: 0,
     msgList: [],
@@ -87,8 +90,9 @@ export default {
         this.dialogError = true;
       }
     },
-    clickError() {
-      this.dialogError = true;
+    clickError(error) {
+      this.logError = error
+      this.dialogLog = true;
     },
   },
   watch: {
