@@ -741,8 +741,8 @@ class BaseObjectDetectionCallback:
                         [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
                     image = Image.open(img_path)
                     real_size = image.size
-                    scale_w = real_size[0] / image_size[0]
-                    scale_h = real_size[1] / image_size[1]
+                    scale_w = real_size[0] / 416
+                    scale_h = real_size[1] / 416
                     bboxes_gt = resize_bb(bboxes_gt, scale_w, scale_h)
 
                     for i, cl in enumerate(classes_gt):
