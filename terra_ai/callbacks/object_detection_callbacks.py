@@ -709,6 +709,15 @@ class BaseObjectDetectionCallback:
             raise exc
 
     @staticmethod
+    def resize_bb(boxes, scale_width, scale_height):
+        coord = boxes[:, :4].astype('float')
+        resized_coord = np.concatenate(
+            [coord[:, 0:1] * scale_height, coord[:, 1:2] * scale_width,
+             coord[:, 2:3] * scale_height, coord[:, 3:4] * scale_width], axis=-1).astype('int')
+        resized_coord = np.concatenate([resized_coord, boxes[:, 4:]], axis=-1)
+        return resized_coord
+
+    @staticmethod
     def prepare_dataset_balance(options, class_colors, preset_path) -> dict:
         method_name = 'prepare_dataset_balance'
         try:
@@ -723,10 +732,19 @@ class BaseObjectDetectionCallback:
                     class_bb[data_type][cl] = []
                 for index in range(len(options.dataframe[data_type])):
                     y_true = options.dataframe.get(data_type)['2_object_detection'][index].split(' ')
+                    img_path = os.path.join(
+                        options.data.path, options.dataframe.get('val')['1_image'][index])
+                    # img_path = options.dataframe.get(data_type)['1_image'][index]
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
                     bboxes_gt = np.concatenate(
                         [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
+                    image = Image.open(img_path)
+                    real_size = image.size
+                    scale_w = real_size[0] / image_size[0]
+                    scale_h = real_size[1] / image_size[1]
+                    bboxes_gt = resize_bb(bboxes_gt, scale_w, scale_h)
+
                     for i, cl in enumerate(classes_gt):
                         class_bb[data_type][cl].append(bboxes_gt[i].tolist())
 
