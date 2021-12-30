@@ -743,7 +743,7 @@ class BaseObjectDetectionCallback:
                     real_size = image.size
                     scale_w = real_size[0] / 416
                     scale_h = real_size[1] / 416
-                    bboxes_gt = resize_bb(bboxes_gt, scale_w, scale_h)
+                    bboxes_gt = BaseObjectDetectionCallback.resize_bb(bboxes_gt, scale_w, scale_h)
 
                     for i, cl in enumerate(classes_gt):
                         class_bb[data_type][cl].append(bboxes_gt[i].tolist())
