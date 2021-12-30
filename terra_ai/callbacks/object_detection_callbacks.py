@@ -735,7 +735,7 @@ class BaseObjectDetectionCallback:
                     y_true = options.dataframe.get(data_type)['2_object_detection'][index].split(' ')
                     img_path = os.path.join(
                         options.data.path, options.dataframe.get(data_type)['1_image'][index])
-                    print(f"\nprepare_dataset_balance {index, img_path}")
+                    # print(f"\nprepare_dataset_balance {index, img_path}")
                     # img_path = options.dataframe.get(data_type)['1_image'][index]
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
