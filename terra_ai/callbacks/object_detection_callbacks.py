@@ -739,13 +739,15 @@ class BaseObjectDetectionCallback:
                     # img_path = options.dataframe.get(data_type)['1_image'][index]
                     bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
                     bboxes_gt, classes_gt = bbox_data_gt[:, :4], bbox_data_gt[:, 4]
+                    # print(f"\nprepare_dataset_balance {bboxes_gt}")
                     bboxes_gt = np.concatenate(
                         [bboxes_gt[:, 1:2], bboxes_gt[:, 0:1], bboxes_gt[:, 3:4], bboxes_gt[:, 2:3]], axis=-1)
                     image = Image.open(img_path)
                     real_size = image.size
-                    scale_w = real_size[0] / 416
-                    scale_h = real_size[1] / 416
+                    scale_w = 416 / real_size[0]
+                    scale_h = 416 / real_size[1]
                     bboxes_gt = BaseObjectDetectionCallback.resize_bb(bboxes_gt, scale_w, scale_h)
+                    # print(f"prepare_dataset_balance resize_bb {bboxes_gt}")
                     for i, cl in enumerate(classes_gt):
                         class_bb[data_type][cl].append(bboxes_gt[i].tolist())
 
