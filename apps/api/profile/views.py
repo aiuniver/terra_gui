@@ -18,11 +18,14 @@ class SaveAPIView(BaseAPIView):
                 "user_token": settings.USER_TOKEN,
             }
         )
-
-        response = requests.post(f"{settings.TERRA_API_URL}/update/", json=data)
+        response = requests.post(
+            f"{settings.TERRA_API_URL}/update/",
+            json=data,
+            cookies={"sessionid": settings.USER_SESSION},
+        )
         response_data = response.json()
         if not response_data.get("success"):
-            raise ValueError("Не удалось обновить данные пользователя")
+            raise ValueError(response_data.get("error"))
 
         update_env_file(**serializer.validated_data)
         return BaseResponseSuccess()
@@ -34,12 +37,15 @@ class UpdateTokenAPIView(BaseAPIView):
             "email": settings.USER_EMAIL,
             "user_token": settings.USER_TOKEN,
         }
-
-        response = requests.post(f"{settings.TERRA_API_URL}/update_token/", json=data)
+        response = requests.post(
+            f"{settings.TERRA_API_URL}/update_token/",
+            json=data,
+            cookies={"sessionid": settings.USER_SESSION},
+        )
         response_data = response.json()
-        if not response_data.get("new_token"):
-            raise ValueError("Не удалось обновить токен пользователя")
+        if not response_data.get("success"):
+            raise ValueError(response_data.get("error"))
 
-        new_token = response_data.get("new_token")
+        new_token = response_data.get("data")
         update_env_file(token=new_token)
         return BaseResponseSuccess({"new_token": new_token})
