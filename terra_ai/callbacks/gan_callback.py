@@ -120,6 +120,7 @@ class GANCallback:
                 _id = 1
                 data["y_pred"] = {"type": "image", "data": []}
                 for array in predict_array:
+                    array = array / array.max()
                     # print(array.shape, type(array))
                     y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
                     matplotlib.image.imsave(y_pred_save_path, array)
