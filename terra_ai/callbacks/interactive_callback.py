@@ -9,7 +9,7 @@ import tensorflow
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.gan_callback import GANCallback
+from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
@@ -501,6 +501,8 @@ class InteractiveCallback:
                 self.callback = YoloV4Callback()
             elif dataset.data.architecture == ArchitectureChoice.GAN:
                 self.callback = GANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+                self.callback = CGANCallback()
             else:
                 pass
         except Exception as error:
