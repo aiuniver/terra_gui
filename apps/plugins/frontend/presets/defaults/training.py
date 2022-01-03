@@ -601,4 +601,5 @@ Architectures = {
     },
     ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
     ArchitectureChoice.GAN: {**ArchitectureBasicForm},
+    ArchitectureChoice.CGAN: {**ArchitectureBasicForm},
 }
