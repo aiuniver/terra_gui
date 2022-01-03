@@ -721,6 +721,10 @@ class ArchitectureGANForm(ArchitectureBasicForm):
     pass
 
 
+class ArchitectureCGANForm(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
