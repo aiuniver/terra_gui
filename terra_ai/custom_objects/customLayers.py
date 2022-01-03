@@ -2009,6 +2009,50 @@ class PretrainedYOLO(Layer):
                 (None, 13, 13, 3 * (5 + self.num_classes))]
 
 
+class ConditionalMergeLayer(layers.Layer):
+    def __init__(self, mode='Concatenate', **kwargs):
+        super(ConditionalMergeLayer, self).__init__(**kwargs)
+        self.mode = mode
+        pass
+
+    def concatenate(self, input):
+        if len(input[0].shape) == len(input[1].shape):
+            return layers.Concatenate(axis=-1)([input[0], input[1]])
+        elif len(input[0].shape) > len(input[1].shape):
+            num = 1
+            for i in input[0].shape[1:-1]:
+                num *= i
+            target_shape = list(input[0].shape[1:-1])
+            target_shape.append(input[1].shape[-1])
+            x = layers.RepeatVector(num)(input[1])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[0], x])
+        else:
+            num = 1
+            for i in input[1].shape[1:-1]:
+                num *= i
+            target_shape = list(input[1].shape[1:-1])
+            target_shape.append(input[0].shape[-1])
+            x = layers.RepeatVector(num)(input[0])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[1], x])
+
+    def call(self, input, training=True, **kwargs):
+        if self.mode == 'Concatenate':
+            return self.concatenate(input)
+
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+        }
+        base_config = super(ConditionalMergeLayer, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -2040,11 +2084,12 @@ if __name__ == "__main__":
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
-    x = InstanceNormalization()
-    print(x.compute_output_shape(input_shape=(None, 100)))
+    # x = InstanceNormalization()
+    # print(x.compute_output_shape(input_shape=(None, 100)))
 
-    input = tensorflow.keras.Input(shape=(100,))
+    input1 = tensorflow.keras.Input(shape=(10,))
+    input2 = tensorflow.keras.Input(shape=(32, 32, 3))
     # print(input)
-    x = InstanceNormalization()(input)
+    x = ConditionalMergeLayer()([input1, input2])
     print(x.shape)
     pass

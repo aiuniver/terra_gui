@@ -113,6 +113,14 @@ class InterpolationChoice(str, Enum):
         return list(map(lambda item: item.value, InterpolationChoice))
 
 
+class ConditionalMergeModeChoice(str, Enum):
+    concatenate = "Concatenate"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ConditionalMergeModeChoice))
+
+
 class ResizingInterpolationChoice(str, Enum):
     bilinear = "bilinear"
     nearest = "nearest"
@@ -157,6 +165,7 @@ class PretrainedModelPoolingChoice(str, Enum):
 class YOLOModeChoice(str, Enum):
     YOLOv3 = "YOLOv3"
     YOLOv4 = "YOLOv4"
+
     # YOLOv5 = "YOLOv5"
 
     @staticmethod
@@ -235,7 +244,7 @@ class LayerValueConfig(BaseMixinData):
 
     @validator("validation")
     def _validate_validation(
-        cls, value: LayerValidationMethodChoice, values
+            cls, value: LayerValidationMethodChoice, values
     ) -> LayerValidationMethodChoice:
         __value = values.get("value")
         if not __value:
