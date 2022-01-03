@@ -783,7 +783,7 @@ class LayerValidation:
         # logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
-                if len(self.inp_shape[0]) != len(shape):
+                if len(self.inp_shape[0]) != len(shape) and self.layer_type != LayerTypeChoice.ConditionalMergeLayer:
                     logger.warning(f"Слой {self.layer_type}: "
                                    f"{exceptions.InputShapesHaveDifferentSizesException(self.inp_shape)}")
                     return str(exceptions.InputShapesHaveDifferentSizesException(self.inp_shape))
@@ -798,6 +798,11 @@ class LayerValidation:
                         logger.warning(f"Слой {self.layer_type}: "
                                        f"{exceptions.MismatchedInputShapesException(axis, self.inp_shape)}")
                         return str(exceptions.MismatchedInputShapesException(axis, self.inp_shape))
+            elif self.layer_type == LayerTypeChoice.ConditionalMergeLayer:
+                if len(self.inp_shape) != 2:
+                    logger.warning(f"Слой {self.layer_type}: "
+                                   f"{exceptions.IncorrectQuantityInputDimensionsException(2, len(self.inp_shape))}")
+                    return str(exceptions.IncorrectQuantityInputDimensionsException(2, len(self.inp_shape)))
             else:
                 for shape in self.inp_shape[1:]:
                     if shape != self.inp_shape[0]:

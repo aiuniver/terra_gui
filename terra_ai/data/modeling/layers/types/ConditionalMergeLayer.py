@@ -30,7 +30,6 @@ LayerConfig = LayerConfigData(
     }
 )
 
-
 class ParametersMainData(BaseMixinData):
     mode: ConditionalMergeModeChoice = ConditionalMergeModeChoice.concatenate
 
