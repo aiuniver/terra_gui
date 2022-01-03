@@ -14,7 +14,7 @@ Vue.use(AtComponents)
 
 import vuescroll from '@/assets/js/vuescroll-native.min.js';
 
-Vue.use(vuescroll, {
+const optionsScroll = {
   ops: {
     vuescroll: {
       mode: 'native',
@@ -47,7 +47,21 @@ Vue.use(vuescroll, {
     }
   },
   name: 'scrollbar'
-});
+};
+
+const scroll = localStorage.getItem('settingsScroll');
+if (scroll) {
+  try {
+    const temp = JSON.parse(scroll);
+    temp.size = `${temp.size}px`
+    optionsScroll.ops.bar = {...optionsScroll.ops.bar, ...temp}
+    console.log(optionsScroll.ops.bar)
+  } catch (error) {
+    console.log(error)
+  }
+}
+Vue.use(vuescroll, optionsScroll)
+
 
 import pkg from '../package.json'
 Vue.prototype.$config = {
@@ -57,11 +71,11 @@ Vue.prototype.$config = {
 
 // import all directivs
 import directives from '@/utils/directives'
-directives.forEach(directive=>Vue.directive(directive.name, directive))
+directives.forEach(directive => Vue.directive(directive.name, directive))
 
 // import global components
 import components from '@/components/global'
-components.forEach(component=>Vue.component(component.name, component))
+components.forEach(component => Vue.component(component.name, component))
 
 import AudioVisual from 'vue-audio-visual'
 Vue.use(AudioVisual)
