@@ -69,6 +69,10 @@ class ArchitectureGANData(ArchitectureBasicData):
     pass
 
 
+class ArchitectureCGANData(ArchitectureBasicData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(
