@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from ...choices import DeployTypePageChoice
+from apps.plugins.frontend.choices import DeployTypePageChoice
 
 
 DeployTypeGroup = {
@@ -57,16 +57,7 @@ DeployServerGroup = {
             "name": "server",
             "parse": "server",
             "value": "",
-            "list": [{"value": "", "label": "Демо-панель"}]
-            + list(
-                map(
-                    lambda item: {
-                        "value": item[0],
-                        "label": f'{item[1].get("domain_name")} [{item[1].get("ip_address")}]',
-                    },
-                    settings.USER_SERVERS.items(),
-                )
-            ),
+            "list": [{"value": "", "label": "Демо-панель"}],
         }
     ],
 }
