@@ -1088,8 +1088,8 @@ class ConditionalGANTerraModel(BaseTerraModel):
                                      f"disc_loss={round(results[1].numpy(), 3)}, "
                                      f"disc_real_loss={round(results[2].numpy(), 3)}, "
                                      f"disc_fake_loss={round(results[3].numpy(), 3)}")
-                    if cur_step % 50 == 0:
-                        break
+                    # if cur_step % 50 == 0:
+                    #     break
 
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
