@@ -23,7 +23,7 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
     NoYoloParamsException, TrainingException
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive
@@ -180,22 +180,20 @@ class GUINN:
                 validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
-            if dataset.data.architecture in GAN_ARCHITECTURE:
-                train_model = GANTerraModel(model=base_model,
-                                            model_name=self.nn_name,
-                                            model_path=train_details.model_path)
-
+            if dataset.data.architecture == ArchitectureChoice.GAN:
+                train_model = GANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
+            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+                train_model = ConditionalGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
             elif dataset.data.architecture in YOLO_ARCHITECTURE:
                 options = self.get_yolo_init_parameters(dataset=dataset)
-                train_model = YoloTerraModel(model=base_model,
-                                             model_name=self.nn_name,
-                                             model_path=train_details.model_path,
-                                             **options)
-
+                train_model = YoloTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path, **options)
             else:
-                train_model = BaseTerraModel(model=base_model,
-                                             model_name=self.nn_name,
-                                             model_path=train_details.model_path)
+                train_model = BaseTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
 
             logger.info("Загрузка модели завершена", extra={"type": "success"})
             return train_model

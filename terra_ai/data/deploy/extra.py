@@ -24,6 +24,7 @@ class DeployTypeChoice(str, Enum):
     Wav2Vec = "Wav2Vec"
     TinkoffAPI = "TinkoffAPI"
     GAN = "GAN"
+    CGAN = "CGAN"
 
     @property
     def demo(self) -> str:

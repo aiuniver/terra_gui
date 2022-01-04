@@ -259,7 +259,7 @@ class CGANCallback:
             else:
                 name_list = list(array.keys())
                 shuffle(name_list)
-                for i, name in enumerate(seed_array.keys()):
+                for i, name in enumerate(name_list):
                     examples = np.random.choice(np.arange(len(array[name])), 5)
                     example_idx[name] = np.array(array[name][examples], dtype='float32')
                     if i == count:
@@ -337,7 +337,8 @@ class CGANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    label = example_idx.keys()[idx]
+                    logger.debug(f"{idx, example_idx.keys()}")
+                    label = list(example_idx.keys())[idx]
                     data = CGANCallback().postprocess_gan(
                         predict_array=example_idx[label],
                         label=label,

@@ -950,16 +950,18 @@ class ConditionalGANTerraModel(BaseTerraModel):
     def __get_noise(options: PrepareDataset):
         logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__get_noise.__name__}")
         for out in options.data.columns.keys():
-            if options.data.columns.get(out).get('task') == 'Noise':
-                return options.data.columns.get(out).get('shape')
+            col_name = list(options.data.columns.get(out).keys())[0]
+            if options.data.columns.get(out).get(col_name).get('task') == 'Noise':
+                return options.data.columns.get(out).get(col_name).get('shape')
 
     @staticmethod
     def __prepare_seed(noise, options: PrepareDataset):
         logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__prepare_seed.__name__}")
         class_names = []
         for out in options.data.columns:
-            if options.data.columns.get(out).get('task') == 'Classification':
-                class_names = options.data.columns.get(out).get('classes_names')
+            col_name = list(options.data.columns.get(out).keys())[0]
+            if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
+                class_names = options.data.columns.get(out).get(col_name).get('classes_names')
                 break
         seed = {}
         random_idx = list(np.arange(len(class_names)))
@@ -968,6 +970,7 @@ class ConditionalGANTerraModel(BaseTerraModel):
             shape = [50]
             shape.extend(noise)
             seed[class_names[i]] = tf.random.normal(shape=shape)
+        # logger.debug(f"seed - {seed}")
         return seed
 
     @staticmethod
@@ -995,32 +998,38 @@ class ConditionalGANTerraModel(BaseTerraModel):
             # logger.error(exc)
             raise exc
 
-    @staticmethod
-    def __get_input_keys(options: PrepareDataset) -> dict:
+    # @staticmethod
+    def __get_input_keys(self, options: PrepareDataset) -> dict:
         keys = {}
+        gen_inputs = [inp.name for inp in self.generator.inputs]
+        disc_inputs = [inp.name for inp in self.discriminator.inputs]
         for out in options.data.columns.keys():
-            if options.data.columns.get(out).get('task') == 'Classification':
-                keys['labels'] = f"{out}"
-            if options.data.columns.get(out).get('task') == 'Image':
+            col_name = list(options.data.columns.get(out).keys())[0]
+            # logger.debug(f"__get_input_keys - out - {out, options.data.columns.get(out)}")
+            if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
+                if f"{out}" in gen_inputs:
+                    keys['gen_labels'] = f"{out}"
+                if f"{out}" in disc_inputs:
+                    keys['disc_labels'] = f"{out}"
+            if options.data.columns.get(out).get(col_name).get('task') == 'Image':
                 keys['image'] = f"{out}"
-            if options.data.columns.get(out).get('task') == 'Noise':
+            if options.data.columns.get(out).get(col_name).get('task') == 'Noise':
                 keys['noise'] = f"{out}"
+        # logger.debug(f"__get_input_keys - keys - {keys}")
         return keys
 
-
     @tf.function
-    def __train_step(self, images, labels, input_keys: dict,
-                     gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
+    def __train_step(self, images, gen_labels, disc_labels, input_keys: dict, **options):
         # logger.debug(f"{GANTerraModel.name}, {GANTerraModel.__train_step.__name__}")
         images = tf.cast(images, dtype='float32')
-        noise_shape = [gen_batch]
+        noise_shape = [gen_labels.shape[0]]
         noise_shape.extend(list(self.noise))
         noise = tf.random.normal(noise_shape)
-        true_disc_input = {input_keys['image']: images, input_keys['labels']: labels}
-        gen_input = {input_keys['noise']: noise, input_keys['labels']: labels}
+        true_disc_input = {input_keys['image']: images, input_keys['disc_labels']: disc_labels}
+        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             generated_images = self.generator(gen_input, training=True)
-            fake_disc_input = {input_keys['image']: generated_images, input_keys['labels']: labels}
+            fake_disc_input = {input_keys['image']: generated_images, input_keys['disc_labels']: disc_labels}
 
             real_output = self.discriminator(true_disc_input, training=True)
             fake_output = self.discriminator(fake_disc_input, training=True)
@@ -1047,26 +1056,28 @@ class ConditionalGANTerraModel(BaseTerraModel):
             loss_dict = self._prepare_loss_dict(params)
             self.generator_loss_func = loss_dict.get('generator')
             self.discriminator_loss_func = loss_dict.get('discriminator')
-            # logger.debug(f'loss_dict - {loss_dict}')
+            # logger.debug(f'input_keys - {input_keys}')
             self.set_optimizer(params=params)
             current_epoch = self.callback.last_epoch
             end_epoch = self.callback.total_epochs
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
-                # logger.debug(f"Эпоха {epoch + 1}")
+                logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                    # logger.debug(f'{image_data.keys()}')
                     cur_step += 1
-                    logger.debug(f"Batch {cur_step}: start...")
-                    results = self.__train_step(images=image_data.get(input_keys.get('image')),
-                                                labels=image_data.get(input_keys.get('labels')),
-                                                input_keys=input_keys,
-                                                gen_batch=params.base.batch,
-                                                dis_batch=params.base.batch)
+                    # logger.debug(f"Batch {cur_step}: start...")
+                    results = self.__train_step(
+                        images=image_data.get(input_keys.get('image')),
+                        gen_labels=image_data.get(input_keys.get('gen_labels')),
+                        disc_labels=image_data.get(input_keys.get('disc_labels')),
+                        input_keys=input_keys
+                    )
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
@@ -1077,6 +1088,8 @@ class ConditionalGANTerraModel(BaseTerraModel):
                                      f"disc_loss={round(results[1].numpy(), 3)}, "
                                      f"disc_real_loss={round(results[2].numpy(), 3)}, "
                                      f"disc_fake_loss={round(results[3].numpy(), 3)}")
+                    if cur_step % 50 == 0:
+                        break
 
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
@@ -1088,14 +1101,14 @@ class ConditionalGANTerraModel(BaseTerraModel):
                             lbl = lbl.astype('float32')
                             seed_array_dict = {
                                 input_keys['noise']: self.seed.get(name),
-                                input_keys['labels']: lbl
+                                input_keys['gen_labels']: lbl
                             }
-                            seed_predict['name'] = self.generator(seed_array_dict).numpy()
+                            seed_predict[name] = self.generator(seed_array_dict).numpy()
                             random_array_dict = {
                                 input_keys['noise']: tf.random.normal(shape=self.seed.get(name).shape),
-                                input_keys['labels']: lbl
+                                input_keys['gen_labels']: lbl
                             }
-                            random_predict['name'] = self.generator(random_array_dict).numpy()
+                            random_predict[name] = self.generator(random_array_dict).numpy()
                         self.callback.on_train_batch_end(
                             batch=cur_step,
                             arrays={"train": random_predict, "seed": seed_predict}
@@ -1126,14 +1139,14 @@ class ConditionalGANTerraModel(BaseTerraModel):
                     lbl = lbl.astype('float32')
                     seed_array_dict = {
                         input_keys['noise']: self.seed.get(name),
-                        input_keys['labels']: lbl
+                        input_keys['gen_labels']: lbl
                     }
-                    seed_predict['name'] = self.generator(seed_array_dict).numpy()
+                    seed_predict[name] = self.generator(seed_array_dict).numpy()
                     random_array_dict = {
                         input_keys['noise']: tf.random.normal(shape=self.seed.get(name).shape),
-                        input_keys['labels']: lbl
+                        input_keys['gen_labels']: lbl
                     }
-                    random_predict['name'] = self.generator(random_array_dict).numpy()
+                    random_predict[name] = self.generator(random_array_dict).numpy()
 
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
