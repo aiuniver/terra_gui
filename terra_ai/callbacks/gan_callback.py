@@ -366,23 +366,22 @@ class CGANCallback:
         try:
             return_data = []
             _id = 0
-            for class_type in dataset_balance.keys():
-                preset = {}
-                class_names, class_count = sort_dict(
-                    dict_to_sort=dataset_balance.get(class_type),
-                    mode=interactive_config.data_balance.sorted.name
-                )
-                preset['train'] = fill_graph_front_structure(
-                    _id=0,
-                    _type='histogram',
-                    type_data='train',
-                    graph_name=f"Тренировочная выборка",
-                    short_name=f"Тренировочная",
-                    x_label="Название класса",
-                    y_label="Значение",
-                    plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
-                )
-                return_data.append(preset)
+            preset = {}
+            class_names, class_count = sort_dict(
+                dict_to_sort=dataset_balance,
+                mode=interactive_config.data_balance.sorted.name
+            )
+            preset['train'] = fill_graph_front_structure(
+                _id=0,
+                _type='histogram',
+                type_data='train',
+                graph_name=f"Тренировочная выборка",
+                short_name=f"Тренировочная",
+                x_label="Название класса",
+                y_label="Значение",
+                plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
+            )
+            return_data.append(preset)
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
