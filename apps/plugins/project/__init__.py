@@ -289,7 +289,6 @@ class Project(BaseMixinData):
         self.model = model
         if self.dataset:
             self.model.set_dataset_indexes(self.dataset)
-            self.model.update_layers(self.dataset)
         defaults_data.modeling.set_layer_datatype(self.dataset)
         self.clear_training(DEFAULT_TRAINING_PATH_NAME)
         self.save_config()
