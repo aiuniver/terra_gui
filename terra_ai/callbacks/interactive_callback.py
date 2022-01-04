@@ -219,6 +219,7 @@ class InteractiveCallback:
                             preset_path=self.training_details.intermediate_path,
                             class_colors=self.class_colors
                         )
+                        self.get_balance = False
 
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
