@@ -1,4 +1,5 @@
 import os
+from collections import Counter
 from random import shuffle
 
 import matplotlib
@@ -7,10 +8,12 @@ import tensorflow
 from PIL import Image
 from tensorflow.keras.preprocessing import image
 
-from terra_ai.callbacks.utils import get_y_true, round_loss_metric
+from terra_ai.callbacks.utils import get_y_true, round_loss_metric, sort_dict, fill_graph_front_structure, \
+    fill_graph_plot_data
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice
 import terra_ai.exceptions.callbacks as exception
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.logging import logger
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
@@ -232,17 +235,19 @@ class CGANCallback:
             raise exc
 
     @staticmethod
-    def dataset_balance(options, y_true, preset_path: str, class_colors) -> dict:
-        return {}
+    def dataset_balance(options: PrepareDataset, y_true, preset_path: str, class_colors) -> dict:
+        class_list = []
+        for col in options.dataframe['train'].columns:
+            if 'Класс' in col:
+                class_list = list(options.dataframe['train'][col])
+                break
+        return dict(Counter(class_list))
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
                                y_pred, inverse_y_pred, raw_y_pred=None) -> dict:
         return {}
 
-    @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config) -> dict:
-        return {}
 
     @staticmethod
     def prepare_example_idx_to_show(array: dict, seed_array: dict, count: int,
@@ -354,3 +359,34 @@ class CGANCallback:
                 CGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config):
+        method_name = 'balance_data_request'
+        try:
+            return_data = []
+            _id = 0
+            for class_type in dataset_balance.keys():
+                preset = {}
+                class_names, class_count = sort_dict(
+                    dict_to_sort=dataset_balance.get(class_type),
+                    mode=interactive_config.data_balance.sorted.name
+                )
+                preset['train'] = fill_graph_front_structure(
+                    _id=0,
+                    _type='histogram',
+                    type_data='train',
+                    graph_name=f"Тренировочная выборка",
+                    short_name=f"Тренировочная",
+                    x_label="Название класса",
+                    y_label="Значение",
+                    plot_data=[fill_graph_plot_data(x=class_names, y=class_count)],
+                )
+                return_data.append(preset)
+            return return_data
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                CGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+

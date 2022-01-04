@@ -212,6 +212,13 @@ class InteractiveCallback:
                         count=count,
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type
                     )
+                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.CGAN:
+                        logger.debug(f"{InteractiveCallback.name}: расчет баланса датасета...")
+                        self.dataset_balance = self.callback.dataset_balance(
+                            options=self.options, y_true=self.y_true,
+                            preset_path=self.training_details.intermediate_path,
+                            class_colors=self.class_colors
+                        )
 
                 if on_epoch_end_flag:
                     self.current_epoch = fit_logs.get('epochs')[-1]
