@@ -527,7 +527,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
+            logger.error(exc)
             return 0.
 
     @staticmethod
@@ -535,6 +535,7 @@ class History:
         method_name = '_evaluate_overfitting'
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
+            logger.debug(f"overfitting mode: {mode}")
             overfitting = False
             if not mean_log[-1] or not min(mean_log) or not max(mean_log):
                 overfitting = True
@@ -542,7 +543,7 @@ class History:
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                     overfitting = True
-            else:
+            elif mode == 'max':
                 if mean_log[-1] < max(mean_log) and \
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                     overfitting = True
