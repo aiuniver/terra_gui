@@ -719,7 +719,11 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
 
             true_bbox = dataset.dataframe.get("val").get('2_object_detection')[index]  # .split(' ')
             tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[index]))
-            bbox_data_gt = np.array(resize_bboxes(image_mode, true_bbox, tmp_im.width, tmp_im.height))
+            try:
+                bbox_data_gt = np.array(resize_bboxes(image_mode, true_bbox, tmp_im.width, tmp_im.height))
+            except Exception:
+                bbox_data_gt = []
+                continue
             # bbox_data_gt = np.array([list(map(int, box.split(','))) for box in y_true])
 
             if len(bbox_data_gt) == 0:
@@ -842,6 +846,8 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25
                     ground_truth_data = id_ground_truth.get(file_id)
                     ovmax = -1
                     gt_match = -1
+                    if ground_truth_data is None:
+                        ground_truth_data = []
                     # load prediction bounding-box
                     bb = [float(x) for x in prediction["bbox"].split()]  # bounding box of prediction
                     for obj in ground_truth_data:
