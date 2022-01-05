@@ -544,8 +544,11 @@ class History:
                     overfitting = True
                 if mode == 'max' and max(mean_log) != 0:
                     overfitting = True
-            elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
-                overfitting = True
+            # elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
+            #     if mode == 'min' and not min(mean_log):
+            #         overfitting = True
+            #     if mode == 'max' and not max(mean_log) != 0:
+            #         overfitting = True
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
