@@ -499,8 +499,8 @@ class History:
                         mean_log=self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
-                    logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
-                                 f"metric_overfitting: {metric_overfitting}")
+                    # logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
+                    #              f"metric_overfitting: {metric_overfitting}")
                     if metric_overfitting:
                         normal_state = False
                     else:
