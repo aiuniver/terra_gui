@@ -539,7 +539,7 @@ class History:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             # logger.debug(f"overfitting mode: {mode}")
             overfitting = False
-            if mean_log[-1] == 0 and (min(mean_log) == 0 or max(mean_log) == 0):
+            if mean_log[-1] == 0:
                 if mode == 'min' and min(mean_log) != 0:
                     overfitting = True
                 if mode == 'max' and max(mean_log) != 0:
