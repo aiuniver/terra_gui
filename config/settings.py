@@ -154,7 +154,7 @@ USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
 USER_EMAIL = env.str("USER_EMAIL")
 USER_TOKEN = env.str("USER_TOKEN")
-USER_SERVERS = env.json("USER_SERVERS", default={})
+USER_SESSION = env.str("USER_SESSION")
 
 
 # Logging

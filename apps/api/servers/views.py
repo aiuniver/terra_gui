@@ -22,6 +22,7 @@ def remote_request(url: str, data: dict = None) -> Any:
     response = requests.post(
         f"{settings.TERRA_API_URL}{url}",
         json={"config": settings.USER_PORT, **data},
+        cookies={"sessionid": settings.USER_SESSION},
     )
     if response.ok:
         data = response.json()
