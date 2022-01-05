@@ -495,10 +495,12 @@ class History:
                         round_loss_metric(self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"]))
                     )
                     metric_overfitting = self._evaluate_overfitting(
-                        metric_name,
-                        self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        metric_name=metric_name,
+                        mean_log=self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
+                    logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
+                                 f"metric_overfitting: {metric_overfitting}")
                     if metric_overfitting:
                         normal_state = False
                     else:
@@ -537,7 +539,9 @@ class History:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             logger.debug(f"overfitting mode: {mode}")
             overfitting = False
-            if not mean_log[-1] or not min(mean_log) or not max(mean_log):
+            if mean_log[-1] == 0:
+                overfitting = False
+            elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
                 overfitting = True
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
