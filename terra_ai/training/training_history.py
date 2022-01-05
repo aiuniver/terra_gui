@@ -522,8 +522,9 @@ class History:
                         round_loss_metric(self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"]))
                     )
                     metric_overfitting = self._evaluate_overfitting(
-                        metric_name,
-                        self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        metric_name=metric_name,
+                        mean_log=self.log_history['output']['progress_state']['metrics'][
+                            metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
                     if metric_overfitting:
