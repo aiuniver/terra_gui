@@ -50,14 +50,19 @@ def json2model_cascade(path: str):
     for i in os.listdir(path):
         if i[-3:] == '.h5' and 'best' in i:
             weight = i
-        elif weight is None and i[-3:] == '.h5':
-            weight = i
-        elif i == 'trained_model.trm':
+        elif 'model_best_weights.data' in i:
+            weight = i.split('.')[0]
+        if not weight:
+            if i[-3:] == '.h5':
+                weight = i
+            elif 'model_weights.data' in i:
+                weight = i.split('.')[0]
+        if i == 'trained_model.trm':
             model = i
             model_tf_format = True
         elif i[-4:] == '.trm' and 'model_json' in i:
             model = i
-        elif i[-4:] == '.trm' and 'custom_obj_json' in i:
+        if i[-4:] == '.trm' and 'custom_obj_json' in i:
             custom_object = i
 
     def __get_json_data(path_model_json, path_custom_obj_json):
