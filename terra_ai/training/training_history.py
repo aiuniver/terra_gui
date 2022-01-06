@@ -527,6 +527,8 @@ class History:
                             metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
+                    # logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
+                    #              f"metric_overfitting: {metric_overfitting}")
                     if metric_overfitting:
                         normal_state = False
                     else:
@@ -565,7 +567,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
+            logger.error(exc)
             return 0.
 
     @staticmethod
@@ -574,13 +576,21 @@ class History:
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
-            if not mean_log[-1] or not min(mean_log) or not max(mean_log):
-                overfitting = True
+            if mean_log[-1] == 0:
+                if mode == 'min' and min(mean_log) != 0:
+                    overfitting = True
+                if mode == 'max' and max(mean_log) != 0:
+                    overfitting = True
+            # elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
+            #     if mode == 'min' and not min(mean_log):
+            #         overfitting = True
+            #     if mode == 'max' and not max(mean_log) != 0:
+            #         overfitting = True
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                     overfitting = True
-            else:
+            elif mode == 'max':
                 if mean_log[-1] < max(mean_log) and \
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                     overfitting = True

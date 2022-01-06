@@ -29,8 +29,8 @@ class BaseTerraModel:
         self.model_name = model_name
         self.model_json = f"{model_name}_json.trm"
         self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
-        self.model_weights = f"{model_name}_weights.h5"
-        self.model_best_weights = f"{model_name}_best_weights.h5"
+        self.model_weights = f"{model_name}_weights"
+        self.model_best_weights = f"{model_name}_best_weights"
 
         self.saving_path = model_path
         self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
@@ -236,7 +236,7 @@ class BaseTerraModel:
                     if self.callback.stop_training:
                         break
 
-                logger.debug(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...")
+                # logger.debug(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...")
                 self.save_weights()
                 if self.callback.stop_training:
                     logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "info"})
@@ -501,7 +501,7 @@ class YoloTerraModel(BaseTerraModel):
                     if self.callback.stop_training:
                         break
 
-                logger.debug(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...")
+                # logger.debug(f"Эпоха {epoch + 1}: сохраниеиние весов текущей эпохи...")
                 self.save_weights()
                 if self.callback.stop_training:
                     logger.info(f"Эпоха {epoch + 1}: остановка обучения", extra={"type": "success"})
