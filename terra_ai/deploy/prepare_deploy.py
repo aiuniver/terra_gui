@@ -182,9 +182,13 @@ class DeployCreator:
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
+            elif 'model_best_weights.data' in i:
+                weight = i.split('.')[0]
             if not weight:
                 if i[-3:] == '.h5':
                     weight = i
+                elif 'model_weights.data' in i:
+                    weight = i.split('.')[0]
         if weight:
             out_model = model.base_model
             out_model.load_weights(os.path.join(model_path, weight))
