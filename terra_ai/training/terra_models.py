@@ -964,12 +964,12 @@ class ConditionalGANTerraModel(BaseTerraModel):
                 class_names = options.data.columns.get(out).get(col_name).get('classes_names')
                 break
         seed = {}
-        random_idx = list(np.arange(len(class_names)))
-        random.shuffle(random_idx)
-        for i in random_idx:
+        # random_idx = list(np.arange(len(class_names)))
+        # random.shuffle(random_idx)
+        for name in class_names:
             shape = [50]
             shape.extend(noise)
-            seed[class_names[i]] = tf.random.normal(shape=shape)
+            seed[name] = tf.random.normal(shape=shape)
         # logger.debug(f"seed - {seed}")
         return seed
 
@@ -1052,6 +1052,12 @@ class ConditionalGANTerraModel(BaseTerraModel):
             self.train_length = len(dataset.dataframe.get('train'))
             self.generator_optimizer = self.set_optimizer(params=params)
             self.discriminator_optimizer = self.set_optimizer(params=params)
+            class_names = []
+            for out in dataset.data.columns:
+                col_name = list(dataset.data.columns.get(out).keys())[0]
+                if dataset.data.columns.get(out).get(col_name).get('task') == 'Classification':
+                    class_names = dataset.data.columns.get(out).get(col_name).get('classes_names')
+                    break
             input_keys = self.__get_input_keys(dataset)
             loss_dict = self._prepare_loss_dict(params)
             self.generator_loss_func = loss_dict.get('generator')
@@ -1095,7 +1101,7 @@ class ConditionalGANTerraModel(BaseTerraModel):
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
                         seed_predict = {}
                         random_predict = {}
-                        for i, name in enumerate(self.seed.keys()):
+                        for i, name in enumerate(class_names):
                             lbl = np.zeros(shape=(self.seed.get(name).shape[0], len(self.seed.keys())))
                             lbl[:, i] = 1
                             lbl = lbl.astype('float32')
@@ -1133,7 +1139,7 @@ class ConditionalGANTerraModel(BaseTerraModel):
 
                 seed_predict = {}
                 random_predict = {}
-                for i, name in enumerate(self.seed.keys()):
+                for i, name in enumerate(class_names):
                     lbl = np.zeros(shape=(self.seed.get(name).shape[0], len(self.seed.keys())))
                     lbl[:, i] = 1
                     lbl = lbl.astype('float32')
@@ -1154,7 +1160,6 @@ class ConditionalGANTerraModel(BaseTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-
                 # if self.callback.is_best():
                 #     self.save_weights(path_=self.file_path_model_best_weights)
                 #     logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
