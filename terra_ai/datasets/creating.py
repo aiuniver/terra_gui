@@ -24,7 +24,6 @@ import random
 import numpy as np
 import pandas as pd
 import json
-import joblib
 import tempfile
 import shutil
 import zipfile
@@ -34,9 +33,9 @@ from math import ceil
 from PIL import Image
 from itertools import repeat
 from pathlib import Path
-from typing import Union
 from datetime import datetime
 from pytz import timezone
+from terra_ai.logging import logger
 
 
 class CreateDataset(object):
@@ -49,7 +48,7 @@ class CreateDataset(object):
         progress.pool.reset(name=self.progress_name,
                             message='Начало',
                             finished=False)
-
+        logger.info(f'Начало формирования датасета {creation_data.name}.')
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         os.makedirs(self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])), exist_ok=True)
         self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
@@ -73,6 +72,7 @@ class CreateDataset(object):
         shutil.rmtree(self.temp_directory)
         progress.pool(name=self.progress_name, message='Формирование датасета завершено', data=dataset_data,
                       percent=100, finished=True)
+        logger.info(f'Создан датасет {creation_data.name}.')
 
         # if creation_data.version:  # Больше сделано для дебаггинга
         #     self.version = CreateVersion(version_data=creation_data.version)
@@ -122,9 +122,11 @@ class CreateVersion(object):
         self.dataframe: dict = {}
         self.columns: dict = {}
         self.preprocessing = CreatePreprocessing()
-
         version_data = self.preprocess_version_data(version_data)
-        print(version_data)
+
+        logger.info(f'Начало создания версии {version_data.name}.')
+        logger.debug(version_data)
+
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
         self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
@@ -168,6 +170,7 @@ class CreateVersion(object):
         shutil.rmtree(self.temp_directory)
         progress.pool(name=self.progress_name, message='Формирование версии датасета завершено', data=version_data,
                       percent=100, finished=True)
+        logger.info(f'Создана версия {version_data.name}', extra={'type': "info"})
 
     @staticmethod
     def zip_dataset(src, dst):
@@ -272,6 +275,7 @@ class CreateVersion(object):
                                                                                    'put': idx})
             except Exception:
                 progress.pool(self.progress_name, error=f'Ошибка создания инструкций для {puts}')
+                logger.debug(f'Создание инструкций провалилось на {one_path}')
                 raise
 
             # return_data = []
@@ -458,6 +462,8 @@ class CreateVersion(object):
         except Exception:
             progress.pool(self.progress_name,
                           error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+            for key, value in build_dataframe.items():
+                logger.debug(key, len(value))
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
@@ -472,7 +478,7 @@ class CreateVersion(object):
             for col_name, data in put_instructions[key].items():
                 data_to_pass = data.instructions[0]
                 if self.tags[key][col_name] in PATH_TYPE_LIST:
-                    data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))  # self.sources_temp_directory
+                    data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))
                 create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
                     data_to_pass,
                     **data.parameters,
