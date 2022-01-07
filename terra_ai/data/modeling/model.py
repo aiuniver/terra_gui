@@ -173,7 +173,7 @@ class ModelBaseDetailsData(AliasMixinData):
         for _index, _dataset_layer in enumerate(dataset_model.outputs):
             self.switch_index(self.outputs[_index].id, _dataset_layer.id)
 
-    def update_layers(self, dataset):
+    def update_layers(self, dataset, exclude_type=False):
         dataset_model = dataset.model
 
         for index, layer in enumerate(self.inputs):
@@ -183,6 +183,8 @@ class ModelBaseDetailsData(AliasMixinData):
             layer_init_dict.pop("id")
             layer_init_dict.pop("bind")
             layer_init_dict.pop("position")
+            if exclude_type:
+                layer_init_dict.pop("type")
             self.layers.append(
                 LayerData(**recursive_update(layer_dict, layer_init_dict))
             )
@@ -194,6 +196,8 @@ class ModelBaseDetailsData(AliasMixinData):
             layer_init_dict.pop("id")
             layer_init_dict.pop("bind")
             layer_init_dict.pop("position")
+            if exclude_type:
+                layer_init_dict.pop("type")
             self.layers.append(
                 LayerData(**recursive_update(layer_dict, layer_init_dict))
             )
