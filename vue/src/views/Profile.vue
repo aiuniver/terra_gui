@@ -2,8 +2,8 @@
   <main class="page-profile">
     <p class="page-profile__title">Мой профиль</p>
     <div class="page-profile__block">
-      <t-input-new v-model.trim="firstName" label="Имя" :error="errFirst" @input="errFirst=''" />
-      <t-input-new v-model.trim="lastName" label="Фамилия" :error="errLast" @input="errLast=''" />
+      <t-input-new v-model.trim="firstName" label="Имя" :error="errFirst" @input="errFirst = ''" />
+      <t-input-new v-model.trim="lastName" label="Фамилия" :error="errLast" @input="errLast = ''" />
     </div>
     <div class="page-profile__btns">
       <t-button class="btn" @click="save" :loading="isLoading" :disabled="isLoading">Сохранить</t-button>
@@ -41,6 +41,24 @@
         <p>{{ noticeMsg }}</p>
       </div>
     </transition>
+    <hr />
+    <h2 class="page-profile__title mt-6">Настройки скролла</h2>
+    <div class="page-profile__scroll d-flex">
+      <t-field label="Ширина (px)" class="mr-4">
+        <t-input-new v-model.number="scroll.size" :error="errScrollSize" />
+      </t-field>
+      <t-field label="Цвет (hex)" class="mr-4">
+        <t-input-new v-model.trim="scroll.background" :error="errScrollBackground" />
+      </t-field>
+      <t-field label="Прозрачность" class="mr-4">
+        <t-input-new v-model.number="scroll.opacity" :error="errScrollOpacity" />
+      </t-field>
+    </div>
+    <div class="page-profile__btns">
+      <t-button class="btn" :disabled="isScrollDisabled" @click="onSaveScroll">Сохранить</t-button>
+      <!-- <button class="btn cancel" @click="cancel">Отменить</button> -->
+    </div>
+    <hr />
   </main>
 </template>
 
@@ -56,7 +74,12 @@ export default {
     // tId: null,
     errFirst: '',
     errLast: '',
-    isLoading: false
+    isLoading: false,
+    scroll: {
+      background: '#242f3d',
+      opacity: 1,
+      size: '4px',
+    },
   }),
   computed: {
     ...mapGetters({
@@ -78,6 +101,21 @@ export default {
         return this.user.last_name;
       },
     },
+    errScrollSize() {
+      const size = this.scroll.size;
+      return size > 0 && size < 99 ? '' : 'От 1 до 99';
+    },
+    errScrollBackground() {
+      const color = this.scroll.background;
+      return /^#([0-9A-F]{3}){1,2}$/i.test(color) ? '' : 'Цвет должен быть в hex формате (#FFFFFF)';
+    },
+    errScrollOpacity() {
+      const size = this.scroll.opacity;
+      return size >= 0 && size <= 1 ? '' : 'От 0 до 1';
+    },
+    isScrollDisabled() {
+      return Boolean(this.errScrollSize || this.errScrollBackground || this.errScrollOpacity);
+    },
   },
   methods: {
     copy() {
@@ -89,7 +127,7 @@ export default {
       selection.addRange(range);
       document.execCommand('copy');
       selection.removeAllRanges();
-      document.querySelector('.copy-msg').textContent = 'Token скопирован в буфер обмена'
+      document.querySelector('.copy-msg').textContent = 'Token скопирован в буфер обмена';
     },
     async updateToken() {
       const res = await this.$store.dispatch('axios', { url: '/profile/update_token/' });
@@ -120,6 +158,19 @@ export default {
     //   this.showNotice = true;
     //   this.tId = setTimeout(() => (this.showNotice = false), 2000);
     // },
+    onSaveScroll() {
+      localStorage.setItem('settingsScroll', JSON.stringify(this.scroll));
+    },
+  },
+  mounted() {
+    const scroll = localStorage.getItem('settingsScroll');
+    if (scroll) {
+      try {
+        this.scroll = JSON.parse(scroll);
+      } catch (error) {
+        console.log(error)
+      }
+    }
   },
   watch: {
     firstName() {
@@ -128,7 +179,7 @@ export default {
     lastName() {
       this.isChanged = true;
     },
-  }
+  },
 };
 </script>
 
@@ -190,7 +241,8 @@ export default {
     font-weight: 600;
     margin-bottom: 30px;
   }
-  .token, .copy-msg {
+  .token,
+  .copy-msg {
     vertical-align: middle;
   }
   hr {

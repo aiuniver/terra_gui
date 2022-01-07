@@ -26,7 +26,7 @@
             <div class="t-logging__item" :key="'errors_' + i">
               <div class="t-logging__date">{{ (error.time * 1000) | formatDate }}</div>
               <div class="t-logging__type">{{ error.level }}</div>
-              <div class="t-logging__error" @click="click(error)">
+              <div :class="['t-logging__error', { 't-logging__error': isActive(error) }]" @click="click(error)">
                 {{ error.title }}
               </div>
             </div>
@@ -60,21 +60,6 @@ export default {
     copy: false,
     selected: [],
   }),
-  methods: {
-    ...mapActions({
-      getLogs: 'logging/get',
-    }),
-    click(error) {
-      this.$emit('error', error);
-    },
-    onChange(tag) {
-      if (this.selected.includes(tag)) {
-        this.selected = this.selected.filter(i => i !== tag);
-      } else {
-        this.selected.push(tag);
-      }
-    },
-  },
   computed: {
     tags() {
       return [...new Set(this.errors.map(i => i.level))];
@@ -92,6 +77,27 @@ export default {
       get() {
         return this.value;
       },
+    },
+  },
+  methods: {
+    ...mapActions({
+      getLogs: 'logging/get',
+    }),
+    click(error) {
+      // console.log(error.massage);
+      if (error.massage) {
+        this.$emit('error', error);
+      }
+    },
+    isActive({ message }) {
+      return Boolean(message);
+    },
+    onChange(tag) {
+      if (this.selected.includes(tag)) {
+        this.selected = this.selected.filter(i => i !== tag);
+      } else {
+        this.selected.push(tag);
+      }
     },
   },
   watch: {
@@ -133,11 +139,14 @@ export default {
   &__error {
     flex: 1 1 auto;
     white-space: pre-wrap;
-    cursor: pointer;
+
     // width: 586px;
     // overflow: hidden;
-    &:hover {
-      opacity: 0.7;
+    &--active {
+      cursor: pointer;
+      &:hover {
+        opacity: 0.7;
+      }
     }
   }
 }

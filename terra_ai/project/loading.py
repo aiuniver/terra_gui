@@ -38,10 +38,13 @@ def load(dataset_path: Path, source: Path, destination: Path):
                 }
             else:
                 dataset_info = config.get("dataset_info")
-            datasets_loading.choice(
-                PROJECT_LOAD_NAME,
-                DatasetLoadData(path=dataset_path, **dataset_info),
-            )
+            if dataset_info:
+                datasets_loading.choice(
+                    PROJECT_LOAD_NAME,
+                    DatasetLoadData(path=dataset_path, **dataset_info),
+                )
+            else:
+                progress.pool.reset(PROJECT_LOAD_NAME, finished=True)
 
     except Exception as error:
         progress.pool(PROJECT_LOAD_NAME, finished=True, error=error)
