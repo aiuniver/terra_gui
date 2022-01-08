@@ -16,7 +16,7 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 2,
+            "value": 3,
             "validation": LayerValidationMethodChoice.minimal,
         },
         "module": ModuleChoice.terra_custom_layers,

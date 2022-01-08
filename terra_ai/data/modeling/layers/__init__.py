@@ -686,6 +686,13 @@ class LayerUNETBlock3DData(LayerMixinData):
     )
 
 
+class LayerConditionalMergeLayerData(LayerMixinData):
+    main: types.ConditionalMergeLayer.ParametersMainData = types.ConditionalMergeLayer.ParametersMainData()
+    extra: types.ConditionalMergeLayer.ParametersExtraData = (
+        types.ConditionalMergeLayer.ParametersExtraData()
+    )
+
+
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
         types.PretrainedYOLO.ParametersMainData()

@@ -12,6 +12,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 import terra_ai.exceptions.callbacks as exception
+from terra_ai.logging import logger
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -345,17 +346,12 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-
-# def print_error(class_name: str, method_name: str, message: Exception):
-#     return print(f'\n_________________________________________________\n'
-#                  f'Error in class {class_name} method {method_name}: {message}'
-#                  f'\n_________________________________________________\n')
+GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.CGAN]
 
 
 def reformat_fit_array(array: dict, train_idx: list = None):
     method_name = 'reformat_fit_array'
     try:
-        # print(method_name)
         reformat_true = {}
         for data_type in array.keys():
             reformat_true[data_type] = {}
