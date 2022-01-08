@@ -948,11 +948,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1036,7 +1036,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'
@@ -1090,7 +1090,6 @@ class InteractiveCallback:
                             )
                         )
                         _id += 1
-
             return data_return
         except Exception as error:
             if self.first_error:

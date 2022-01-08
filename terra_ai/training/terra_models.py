@@ -264,7 +264,7 @@ class BaseTerraModel:
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"type": "info"})
+                    # logger.info("Веса лучшей эпохи успешно сохранены", extra={"type": "info"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -575,7 +575,7 @@ class YoloTerraModel(BaseTerraModel):
 
                 if self.callback.is_best():
                     self.save_weights(path_=self.file_path_model_best_weights)
-                    logger.info("Веса лучшей эпохи успешно сохранены", extra={"type": "success"})
+                    # logger.info("Веса лучшей эпохи успешно сохранены", extra={"type": "success"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
