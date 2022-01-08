@@ -61,7 +61,7 @@ class LayerText2SpeechData(LayerBaseData, types.Text2Speech.ParametersData):
     pass
 
 
-class LayerGANData(LayerBaseData, types.Text2Speech.ParametersData):
+class LayerGANData(LayerBaseData, types.GAN.ParametersData):
     pass
 
 

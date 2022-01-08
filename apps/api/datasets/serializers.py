@@ -184,6 +184,10 @@ class LayerParametersText2SpeechSerializer(serializers.Serializer):
     pass
 
 
+class LayerParametersGANSerializer(serializers.Serializer):
+    pass
+
+
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
