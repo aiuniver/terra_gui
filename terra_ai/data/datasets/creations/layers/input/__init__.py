@@ -29,6 +29,10 @@ class LayerDataframeData(LayerBaseData, types.Dataframe.ParametersData):
     pass
 
 
+class LayerNoiseData(LayerBaseData, types.Noise.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(

@@ -4,4 +4,5 @@ from . import (
     Audio,
     Video,
     Dataframe,
+    Noise,
 )
