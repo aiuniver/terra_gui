@@ -28,10 +28,8 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
-import logging
 import h5py
 from math import ceil
-from PIL import Image
 from itertools import repeat
 from pathlib import Path
 from typing import Union
@@ -210,6 +208,36 @@ class CreateDataset(object):
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
+            elif out.type == LayerOutputTypeChoice.GAN:
+                out_list = []
+                img_shape = ()
+                sources_paths = []
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Image:
+                        img_shape = (inp.parameters.height, inp.parameters.width, 3)
+                        sources_paths = inp.parameters.sources_paths
+                creation_data.inputs.append(
+                    CreationInputData(
+                        id=2,
+                        name='Шум',
+                        type=LayerInputTypeChoice.Noise,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': (100,)}))
+                out_list.append(
+                    CreationOutputData(
+                        id=3,
+                        name='Генератор',
+                        type=LayerOutputTypeChoice.Generator,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': img_shape}).native())
+                out_list.append(
+                    CreationOutputData(
+                        id=4,
+                        name='Дискриминатор',
+                        type=LayerOutputTypeChoice.Discriminator,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': (1,)}).native())
+                creation_data.outputs = CreationOutputsList(out_list)
 
         if creation_data.columns_processing:
             for worker_name, worker_params in creation_data.columns_processing.items():
@@ -450,6 +478,7 @@ class CreateDataset(object):
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
 
                 results_list = []
+                parameters = {}
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(instructions, temp_paths_list, repeat(put))
                     progress.pool(self.progress_name,
@@ -457,17 +486,19 @@ class CreateDataset(object):
                     for i, result in enumerate(results):
                         progress.pool(self.progress_name, percent=ceil(i / len(temp_paths_list) * 100))
                         results_list += result[0]['instructions']
+                        parameters = result[0]['parameters']
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
                                             LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
                                             LayerOutputTypeChoice.Tracker, LayerOutputTypeChoice.Speech2Text,
-                                            LayerOutputTypeChoice.Text2Speech]:
+                                            LayerOutputTypeChoice.Text2Speech, LayerOutputTypeChoice.Generator,
+                                            LayerOutputTypeChoice.Discriminator, LayerInputTypeChoice.Noise]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
-                instructions_data = InstructionsData(instructions=results_list, parameters=result[0]['parameters'])
 
+                instructions_data = InstructionsData(instructions=results_list, parameters=parameters)
                 if decamelize(put.type) in PATH_TYPE_LIST:
                     new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                  for path in instructions_data.instructions]
@@ -749,10 +780,9 @@ class CreateDataset(object):
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
                     data_to_pass = self.dataframe['train'].iloc[0, 1]
-                    tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                     self.dataframe['train'].iloc[0, 0]))
-                    data.parameters.update([('orig_x', tmp_im.width),
-                                            ('orig_y', tmp_im.height)])
+                    tmp_im = self.dataframe['train'].iloc[0, 0].split(';')[1].split(',')
+                    data.parameters.update([('orig_x', int(tmp_im[0])),
+                                            ('orig_y', int(tmp_im[1]))])
                 else:
                     data_to_pass = data.instructions[0]
                 array = np.array([1])
@@ -1014,10 +1044,9 @@ class CreateDataset(object):
                                 #     tmp_data.append(self.augmentation[split]['1_image'][i])
                                 # else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
-                                tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                                 self.dataframe[split].iloc[i, 0]))
-                                parameters_to_pass.update([('orig_x', tmp_im.width),
-                                                           ('orig_y', tmp_im.height)])
+                                tmp_im = self.dataframe['train'].iloc[i, 0].split(';')[1].split(',')
+                                parameters_to_pass.update([('orig_x', int(tmp_im[0])),
+                                                           ('orig_y', int(tmp_im[1]))])
                             else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
                             # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
@@ -1193,9 +1222,11 @@ class CreateDataset(object):
             architecture = ArchitectureChoice.Speech2Text
         elif out_task_name == LayerOutputTypeChoice.Text2Speech:
             architecture = ArchitectureChoice.Text2Speech
-        elif creation_data.outputs[0].type == LayerOutputTypeChoice.GAN:
+        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+                and len(creation_data.inputs) == 2:
             architecture = ArchitectureChoice.GAN
-        elif creation_data.outputs[0].type == LayerOutputTypeChoice.CGAN:
+        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+                and len(creation_data.inputs) > 2:
             architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
