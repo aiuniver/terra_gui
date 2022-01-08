@@ -122,3 +122,25 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
 
 class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
     pass
+
+
+class ParametersGANData(ColumnProcessingData):
+    pass
+
+
+class ParametersNoiseData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False
+
+
+class ParametersDiscriminatorData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False
+
+
+class ParametersGeneratorData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False

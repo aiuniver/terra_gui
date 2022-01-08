@@ -11,5 +11,7 @@ from . import (
     Timeseries,
     Tracker,
     Text2Speech,
-    Speech2Text
+    Speech2Text,
+    Discriminator,
+    Generator,
 )
