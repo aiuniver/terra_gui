@@ -259,7 +259,7 @@ class CGANCallback:
             if choice_type == ExampleChoiceTypeChoice.seed:
                 name_list = list(seed_array.keys())
                 shuffle_idx = list(np.arange(len(name_list)))
-                # shuffle(shuffle_idx)
+                shuffle(shuffle_idx)
                 for i in shuffle_idx:
                     example_idx[name_list[i]] = np.array(seed_array[name_list[i]][:5], dtype='float32')
                     # if i == count:
