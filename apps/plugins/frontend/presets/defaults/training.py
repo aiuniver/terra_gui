@@ -600,4 +600,6 @@ Architectures = {
         "yolo": ArchitectureGroupYoloV4,
     },
     ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
+    ArchitectureChoice.GAN: {**ArchitectureBasicForm},
+    ArchitectureChoice.CGAN: {**ArchitectureBasicForm},
 }

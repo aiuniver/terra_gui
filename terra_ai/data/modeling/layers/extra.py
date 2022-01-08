@@ -113,6 +113,14 @@ class InterpolationChoice(str, Enum):
         return list(map(lambda item: item.value, InterpolationChoice))
 
 
+class ConditionalMergeModeChoice(str, Enum):
+    concatenate = "Concatenate"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ConditionalMergeModeChoice))
+
+
 class ResizingInterpolationChoice(str, Enum):
     bilinear = "bilinear"
     nearest = "nearest"

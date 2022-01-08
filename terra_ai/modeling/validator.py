@@ -10,6 +10,8 @@ import networkx as nx
 import numpy as np
 import tensorflow
 from tensorflow.python.keras.backend import clear_session
+
+from terra_ai.callbacks.utils import GAN_ARCHITECTURE
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -27,6 +29,7 @@ class ModelValidator:
 
     def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
+        logger.info(f"Используемая архитектура: {architecture}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -45,6 +48,16 @@ class ModelValidator:
         self.val_dictionary: Dict[int, Any] = {}
         self.keras_code: str = ""
         self.valid: bool = True
+        self.num_models: int = 0
+        self.model_idxs: list = []
+        self.model_count: int = 1
+        # architecture = ArchitectureChoice.GAN
+        self.architecture = architecture
+        if self.architecture in GAN_ARCHITECTURE:
+            self.model_count = 2
+        if not architecture:
+            self.model_count = None
+        self.separated_plans: list = []
 
         self.input_shape = {}
         self.model_plan = []
@@ -77,11 +90,14 @@ class ModelValidator:
         """Create keras code from model plan"""
         # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
         logger.info("Компиляция керас-кода модели...")
+        self._plan_separation()
         self.keras_code = ""
         layers_import = {}
         name_dict = {}
-        input_list = []
-        output_list = []
+        input_list = {}
+        output_list = {}
+
+        # name_dict
         for layer in self.model_plan:
             if layer[1] not in layers_import.values() \
                     and self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.block_plan:
@@ -92,13 +108,14 @@ class ModelValidator:
                         layers_import[block_layer[0]] = block_layer[1]
             if layer[0] in self.start_row:
                 name_dict[layer[0]] = f"input_{layer[2].get('name')}"
-                input_list.append(f"input_{layer[2].get('name')}")
+                input_list[layer[0]] = f"input_{layer[2].get('name')}"
             elif layer[0] in self.end_row:
                 name_dict[layer[0]] = f"output_{layer[2].get('name')}"
-                output_list.append(f"output_{layer[2].get('name')}")
+                output_list[layer[0]] = f"output_{layer[2].get('name')}"
             else:
                 name_dict[layer[0]] = f"x_{layer[0]}"
 
+        # header str
         layers_str = ""
         for _id, _layer_name in layers_import.items():
             layers_str += (
@@ -106,37 +123,50 @@ class ModelValidator:
             )
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
-        inputs_str = ""
-        for i in input_list:
-            inputs_str += f"{i}, "
-        inputs_str = f"[{inputs_str[:-2]}]"
+        model_count = 1
+        for idx, model in enumerate(self.separated_plans):
+            model_name = 'model'
+            inputs_str = ""
+            for inp in input_list.keys():
+                if inp in self.model_idxs[idx]:
+                    inputs_str += f"{input_list.get(inp)}, "
+            inputs_str = f"[{inputs_str[:-2]}]"
 
-        outputs_str = ""
-        for i in output_list:
-            outputs_str += f"{i}, "
-        outputs_str = f"[{outputs_str[:-2]}]"
+            outputs_str = ""
+            for out in output_list.keys():
+                if out in self.model_idxs[idx]:
+                    if self.architecture in GAN_ARCHITECTURE and self.layer_output_shapes[out][0][1:] == (1,):
+                        model_name = f"discriminator_{model_count}"
+                    elif self.architecture in GAN_ARCHITECTURE and self.layer_output_shapes[out][0][1:] != (1,):
+                        model_name = f"generator_{model_count}"
+                    else:
+                        model_name = f'model_{model_count}'
+                    outputs_str += f"{output_list.get(out)}, "
+            outputs_str = f"[{outputs_str[:-2]}]"
+            model_count += 1
 
-        for layer in self.model_plan:
-            if layer[1] == LayerTypeChoice.CustomBlock:
-                layer_str = ""
-                block_uplinks = {-1: name_dict[layer[3][0]]}
-                for block_layer in self.block_plans.get(layer[0]):
-                    layer_str += self._get_layer_str(
-                        _layer=block_layer,
-                        name_dict=name_dict,
-                        identifier=layer[2].get("name", ""),
-                        _block_uplinks=block_uplinks,
-                    )
-                layer_str = f"\n{layer_str}\n"
-            else:
-                layer_str = self._get_layer_str(_layer=layer, name_dict=name_dict)
-            self.keras_code += layer_str
+            for layer in model:
+                if layer[1] == LayerTypeChoice.CustomBlock:
+                    layer_str = ""
+                    block_uplinks = {-1: name_dict[layer[3][0]]}
+                    for block_layer in self.block_plans.get(layer[0]):
+                        layer_str += self._get_layer_str(
+                            _layer=block_layer,
+                            name_dict=name_dict,
+                            identifier=layer[2].get("name", ""),
+                            _block_uplinks=block_uplinks,
+                        )
+                    layer_str = f"\n{layer_str}\n"
+                else:
+                    layer_str = self._get_layer_str(_layer=layer, name_dict=name_dict)
+                self.keras_code += layer_str
 
-        if self.keras_code:
-            self.keras_code = f"{layers_str}{self.keras_code[:-2]})"
-            self.keras_code = (
-                f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
-            )
+            if self.keras_code:
+                self.keras_code = f"{self.keras_code[:-2]})"
+                self.keras_code = (
+                    f"{self.keras_code}\n\n{model_name} = Model({inputs_str}, {outputs_str}) \n\n"
+                )
+        self.keras_code = f"{layers_str}{self.keras_code[:-2]}"
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
@@ -183,9 +213,25 @@ class ModelValidator:
         return self.val_dictionary
 
     def get_keras_model(self):
+        self._plan_separation()
         # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
-        mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
-        return mc.create_model()
+        if self.architecture in GAN_ARCHITECTURE:
+            models = {'generator': None, 'discriminator': None}
+            for model_plan in self.separated_plans:
+                mc = ModelCreator(model_plan, self.input_shape, self.block_plans, self.layers_config)
+                model = mc.create_model()
+                if model.outputs[0].shape[1:] == (1,):
+                    models['discriminator'] = model
+                else:
+                    models['generator'] = model
+            print(models, models['discriminator'].outputs, models['generator'].outputs)
+            return models
+        else:
+            mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
+            model = mc.create_model()
+            for layer in model.layers:
+                print(layer)
+            return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
         # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
@@ -274,7 +320,7 @@ class ModelValidator:
                         self.block_plans[layer.id] = reorder_plan(block_plan)
                         break
         self._get_model_links()
-        self._get_reorder_model()
+        self.model_plan = self._get_reorder_model(self.model_plan)
 
     def _get_cycles_check(self) -> None:
         """
@@ -309,20 +355,32 @@ class ModelValidator:
             list(nx.weakly_connected_components(di_graph)),
             key=lambda subgraph: -len(subgraph),
         )
-        if len(sub_graphs) > 1:
+        if not self.model_count:
+            self.model_idxs = sub_graphs
+        elif len(sub_graphs) > self.model_count:
             self.valid = False
-            for group in sub_graphs[1:]:
+            for group in sub_graphs[self.model_count:]:
                 for layer in group:
                     logger.warning(f"Слой {layer}: {exceptions.LayerNotConnectedToMainPartException()}")
                     self.val_dictionary[layer] = str(exceptions.LayerNotConnectedToMainPartException())
+        elif len(sub_graphs) < self.model_count:
+            self.valid = False
+            # for group in sub_graphs[1:]:
+            for group in sub_graphs[self.model_count:]:
+                logger.warning(exceptions.ExpectedMoreModelsException(self.model_count, len(sub_graphs)))
+                for layer in group:
+                    self.val_dictionary[layer] = \
+                        str(exceptions.ExpectedMoreModelsException(self.model_count, len(sub_graphs)))
+        else:
+            self.model_idxs = sub_graphs
 
     def _get_model_links(self) -> None:
         # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         (self.start_row, self.up_links, self.down_links, self.all_indexes, self.end_row) = get_links(self.model_plan)
 
-    def _get_reorder_model(self):
-        # logger.debug(f"{self.name}, {self._get_reorder_model.__name__}")
-        self.model_plan = reorder_plan(self.model_plan)
+    @staticmethod
+    def _get_reorder_model(plan: list):
+        return reorder_plan(plan)
 
     def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
@@ -488,6 +546,24 @@ class ModelValidator:
                     )
         return block_output, block_comment
 
+    def _plan_separation(self):
+        # logger.debug(f"{self.name}, {self._plan_separation.__name__}")
+        self._get_full_connection_check()
+        # logger.debug(f'self.model_idxs - {self.model_idxs}')
+        if len(self.model_idxs) == 1:
+            self.separated_plans = [self.model_plan]
+        else:
+            for plan_idxs in self.model_idxs:
+                new_plan = []
+                for idx in plan_idxs:
+                    for layer in self.model_plan:
+                        if idx == layer[0]:
+                            new_plan.append(layer)
+                            break
+                # logger.debug(f'self._get_reorder_model(new_plan) - {self._get_reorder_model(new_plan)}')
+                self.separated_plans.append(self._get_reorder_model(new_plan))
+        # logger.debug(f'\n self.separated_plans\n {self.separated_plans[0]} \n  {self.separated_plans[1]}')
+
 
 # noinspection PyBroadException
 class LayerValidation:
@@ -534,7 +610,6 @@ class LayerValidation:
                     or self.module_type == ModuleTypeChoice.keras_pretrained_model:
                 try:
                     params = copy.deepcopy(self.layer_parameters)
-                    # print('params', params)
                     if self.layer_type == LayerTypeChoice.Input:
                         return self.inp_shape, None
                     elif self.module_type == ModuleTypeChoice.keras_pretrained_model:
@@ -548,19 +623,14 @@ class LayerValidation:
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
                     elif self.layer_type == LayerTypeChoice.PretrainedYOLO:
-                        # print(self.inp_shape)
                         params['use_weights'] = False
-                        # print('params', params)
-                        # print(getattr(self.module, self.layer_type))
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
-                        # print(output_shape)
                     else:
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
-
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
@@ -713,7 +783,7 @@ class LayerValidation:
         # logger.debug(f"{self.name}, {self.input_dimension_validation.__name__}")
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
-                if len(self.inp_shape[0]) != len(shape):
+                if len(self.inp_shape[0]) != len(shape) and self.layer_type != LayerTypeChoice.ConditionalMergeLayer:
                     logger.warning(f"Слой {self.layer_type}: "
                                    f"{exceptions.InputShapesHaveDifferentSizesException(self.inp_shape)}")
                     return str(exceptions.InputShapesHaveDifferentSizesException(self.inp_shape))
@@ -728,6 +798,11 @@ class LayerValidation:
                         logger.warning(f"Слой {self.layer_type}: "
                                        f"{exceptions.MismatchedInputShapesException(axis, self.inp_shape)}")
                         return str(exceptions.MismatchedInputShapesException(axis, self.inp_shape))
+            elif self.layer_type == LayerTypeChoice.ConditionalMergeLayer:
+                if len(self.inp_shape) != 2:
+                    logger.warning(f"Слой {self.layer_type}: "
+                                   f"{exceptions.IncorrectQuantityInputDimensionsException(2, len(self.inp_shape))}")
+                    return str(exceptions.IncorrectQuantityInputDimensionsException(2, len(self.inp_shape)))
             else:
                 for shape in self.inp_shape[1:]:
                     if shape != self.inp_shape[0]:
@@ -1043,7 +1118,7 @@ class LayerValidation:
         if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
                 self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
             exc = f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
-                   f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
+                  f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
             logger.warning(f"Слой {self.layer_type}: {exc}")
             return exc
         # OnlyYOLO exceptions
@@ -1279,7 +1354,7 @@ if __name__ == "__main__":
             module='tensorflow.keras.layers', module_type='keras'),
         3: LayerConfigData(
             num_uplinks=LayerValueConfig(value=1, validation='fixed'),
-            input_dimension=LayerValueConfig(value=2, validation= 'minimal'),
+            input_dimension=LayerValueConfig(value=2, validation='minimal'),
             module='tensorflow.keras.layers',
             module_type='keras'),
         4: LayerConfigData(

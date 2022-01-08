@@ -106,6 +106,8 @@ class TaskChoice(str, Enum):
     Dataframe = "Dataframe"
     TextSegmentation = "TextSegmentation"
     TimeseriesTrend = "TimeseriesTrend"
+    Generator = "Generator"
+    Discriminator = "Discriminator"
 
 
 class LossChoice(str, Enum):

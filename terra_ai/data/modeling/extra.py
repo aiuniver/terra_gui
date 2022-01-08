@@ -137,6 +137,7 @@ class LayerTypeChoice(str, Enum):
     UNETBlock2D = "UNETBlock2D"
     UNETBlock3D = "UNETBlock3D"
     PretrainedYOLO = "PretrainedYOLO"
+    ConditionalMergeLayer = "ConditionalMergeLayer"
 
     @staticmethod
     def values() -> list:

@@ -9,6 +9,8 @@ class ModelingMessages(dict, Enum):
     # Connection
     LayerNotConnectedToMainPart = {"ru": "Слой не подключен к основной части",
                                    "eng": "Layer is not connected to main part"}
+    ExpectedMoreModels = {"ru": "Для данной архитектуры необходимо %s модели, но обнаружено только %s модель",
+                          "eng": "For given task expected %s models but found only %s"}
     # Input Shape
     ExpectedOtherInputShapeDim = {"ru": "Expected input shape dim=%s for %s but received dim=%s with input_shape `%s`",
                                   "eng": "Expected input shape dim=%s for %s but received dim=%s with input_shape `%s`"}
@@ -80,6 +82,14 @@ class ModelingException(TerraBaseException):
 class LayerNotConnectedToMainPartException(ModelingException):
     class Meta:
         message = ModelingMessages.LayerNotConnectedToMainPart
+
+
+class ExpectedMoreModelsException(ModelingException):
+    class Meta:
+        message = ModelingMessages.ExpectedMoreModels
+
+    def __init__(self, __expected, __found, **kwargs):
+        super().__init__(str(__expected), str(__found), **kwargs)
 
 
 class ExpectedOtherInputShapeDimException(ModelingException):
