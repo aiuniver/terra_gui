@@ -222,6 +222,7 @@ class InteractiveCallback:
                         self.get_balance = False
 
                 if on_epoch_end_flag:
+                    print('fit_logs', fit_logs)
                     self.current_epoch = fit_logs.get('epochs')[-1]
                     logger.debug(f"{InteractiveCallback.name}: обновление логов и таблицы прогресса обучения...")
                     self.log_history = fit_logs

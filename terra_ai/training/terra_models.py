@@ -456,11 +456,8 @@ class YoloTerraModel(BaseTerraModel):
                 cur_step, giou_train, conf_train, prob_train, total_train = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, target1, target2 in dataset.dataset.get('train').batch(params.base.batch):
-                    results = self.__train_step(image_data,
-                                                target1,
-                                                target2,
-                                                global_steps=global_steps,
-                                                **yolo_parameters)
+                    results = self.__train_step(
+                        image_data, target1, target2, global_steps=global_steps, **yolo_parameters)
 
                     giou_train += results[1].numpy()
                     conf_train += results[2].numpy()
@@ -469,6 +466,9 @@ class YoloTerraModel(BaseTerraModel):
                     for cls in range(num_class):
                         train_loss_cls[classes[cls]] += results[5][classes[cls]].numpy()
 
+                    # logger.debug(f"Batch {cur_step+1}, "
+                    #              f"giou_train: {round(giou_train/(cur_step+1),3)}, conf_train: {round(conf_train/(cur_step+1),3)}, "
+                    #              f"prob_train: {round(prob_train/(cur_step+1),3)}, total_train: {round(total_train/(cur_step+1),3)}")
                     # true_array = list(target1.values())
                     # length = results[6][0].shape[0]
                     # for i in range(len(train_pred)):
