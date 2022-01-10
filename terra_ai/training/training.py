@@ -66,7 +66,7 @@ class GUINN:
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         method_name = '_set_training_params'
-        logger.info("Установка параметров обучения...", extra={"type": "info"})
+        # logger.info("Установка параметров обучения...", extra={"type": "info"})
         try:
             self.params = params
             self.dataset = self._prepare_dataset(
@@ -99,7 +99,7 @@ class GUINN:
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
         self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
                                     deploy_type=self.deploy_type.name)
-        logger.info("Добавление колбэков выполнено", extra={"type": "success"})
+        # logger.info("Добавление колбэков выполнено", extra={"type": "success"})
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
@@ -155,7 +155,7 @@ class GUINN:
     def _prepare_dataset(self, dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
         method_name = '_prepare_dataset'
         try:
-            logger.info("Загрузка датасета...", extra={"type": "info"})
+            # logger.info("Загрузка датасета...", extra={"type": "info"})
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
@@ -171,7 +171,7 @@ class GUINN:
                    dataset: PrepareDataset) -> Union[BaseTerraModel, YoloTerraModel]:
         method_name = 'set model'
         try:
-            logger.info("Загрузка модели...", extra={"type": "info"})
+            # logger.info("Загрузка модели...", extra={"type": "info"})
             base_model = None
             if train_details.state.status == "training":
                 validator = ModelValidator(model, dataset.data.architecture)
@@ -223,7 +223,7 @@ class GUINN:
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
         method_name = 'terra_fit'
-        logger.info(f"start {method_name}")
+        # logger.info(f"start {method_name}")
         try:
             # check and kill last training if it detect
             self._kill_last_training(state=training)
@@ -258,7 +258,7 @@ class GUINN:
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
         method_name = 'model_fit'
         try:
-            logger.info(f"Старт обучения модели...", extra={"front_level": "info"})
+            # logger.info(f"Старт обучения модели...", extra={"front_level": "info"})
             self._set_callbacks(dataset=dataset, train_details=params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")

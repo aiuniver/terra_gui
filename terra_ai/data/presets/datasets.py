@@ -3978,6 +3978,401 @@ DatasetsGroups = [
                     Tags.terra_ai.value,
                 ],
             },
+            {
+                "alias": "brain_tumor",
+                "name": "Опухоль мозга",
+                "architecture": ArchitectureChoice.ImageClassification.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Изображения",
+                        "shape": (224, 224, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["no", "yes"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Метки классов",
+                        "shape": (2,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 2,
+                        "classes_names": ["no", "yes"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "breast_cancer",
+                "name": "Рак груди",
+                "architecture": ArchitectureChoice.ImageClassification.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Изображения",
+                        "shape": (192, 192, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["non-pCR", "pCR"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Метки классов",
+                        "shape": (2,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 2,
+                        "classes_names": ["non-pCR", "pCR"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "pnevmonija",
+                "name": "Пневмония",
+                "architecture": ArchitectureChoice.ImageClassification.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Изображения",
+                        "shape": (224, 224, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["NORMAL", "PNEUMONIA"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Метки классов",
+                        "shape": (2,),
+                        "task": LayerOutputTypeChoice.Classification.value,
+                        "num_classes": 2,
+                        "classes_names": ["NORMAL", "PNEUMONIA"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.classification.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "obnaruzhenie_znachimyh_obektov_1",
+                "name": "Обнаружение значимых объектов 1",
+                "architecture": ArchitectureChoice.ImageSegmentation.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Изображения",
+                        "shape": (224, 224, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["Images"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Маски сегментации",
+                        "shape": (224, 224, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Фон", "Объект"],
+                        "classes_colors": ["black", "white"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "obnaruzhenie_znachimyh_obektov_2",
+                "name": "Обнаружение значимых объектов 2",
+                "architecture": ArchitectureChoice.ImageSegmentation.name,
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Изображения",
+                        "shape": (224, 224, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 2,
+                        "classes_names": ["Images"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Маски сегментации",
+                        "shape": (224, 224, 2),
+                        "task": LayerOutputTypeChoice.Segmentation.value,
+                        "num_classes": 2,
+                        "classes_names": ["Фон", "Объект"],
+                        "classes_colors": ["black", "white"],
+                        "encoding": LayerEncodingChoice.ohe.value,
+                    }
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.segmentation.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "maski_na_litse",
+                "name": "Маски на лице",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Изображения",
+                        "shape": (416, 416, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["images"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (52, 52, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 3,
+                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    3: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (26, 26, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 3,
+                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (13, 13, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 3,
+                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "obnaruzhenie_ognja",
+                "name": "Обнаружение огня",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Изображения",
+                        "shape": (416, 416, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["images"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (52, 52, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 1,
+                        "classes_names": ["Fire"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    3: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (26, 26, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 1,
+                        "classes_names": ["Fire"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (13, 13, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 1,
+                        "classes_names": ["Fire"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "ufc",
+                "name": "UFC",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Изображения",
+                        "shape": (416, 416, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["images"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (52, 52, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 4,
+                        "classes_names": ["Feet", "Gloves", "Head", "object"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    3: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (26, 26, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 4,
+                        "classes_names": ["Feet", "Gloves", "Head", "object"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (13, 13, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 4,
+                        "classes_names": ["Feet", "Gloves", "Head", "object"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "kaski_i_zhilety",
+                "name": "Каски и жилеты",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "uint8",
+                        "name": "Изображения",
+                        "shape": (416, 416, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": ["obj_train_data"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (52, 52, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 2,
+                        "classes_names": ["Vest", "Helmet"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    3: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (26, 26, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 2,
+                        "classes_names": ["Vest", "Helmet"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "3D",
+                        "dtype": "float32",
+                        "name": "Bounding boxes",
+                        "shape": (13, 13, 3, 18),
+                        "task": LayerOutputTypeChoice.ObjectDetection.value,
+                        "num_classes": 2,
+                        "classes_names": ["Vest", "Helmet"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+
+
         ],
     },
     {
