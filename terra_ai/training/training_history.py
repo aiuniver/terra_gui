@@ -62,6 +62,7 @@ class History:
         self.epochs = training_details.base.epochs
         self.sum_epoch = self.epochs
         self.log_history = self._load_logs(dataset=dataset, training_details=training_details)
+        logger.debug(f"self.log_history: {self.log_history}")
         self.class_outputs = class_metric_list(dataset)
         if self.architecture_type in CLASSIFICATION_ARCHITECTURE:
             self.y_true, _ = BaseClassificationCallback().get_y_true(dataset)
@@ -153,7 +154,7 @@ class History:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
             if options.data.architecture in YOLO_ARCHITECTURE:
-                log_history['output'] = OUTPUT_LOG_CONFIG
+                log_history['output'] = copy.deepcopy(OUTPUT_LOG_CONFIG)
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
