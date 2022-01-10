@@ -1191,18 +1191,18 @@ class ModelCreator:
 
     def _get_model_links(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        logger.debug(f"{self.name}, {self._get_model_links.__name__}")
+        # logger.debug(f"{self.name}, {self._get_model_links.__name__}")
         self.start_row, self.uplinks, self.downlinks, _, self.end_row = get_links(self.model_plan)
 
     def _get_idx_line(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
+        # logger.debug(f"{self.name}, {self._get_idx_line.__name__}")
         self.idx_line = get_idx_line(self.model_plan)
 
     def _build_keras_model(self):
         """Build keras model from plan"""
         logger.info("Сборка модели из плана...")
-        logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
+        # logger.debug(f"{self.name}, {self._build_keras_model.__name__}")
         for _id in self.idx_line:
             layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]
             layer_idx = self.model_plan[self.id_idx_dict.get(_id)][0]
@@ -1261,7 +1261,7 @@ class ModelCreator:
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
+        # logger.debug(f"{self.name}, {self._tf_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
@@ -1273,7 +1273,7 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
-        logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
+        # logger.debug(f"{self.name}, {self._pretrained_model_init_.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         param2del = ["name", "trainable", "output_layer"]
         attr = copy.deepcopy(terra_layer[2])
@@ -1295,7 +1295,7 @@ class ModelCreator:
             activation='linear', name=terra_layer[2].get("name"))(pretrained_layer)
 
     def _custom_block_init(self, terra_layer):
-        logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
+        # logger.debug(f"{self.name}, {self._custom_block_init.__name__}")
         block_object = CustomLayer()
         block_object.block_plan = self.block_plans.get(terra_layer[0])
         for layer in block_object.block_plan:
@@ -1320,13 +1320,13 @@ class ModelCreator:
         3 - # uplinks - (list of  int)
         4 - # downlinks - (list of int)
         """
-        logger.debug(f"{self.name}, {self.create_model.__name__}")
+        # logger.debug(f"{self.name}, {self.create_model.__name__}")
         self._build_keras_model()
         return self.nnmodel
 
     def creator_cleaner(self) -> None:
         """clean and reset to default self.nnmodel"""
-        logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
+        # logger.debug(f"\n{self.name}, {self.creator_cleaner.__name__}")
         clear_session()
         del self.nnmodel
         gc.collect()

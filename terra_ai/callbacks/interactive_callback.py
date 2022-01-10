@@ -80,7 +80,7 @@ class InteractiveCallback:
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.set_attributes.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.set_attributes.__name__}")
         method_name = "set attributes"
         try:
             self.options = dataset
@@ -101,7 +101,7 @@ class InteractiveCallback:
             ).with_traceback(error.__traceback__)
 
     def clear_history(self):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.clear_history.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.clear_history.__name__}")
         self.log_history = {}
         self.current_logs = {}
         self.progress_table = {}
@@ -117,7 +117,7 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
-                logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
+                # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
                     logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
@@ -330,7 +330,7 @@ class InteractiveCallback:
     def get_train_results(self):
         """Return dict with data for current interactive request"""
         if self.log_history and self.log_history.get("epochs", {}):
-            logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.get_train_results.__name__}")
+            # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.get_train_results.__name__}")
             data_type = self.training_details.interactive.intermediate_result.data_type.name
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
@@ -442,7 +442,7 @@ class InteractiveCallback:
             self.training_details.result = {"train_data": result}
 
     def _callback_router(self, dataset: PrepareDataset):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._callback_router.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._callback_router.__name__}")
         method_name = '_callback_router'
         try:
             if dataset.data.architecture == ArchitectureChoice.Basic:
@@ -520,7 +520,7 @@ class InteractiveCallback:
             raise exc
 
     def _class_metric_list(self):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._class_metric_list.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._class_metric_list.__name__}")
         method_name = '_class_metric_list'
         try:
             return class_metric_list(self.options)
@@ -531,7 +531,7 @@ class InteractiveCallback:
             raise exc
 
     def _prepare_seed(self):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._prepare_seed.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._prepare_seed.__name__}")
         method_name = '_prepare_seed'
         try:
             example_idx = {}
@@ -580,7 +580,7 @@ class InteractiveCallback:
             raise exc
 
     def _update_progress_table(self, epoch_time: float):
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._update_progress_table.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._update_progress_table.__name__}")
         method_name = '_update_progress_table'
         try:
             if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -641,7 +641,7 @@ class InteractiveCallback:
             raise exc
 
     def _get_loss_graph_data_request(self) -> list:
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_loss_graph_data_request.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_loss_graph_data_request.__name__}")
         method_name = '_get_loss_graph_data_request'
         try:
             data_return = []
@@ -759,6 +759,8 @@ class InteractiveCallback:
                             if x is not None:
                                 no_none_train.append(x)
                         best_train_value = min(no_none_train) if no_none_train else None
+                        print('self.log_history.get("epochs"), train_list, best_train_value',
+                              self.log_history.get("epochs"), train_list, best_train_value)
                         best_train = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
                                if best_train_value is not None else None],
@@ -935,7 +937,7 @@ class InteractiveCallback:
                 pass
 
     def _get_metric_graph_data_request(self) -> list:
-        logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_metric_graph_data_request.__name__}")
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_metric_graph_data_request.__name__}")
         method_name = '_get_metric_graph_data_request'
         try:
             data_return = []

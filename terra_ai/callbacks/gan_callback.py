@@ -26,14 +26,14 @@ class GANCallback:
 
     @staticmethod
     def get_x_array(options):
-        logger.debug(f"{GANCallback.name}, {GANCallback.get_x_array.__name__}")
+        # logger.debug(f"{GANCallback.name}, {GANCallback.get_x_array.__name__}")
         x_val = None
         inverse_x_val = None
         return x_val, inverse_x_val
 
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
-        logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_deploy.__name__}")
+        # logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_deploy.__name__}")
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -82,17 +82,17 @@ class GANCallback:
 
     @staticmethod
     def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
-                               y_pred, inverse_y_pred, raw_y_pred=None) -> list:
+                               y_pred, inverse_y_pred, raw_y_pred=None) -> dict:
         return {}
 
     @staticmethod
-    def balance_data_request(options, dataset_balance, interactive_config):
+    def balance_data_request(options, dataset_balance, interactive_config) -> dict:
         return {}
 
     @staticmethod
     def prepare_example_idx_to_show(array: np.ndarray, seed_array: np.ndarray, count: int,
                                     choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed) -> np.ndarray:
-        logger.debug(f"{GANCallback.name}, {GANCallback.prepare_example_idx_to_show.__name__}")
+        # logger.debug(f"{GANCallback.name}, {GANCallback.prepare_example_idx_to_show.__name__}")
         method_name = 'prepare_example_idx_to_show'
         try:
             if choice_type == ExampleChoiceTypeChoice.seed:
@@ -109,7 +109,7 @@ class GANCallback:
 
     @staticmethod
     def postprocess_gan(predict_array: np.ndarray, image_id: int, save_path, return_mode='deploy'):
-        logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_gan.__name__}")
+        # logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_gan.__name__}")
         method_name = 'postprocess_gan'
         try:
             data = {"y_true": {}, "y_pred": {}, "stat": {}}
@@ -149,7 +149,7 @@ class GANCallback:
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
                                     y_true, inverse_y_true, class_colors, raw_y_pred=None):
-        logger.debug(f"{GANCallback.name}, {GANCallback.intermediate_result_request.__name__}")
+        # logger.debug(f"{GANCallback.name}, {GANCallback.intermediate_result_request.__name__}")
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
@@ -191,7 +191,7 @@ class CGANCallback:
     @staticmethod
     def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
         # TODO: актуализировать когда появятся темплейты для деплоя
-        logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_deploy.__name__}")
+        # logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_deploy.__name__}")
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
@@ -252,7 +252,7 @@ class CGANCallback:
     @staticmethod
     def prepare_example_idx_to_show(array: dict, seed_array: dict, count: int,
                                     choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed) -> dict:
-        logger.debug(f"{CGANCallback.name}, {CGANCallback.prepare_example_idx_to_show.__name__}")
+        # logger.debug(f"{CGANCallback.name}, {CGANCallback.prepare_example_idx_to_show.__name__}")
         method_name = 'prepare_example_idx_to_show'
         try:
             example_idx = {}
@@ -281,7 +281,7 @@ class CGANCallback:
 
     @staticmethod
     def postprocess_gan(predict_array: np.ndarray, label: str, image_id: int, save_path, return_mode='deploy'):
-        logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_gan.__name__}")
+        # logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_gan.__name__}")
         method_name = 'postprocess_gan'
         try:
             data = {"y_true": {}, "y_pred": {}, "stat": {}}
@@ -331,7 +331,7 @@ class CGANCallback:
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
                                     preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
                                     y_true, inverse_y_true, class_colors, raw_y_pred=None):
-        logger.debug(f"{CGANCallback.name}, {CGANCallback.intermediate_result_request.__name__}")
+        # logger.debug(f"{CGANCallback.name}, {CGANCallback.intermediate_result_request.__name__}")
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
