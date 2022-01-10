@@ -1,16 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.keras.layers import InputSpec
 from tensorflow.python.layers.base import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow import cast
 from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
-
-from terra_ai.custom_objects.pretrained_yolo import YOLOv4, YOLOv3
-from terra_ai.data.modeling.layers.extra import YOLOModeChoice
 
 terra_custom_layers = {
     "InstanceNormalization": "custom_objects/customLayers",
@@ -101,8 +97,6 @@ class InstanceNormalization(Layer):
         if (self.axis is not None) and (ndim == 2):
             raise ValueError('Cannot specify axis for rank 1 tensor')
 
-        self.input_spec = InputSpec(ndim=ndim)
-
         if self.axis is None:
             shape = (1,)
         else:
@@ -166,6 +160,9 @@ class InstanceNormalization(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
 
 
 class VAEBlock(Layer):
@@ -2012,6 +2009,50 @@ class PretrainedYOLO(Layer):
                 (None, 13, 13, 3 * (5 + self.num_classes))]
 
 
+class ConditionalMergeLayer(layers.Layer):
+    def __init__(self, mode='Concatenate', **kwargs):
+        super(ConditionalMergeLayer, self).__init__(**kwargs)
+        self.mode = mode
+        pass
+
+    def concatenate(self, input):
+        if len(input[0].shape) == len(input[1].shape):
+            return layers.Concatenate(axis=-1)([input[0], input[1]])
+        elif len(input[0].shape) > len(input[1].shape):
+            num = 1
+            for i in input[0].shape[1:-1]:
+                num *= i
+            target_shape = list(input[0].shape[1:-1])
+            target_shape.append(input[1].shape[-1])
+            x = layers.RepeatVector(num)(input[1])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[0], x])
+        else:
+            num = 1
+            for i in input[1].shape[1:-1]:
+                num *= i
+            target_shape = list(input[1].shape[1:-1])
+            target_shape.append(input[0].shape[-1])
+            x = layers.RepeatVector(num)(input[0])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[1], x])
+
+    def call(self, input, training=True, **kwargs):
+        if self.mode == 'Concatenate':
+            return self.concatenate(input)
+
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+        }
+        base_config = super(ConditionalMergeLayer, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -2043,10 +2084,12 @@ if __name__ == "__main__":
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
-    x = PretrainedYOLO(num_classes=5)
-    print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
+    # x = InstanceNormalization()
+    # print(x.compute_output_shape(input_shape=(None, 100)))
 
-    input = tensorflow.keras.layers.Input(shape=(416, 416, 3))
-    x = PretrainedYOLO(num_classes=5)(input)
-    print(x)
+    input1 = tensorflow.keras.Input(shape=(10,))
+    input2 = tensorflow.keras.Input(shape=(32, 32, 3))
+    # print(input)
+    x = ConditionalMergeLayer()([input1, input2])
+    print(x.shape)
     pass

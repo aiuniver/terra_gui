@@ -11,7 +11,7 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
 from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOLO_ARCHITECTURE, \
-    CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list
+    CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list, GAN_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
 from terra_ai.data.training.extra import StateStatusChoice
@@ -158,6 +158,33 @@ class History:
                 for class_name in options.data.outputs.get(out).classes_names:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
                     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
+
+            if options.data.architecture in GAN_ARCHITECTURE:
+                log_history['output'] = {
+                    "loss": {
+                        'gen_loss': {"train": [], "val": []},
+                        'disc_loss': {"train": [], "val": []},
+                        'disc_real_loss': {"train": [], "val": []},
+                        'disc_fake_loss': {"train": [], "val": []}
+                    },
+                    "metrics": {},
+                    "progress_state": {
+                        "loss": {
+                            'gen_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                            'disc_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                            'disc_real_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                            'disc_fake_loss': {
+                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                        }
+                    }
+                }
+                # out = list(options.data.outputs.keys())[0]
+                # for class_name in options.data.outputs.get(out).classes_names:
+                #     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
+                #     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
             return log_history
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -495,10 +522,13 @@ class History:
                         round_loss_metric(self._get_mean_log(self.log_history['output']['metrics'][metric_name]["val"]))
                     )
                     metric_overfitting = self._evaluate_overfitting(
-                        metric_name,
-                        self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        metric_name=metric_name,
+                        mean_log=self.log_history['output']['progress_state']['metrics'][
+                            metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
+                    # logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
+                    #              f"metric_overfitting: {metric_overfitting}")
                     if metric_overfitting:
                         normal_state = False
                     else:
@@ -507,6 +537,16 @@ class History:
                         metric_overfitting)
                     self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
+
+            if self.dataset.data.architecture in GAN_ARCHITECTURE:
+                for key in self.log_history['output']["loss"].keys():
+                    self.log_history['output']["loss"][key]['train'].append(
+                            round_loss_metric(self.current_logs.get('loss').get(key).get('train')))
+                for loss_name in self.log_history['output']["loss"].keys():
+                    self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(False)
+                    self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'].append(False)
+                    self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(True)
+
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
@@ -527,7 +567,7 @@ class History:
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
-            # logger.error(exc)
+            logger.error(exc)
             return 0.
 
     @staticmethod
@@ -536,13 +576,21 @@ class History:
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
-            if not mean_log[-1] or not min(mean_log) or not max(mean_log):
-                overfitting = True
+            if mean_log[-1] == 0:
+                if mode == 'min' and min(mean_log) != 0:
+                    overfitting = True
+                if mode == 'max' and max(mean_log) != 0:
+                    overfitting = True
+            # elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
+            #     if mode == 'min' and not min(mean_log):
+            #         overfitting = True
+            #     if mode == 'max' and not max(mean_log) != 0:
+            #         overfitting = True
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:
                     overfitting = True
-            else:
+            elif mode == 'max':
                 if mean_log[-1] < max(mean_log) and \
                         (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 2:
                     overfitting = True
