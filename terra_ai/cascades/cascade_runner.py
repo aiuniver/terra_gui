@@ -76,7 +76,7 @@ class CascadeRunner:
                                                                           model_task=model_task,
                                                                           dataset_data=dataset_config_data,
                                                                           presets_path=presets_path)
-
+            logger.info(f"Конфиг каскада: {cascade_config}")
             main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
             logger.info("Сборка каскада завершена", extra={"type": "success"})

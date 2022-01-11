@@ -154,7 +154,7 @@ class BlockFunctionTypeChoice(str, Enum):
     PlotMaskSegmentation = "PlotMaskSegmentation"
     PutTag = "PutTag"
     PostprocessBoxes = "PostprocessBoxes"
-    PlotBBoxes = "PlotBBoxes"
+    PlotBboxes = "PlotBboxes"
     FilterClasses = "FilterClasses"
 
     @staticmethod
@@ -251,7 +251,7 @@ class BlocksBindChoice(Enum):
         (
             (
                 BlockGroupChoice.Model,
-                BlockFunctionTypeChoice.PlotBBoxes,
+                BlockFunctionTypeChoice.PlotBboxes,
                 BlockFunctionTypeChoice.PlotMaskSegmentation,
                 BlockFunctionTypeChoice.MaskedImage,
                 BlockFunctionTypeChoice.PutTag,
@@ -336,8 +336,8 @@ class BlocksBindChoice(Enum):
         (BlockGroupChoice.Model, BlockGroupChoice.InputData),
         (LayerInputTypeChoice.Image,),
     )
-    PlotBBoxes = (
-        "PlotBBoxes",
+    PlotBboxes = (
+        "PlotBboxes",
         (
             (
                 BlockFunctionTypeChoice.PostprocessBoxes,
@@ -417,7 +417,7 @@ class FunctionParamsChoice(Enum):
         BlockFunctionTypeChoice.PostprocessBoxes,
         ("input_size", "score_threshold", "iou_threshold", "method", "sigma"),
     )
-    PlotBBoxes = (BlockFunctionTypeChoice.PlotBBoxes, ("classes",))
+    PlotBboxes = (BlockFunctionTypeChoice.PlotBboxes, ("classes",))
     Sort = (BlockServiceTypeChoice.Sort, ("max_age", "min_hits"))
     BiTBasedTracker = (
         BlockServiceTypeChoice.BiTBasedTracker,
