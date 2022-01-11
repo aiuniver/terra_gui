@@ -304,7 +304,7 @@ class ModelValidator:
 
     def _build_model_plan(self):
         # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
-        logger.info("Предобработка плана модели...")
+        # logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
                 self.input_shape[layer.id] = layer.shape.input

@@ -24,7 +24,7 @@
     "plot bboxes": {
       "tag": "function",
       "task": "ObjectDetection",
-      "name": "plot_b_boxes",
+      "name": "plot_bboxes",
       "params": {
         "classes": [
           "black-knight",

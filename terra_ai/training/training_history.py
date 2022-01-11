@@ -62,7 +62,6 @@ class History:
         self.epochs = training_details.base.epochs
         self.sum_epoch = self.epochs
         self.log_history = self._load_logs(dataset=dataset, training_details=training_details)
-        # print('self.log_history', self.log_history)
         self.class_outputs = class_metric_list(dataset)
         if self.architecture_type in CLASSIFICATION_ARCHITECTURE:
             self.y_true, _ = BaseClassificationCallback().get_y_true(dataset)
@@ -93,7 +92,6 @@ class History:
     def _load_logs(self, dataset: PrepareDataset, training_details: TrainingDetailsData):
         method_name = '_load_logs'
         try:
-            # print('self.training_detail.state.status', self.training_detail.state.status)
             if self.training_detail.state.status == StateStatusChoice.addtrain:
                 if self.training_detail.logs:
                     logs = self.training_detail.logs
