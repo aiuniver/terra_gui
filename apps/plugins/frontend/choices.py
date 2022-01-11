@@ -335,5 +335,5 @@ class BlockFunctionTypeChoice(str, Enum):
     PlotMaskSegmentation = "Наложение маски всех классов по цветам"
     PutTag = "Расстановка тегов по вероятностям из модели"
     PostprocessBoxes = "Постобработка Yolo"
-    PlotBBoxes = "Наложение BBox на изображение"
+    PlotBboxes = "Наложение BBox на изображение"
     FilterClasses = "Фильтрация классов Service YoloV5"
