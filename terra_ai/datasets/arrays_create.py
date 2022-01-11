@@ -37,7 +37,7 @@ class CreateArray(object):
         for elem in paths_list:
             try:
                 img = load_img(elem)
-                p_list.append(';'.join([elem, f'{img.height},{img.width}']))
+                p_list.append(';'.join([str(elem), f'{img.height},{img.width}']))
             except (UnidentifiedImageError, IOError):
                 pass
 
