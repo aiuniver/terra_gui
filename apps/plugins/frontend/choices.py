@@ -23,6 +23,7 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
     Tracker = "Трекер (каскад)"
+    TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
     GAN = "Генеративно-состязательная НС"
