@@ -1211,11 +1211,6 @@ class CreateDataset(object):
         inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
         out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
 
-        print('inp_task_name', inp_task_name)
-        print('out_task_name', out_task_name)
-        print('creation_data.outputs[0].type', creation_data.outputs[0].type)
-        print('len(creation_data.inputs)', len(creation_data.inputs))
-
         if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
             architecture = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
         elif out_task_name in ArchitectureChoice.__dict__.keys():
