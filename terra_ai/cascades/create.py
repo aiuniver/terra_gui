@@ -228,6 +228,7 @@ def json2cascade(path: str, cascade_config=None, mode="deploy"):
                     params["model"] = "model"
                     params['model_path'] = path
                 else:
+                    params["model"] = "model"
                     params['model_path'] = os.path.split(path)[0]
             print('params', params)
             print('sys.modules.get(__name__)', sys.modules.get(__name__))
