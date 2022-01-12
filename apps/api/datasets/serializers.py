@@ -251,6 +251,11 @@ class CreateLayerOutputSerializer(CreateLayerSerializer):
         choices=frontend_choices.LayerOutputTypeChoice.items_tuple()
     )
 
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("data", {}).get("type") == "TrackerImages":
+            kwargs["data"]["type"] = "Tracker"
+        super().__init__(*args, **kwargs)
+
 
 class CreateTagSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
