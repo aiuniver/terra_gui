@@ -186,7 +186,7 @@ class ModelBaseDetailsData(AliasMixinData):
             if exclude_type:
                 layer_init_dict.pop("type")
             self.layers.append(
-                LayerData(**recursive_update(layer_dict, layer_init_dict))
+                LayerData(**recursive_update(layer_init_dict, layer_dict))
             )
 
         for index, layer in enumerate(self.outputs):
@@ -199,7 +199,7 @@ class ModelBaseDetailsData(AliasMixinData):
             if exclude_type:
                 layer_init_dict.pop("type")
             self.layers.append(
-                LayerData(**recursive_update(layer_dict, layer_init_dict))
+                LayerData(**recursive_update(layer_init_dict, layer_dict))
             )
 
     def dict(self, **kwargs):
