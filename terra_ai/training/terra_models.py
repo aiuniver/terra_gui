@@ -12,8 +12,9 @@ from tensorflow import keras
 from tensorflow.python.keras.models import Model
 
 from terra_ai.callbacks import interactive
-from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length
+from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length, CLASSIFICATION_ARCHITECTURE
 from terra_ai.custom_objects.customLayers import terra_custom_layers
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.logging import logger
@@ -146,8 +147,15 @@ class BaseTerraModel:
             # logger.error(exc)
             raise exc
 
+    @staticmethod
+    def _add_sample_weights(label, weights):
+        class_weights = tf.constant(weights)
+        class_weights = class_weights / tf.reduce_sum(class_weights)
+        sample_weights = tf.gather(class_weights, indices=tf.cast(label, tf.int32))
+        return sample_weights
+
     @tf.function
-    def __train_step(self, x_batch, y_batch, losses: dict, set_optimizer):
+    def __train_step(self, x_batch, y_batch, losses: dict, set_optimizer, sample_weights: dict):
         """
         losses = {'2': loss_fn}
         """
@@ -155,13 +163,14 @@ class BaseTerraModel:
             logits_ = self.base_model(x_batch, training=True)
             y_true_ = list(y_batch.values())
             if not isinstance(logits_, list):
-                loss_fn = losses.get(list(losses.keys())[0])
-                total_loss = loss_fn(y_true_[0], logits_)
+                out = list(losses.keys())[0]
+                # loss_fn = losses.get(list(losses.keys())[0])
+                total_loss = losses[out](y_true_[0], logits_, sample_weights[out])
             else:
                 total_loss = tf.convert_to_tensor(0.)
-                for k, key in enumerate(losses.keys()):
-                    loss_fn = losses[key]
-                    total_loss = tf.add(loss_fn(y_true_[k], logits_[k]), total_loss)
+                for k, out in enumerate(losses.keys()):
+                    loss_fn = losses[out]
+                    total_loss = tf.add(loss_fn(y_true_[k], logits_[k], sample_weights[out]), total_loss)
         grads = tape.gradient(total_loss, self.base_model.trainable_weights)
         set_optimizer.apply_gradients(zip(grads, self.base_model.trainable_weights))
         return [logits_] if not isinstance(logits_, list) else logits_, y_true_
@@ -184,6 +193,7 @@ class BaseTerraModel:
             self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
             output_list = list(dataset.data.outputs.keys())
+            sample_weights = {}
             for out in output_list:
                 train_target_shape, val_target_shape = [self.train_length], [self.val_length]
                 train_target_shape.extend(list(dataset.data.outputs.get(out).shape))
@@ -192,8 +202,11 @@ class BaseTerraModel:
                 train_true[f"{out}"] = np.zeros(train_target_shape).astype('float32')
                 val_pred[f"{out}"] = np.zeros(val_target_shape).astype('float32')
                 val_true[f"{out}"] = np.zeros(val_target_shape).astype('float32')
+                sample_weights[f"{out}"] = None
 
             train_data_idxs = np.arange(self.train_length).tolist()
+            first_epoch = True
+            weight_dataset = False
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
                 logger.debug(f"Эпоха {epoch+1}")
@@ -202,11 +215,18 @@ class BaseTerraModel:
                 current_idx = 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
+                    length = list(y_batch_train.values())[0].shape[0]
+                    batch_weights = {}
+                    for out in sample_weights.keys():
+                        if sample_weights[out] is None:
+                            batch_weights[out] = None
+                        else:
+                            batch_weights[out] = sample_weights[out][current_idx: current_idx + length]
                     logits, y_true = self.__train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train,
-                        losses=loss, set_optimizer=self.optimizer
+                        losses=loss, set_optimizer=self.optimizer, sample_weights=batch_weights
                     )
-                    length = logits[0].shape[0]
+                    # length = logits[0].shape[0]
                     for i, out in enumerate(output_list):
                         train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
                         train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
@@ -253,6 +273,37 @@ class BaseTerraModel:
                         val_true[f"{out}"][current_val_idx: current_val_idx + length] = val_true_array[i].numpy()
                     current_val_idx += length
                     val_steps += 1
+
+                if weight_dataset and first_epoch and (
+                    dataset.data.architecture in CLASSIFICATION_ARCHITECTURE or
+                    dataset.data.architecture in [ArchitectureChoice.TextSegmentation,
+                                                  ArchitectureChoice.ImageSegmentation]
+                ):
+                    for out in output_list:
+                        if dataset.data.outputs.get(int(out)).task == 'Classification':
+                            classes = np.argmax(train_true[f"{out}"], axis=-1)
+                            count = {}
+                            for i in set(sorted(classes)):
+                                count[i] = 0
+                            for i in classes:
+                                count[i] += 1
+                            weighted_count = {}
+                            for k, v in count.items():
+                                weighted_count[k] = max(count.values()) / v
+                            sample_weights[f"{out}"] = []
+                            for i in classes:
+                                sample_weights[f"{out}"].append(weighted_count[i])
+                            sample_weights[f"{out}"] = tf.constant(sample_weights[f"{out}"])
+                            logger.debug(f"weighted_count: {weighted_count}")
+                        if dataset.data.outputs.get(int(out)).task in ['Segmentation', 'TextSegmentation']:
+                            weights_dict = {}
+                            for i in range(train_true[f"{out}"].shape[-1]):
+                                weights_dict[i] = train_true[f"{out}"][..., i].sum()
+                            weights = [max(weights_dict.values()) / weights_dict[i] for i in weights_dict.keys()]
+                            sample_weights[f"{out}"] = self._add_sample_weights(
+                                np.argmax(train_true[f"{out}"], axis=-1), weights)
+                            logger.debug(f"weights: {weights}")
+                    first_epoch = False
 
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
