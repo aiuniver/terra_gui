@@ -24,7 +24,8 @@ from terra_ai.data.datasets.extra import (
     LayerVideoModeChoice,
     LayerTypeProcessingClassificationChoice,
     LayerImageFrameModeChoice,
-    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerObjectDetectionModelChoice,
+    LayerYoloChoice, LayerODDatasetTypeChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -333,6 +334,26 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
             cls.__fields__["depth"].required = True
             cls.__fields__["scaler"].required = True
         return value
+
+
+class ParametersObjectDetectionData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи обнаружения объектов.
+    """
+
+    model: LayerObjectDetectionModelChoice = LayerObjectDetectionModelChoice.yolo
+    yolo: LayerYoloChoice = LayerYoloChoice.v4
+    classes_names: Optional[list]
+    num_classes: Optional[PositiveInt]
+    model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
+    frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    # put: Optional[PositiveInt]
+    # cols_names: Optional[str]
+
+    # def __init__(self, **data):
+    #     data.update({"cols_names": None})
+    #     super().__init__(**data)
 
 
 class ParametersGANData(ParametersBaseData):

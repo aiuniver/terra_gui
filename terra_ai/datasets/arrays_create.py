@@ -124,7 +124,7 @@ class CreateArray(object):
                 cur_text = re.sub(cl_symbol, f"{cl_symbol} ", cur_text)
 
             cur_text = ' '.join(text_to_word_sequence(
-                cur_text, **{'lower': False, 'filters': '\t\n\ufeff\xa0', 'split': ' '})
+                cur_text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '})
             )
 
             return cur_text
@@ -698,15 +698,14 @@ class CreateArray(object):
     @staticmethod
     def cut_segmentation(paths_list: list, dataset_folder=None, **options: dict):
 
-        # for elem in paths_list:
-        #     os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-        #     shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-        #                                        os.path.basename(elem)))
+        new_paths_list = []
+        for elem in paths_list:
+            new_path = dataset_folder.joinpath(Path(elem).parent.name, Path(elem).name)
+            os.makedirs(new_path.parent, exist_ok=True)
+            shutil.copyfile(elem, new_path)
+            new_paths_list.append(str(new_path))
 
-        # paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
-        #               for elem in paths_list]
-
-        instructions = {'instructions': paths_list,
+        instructions = {'instructions': new_paths_list,
                         'parameters': {'mask_range': options['mask_range'],
                                        'num_classes': options['num_classes'],
                                        'height': options['height'],
@@ -765,8 +764,10 @@ class CreateArray(object):
                         'parameters': {'yolo': options['yolo'],
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
+                                       'frame_mode': options['frame_mode'],
                                        'put': options['put'],
-                                       'frame_mode': options['frame_mode']}
+                                       'cols_names': options['cols_names']
+                                       }
                         }
 
         return instructions

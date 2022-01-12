@@ -261,8 +261,6 @@ class CreationVersionData(AliasMixinData):
     "Алиас родительского датасета"
     info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
     "Информация о данных"
-    use_generator: bool = False
-    "Использовать генератор"
     processing: Dict[str, ColumnsProcessingData] = {}
     "Обработчики"
     inputs: CreationInputsList = CreationInputsList()

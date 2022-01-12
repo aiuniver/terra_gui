@@ -29,6 +29,10 @@ class ColumnProcessingClassificationData(types.ParametersClassificationData):
     pass
 
 
+class ColumnProcessingObjectDetectionData(types.ParametersObjectDetectionData):
+    pass
+
+
 class ColumnProcessingRegressionData(types.ParametersRegressionData):
     pass
 

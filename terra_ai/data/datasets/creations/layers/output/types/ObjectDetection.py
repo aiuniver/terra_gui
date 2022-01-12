@@ -14,11 +14,11 @@ class ParametersData(SourcesPathsData):
     yolo: LayerYoloChoice = LayerYoloChoice.v4
     classes_names: Optional[list]
     num_classes: Optional[PositiveInt]
-    put: Optional[PositiveInt]
-    cols_names: Optional[str]
+    # put: Optional[PositiveInt]
     model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
     frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    # cols_names: Optional[str]
 
-    def __init__(self, **data):
-        data.update({"cols_names": None})
-        super().__init__(**data)
+    # def __init__(self, **data):
+    #     data.update({"cols_names": None})
+    #     super().__init__(**data)

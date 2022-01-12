@@ -202,6 +202,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Video = "Video"
     Scaler = "Scaler"
     Classification = "Classification"
+    ObjectDetection = "ObjectDetection"
     Regression = "Regression"
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"

@@ -594,7 +594,7 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #     return real_boxes
 
 
-def get_od_names(version_data):
+def get_od_names(version_data, source_path):
 
     names_list = []
     for worker_name, worker_params in version_data.processing.items():
@@ -604,7 +604,7 @@ def get_od_names(version_data):
                     ann_path = list(out.parameters[list(out.parameters.keys())[0]].keys())[0]
             if worker_params.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1,
                                                        LayerODDatasetTypeChoice.Yolo_terra]:
-                with open(version_data.joinpath('obj.names'), 'r') as names:
+                with open(source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split('\n') if elem]
 
