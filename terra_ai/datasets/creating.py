@@ -1080,6 +1080,8 @@ class CreateDataset(object):
                         for i, result in enumerate(results):
                             if psutil.virtual_memory()._asdict().get("percent") > 90:
                                 current_arrays = []
+                                progress.pool(self.progress_name,
+                                              error='Создание датасета прервано. Превышен доступный лимит ОЗУ.')
                                 raise Resource
                             # if isinstance(result, tuple):
                             #     augm_data = result[1]
