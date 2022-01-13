@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 import random
+import time
 
 import numpy as np
 
@@ -206,7 +207,7 @@ class BaseTerraModel:
 
             train_data_idxs = np.arange(self.train_length).tolist()
             first_epoch = True
-            weight_dataset = False
+            weight_dataset = True
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
                 logger.debug(f"Эпоха {epoch+1}")
@@ -295,7 +296,8 @@ class BaseTerraModel:
                                 sample_weights[f"{out}"].append(weighted_count[i])
                             sample_weights[f"{out}"] = tf.constant(sample_weights[f"{out}"])
                             logger.debug(f"weighted_count: {weighted_count}")
-                        if dataset.data.outputs.get(int(out)).task in ['Segmentation', 'TextSegmentation']:
+                        if dataset.data.outputs.get(int(out)).task in ['Segmentation', 'TextSegmentation'] and \
+                                dataset.data.outputs.get(int(out)).encoding == 'ohe':
                             weights_dict = {}
                             for i in range(train_true[f"{out}"].shape[-1]):
                                 weights_dict[i] = train_true[f"{out}"][..., i].sum()
@@ -858,7 +860,8 @@ class GANTerraModel:
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
-                for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                for image_data, _ in dataset.dataset.get('train').shuffle(
+                        buffer_size=params.base.batch).batch(params.base.batch):
                     cur_step += 1
                     # logger.debug(f"Batch {cur_step}: start...")
                     results = self.__train_step(images=image_data.get(self.discriminator.inputs[0].name),
@@ -927,111 +930,10 @@ class ConditionalGANTerraModel(GANTerraModel):
     def __init__(self, model: dict, model_name: str, model_path: Path, options: PrepareDataset):
         # logger.debug(f"{ConditionalGANTerraModel.name} is started")
         super().__init__(model=model, model_name=model_name, model_path=model_path)
-        # logger.debug(f'model: {model}')
-        # self.options = options
-        # self.saving_path = model_path
-        # self.generator: Model = model.get('generator')
-        # self.discriminator: Model = model.get('discriminator')
-        # self.file_path_gen_json = os.path.join(self.saving_path, "generator_json.trm")
-        # self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
-        # self.generator_json = self.generator.to_json()
-        # self.discriminator_json = self.discriminator.to_json()
         self.noise = self.__get_noise(options)
-        # # logger.debug(f'self.noise: {self.noise}')
-        # self.generator_loss_func = None
-        # self.discriminator_loss_func = None
-        # self.generator_optimizer = None
-        # self.discriminator_optimizer = None
         self.seed: dict = self.__prepare_cgan_seed(self.noise, options)
-        #
-        # self.generator_weights = "generator_weights.h5"
-        # self.file_path_gen_weights = os.path.join(self.saving_path, self.generator_weights)
-        # self.discriminator_weights = "discriminator_weights.h5"
-        # self.file_path_disc_weights = os.path.join(self.saving_path, self.discriminator_weights)
         pass
 
-    # def save(self) -> None:
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.save.__name__}")
-    #     method_name = 'save'
-    #     try:
-    #         self.__save_model_to_json()
-    #         self.__save_custom_objects_to_json()
-    #         self.save_weights()
-    #     except Exception as error:
-    #         exc = exception.ErrorInClassInMethodException(
-    #             ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-    #         # logger.error(exc)
-    #         raise exc
-    #
-    # def load(self) -> None:
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.load.__name__}")
-    #     gen_model_data, disc_model_data, custom_dict = self.__get_json_data()
-    #     custom_object = self.__set_custom_objects(custom_dict)
-    #     self.generator = tf.keras.models.model_from_json(gen_model_data, custom_objects=custom_object)
-    #     self.discriminator = tf.keras.models.model_from_json(gen_model_data, custom_objects=custom_object)
-    #     self.generator_json = self.generator.to_json()
-    #     self.discriminator_json = self.discriminator.to_json()
-    #
-    # def save_weights(self, gw_path_=None, dw_path_=None):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.save_weights.__name__}")
-    #     if not gw_path_:
-    #         gw_path_ = os.path.join(self.saving_path, self.generator_weights)
-    #     self.generator.save_weights(gw_path_)
-    #     if not dw_path_:
-    #         dw_path_ = os.path.join(self.saving_path, self.discriminator_weights)
-    #     self.discriminator.save_weights(dw_path_)
-    #
-    # def load_weights(self):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.load_weights.__name__}")
-    #     self.generator.load_weights(self.file_path_gen_weights)
-    #     self.discriminator.load_weights(self.file_path_disc_weights)
-    #
-    # @staticmethod
-    # def _prepare_loss_dict(params: TrainingDetailsData):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel._prepare_loss_dict.__name__}")
-    #     method_name = '_prepare_loss_dict'
-    #     try:
-    #         loss_dict = {}
-    #         # logger.debug(f"params.base.architecture.parameters.outputs\n {params.base.architecture.parameters.outputs}")
-    #         for output_layer in params.base.architecture.parameters.outputs:
-    #             loss_obj = getattr(
-    #                 importlib.import_module(
-    #                     loss_metric_config.get("loss").get(output_layer.loss.name, {}).get('module')),
-    #                 output_layer.loss.name
-    #             )(from_logits=True)
-    #             loss_dict.update({str(output_layer.task.name).lower(): loss_obj})
-    #         return loss_dict
-    #     except Exception as error:
-    #         exc = exception.ErrorInClassInMethodException(
-    #             ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-    #         # logger.error(exc)
-    #         raise exc
-
-    # def __save_model_to_json(self):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__save_model_to_json.__name__}")
-    #     with open(self.file_path_gen_json, "w", encoding="utf-8") as json_file:
-    #         json.dump(self.generator_json, json_file)
-    #
-    #     with open(self.file_path_disc_json, "w", encoding="utf-8") as json_file:
-    #         json.dump(self.discriminator_json, json_file)
-    #
-    # def __save_custom_objects_to_json(self):
-    #     with open(self.file_path_custom_obj_json, "w", encoding="utf-8") as json_file:
-    #         json.dump(terra_custom_layers, json_file)
-    #
-    # def __get_json_data(self):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__get_json_data.__name__}")
-    #     with open(self.file_path_gen_json) as json_file:
-    #         gen_data = json.load(json_file)
-    #
-    #     with open(self.file_path_disc_json) as json_file:
-    #         disc_data = json.load(json_file)
-    #
-    #     with open(self.file_path_custom_obj_json) as json_file:
-    #         custom_dict = json.load(json_file)
-    #
-    #     return gen_data, disc_data, custom_dict
-    #
     @staticmethod
     def __get_noise(options: PrepareDataset):
         # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__get_noise.__name__}")
@@ -1070,21 +972,6 @@ class ConditionalGANTerraModel(GANTerraModel):
     def __generator_loss(loss_func, fake_output):
         return loss_func(tf.ones_like(fake_output), fake_output)
 
-    # def set_optimizer(self, params: TrainingDetailsData):
-    #     # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.set_optimizer.__name__}")
-    #     method_name = 'set_optimizer'
-    #     try:
-    #         optimizer_object = getattr(keras.optimizers, params.base.optimizer.type)
-    #         parameters = params.base.optimizer.parameters.main.native()
-    #         parameters.update(params.base.optimizer.parameters.extra.native())
-    #         return optimizer_object(**parameters)
-    #     except Exception as error:
-    #         exc = exception.ErrorInClassInMethodException(
-    #             ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-    #         # logger.error(exc)
-    #         raise exc
-
-    # @staticmethod
     def __get_input_keys(self, options: PrepareDataset) -> dict:
         keys = {}
         gen_inputs = [inp.name for inp in self.generator.inputs]
@@ -1156,12 +1043,15 @@ class ConditionalGANTerraModel(GANTerraModel):
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
+                ep = time.time()
                 # logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 # logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
-                for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                for image_data, _ in dataset.dataset.get('train').shuffle(
+                        buffer_size=params.base.batch).batch(params.base.batch):
+                    st = time.time()
                     # logger.debug(f'{image_data.keys()}')
                     cur_step += 1
                     # logger.debug(f"Batch {cur_step}: start...")
@@ -1171,10 +1061,13 @@ class ConditionalGANTerraModel(GANTerraModel):
                         disc_labels=image_data.get(input_keys.get('disc_labels')),
                         input_keys=input_keys
                     )
+                    # logger.debug(f"result time - {time.time() - st}")
+                    # st = time.time()
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
                     disc_fake_loss += results[3].numpy()
+                    logger.debug(f"batch time - {time.time() - st}")
                     # if cur_step % 10 == 0:
                     #     logger.debug(f"Batch {cur_step}: "
                     #                  f"gen_loss={round(results[0].numpy(), 3)}, "
@@ -1185,7 +1078,8 @@ class ConditionalGANTerraModel(GANTerraModel):
                     #     break
 
                     if interactive.urgent_predict:
-                        # logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
+                        # st = time.time()
+                        logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
                         seed_predict = {}
                         random_predict = {}
                         for i, name in enumerate(class_names):
@@ -1206,12 +1100,13 @@ class ConditionalGANTerraModel(GANTerraModel):
                             batch=cur_step,
                             arrays={"train": random_predict, "seed": seed_predict}
                         )
+                        # logger.debug(f"urgent_predict time - {time.time() - st}")
                     else:
                         self.callback.on_train_batch_end(batch=cur_step)
 
                     if self.callback.stop_training:
                         break
-
+                logger.debug(f"\n\nepoch time - {time.time() - ep}\n\n")
                 # logger.info(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...", extra={"type": "info"})
                 self.save_weights()
                 if self.callback.stop_training:
