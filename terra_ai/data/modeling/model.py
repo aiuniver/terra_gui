@@ -177,29 +177,27 @@ class ModelBaseDetailsData(AliasMixinData):
         dataset_model = dataset.model
 
         for index, layer in enumerate(self.inputs):
-            layer_init = dataset_model.inputs.get(layer.id)
-            layer_init_dict = layer_init.native()
-            layer_dict = layer.native()
-            layer_init_dict.pop("id")
-            layer_init_dict.pop("bind")
-            layer_init_dict.pop("position")
+            dataset_layer = dataset_model.inputs.get(layer.id).native()
+            dataset_layer.pop("id")
+            dataset_layer.pop("bind")
+            dataset_layer.pop("position")
+            dataset_layer.pop("parameters")
             if exclude_type:
-                layer_init_dict.pop("type")
+                dataset_layer.pop("type")
             self.layers.append(
-                LayerData(**recursive_update(layer_init_dict, layer_dict))
+                LayerData(**recursive_update(layer.native(), dataset_layer))
             )
 
         for index, layer in enumerate(self.outputs):
-            layer_init = dataset_model.outputs.get(layer.id)
-            layer_init_dict = layer_init.native()
-            layer_dict = layer.native()
-            layer_init_dict.pop("id")
-            layer_init_dict.pop("bind")
-            layer_init_dict.pop("position")
+            dataset_layer = dataset_model.outputs.get(layer.id).native()
+            dataset_layer.pop("id")
+            dataset_layer.pop("bind")
+            dataset_layer.pop("position")
+            dataset_layer.pop("parameters")
             if exclude_type:
-                layer_init_dict.pop("type")
+                dataset_layer.pop("type")
             self.layers.append(
-                LayerData(**recursive_update(layer_init_dict, layer_dict))
+                LayerData(**recursive_update(layer.native(), dataset_layer))
             )
 
     def dict(self, **kwargs):

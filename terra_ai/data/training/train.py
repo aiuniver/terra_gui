@@ -219,11 +219,9 @@ class ArchitectureData(BaseMixinData):
         _outputs = value.get("outputs", [])
         # print('\n _validate_parameters', values)
         for _index, _output in enumerate(_outputs):
-            _output["task"] = (
-                _model.layers.get(_output.get("id")).task.value
-                if _model.layers.get(_output.get("id")).task
-                else None
-            )
+            _layer = _model.layers.get(_output.get("id"))
+            if _layer:
+                _output["task"] = _layer.task.value if _layer.task else None
             _outputs[_index] = _output
         value["outputs"] = _outputs
         value["model"] = _model
