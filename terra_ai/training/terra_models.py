@@ -1043,7 +1043,7 @@ class ConditionalGANTerraModel(GANTerraModel):
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
-                ep = time.time()
+                # ep = time.time()
                 # logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
@@ -1051,7 +1051,7 @@ class ConditionalGANTerraModel(GANTerraModel):
                 # logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for image_data, _ in dataset.dataset.get('train').shuffle(
                         buffer_size=params.base.batch).batch(params.base.batch):
-                    st = time.time()
+                    # st = time.time()
                     # logger.debug(f'{image_data.keys()}')
                     cur_step += 1
                     # logger.debug(f"Batch {cur_step}: start...")
@@ -1067,15 +1067,15 @@ class ConditionalGANTerraModel(GANTerraModel):
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
                     disc_fake_loss += results[3].numpy()
-                    logger.debug(f"batch time - {time.time() - st}")
+                    # logger.debug(f"batch time - {time.time() - st}")
                     # if cur_step % 10 == 0:
                     #     logger.debug(f"Batch {cur_step}: "
                     #                  f"gen_loss={round(results[0].numpy(), 3)}, "
                     #                  f"disc_loss={round(results[1].numpy(), 3)}, "
                     #                  f"disc_real_loss={round(results[2].numpy(), 3)}, "
                     #                  f"disc_fake_loss={round(results[3].numpy(), 3)}")
-                    # if cur_step % 50 == 0:
-                    #     break
+                    if cur_step % 50 == 0:
+                        break
 
                     if interactive.urgent_predict:
                         # st = time.time()
@@ -1106,7 +1106,7 @@ class ConditionalGANTerraModel(GANTerraModel):
 
                     if self.callback.stop_training:
                         break
-                logger.debug(f"\n\nepoch time - {time.time() - ep}\n\n")
+                # logger.debug(f"\n\nepoch time - {time.time() - ep}\n\n")
                 # logger.info(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...", extra={"type": "info"})
                 self.save_weights()
                 if self.callback.stop_training:

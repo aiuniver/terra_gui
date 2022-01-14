@@ -9,7 +9,7 @@ from PIL import Image
 from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import get_y_true, round_loss_metric, sort_dict, fill_graph_front_structure, \
-    fill_graph_plot_data
+    fill_graph_plot_data, get_link_from_dataframe
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice
 import terra_ai.exceptions.callbacks as exception
@@ -112,7 +112,7 @@ class GANCallback:
         # logger.debug(f"{GANCallback.name}, {GANCallback.postprocess_gan.__name__}")
         method_name = 'postprocess_gan'
         try:
-            data = {"y_true": {}, "y_pred": {}, "stat": {}}
+            # data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
                 # predict_array = predict_array.astype("uint8")
                 img_save_path = os.path.join(save_path, "deploy_presets", f"gan_postprocessing_{image_id}.webp")
@@ -121,14 +121,14 @@ class GANCallback:
                 return return_path
 
             if return_mode == 'callback':
+                data = {"type": "image", "data": []}
                 _id = 1
-                data["y_pred"] = {"type": "image", "data": []}
                 for array in predict_array:
                     array = array / array.max()
                     # print(array.shape, type(array))
                     y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
                     matplotlib.image.imsave(y_pred_save_path, array)
-                    data["y_pred"]["data"].append(
+                    data["data"].append(
                         {
                             "title": "Изображение",
                             "value": y_pred_save_path,
@@ -144,6 +144,48 @@ class GANCallback:
             # logger.error(exc)
             raise exc
 
+    @staticmethod
+    def postprocess_initial_source(options: PrepareDataset, image_id: int, preset_path: str):
+        method_name = 'postprocess_initial_source'
+        try:
+            total_length = len(options.dataframe.get('train'))
+            idxs = np.random.randint(0, total_length, 3)
+            column_disc = ''
+            for column in options.dataframe.get('train').columns:
+                if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
+                    column_disc = column
+                    break
+            _id = 1
+            data = {"type": "image", "data": []}
+            for idx in idxs:
+                initial_file_path = get_link_from_dataframe(
+                    dataframe=options.dataframe.get('train'),
+                    column=column_disc,
+                    index=idx
+                )
+                img = Image.open(os.path.join(options.data.path, initial_file_path))
+                img = img.resize(
+                    options.data.inputs.get(int(column_disc.split('_')[0])).shape[0:2],
+                    Image.ANTIALIAS
+                )
+                img = img.convert('RGB')
+                source = os.path.join(preset_path, f"initial_gan_image_{image_id}_position_{_id}.webp")
+                img.save(source, 'webp')
+                data["data"].append(
+                    {
+                        "title": "Изображение",
+                        "value": source,
+                        "color_mark": None,
+                    }
+                )
+                _id += 1
+            return data
+
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                GANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -163,13 +205,19 @@ class GANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    data = GANCallback().postprocess_gan(
-                        predict_array=example_idx[idx*5: (idx+1)*5],
+                    init_data = GANCallback().postprocess_initial_source(
+                        options=options,
+                        image_id=idx,
+                        preset_path=preset_path,
+                    )
+                    return_data[f"{idx + 1}"]['initial_data'][f"Тренировочные данные"] = init_data
+                    pred_data = GANCallback().postprocess_gan(
+                        predict_array=example_idx[idx*3: (idx+1)*3],
                         image_id=idx,
                         save_path=preset_path,
                         return_mode='callback'
                     )
-                    return_data[f"{idx + 1}"]['predict_value'][f"Генератор"] = data.get('y_pred')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Генератор"] = pred_data
                 return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -268,7 +316,7 @@ class CGANCallback:
                 name_list = list(array.keys())
                 shuffle(name_list)
                 for i, name in enumerate(name_list):
-                    examples = np.random.choice(np.arange(len(array[name])), 5)
+                    examples = np.random.choice(np.arange(len(array[name])), 3)
                     example_idx[name] = np.array(array[name][examples], dtype='float32')
                     # if i == count:
                     #     break
@@ -284,7 +332,7 @@ class CGANCallback:
         # logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_gan.__name__}")
         method_name = 'postprocess_gan'
         try:
-            data = {"y_true": {}, "y_pred": {}, "stat": {}}
+            # data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
                 # predict_array = predict_array.astype("uint8")
                 img_save_path = os.path.join(save_path, "deploy_presets", f"gan_postprocessing_{image_id}.webp")
@@ -294,23 +342,23 @@ class CGANCallback:
 
             if return_mode == 'callback':
                 _id = 1
-                data['y_true'] = {
-                    "type": "str",
-                    "data": [
-                        {
-                            "title": "Класс",
-                            "value": label,
-                            "color_mark": None
-                        }
-                    ]
-                }
-                data["y_pred"] = {"type": "image", "data": []}
+                # data = {
+                #     "type": "str",
+                #     "data": [
+                #         {
+                #             "title": "Класс",
+                #             "value": label,
+                #             "color_mark": None
+                #         }
+                #     ]
+                # }
+                data = {"type": "image", "data": []}
                 for array in predict_array:
                     array = array / array.max()
                     # print(array.shape, type(array))
                     y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
                     matplotlib.image.imsave(y_pred_save_path, array)
-                    data["y_pred"]["data"].append(
+                    data["data"].append(
                         {
                             "title": "Изображение",
                             "value": y_pred_save_path,
@@ -326,6 +374,65 @@ class CGANCallback:
             # logger.error(exc)
             raise exc
 
+    @staticmethod
+    def postprocess_initial_source(options: PrepareDataset, label, labels: dict, image_id: int, preset_path: str):
+        method_name = 'postprocess_initial_source'
+        try:
+            # total_length = len(labels.get(label))
+            idxs = np.random.choice(labels.get(label), 3)
+            column_disc = ''
+            for column in options.dataframe.get('train').columns:
+                if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
+                    column_disc = column
+                    break
+            _id = 1
+            data = {"type": "image", "data": []}
+            for idx in idxs:
+                logger.debug(f"label: {label} - {options.dataframe.get('train')['2_Класс'][idx]}")
+                initial_file_path = get_link_from_dataframe(
+                    dataframe=options.dataframe.get('train'),
+                    column=column_disc,
+                    index=idx
+                )
+                img = Image.open(os.path.join(options.data.path, initial_file_path))
+                img = img.resize(
+                    options.data.inputs.get(int(column_disc.split('_')[0])).shape[0:2],
+                    Image.ANTIALIAS
+                )
+                img = img.convert('RGB')
+                source = os.path.join(preset_path, f"initial_gan_image_{image_id}_position_{_id}.webp")
+                img.save(source, 'webp')
+                data["data"].append(
+                    {
+                        "title": "Изображение",
+                        "value": source,
+                        "color_mark": None,
+                    }
+                )
+                _id += 1
+            return data
+
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                CGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
+    @staticmethod
+    def get_label_idx(options: PrepareDataset):
+        labels = []
+        for col in options.dataframe.get('train').columns:
+            if "Класс" in col:
+                labels = list(options.dataframe['train'][col])
+        label_idx = {}
+        for i, lbl in enumerate(labels):
+            if f"{lbl}" not in label_idx.keys():
+                label_idx[f"{lbl}"] = []
+            label_idx[f"{lbl}"].append(i)
+        # for i in label_idx.keys():
+        #     logger.debug(f"label {i}: {label_idx[i][:10]}")
+        return label_idx
+
 
     @staticmethod
     def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
@@ -335,6 +442,8 @@ class CGANCallback:
         method_name = 'intermediate_result_request'
         try:
             return_data = {}
+            label_idx = CGANCallback().get_label_idx(options)
+            # logger.debug(f"label_idx: {label_idx.keys()}")
             if interactive_config.intermediate_result.show_results:
                 # data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
@@ -345,17 +454,36 @@ class CGANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    logger.debug(f"{idx, example_idx.keys()}")
                     label = list(example_idx.keys())[idx]
-                    data = CGANCallback().postprocess_gan(
+                    # logger.debug(f"label: {label}")
+                    return_data[f"{idx + 1}"]['initial_data'][f"Класс"] = {
+                        "type": "str",
+                        "data": [
+                            {
+                                "title": "Класс",
+                                "value": label,
+                                "color_mark": None
+                            }
+                        ]
+                    }
+                    true_data = CGANCallback().postprocess_initial_source(
+                        options=options,
+                        label=label,
+                        labels=label_idx,
+                        image_id=idx,
+                        preset_path=preset_path,
+                    )
+                    return_data[f"{idx + 1}"]['true_value'][f"Тренировочные данные"] = true_data
+
+                    pred_data = CGANCallback().postprocess_gan(
                         predict_array=example_idx[label],
                         label=label,
                         image_id=idx,
                         save_path=preset_path,
                         return_mode='callback'
                     )
-                    return_data[f"{idx + 1}"]['predict_value'][f"Генератор"] = data.get('y_pred')
-                    return_data[f"{idx + 1}"]['true_value'][f"Класс"] = data.get('y_true')
+                    return_data[f"{idx + 1}"]['predict_value'][f"Генератор"] = pred_data
+
                 return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(

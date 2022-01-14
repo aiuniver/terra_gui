@@ -917,3 +917,9 @@ def set_preset_count(len_array: int, preset_percent: int) -> int:
         return 10
     else:
         return len_array
+
+
+def get_link_from_dataframe(dataframe, column, index):
+    link = dataframe[column][index]
+    link = link.split(";")[0]
+    return link
