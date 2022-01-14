@@ -8,7 +8,7 @@ from PIL import Image, ImageFont, ImageDraw
 from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
-    fill_graph_front_structure, fill_graph_plot_data, set_preset_count
+    fill_graph_front_structure, fill_graph_plot_data, set_preset_count, get_link_from_dataframe
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 import terra_ai.exceptions.callbacks as exception

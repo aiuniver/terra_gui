@@ -10,7 +10,8 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count
+    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count, \
+    get_link_from_dataframe
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
