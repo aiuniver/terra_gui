@@ -60,7 +60,6 @@ class BaseSegmentationCallback:
             # logger.error(exc)
             raise exc
 
-
     @staticmethod
     def get_inverse_array(array: dict, options, type="output"):
         inverse_array = {"train": {}, "val": {}}
@@ -153,8 +152,13 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                 for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
                         column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
+            initial_file_path = get_link_from_dataframe(
+                dataframe=options.dataframe.get(data_type),
+                column=options.dataframe.get(data_type).columns[column_idx[0]],
+                index=example_id
+            )
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
+                dataset_path, initial_file_path  # options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -171,7 +175,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             if return_mode == 'callback':
                 source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
                 img.save(source, 'webp')
-                data = [{"title": "Изображение", "value": source, "color_mark": None }]
+                data = [{"title": "Изображение", "value": source, "color_mark": None}]
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
