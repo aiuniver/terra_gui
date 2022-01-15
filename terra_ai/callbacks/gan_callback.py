@@ -388,7 +388,7 @@ class CGANCallback:
             _id = 1
             data = {"type": "image", "data": []}
             for idx in idxs:
-                logger.debug(f"label: {label} - {options.dataframe.get('train')['2_Класс'][idx]}")
+                # logger.debug(f"label: {label} - {options.dataframe.get('train')['2_Класс'][idx]}")
                 initial_file_path = get_link_from_dataframe(
                     dataframe=options.dataframe.get('train'),
                     column=column_disc,
