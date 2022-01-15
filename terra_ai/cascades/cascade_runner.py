@@ -241,10 +241,8 @@ class CascadeRunner:
                         key: val for key, val in block.parameters.main.native().items()
                         if key in block_parameters
                     }
-                    print('block.parameters', block.parameters)
                     if "model_path" in parameters.keys() and not parameters.get("model_path"):
                         parameters["model_path"] = str(block.parameters.model_path)
-                        print('parameters["model_path"]', parameters["model_path"])
                 else:
                     parameters = {
                         key: val for key, val in block.parameters.main.native().items()
