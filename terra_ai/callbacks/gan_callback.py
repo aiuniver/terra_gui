@@ -309,7 +309,7 @@ class CGANCallback:
                 shuffle_idx = list(np.arange(len(name_list)))
                 shuffle(shuffle_idx)
                 for i in shuffle_idx:
-                    example_idx[name_list[i]] = np.array(seed_array[name_list[i]][:5], dtype='float32')
+                    example_idx[name_list[i]] = np.array(seed_array[name_list[i]][:3], dtype='float32')
                     # if i == count:
                     #     break
             else:
