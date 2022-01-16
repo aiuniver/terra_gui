@@ -23,6 +23,7 @@ $quanityPxMult: 4px;
 
 :root {
   --color-bg: #{$color-dark-bg};
+  --color-bg-list: #{$color-dark-gray3};
   --color-border: #{$color-dark-border};
   --color-text: #{$color-dark-text};
   --color-bg-dropdown: #{$color-dark-bg-dropdown};
@@ -35,6 +36,7 @@ $quanityPxMult: 4px;
   @media screen {
     &[data-theme="light"] {
       --color-bg: #{$color-light-bg};
+      --color-bg-list: #{$color-dark-gray3};
       --color-border: #{$color-light-border};
       --color-text: #{$color-light-text};
       --color-bg-dropdown: #{$color-ligth-bg-dropdown};
