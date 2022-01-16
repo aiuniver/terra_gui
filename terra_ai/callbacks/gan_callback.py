@@ -396,7 +396,7 @@ class CGANCallback:
                 )
                 img = Image.open(os.path.join(options.data.path, initial_file_path))
                 img = img.resize(
-                    options.data.inputs.get(int(column_disc.split('_')[0])).shape[0:2],
+                    options.data.inputs.get(int(column_disc.split('_')[0])).shape[0:2][::-1],
                     Image.ANTIALIAS
                 )
                 img = img.convert('RGB')
