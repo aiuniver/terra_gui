@@ -15,7 +15,11 @@ from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
 
-from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, GAN_ARCHITECTURE
+from terra_ai.callbacks.utils import (
+    YOLO_ARCHITECTURE,
+    CLASS_ARCHITECTURE,
+    GAN_ARCHITECTURE,
+)
 from terra_ai.exceptions.training import TrainingAlreadyExistsException
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -228,6 +232,10 @@ class ArchitectureData(BaseMixinData):
         return field.type_(**(value or {}))
 
 
+class TrainGANData(BaseMixinData):
+    pass
+
+
 class TrainData(BaseMixinData):
     model: Any
     batch: PositiveInt = 32
@@ -250,7 +258,7 @@ class TrainData(BaseMixinData):
 class TrainingDetailsData(BaseMixinData):
     model: Any
     name: Optional[str]
-    base: TrainData = TrainData()
+    base: Union[TrainData, TrainGANData] = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
     result: Optional[dict] = {}
