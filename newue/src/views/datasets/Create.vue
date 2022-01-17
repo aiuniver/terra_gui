@@ -1,7 +1,13 @@
 <template>
   <main class="page page-datasets">
-    <div class="page-datasets-inner">
-      <div class="page-datasets-inner__workspace"><router-view></router-view></div>
+    <div class="page-datasets__toolbar">
+      <Toolbar @action="handleWorkspaceAction" />
+    </div>
+    <div class="page-datasets__main">
+      <Blocks />  
+    </div>
+
+    <div class="page-datasets__params">
       <BasePanel @action="handleActionPanel">
         <template v-if="component === 'DatasetTabsDownload'">
           <BasePanelContent noMargin>
@@ -42,22 +48,21 @@
         </template>
       </BasePanel>
     </div>
-    <Layer v-bind="layerData1" style="position: absolute; top: 150px; left: 50%" />
-    <Layer v-bind="layerData2" style="position: absolute; top: 150px; left: 30%" />
-    <Layer v-bind="layerData3" style="position: absolute; top: 150px; left: 10%" />
-    <WorkspaceActions @action="handleWorkspaceAction" />
   </main>
 </template>
 
 <script>
+import Toolbar from '@/components/datasets/components/create/toolbar/Toolbar'
+import Blocks from '../../components/datasets/components/create/main'
 export default {
   components: {
-    WorkspaceActions: () => import('@/components/datasets/components/create/WorkspaceActions'),
+    Toolbar,
+    Blocks,
     DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
     DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),
     DatasetDownloadTabs: () => import('@/components/datasets/components/create/DatasetDownloadTabs'),
     DatasetHelpers: () => import('@/components/datasets/components/create/DatasetHelpers'),
-    Layer: () => import('@/components/datasets/components/Layer'),
+
   },
 
   name: 'Datasets',
@@ -180,11 +185,17 @@ export default {
 <style lang="scss" scoped>
 .page-datasets {
   position: relative;
+  display: flex;
 
-  &-inner::v-deep {
-    display: flex;
-    height: 100%;
-    justify-content: space-between;
+  &__toopbar {
+  }
+
+  &__main {
+    flex: 1 1 auto;
+  }
+
+  &__params {
+    flex: 0 0 600px;
   }
 }
 </style>
