@@ -1,0 +1,121 @@
+<template>
+  <div class="forms">
+    <t-input
+      v-if="type === 'tuple'"
+      v-show="visible"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :inline="inline"
+      :disabled="disabled"
+      @parse="change"
+    />
+    <t-field v-if="type === 'number' || type === 'text'" v-show="visible" :label="label" inline>
+      <t-input-new
+        small
+        :style="{ width: '70px' }"
+        :value="getValue"
+        :type="type"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
+    <t-field v-if="type === 'checkbox'" :label="label" v-show="visible" inline>
+      <t-checkbox-new :value="getValue" :parse="parse" :name="name" :disabled="disabled" @parse="change" />
+    </t-field>
+    <t-field v-if="type === 'select'" :label="label" v-show="visible">
+      <t-select-new
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :inline="inline"
+
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
+
+    <t-field v-if="type === 'auto_complete'" :label="label" v-show="visible">
+      <t-auto-complete-new
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        all
+        @parse="change"
+      />
+    </t-field>
+  </div>
+</template>
+
+<script>
+
+export default {
+  name: 't-auto-field-deploy',
+  components: {
+  },
+  props: {
+    type: String,
+    value: [String, Boolean, Number, Array],
+    list: Array,
+    event: String,
+    label: String,
+    parse: String,
+    name: String,
+    id: Number,
+    state: Object,
+    inline: Boolean,
+    changeable: Boolean,
+    visible: Boolean,
+    disabled: [Boolean, Array],
+  },
+  data: () => ({
+    valueIn: null,
+  }),
+  computed: {
+    getValue() {
+      return this.state?.[this.parse] ?? this.value;
+    },
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
+    error() {
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
+    },
+  },
+  methods: {
+    change({ parse, name, value }) {
+      // console.log(parse, value)
+      // this.valueIn = null;
+      this.$emit('parse', { parse, name, value, changeable: this.changeable });
+      // this.$nextTick(() => {
+      //   this.valueIn = value;
+      // });
+    },
+  },
+  created() {
+    // console.log(this.disabled);
+  },
+  mounted() {
+    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse, changeable: this.changeable, mounted: true });
+    // console.log(this.name, this.parameters, this.getValue)
+    this.$nextTick(() => {
+      this.valueIn = this.getValue;
+    });
+    // this.$emit('height', this.$el.clientHeight);
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.forms {
+  // padding-top: 10px;
+}
+</style>
