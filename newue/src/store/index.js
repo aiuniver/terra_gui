@@ -7,6 +7,7 @@ import datasets from './modules/datasets';
 import logging from './modules/logging';
 import projects from './modules/projects';
 import themes from './modules/themes';
+import create from './modules/create';
 
 Vue.use(Vuex);
 
@@ -16,7 +17,8 @@ export default new Vuex.Store({
     messages,
     datasets,
     projects,
-    themes
+    themes,
+    create
   },
   state: {},
   mutations: {},

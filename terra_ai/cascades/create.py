@@ -230,9 +230,6 @@ def json2cascade(path: str, cascade_config=None, mode="deploy"):
                 else:
                     params["model"] = "model"
                     params['model_path'] = os.path.split(path)[0]
-            print('params', params)
-            print('sys.modules.get(__name__)', sys.modules.get(__name__))
-            print('"create_" + params[tag]', "create_" + params['tag'])
             cascades[i] = getattr(sys.modules.get(__name__), "create_" + params['tag'])(**params)
 
     adjacency_map = OrderedDict()

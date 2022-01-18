@@ -210,6 +210,7 @@ class LayerVideoModeChoice(str, Enum):
 
 
 class LayerPrepareMethodChoice(str, Enum):
+    no_preparation = "Не применять"
     embedding = "Embedding"
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
