@@ -221,7 +221,6 @@ class ArchitectureData(BaseMixinData):
             value = {}
         _model = values.get("model")
         _outputs = value.get("outputs", [])
-        # print('\n _validate_parameters', values)
         for _index, _output in enumerate(_outputs):
             _layer = _model.layers.get(_output.get("id"))
             if _layer:
@@ -230,10 +229,6 @@ class ArchitectureData(BaseMixinData):
         value["outputs"] = _outputs
         value["model"] = _model
         return field.type_(**(value or {}))
-
-
-class TrainGANData(BaseMixinData):
-    pass
 
 
 class TrainData(BaseMixinData):
@@ -258,7 +253,7 @@ class TrainData(BaseMixinData):
 class TrainingDetailsData(BaseMixinData):
     model: Any
     name: Optional[str]
-    base: Union[TrainData, TrainGANData] = TrainData()
+    base: TrainData = TrainData()
     interactive: InteractiveData = InteractiveData()
     state: StateData = StateData(status="no_train")
     result: Optional[dict] = {}
