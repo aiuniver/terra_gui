@@ -122,7 +122,7 @@ class CreationInputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    parameters: Dict[Path, Dict[str, list]]
+    parameters: Dict[str, Dict[str, list]]
     "Параметры"
     # type: #LayerInputTypeChoice
     # "Тип данных"
@@ -156,7 +156,7 @@ class CreationOutputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    parameters: Dict[Path, Dict[str, list]]
+    parameters: Dict[str, Dict[str, list]]
     "Параметры"
 
     # type: #LayerOutputTypeChoice

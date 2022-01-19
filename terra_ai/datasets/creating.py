@@ -1,6 +1,7 @@
 from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
-from terra_ai.utils import decamelize, camelize
+from terra_ai.utils import decamelize, camelize, autodetect_encoding
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
+from terra_ai.datasets import arrays_classes
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
@@ -112,285 +113,6 @@ class CreateDataset(object):
         return dataset_data
 
 
-class Regular(object):
-
-    y_cls = []
-
-    def create_put_instructions(self,
-                                put_data: dict,
-                                processing: dict,
-                                sources_temp_directory: Path,
-                                version_paths_data: VersionPathsData):
-
-        def instructions(one_path, params):
-
-            try:
-                instr = getattr(CreateArray, f'instructions_{decamelize(params["type"])}')([one_path],
-                                                                                           **params['parameters'])
-                cut = getattr(CreateArray, f'cut_{decamelize(params["type"])}')(instr['instructions'],
-                                                                                version_paths_data.sources,
-                                                                                **instr['parameters'],
-                                                                                **{'cols_names': cols_names,
-                                                                                   'put': idx})
-            except Exception:
-                progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {put_data}')
-                logger.debug(f'Создание инструкций провалилось на {one_path}')
-                raise
-
-            if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                self.y_cls += [os.path.basename(path) for _ in range(len(cut['instructions']))]
-
-            return cut
-
-        put_parameters = {}
-        tags = {}
-        for idx in range(put_data[0].id, put_data[0].id + len(put_data)):
-            data = []
-            parameters = {}
-            for path, val in put_data.get(idx).parameters.items():
-                data_to_pass = []
-                cols_names = ''
-                current_path = sources_temp_directory.joinpath(path)
-                parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
-                if current_path.is_dir():
-                    if parameters['type'] == LayerOutputTypeChoice.Classification:
-                        data_to_pass = self.y_cls
-                    else:
-                        for direct, folder, file_name in os.walk(current_path):
-                            if file_name:
-                                for name in sorted(file_name):
-                                    data_to_pass.append(os.path.join(current_path, name))
-                    cols_names = f"{put_data.get(idx).id}_{decamelize(parameters['type'])}"
-                    tags[idx] = {cols_names: decamelize(parameters['type'])}
-                elif current_path.is_file():
-                    print('ТАБЛИЦА')
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(instructions, data_to_pass, repeat(parameters))
-                    progress.pool(version_progress_name, message=f'Формирование файлов для {os.path.basename(path)}')
-                    for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
-                        decamelize(parameters['type'])
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            for j in range(len(result['instructions'])):
-                                result['instructions'][j] = result['instructions'][j].replace(
-                                    str(version_paths_data.sources), '')[1:]
-                        data += result['instructions']
-            if parameters['type'] == LayerOutputTypeChoice.Classification:
-                data = self.y_cls
-                # ### Дальше идет не очень хороший код
-                if parameters['parameters']['type_processing'] == "categorical":
-                    classes_names = list(dict.fromkeys(data))
-                else:
-                    if len(parameters['parameters']["ranges"].split(" ")) == 1:
-                        border = max(data) / int(parameters['parameters']["ranges"])
-                        classes_names = np.linspace(border, max(data), int(parameters['parameters']["ranges"])).tolist()
-                    else:
-                        classes_names = parameters['parameters']["ranges"].split(" ")
-                result['parameters']['classes_names'] = classes_names
-                result['parameters']['num_classes'] = len(classes_names)
-                # ###
-            instructions_data = InstructionsData(instructions=data, parameters=result['parameters'])
-            instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
-            put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
-
-        return put_parameters, tags
-
-    @staticmethod
-    def create_dataset_arrays(put_data: dict,
-                              preprocessing: CreatePreprocessing,
-                              dataframe: dict,
-                              version_paths_data: VersionPathsData):
-
-        def array_creation(row, instructions):
-
-            full_array = []
-            for h in range(len(row)):
-                try:
-                    arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
-                    arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
-                                                                                              **arr['parameters'])
-                    full_array.append(arr)
-                except Exception:
-                    progress.pool(version_progress_name, error='Ошибка создания массивов данных')
-                    raise
-
-            return full_array
-
-        for split in ['train', 'val']:
-            open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
-            hdf = h5py.File(version_paths_data.arrays.joinpath('dataset.h5'), open_mode)
-            if split not in list(hdf.keys()):
-                hdf.create_group(split)
-            for key in put_data.keys():
-                data_to_pass = []
-                tmp_parameter_data = []
-                for i in range(len(dataframe[split])):
-                    tmp_data = []
-                    tmp_parameter_data = []
-                    for col_name, data in put_data[key].items():
-                        parameters_to_pass = data.parameters.copy()
-                        if preprocessing.preprocessing.get(key) and \
-                                preprocessing.preprocessing.get(key).get(col_name):
-                            prep = preprocessing.preprocessing.get(key).get(col_name)
-                            parameters_to_pass.update([('preprocess', prep)])
-                        if data.parameters['put_type'] in PATH_TYPE_LIST:
-                            tmp_data.append(version_paths_data.sources.joinpath(dataframe[split].loc[i, col_name]))
-                        else:
-                            tmp_data.append(dataframe[split].loc[i, col_name])
-                        tmp_parameter_data.append(parameters_to_pass)
-                    data_to_pass.append(tmp_data)
-
-                progress.pool(version_progress_name,
-                              message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
-                              percent=0)
-
-                hdf[split].create_group(f'id_{key}')
-
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(array_creation, data_to_pass, repeat(tmp_parameter_data))
-                    for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
-                        array = np.concatenate(result, axis=0)
-                        hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
-                        del result
-            hdf.close()
-
-    @staticmethod
-    def create_put_parameters(put_data: dict,
-                              preprocessing: CreatePreprocessing,
-                              version_data: CreationVersionData,
-                              put: str,
-                              version_paths_data: VersionPathsData):
-
-        creating_puts_data = {}
-        columns = {}
-        for key in put_data.keys():
-            put_array = []
-            columns[key] = {}
-            for col_name, data in put_data[key].items():
-                data_to_pass = data.instructions[0]
-                if data.parameters['put_type'] in PATH_TYPE_LIST:
-                    data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
-                create = getattr(CreateArray(), f'create_{data.parameters["put_type"]}')(
-                    data_to_pass,
-                    **data.parameters,
-                    **{'preprocess': preprocessing.preprocessing[key][col_name]}
-                )
-                array = getattr(CreateArray(), f'preprocess_{data.parameters["put_type"]}')(create['instructions'],
-                                                                                            **create['parameters'])
-                put_array.append(array)
-                if create['parameters'].get('classes_names'):
-                    classes_names = create['parameters'].get('classes_names')
-                else:
-                    classes_names = sorted([os.path.basename(x) for x in version_data.__dict__[put].get(key).parameters.keys()])
-
-                # Прописываем параметры для колонки
-                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
-                                  'dtype': str(array.dtype),
-                                  'shape': array.shape,
-                                  'name': version_data.__dict__[put].get(key).name,
-                                  'task': camelize(data.parameters.get('put_type')),
-                                  'classes_names': classes_names,
-                                  'classes_colors': data.parameters.get('classes_colors'),
-                                  'num_classes': len(classes_names) if classes_names else 0,
-                                  'encoding': 'none' if not data.parameters.get('encoding') else data.parameters.get('encoding')}
-                current_column = DatasetInputsData(**col_parameters) if put == 'inputs' else DatasetOutputsData(**col_parameters)
-                columns[key].update([(col_name, current_column.native())])
-
-            put_array = np.concatenate(put_array, axis=0)
-            classes_colors_list, classes_names_list, encoding_list, task_list = [], [], [], []
-            for value in columns[key].values():
-                if value.get('classes_colors'):
-                    for c_color in value.get('classes_colors'):
-                        classes_colors_list.append(c_color)
-                if value.get('classes_names'):
-                    for c_name in value.get('classes_names'):
-                        classes_names_list.append(c_name)
-                encoding_list.append(value.get('encoding') if value.get('encoding') else 'none')
-                task_list.append(value.get('task'))
-            put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
-                              'dtype': str(put_array.dtype),
-                              'shape': put_array.shape,
-                              'name': version_data.__dict__[put].get(key).name,
-                              'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
-                              'classes_names': classes_names_list if classes_names_list else None,
-                              'classes_colors': classes_colors_list if classes_colors_list else None,
-                              'num_classes': len(classes_names_list) if classes_names_list else None,
-                              'encoding': 'none' if len(encoding_list) > 1 or not encoding_list else encoding_list[0]}
-
-            creating_puts_data[key] = DatasetInputsData(**put_parameters).native() if put == 'inputs'\
-                else DatasetOutputsData(**put_parameters).native()
-
-        return creating_puts_data, columns
-
-
-class ObjectDetection(object):
-
-    @staticmethod
-    def create_put_instructions(put_data: dict,
-                                processing: dict,
-                                sources_temp_directory: Path,
-                                version_paths_data: VersionPathsData):
-
-        def instructions(one_path, params):
-
-            try:
-                instr = getattr(CreateArray, f'instructions_{decamelize(params["type"])}')([one_path],
-                                                                                           **params['parameters'])
-                cut = getattr(CreateArray, f'cut_{decamelize(params["type"])}')(instr['instructions'],
-                                                                                version_paths_data.sources,
-                                                                                **instr['parameters'],
-                                                                                **{'cols_names': cols_names,
-                                                                                   'put': idx})
-            except Exception:
-                progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {put_data.get(idx).name}')
-                logger.debug(f'Создание инструкций провалилось на {one_path}')
-                raise
-
-            return cut
-
-        put_parameters = {}
-        tags = {}
-
-        for idx in range(put_data[0].id, put_data[0].id + len(put_data)):
-            data = []
-            parameters = {}
-            for path, val in put_data.get(idx).parameters.items():
-                data_to_pass = []
-                cols_names = ''
-                current_path = sources_temp_directory.joinpath(path)
-                parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
-                for direct, folder, file_name in os.walk(current_path):
-                    if file_name:
-                        for name in sorted(file_name):
-                            if 'model_type' in put_data.get(idx).parameters.keys() and \
-                                    put_data.get(idx).parameters.model_type == LayerODDatasetTypeChoice.Udacity and \
-                                    name.endswith('.csv'):
-                                data_to_pass.append(current_path.joinpath(name))
-                            elif 'model_type' in put_data.get(idx).parameters.keys() and \
-                                    put_data.get(idx).parameters.model_type == LayerODDatasetTypeChoice.Yolov1 and \
-                                    name.endswith('.txt'):
-                                data_to_pass.append(current_path.joinpath(name))
-                            else:
-                                data_to_pass.append(current_path.joinpath(name))
-                cols_names = f"{put_data.get(idx).id}_{decamelize(parameters['type'])}"
-                tags[idx] = {cols_names: decamelize(parameters['type'])}
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(instructions, data_to_pass, repeat(parameters))
-                    progress.pool(version_progress_name, message=f'Формирование файлов для {os.path.basename(path)}')
-                    for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            for j in range(len(result['instructions'])):
-                                result['instructions'][j] = result['instructions'][j].replace(str(version_paths_data.sources), '')[1:]
-                        data += result['instructions']
-            instructions_data = InstructionsData(instructions=data, parameters=result['parameters'])
-            instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
-            put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
-
-        return put_parameters, tags
-
-
 class Cascade(object):
     pass
 
@@ -413,7 +135,9 @@ class CreateVersion(object):
         self.dataframe: dict = {}
         self.columns: dict = {}
         self.preprocessing = CreatePreprocessing()
-        self.task_class = globals()['ObjectDetection']()
+        # self.task_class = globals()['ObjectDetection']()
+        self.y_cls = []
+        self.tags = {}
 
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
@@ -435,7 +159,7 @@ class CreateVersion(object):
         version_data = self.preprocess_version_data(version_data, self.sources_temp_directory)
         logger.debug(version_data)
         progress.pool(name=version_progress_name, message='Создание инструкций', percent=0)
-        self.instructions, self.tags = self.create_instructions(version_data)
+        self.instructions = self.create_instructions(version_data)  # self.tags
         progress.pool(name=version_progress_name, message='Создание объектов обработки', percent=0)
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
@@ -443,14 +167,16 @@ class CreateVersion(object):
         self.create_table(version_data)
 
         progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
-        self.task_class.create_dataset_arrays(put_data=self.instructions.inputs,
-                                              preprocessing=self.preprocessing,
-                                              dataframe=self.dataframe,
-                                              version_paths_data=self.version_paths_data)
-        self.task_class.create_dataset_arrays(put_data=self.instructions.outputs,
-                                              preprocessing=self.preprocessing,
-                                              dataframe=self.dataframe,
-                                              version_paths_data=self.version_paths_data)
+        # self.task_class.create_dataset_arrays(put_data=self.instructions.inputs,
+        #                                       preprocessing=self.preprocessing,
+        #                                       dataframe=self.dataframe,
+        #                                       version_paths_data=self.version_paths_data)
+        # self.task_class.create_dataset_arrays(put_data=self.instructions.outputs,
+        #                                       preprocessing=self.preprocessing,
+        #                                       dataframe=self.dataframe,
+        #                                       version_paths_data=self.version_paths_data)
+        self.create_dataset_arrays(put_data=self.instructions.inputs)
+        self.create_dataset_arrays(put_data=self.instructions.outputs)
 
         self.inputs = self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
         self.outputs = self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
@@ -547,126 +273,132 @@ class CreateVersion(object):
                         tmp.append(j)
                 new_array.append(tmp)
             new_array = np.array(new_array)
-        return new_array
+        return new_arraykk
 
     def create_instructions(self, version_data):
 
-        inputs, inp_tags = self.task_class.create_put_instructions(
+        inputs = self.create_put_instructions(
             put_data=version_data.inputs,
             processing=version_data.processing,
-            sources_temp_directory=self.sources_temp_directory,
-            version_paths_data=self.version_paths_data
         )
 
-        outputs, out_tags = self.task_class.create_put_instructions(
+        outputs = self.create_put_instructions(
             put_data=version_data.outputs,
             processing=version_data.processing,
-            sources_temp_directory=self.sources_temp_directory,
-            version_paths_data=self.version_paths_data
         )
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
-        tags = {}
-        tags.update(inp_tags)
-        tags.update(out_tags)
+        # tags = {}
+        # tags.update(inp_tags)
+        # tags.update(out_tags)
 
-        return instructions, tags
+        return instructions
 
-    def create_put_instructions(self, puts, processing):
+    def create_put_instructions(self, put_data, processing):
 
         def instructions(one_path, params):
 
             try:
-                instr = getattr(CreateArray, f'instructions_{decamelize(params["type"])}')([one_path],
-                                                                                           **params['parameters'])
-                cut = getattr(CreateArray, f'cut_{decamelize(params["type"])}')(instr['instructions'],
-                                                                                self.version_paths_data.sources,
-                                                                                **instr['parameters'],
-                                                                                **{'cols_names': cols_names,
-                                                                                   'put': idx})
+                # instr = getattr(CreateArray, f'instructions_{decamelize(params["type"])}')([one_path],
+                #                                                                            **params['parameters'])
+                # cut = getattr(CreateArray, f'cut_{decamelize(params["type"])}')(instr['instructions'],
+                #                                                                 self.version_paths_data.sources,
+                #                                                                 **instr['parameters'],
+                #                                                                 **{'cols_names': cols_names,
+                #                                                                    'put': idx})
+                cut = getattr(getattr(arrays_classes, decamelize(params["type"])), f'{params["type"]}Array')().prepare(
+                    sources=[one_path],
+                    dataset_folder=self.version_paths_data.sources,
+                    **params['parameters'],
+                    **{'cols_names': col_name, 'put': idx}
+                )
+
             except Exception:
-                progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {puts}')
+                progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {put_data.get(idx).name}')
                 logger.debug(f'Создание инструкций провалилось на {one_path}')
                 raise
 
-            # return_data = []
-            # for i in range(len(cut['instructions'])):
-            #     if decamelize(parameters['type']) in PATH_TYPE_LIST:
-            #         return_data.append(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:])  # self.sources_temp_directory
-            #     else:
-            #         return_data.append(cut['instructions'][i])
-            if idx == puts[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                self.y_cls += [os.path.basename(path) for _ in range(len(cut['instructions']))]
+            # if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
+            #     self.y_cls += [os.path.basename(one_path) for _ in range(len(cut['instructions']))]
 
             return cut  # {'instructions': return_data, 'parameters': cut['parameters']}
 
         put_parameters = {}
 
-        for idx in range(puts[0].id, puts[0].id + len(puts)):
-            data = []
-            parameters = None
-            for path, val in puts.get(idx).parameters.items():
-                data_to_pass = []
-                cols_names = ''
-                current_path = self.sources_temp_directory.joinpath(path)
-                parameters = processing[str(val[os.path.basename(path)][0])].native()  # Аккуратно с [0]
-                if current_path.is_dir():
+        for idx in range(put_data[0].id, put_data[0].id + len(put_data)):
+            self.tags[idx] = {}
+            put_parameters[idx] = {}
+            for path, val in put_data.get(idx).parameters.items():
+                for name, proc in val.items():
+                    data = []
+                    data_to_pass = []
+                    parameters = processing[str(proc[0])].native()  # Аккуратно с [0]
+                    col_name = decamelize(parameters["type"])
+
+                    if Path(self.sources_temp_directory).joinpath(name.split(':')[0]).is_dir():
+                        # Собираем все пути к файлам в один список
+                        for folder_name in name.split(':'):
+                            current_path = Path(self.sources_temp_directory).joinpath(folder_name)
+                            for direct, folder, files_name in os.walk(current_path):
+                                if files_name:
+                                    for file_name in sorted(files_name):
+                                        data_to_pass.append(os.path.join(current_path, file_name))
+                    elif Path(self.sources_temp_directory).joinpath(path.split(':')[0]).is_file():
+                        col_name = name
+                        current_path = Path(self.sources_temp_directory).joinpath(path.split(':')[0])
+                        # Собираем всю колонку в один список
+                        _, enc = autodetect_encoding(str(current_path), True)
+                        data_to_pass = pd.read_csv(current_path, sep=None, usecols=[name],
+                                                   engine='python', encoding=enc)[name].to_list()
+                        if parameters['type'] == 'Image':  # in PATH_TYPE_LIST:
+                            data_to_pass = [str(Path(self.sources_temp_directory).joinpath(Path(x))) for x in data_to_pass]
+
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        results = executor.map(instructions, data_to_pass, repeat(parameters))
+                        progress.pool(version_progress_name, message=f'Формирование файлов для {os.path.basename(path)}')
+                        for i, result in enumerate(results):
+                            progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
+                            if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                                for j in range(len(result['instructions'])):
+                                    result['instructions'][j] = result['instructions'][j].replace(
+                                        str(self.version_paths_data.sources), '')[1:]
+                            data += result['instructions']
+                            result_params = result['parameters']
+                            # classes_names += result['parameters']['classes_names']
+                            if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
+                                self.y_cls += [os.path.basename(os.path.dirname(data_to_pass[i])) for _ in
+                                               range(len(result['instructions']))]
+                    # if decamelize(parameters['type']) in PATH_TYPE_LIST:
+                    #     for i in range(len(data)):
+                    #         data[i] = data[i].replace(str(self.version_paths_data.sources), '')[1:]  # data[i].replace(str(self.version_paths_data.sources), '')[1:])
+                            # data.append(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:]) # self.sources_temp_directory
+                        # else:
+                        #     data.append(cut['instructions'][i])
+                    #     # if idx - 1 > 0 and parameters['type'] != prev_type:
+                    #     # if idx == 0:
+                    #     # if parameters['type'] != LayerOutputTypeChoice.Classification and i == 0:
+                    #     #     self.y_cls.append(os.path.basename(path))
+                    # if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
+                    #     self.y_cls += [os.path.basename(path) for _ in range(len(data))]
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
-                        data_to_pass = self.y_cls
-                    else:
-                        for direct, folder, file_name in os.walk(current_path):
-                            if file_name:
-                                for name in sorted(file_name):
-                                    data_to_pass.append(os.path.join(current_path, name))
-                    cols_names = f"{puts.get(idx).id}_{decamelize(parameters['type'])}"
-                    self.tags[idx] = {cols_names: decamelize(parameters['type'])}
-                elif current_path.is_file():
-                    print('ТАБЛИЦА')
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(instructions, data_to_pass, repeat(parameters))
-                    progress.pool(version_progress_name, message=f'Формирование файлов для {os.path.basename(path)}')
-                    for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            for j in range(len(result['instructions'])):
-                                result['instructions'][j] = result['instructions'][j].replace(str(self.version_paths_data.sources), '')[1:]
-                        print(result['instructions'])
-                        data += result['instructions']
-                        result_params = result['parameters']
-                        # classes_names += result['parameters']['classes_names']
-                        # if idx == puts[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                        #     self.y_cls += [os.path.basename(path) for _ in range(len(result['instructions']))]
-                # if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                #     for i in range(len(data)):
-                #         data[i] = data[i].replace(str(self.version_paths_data.sources), '')[1:]  # data[i].replace(str(self.version_paths_data.sources), '')[1:])
-                        # data.append(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:]) # self.sources_temp_directory
-                    # else:
-                    #     data.append(cut['instructions'][i])
-                #     # if idx - 1 > 0 and parameters['type'] != prev_type:
-                #     # if idx == 0:
-                #     # if parameters['type'] != LayerOutputTypeChoice.Classification and i == 0:
-                #     #     self.y_cls.append(os.path.basename(path))
-                # if idx == puts[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                #     self.y_cls += [os.path.basename(path) for _ in range(len(data))]
-            if parameters['type'] == LayerOutputTypeChoice.Classification:
-                data = self.y_cls
-                # ### Дальше идет не очень хороший код
-                if parameters['parameters']['type_processing'] == "categorical":
-                    classes_names = list(dict.fromkeys(data))
-                else:
-                    if len(parameters['parameters']["ranges"].split(" ")) == 1:
-                        border = max(data) / int(parameters['parameters']["ranges"])
-                        classes_names = np.linspace(border, max(data), int(parameters['parameters']["ranges"])).tolist()
-                    else:
-                        classes_names = parameters['parameters']["ranges"].split(" ")
-                result['parameters']['classes_names'] = classes_names
-                result['parameters']['num_classes'] = len(classes_names)
-                # ###
-            data = self.y_cls if parameters['type'] == LayerOutputTypeChoice.Classification else data
-            instructions_data = InstructionsData(instructions=data, parameters=result_params)
-            instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
-            put_parameters[idx] = {f'{idx}_{decamelize(parameters["type"])}': instructions_data}
+                        data = self.y_cls
+                        # ### Дальше идет не очень хороший код
+                        if parameters['parameters']['type_processing'] == "categorical":
+                            classes_names = list(dict.fromkeys(data))
+                        else:
+                            if len(parameters['parameters']["ranges"].split(" ")) == 1:
+                                border = max(data) / int(parameters['parameters']["ranges"])
+                                classes_names = np.linspace(border, max(data), int(parameters['parameters']["ranges"])).tolist()
+                            else:
+                                classes_names = parameters['parameters']["ranges"].split(" ")
+                        result['parameters']['classes_names'] = classes_names
+                        result['parameters']['num_classes'] = len(classes_names)
+                        # ###
+                    instructions_data = InstructionsData(instructions=data, parameters=result_params)
+                    instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
+                    put_parameters[idx] = {f'{idx}_{col_name}': instructions_data}
+                    self.tags[idx].update({f'{idx}_{col_name}': decamelize(parameters['type'])})
 
         return put_parameters
 
@@ -767,9 +499,11 @@ class CreateVersion(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
         try:
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
