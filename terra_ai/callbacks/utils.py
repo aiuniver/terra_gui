@@ -346,7 +346,10 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.CGAN]
+GAN_ARCHITECTURE = [
+    ArchitectureChoice.GAN, ArchitectureChoice.CGAN, ArchitectureChoice.TextToImageGAN,
+    ArchitectureChoice.ImageToImageGAN
+]
 
 
 def reformat_fit_array(array: dict, train_idx: list = None):
