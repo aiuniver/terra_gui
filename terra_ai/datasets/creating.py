@@ -38,7 +38,6 @@ from pytz import timezone
 
 
 class CreateDataset(object):
-
     progress_name = 'create_dataset'
 
     @progress.threading
@@ -275,7 +274,7 @@ class CreateDataset(object):
                            'type': LayerOutputTypeChoice.Dataframe,
                            'parameters': {'cols_names': {
                                list(output_copy.parameters.cols_names.keys())[0]: [new_worker_id]},
-                                          'sources_paths': output_copy.parameters.sources_paths}})
+                               'sources_paths': output_copy.parameters.sources_paths}})
                     )
                     break
 
@@ -306,16 +305,12 @@ class CreateDataset(object):
 
         def instructions(item, cur_put, proc_worker):
             try:
-                instr = getattr(CreateArray(),
-                                f'instructions_{decamelize(self.columns_processing[str(proc_worker)].type)}')(
-                    [item], **{'cols_names': f'{put.id}_{name}', 'put': put.id},
-                    **self.columns_processing[str(proc_worker)].parameters.native())
                 cut_data = getattr(CreateArray(),
-                                   f"cut_{decamelize(self.columns_processing[str(proc_worker)].type)}")(
-                    instr['instructions'],
-                    self.paths.sources.joinpath(f"{cur_put.id}_", f"{decamelize(cur_put.type)}"),
-                    **instr['parameters']
-                )
+                                   f'prepare_{decamelize(self.columns_processing[str(proc_worker)].type)}')(
+                    [item],
+                    dataset_folder=self.paths.sources.joinpath(f"{cur_put.id}_", f"{decamelize(cur_put.type)}"),
+                    **{'cols_names': f'{put.id}_{name}', 'put': put.id},
+                    **self.columns_processing[str(proc_worker)].parameters.native())
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка создания инструкций')
                 logger.exception('Ошибка создания инструкций', extra={'type': "warning"})
@@ -350,8 +345,10 @@ class CreateDataset(object):
                 list_of_data = dataframe.loc[:, name].to_numpy().tolist()
                 if put.parameters.cols_names[name_index]:
                     try:
-                        for worker in put.parameters.cols_names[name_index]:  # На будущее после 1 октября - очень аккуратно!
-                            self.tags[put.id][f'{put.id}_{name}'] = decamelize(self.columns_processing[str(worker)].type)
+                        for worker in put.parameters.cols_names[
+                            name_index]:  # На будущее после 1 октября - очень аккуратно!
+                            self.tags[put.id][f'{put.id}_{name}'] = decamelize(
+                                self.columns_processing[str(worker)].type)
                             if decamelize(self.columns_processing[str(worker)].type) in PATH_TYPE_LIST:
                                 # list_of_data = [os.path.join(self.source_path, x) for x in list_of_data]
                                 list_of_data = [Path(self.source_path).joinpath(Path(x)) for x in list_of_data]
@@ -367,7 +364,8 @@ class CreateDataset(object):
                                                      for path in result['instructions']]
                                         result['instructions'] = new_paths
                                     results_list += result['instructions']
-                            result['parameters'].update([('put_type', decamelize(self.columns_processing[str(worker)].type))])
+                            result['parameters'].update(
+                                [('put_type', decamelize(self.columns_processing[str(worker)].type))])
                             instructions_data = InstructionsData(instructions=results_list,
                                                                  parameters=result['parameters'])
                             if instructions_data.parameters['put_type'] == 'classification':
@@ -401,25 +399,26 @@ class CreateDataset(object):
 
         def instructions(path, put):
             try:
-                instr = getattr(CreateArray(), f"instructions_{decamelize(put.type)}")([path],
-                                                                                       **put.parameters.native())
-                cut_data = getattr(CreateArray(), f"cut_{decamelize(put.type)}")(instr['instructions'],
-                                                                                 os.path.join(self.paths.sources,
-                                                                                              f"{put.id}_"
-                                                                                              f"{decamelize(put.type)}"),
-                                                                                 **instr['parameters'])
+                cut_data = getattr(CreateArray(), f"prepare_{decamelize(put.type)}")(
+                    [path],
+                    dataset_folder=os.path.join(self.paths.sources, f"{put.id}_{decamelize(put.type)}"),
+                    **put.parameters.native()
+                )
             except Exception:
                 progress.pool(self.progress_name, error='Ошибка создания инструкций')
                 logger.exception('Ошибка создания инструкций', extra={'type': "warning"})
                 raise
 
-            class_name = [os.path.basename(os.path.dirname(x)) for x in list(instr['instructions'].keys())]\
-                if put.type == LayerInputTypeChoice.Text else None
+            if put.type == LayerInputTypeChoice.Text:
+                class_name = [os.path.basename(os.path.dirname(x)) for x in list(cut_data['data'].keys())]
+                del cut_data['data']
+            else:
+                class_name = None
 
             if class_name:
                 return cut_data, class_name
             else:
-                return (cut_data, )
+                return (cut_data,)
 
         put_parameters: dict = {}
         for put in data:
@@ -436,7 +435,7 @@ class CreateDataset(object):
             else:
                 paths_list: list = []
                 if 'model_type' in put.parameters.native().keys() and \
-                                                        put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
+                        put.parameters.model_type in [LayerODDatasetTypeChoice.Udacity]:
                     for file_name in os.listdir(os.sep.join(str(put.parameters.sources_paths).split(os.sep)[:-1])):
                         if file_name.endswith('.csv'):
                             paths_list.append(file_name)
@@ -533,9 +532,9 @@ class CreateDataset(object):
                     elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                         self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
                 # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
-                    # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': []}
-                    # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
-                    # 'data': []}
+                # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': []}
+                # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
+                # 'data': []}
 
     def fit_preprocessing(self, put_data):
 
@@ -561,9 +560,11 @@ class CreateDataset(object):
                                 if data.parameters['scaler'] == 'terra_image_scaler':
                                     self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
                                 else:
-                                    self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
+                                    self.preprocessing.preprocessing[key][col_name].fit(
+                                        arr['instructions'].reshape(-1, 1))
                         else:
-                            self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+                            self.preprocessing.preprocessing[key][col_name].fit(
+                                np.array(data.instructions).reshape(-1, 1))
                     except Exception:
                         progress.pool(self.progress_name, error='Ошибка обучения скейлера')
                         logger.exception('Ошибка обучения скейлера', extra={'type': "warning"})
@@ -840,11 +841,11 @@ class CreateDataset(object):
                         encoding = LayerEncodingChoice.ohe
                     else:
                         encoding = LayerEncodingChoice.none
-                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation or\
-                        creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe and\
+                elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.Segmentation or \
+                        creation_data.outputs.get(key).type == LayerOutputTypeChoice.Dataframe and \
                         creation_data.columns_processing[
-                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type\
-                        == LayerOutputTypeChoice.Segmentation or\
+                            str(creation_data.outputs.get(key).parameters.cols_names[idx][0])].type \
+                        == LayerOutputTypeChoice.Segmentation or \
                         task == LayerOutputTypeChoice.TimeseriesTrend:
                     encoding = LayerEncodingChoice.ohe
                 elif creation_data.outputs.get(key).type == LayerOutputTypeChoice.TextSegmentation:
@@ -1032,9 +1033,11 @@ class CreateDataset(object):
                                 elif 'trend' in data.parameters.keys():
                                     tmp_data.append(
                                         self.dataframe[split].loc[i + data.parameters['length']:i +
-                                                                                                data.parameters['length']
+                                                                                                data.parameters[
+                                                                                                    'length']
                                                                                                 + data.parameters[
-                                                                                                    'depth'] - 1, col_name])
+                                                                                                    'depth'] - 1,
+                                        col_name])
                                 else:
                                     tmp_data.append(self.dataframe[split].loc[i:i + data.parameters['length'] - 1,
                                                     col_name])
@@ -1072,7 +1075,7 @@ class CreateDataset(object):
                             if current_serv_group not in list(hdf[split].keys()):
                                 hdf[split].create_group(current_serv_group)
                             globals()[f'current_arrays_{n}'] = []
-                            globals()[f'current_arrays_{n+3}'] = []
+                            globals()[f'current_arrays_{n + 3}'] = []
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         results = executor.map(array_creation, data_to_pass, dict_to_pass)
                         for i, result in enumerate(results):
@@ -1104,8 +1107,11 @@ class CreateDataset(object):
                             else:
                                 if self.use_generator:
                                     for n in range(3):
-                                        hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n], compression="gzip")
-                                        hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3], compression="gzip")
+                                        hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n],
+                                                                                    compression="gzip")
+                                        hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i),
+                                                                                            data=result[0][n + 3],
+                                                                                            compression="gzip")
                                 else:
                                     for n in range(6):
                                         globals()[f'current_arrays_{n}'].append(result[0][n])
