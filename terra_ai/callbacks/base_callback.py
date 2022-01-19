@@ -5,7 +5,7 @@ import pynvml as N
 from config import settings
 
 from terra_ai import progress
-from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE
+from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE, GAN_ARCHITECTURE
 from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
@@ -40,6 +40,7 @@ class FitCallback:
         self.dataset_path = dataset.data.path
         self.deploy_type = getattr(DeployTypeChoice, deploy_type)
         self.is_yolo = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
+        self.is_gan = True if dataset.data.architecture in GAN_ARCHITECTURE else False
         self.batch_size = training_details.base.batch
         self.nn_name = model_name
         self.deploy_path = training_details.deploy_path
@@ -317,7 +318,7 @@ class FitCallback:
         logger.debug(f"{method_name}, epoch {self.last_epoch}")
 
         try:
-            if self.is_yolo:
+            if self.is_yolo or self.is_gan:
                 self.history.current_logs = logs
             else:
                 self.history.current_basic_logs(epoch=epoch, arrays=arrays, train_idx=train_data_idxs)

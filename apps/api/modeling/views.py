@@ -108,7 +108,9 @@ class ValidateAPIView(BaseAPIView):
         for index, layer in enumerate(model.inputs):
             layer.shape.output = []
             layer.shape.input = (
-                dataset_model.inputs.get(layer.id).shape.input if dataset_model else []
+                dataset_model.inputs.get(layer.id).shape.input
+                if dataset_model
+                else layer.shape.input
             )
         for index, layer in enumerate(model.outputs):
             layer.shape.input = []

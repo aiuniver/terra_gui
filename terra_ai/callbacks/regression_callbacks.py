@@ -485,7 +485,7 @@ class DataframeRegressionCallback:
                         data["stat"]["data"].append(
                             {
                                 'title': f"Отклонение - «{name.split('_', 1)[-1]}»",
-                                'value': f"{np.round(deviation[i], 2)} %",
+                                'value': f"{round(deviation[i].item(), 2)} %",
                                 'color_mark': color_mark
                             }
                         )

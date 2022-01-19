@@ -17,7 +17,8 @@ from terra_ai.data.modeling.layers.extra import (
     YOLOModeChoice,
     YOLOActivationChoice,
     VAELatentRegularizerChoice,
-    SpaceToDepthDataFormatChoice, CONVBlockConfigChoice,
+    SpaceToDepthDataFormatChoice,
+    CONVBlockConfigChoice,
 )
 
 from terra_ai.data.cascades.blocks.extra import (
