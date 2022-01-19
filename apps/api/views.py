@@ -3,8 +3,10 @@ import json
 from django.conf import settings
 from rest_framework.exceptions import APIException
 
-from apps.plugins.frontend import defaults_data
+from apps.api import decorators, remote
 from apps.api.base import BaseAPIView, BaseResponseSuccess
+from apps.api.serializers import LoginSerializer
+from apps.plugins.frontend import defaults_data
 
 
 class NotFoundAPIView(BaseAPIView):
@@ -19,6 +21,17 @@ class NotFoundAPIView(BaseAPIView):
         )
         self.response = self.finalize_response(request, response, *args, **kwargs)
         return self.response
+
+
+class LoginAPIView(BaseAPIView):
+    @decorators.serialize_data(LoginSerializer)
+    def post(self, request, serializer, **kwargs):
+        response = remote.request("/login/", serializer.validated_data)
+        settings.USER_SESSION = response.get("session")
+        if settings.USER_KEEP_SESSION:
+            with open(settings.ENV_FILE, "a") as env_file_ref:
+                env_file_ref.write(f"USER_SESSION={settings.USER_SESSION}\n")
+        return BaseResponseSuccess({"url": "/datasets"})
 
 
 class ConfigAPIView(BaseAPIView):
