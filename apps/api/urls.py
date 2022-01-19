@@ -7,6 +7,7 @@ from . import views
 app_name = "apps_api"
 
 urlpatterns = [
+    path("login/", views.LoginAPIView.as_view(), name="login"),
     path("config/", views.ConfigAPIView.as_view(), name="config"),
     path("common/", include("apps.api.common.urls", namespace="common")),
     path("profile/", include("apps.api.profile.urls", namespace="profile")),

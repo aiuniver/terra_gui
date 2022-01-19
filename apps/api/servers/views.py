@@ -1,12 +1,8 @@
 import json
-import requests
 
-from typing import Dict, Any
+from typing import Dict
 
-from django.conf import settings
-from rest_framework.exceptions import APIException
-
-from apps.api import decorators
+from apps.api import decorators, remote
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.servers.serializers import (
     CreateSerializer,
@@ -16,28 +12,10 @@ from apps.api.servers.serializers import (
 )
 
 
-def remote_request(url: str, data: dict = None) -> Any:
-    if data is None:
-        data = {}
-    response = requests.post(
-        f"{settings.TERRA_API_URL}{url}",
-        json={"config": settings.USER_PORT, **data},
-        cookies={"sessionid": settings.USER_SESSION},
-    )
-    if response.ok:
-        data = response.json()
-        if data.get("success"):
-            return data.get("data")
-        else:
-            raise APIException(data.get("error"))
-    else:
-        response.raise_for_status()
-
-
 class ServersListMixinAPIView(BaseAPIView):
     def get_servers(self, state: str = None) -> Dict[int, dict]:
         servers = []
-        for server in remote_request(
+        for server in remote.request(
             f'/server/list/{f"?state={state}" if state else ""}'
         ):
             server["state"] = {"name": server.get("state")}
@@ -53,7 +31,7 @@ class ListAPIView(ServersListMixinAPIView):
 class CreateAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(CreateSerializer)
     def post(self, request, serializer, **kwargs):
-        server = remote_request("/server/create/", serializer.validated_data)
+        server = remote.request("/server/create/", serializer.validated_data)
         server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
             json.loads(ServerData(**server).json(ensure_ascii=False))
@@ -63,7 +41,7 @@ class CreateAPIView(ServersListMixinAPIView):
 class GetAPIView(BaseAPIView):
     @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        server = remote_request("/server/get/", serializer.validated_data)
+        server = remote.request("/server/get/", serializer.validated_data)
         server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
             json.loads(ServerFullData(**server).json(ensure_ascii=False))
@@ -73,7 +51,7 @@ class GetAPIView(BaseAPIView):
 class SetupAPIView(ServersListMixinAPIView):
     @decorators.serialize_data(ServerSerializer)
     def post(self, request, serializer, **kwargs):
-        server = remote_request("/server/setup/", serializer.validated_data)
+        server = remote.request("/server/setup/", serializer.validated_data)
         server["state"] = {"name": server.get("state")}
         return BaseResponseSuccess(
             json.loads(ServerData(**server).json(ensure_ascii=False))

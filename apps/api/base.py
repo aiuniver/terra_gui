@@ -45,7 +45,7 @@ class BaseResponse(Response):
             error=error,
             logs=logs,
         )
-        kwargs.update({"status": HTTP_200_OK})
+        kwargs.update({"status": kwargs.get("status", HTTP_200_OK)})
         super().__init__(data=__response.dict(), *args, **kwargs)
 
 
