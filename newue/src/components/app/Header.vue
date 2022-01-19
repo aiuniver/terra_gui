@@ -110,6 +110,7 @@ export default {
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
+  background-color: #17212B;
   &__right {
     height: 100%;
     margin-left: auto;

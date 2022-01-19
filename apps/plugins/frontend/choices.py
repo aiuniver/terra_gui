@@ -23,6 +23,7 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
     Tracker = "Трекер (каскад)"
+    TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
     GAN = "Генеративно-состязательная НС"
@@ -209,6 +210,7 @@ class LayerVideoModeChoice(str, Enum):
 
 
 class LayerPrepareMethodChoice(str, Enum):
+    no_preparation = "Не применять"
     embedding = "Embedding"
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
@@ -336,5 +338,5 @@ class BlockFunctionTypeChoice(str, Enum):
     PlotMaskSegmentation = "Наложение маски всех классов по цветам"
     PutTag = "Расстановка тегов по вероятностям из модели"
     PostprocessBoxes = "Постобработка Yolo"
-    PlotBBoxes = "Наложение BBox на изображение"
+    PlotBboxes = "Наложение BBox на изображение"
     FilterClasses = "Фильтрация классов Service YoloV5"

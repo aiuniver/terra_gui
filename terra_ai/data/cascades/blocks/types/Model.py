@@ -1,6 +1,7 @@
+from typing import Optional
 from terra_ai.data.mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):
-    path: str
+    path: Optional[str]
     postprocess: bool = True

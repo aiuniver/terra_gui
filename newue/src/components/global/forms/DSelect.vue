@@ -2,6 +2,7 @@
   <div
     class="d-input"
     :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
+    v-outside="outside"
   >
     <div v-if="icon" class="d-input__icon">
       <SvgContainer :name="icon" />
@@ -16,16 +17,16 @@
       :disabled="isDisabled"
     />
     <div class="d-input__btn">
-      <div v-show="input && !isDisabled" class="d-input__btn--cleener">
+      <!-- <div v-show="input && !isDisabled" class="d-input__btn--cleener">
         <i class="ci-icon ci-close_big" @click="clear" />
-      </div>
-      <div :class="['d-input__btn--down', { 'd-input__btn--disabled': isDisabled }]">
+      </div> -->
+      <div :class="['d-input__btn--down', { 'd-input__btn--disabled': isDisabled }]" @click="expand">
         <i class="ci-icon ci-caret_down" />
       </div>
     </div>
     <div class="d-content">
       <template v-for="({ label, value }, i) of list" >
-        <div class="d-content__item"  :key="label + i"  v-if="~label.indexOf(input) && input.length" @click="change({ label, value })">
+        <div class="d-content__item"  :key="label + i"  v-if="showContent" @click="change({ label, value })">
           {{ label }}
         </div>
       </template>
@@ -51,10 +52,12 @@ export default {
       type: String,
       default: 'Введите текст',
     },
-    icon: String
+    icon: String,
+    parse: [String, Number]
   },
   data: () => ({
     input: '',
+    showContent: false
   }),
   methods: {
     clear() {
@@ -63,10 +66,21 @@ export default {
       })
     },
     change({ label, value }) {
-      this.$emit('change', { label, value });
-      this.input = ''
+      this.$emit('change', { name: label, value });
+      this.$emit('parse', { name: this.name, parse: this.parse, value });
+      this.input = label
+      this.showContent = false
     },
+    expand() {
+      this.showContent = !this.showContent
+    },
+    outside() {
+      this.showContent = false
+    }
   },
+  created() {
+    this.input = this.list[0]?.label
+  }
 };
 </script>
 
@@ -96,9 +110,9 @@ export default {
   min-width: 100%;
   border-radius: 4px;
   overflow: hidden;
+  z-index: 2;
   &__item {
-    height: 36px;
-    padding: 5px 10px;
+    padding: 10px;
     cursor: pointer;
 
     &:hover {

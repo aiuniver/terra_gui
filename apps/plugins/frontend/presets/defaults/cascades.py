@@ -133,7 +133,7 @@ FunctionTypesFields = {
             },
         },
     ],
-    BlockFunctionTypeChoice.PlotBBoxes: [
+    BlockFunctionTypeChoice.PlotBboxes: [
         {
             "type": "number",
             "name": "line_thickness",
@@ -181,7 +181,7 @@ FunctionGroupTypeRel = {
     ],
     BlockFunctionGroupChoice.ObjectDetection: [
         BlockFunctionTypeChoice.PostprocessBoxes,
-        BlockFunctionTypeChoice.PlotBBoxes,
+        BlockFunctionTypeChoice.PlotBboxes,
         BlockFunctionTypeChoice.FilterClasses,
     ],
 }
@@ -744,7 +744,7 @@ CascadesBlocksTypes = {
     <code>лучшие bbox по выставленным параметрам</code>
 </p>
                     """,
-                    "PlotBBoxes": """
+                    "PlotBboxes": """
 <p>Наложение bbox</b> на изображение YOLOV3 и V4</p>
 <p>Необходимые связи с другими блоками на входе:</p>
 <ol>

@@ -76,7 +76,7 @@ class CascadeRunner:
                                                                           model_task=model_task,
                                                                           dataset_data=dataset_config_data,
                                                                           presets_path=presets_path)
-
+            logger.info(f"Конфиг каскада: {cascade_config}")
             main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
             logger.info("Сборка каскада завершена", extra={"type": "success"})
@@ -241,10 +241,8 @@ class CascadeRunner:
                         key: val for key, val in block.parameters.main.native().items()
                         if key in block_parameters
                     }
-                    print('block.parameters', block.parameters)
                     if "model_path" in parameters.keys() and not parameters.get("model_path"):
                         parameters["model_path"] = str(block.parameters.model_path)
-                        print('parameters["model_path"]', parameters["model_path"])
                 else:
                     parameters = {
                         key: val for key, val in block.parameters.main.native().items()

@@ -891,7 +891,7 @@ def segmentation_metric(true_array, pred_array):
 
 def get_dataset_length(options):
     method_name = 'get_dataset_length'
-    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
+    logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
         train_length, val_length = 0, 0
         if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \

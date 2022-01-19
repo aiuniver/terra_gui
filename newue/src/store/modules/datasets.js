@@ -40,7 +40,10 @@ const actions = {
 
 const getters = {
   getDatasets: ({ datasets }) => datasets,
-  choiceDataset: ({ datasets }) => datasets.find(item => item.active) || {}
+  choiceDataset: ({ datasets }) => datasets.find(item => item.active) || {},
+  getErrors: ({ errors }) => (id) => {
+    return errors?.[id] || {};
+  },
 }
 
 

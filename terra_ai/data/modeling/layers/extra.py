@@ -165,6 +165,7 @@ class PretrainedModelPoolingChoice(str, Enum):
 class YOLOModeChoice(str, Enum):
     YOLOv3 = "YOLOv3"
     YOLOv4 = "YOLOv4"
+
     # YOLOv5 = "YOLOv5"
 
     @staticmethod
@@ -243,7 +244,7 @@ class LayerValueConfig(BaseMixinData):
 
     @validator("validation")
     def _validate_validation(
-        cls, value: LayerValidationMethodChoice, values
+            cls, value: LayerValidationMethodChoice, values
     ) -> LayerValidationMethodChoice:
         __value = values.get("value")
         if not __value:
