@@ -342,16 +342,6 @@ class CGANCallback:
 
             if return_mode == 'callback':
                 _id = 1
-                # data = {
-                #     "type": "str",
-                #     "data": [
-                #         {
-                #             "title": "Класс",
-                #             "value": label,
-                #             "color_mark": None
-                #         }
-                #     ]
-                # }
                 data = {"type": "image", "data": []}
                 for array in predict_array:
                     array = array / array.max()
@@ -618,17 +608,34 @@ class TextToImageGANCallback:
                 return return_path
 
             if return_mode == 'callback':
+                _id = 1
                 data = {"type": "image", "data": []}
-                array = predict_array / predict_array.max()
-                y_pred_save_path = os.path.join(save_path, f"predict_image_{image_id}.webp")
-                matplotlib.image.imsave(y_pred_save_path, array)
-                data["data"].append(
-                    {
-                        "title": "Изображение",
-                        "value": y_pred_save_path,
-                        "color_mark": None,
-                    }
-                )
+                for array in predict_array:
+                    array = array / array.max()
+                    # print(array.shape, type(array))
+                    y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}_position_{_id}.webp")
+                    matplotlib.image.imsave(y_pred_save_path, array)
+                    data["data"].append(
+                        {
+                            "title": "Изображение",
+                            "value": y_pred_save_path,
+                            "color_mark": None,
+                        }
+                    )
+                    _id += 1
+
+                # data = {"type": "image", "data": []}
+                # _id = 1
+                # array = predict_array / predict_array.max()
+                # y_pred_save_path = os.path.join(save_path, f"predict_image_{image_id}.webp")
+                # matplotlib.image.imsave(y_pred_save_path, array)
+                # data["data"].append(
+                #     {
+                #         "title": "Изображение",
+                #         "value": y_pred_save_path,
+                #         "color_mark": None,
+                #     }
+                # )
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -749,3 +756,7 @@ class TextToImageGANCallback:
                 TextToImageGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> dict:
+        return {}
