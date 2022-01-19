@@ -1,4 +1,4 @@
-"""
+ """
 ## Тип слоя `DarkNetConvolutional`
 """
 from typing import Tuple

@@ -1115,12 +1115,12 @@ class LayerValidation:
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
         # DarkNetResBlock exceptions
-        if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
-                self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
-            exc = f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
-                  f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
-            logger.warning(f"Слой {self.layer_type}: {exc}")
-            return exc
+        # if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
+        #         self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
+        #     exc = f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
+        #           f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
+        #     logger.warning(f"Слой {self.layer_type}: {exc}")
+        #     return exc
         # OnlyYOLO exceptions
         if self.layer_type == LayerTypeChoice.PretrainedYOLO:
             if self.inp_shape[0][1:] != (416, 416, 3):
