@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>TerraAI</title>
+	<meta name="theme-color" content="#fff">
+	<meta name="msapplication-navbutton-color" content="#fff">
+	<meta name="apple-mobile-web-app-status-bar-style" content="#fff">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+	<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Open+Sans" />
+	<style type="text/css">
+		html {
+			line-height: 1.15;
+			-webkit-text-size-adjust: 100%;
+		}
+
+		body {
+			margin: 0;
+		}
+
+		main {
+			display: block;
+			height: 100%;
+		}
+
+		h1 {
+			font-size: 2em;
+			margin: 0;
+		}
+
+		hr {
+			box-sizing: content-box;
+			height: 0;
+			overflow: visible;
+		}
+
+		pre {
+			font-family: monospace, monospace;
+			font-size: 1em;
+		}
+
+		a {
+			background-color: transparent;
+		}
+
+		abbr[title] {
+			border-bottom: none;
+			text-decoration: underline;
+			-webkit-text-decoration: underline dotted;
+			text-decoration: underline dotted;
+		}
+
+		b,
+		strong {
+			font-weight: bolder;
+		}
+
+		code,
+		kbd,
+		samp {
+			font-family: monospace, monospace;
+			font-size: 1em;
+		}
+
+		small {
+			font-size: 80%;
+		}
+
+		sub,
+		sup {
+			font-size: 75%;
+			line-height: 0;
+			position: relative;
+			vertical-align: baseline;
+		}
+
+		sub {
+			bottom: -0.25em;
+		}
+
+		sup {
+			top: -0.5em;
+		}
+
+		img {
+			border-style: none;
+		}
+
+		button,
+		input,
+		optgroup,
+		select,
+		textarea {
+			font-family: inherit;
+			font-size: 100%;
+			line-height: 1.15;
+			margin: 0;
+		}
+
+		button,
+		input {
+			overflow: visible;
+		}
+
+		button,
+		select {
+			text-transform: none;
+		}
+
+		button,
+		[type="button"],
+		[type="reset"],
+		[type="submit"] {
+			-webkit-appearance: button;
+		}
+
+		button::-moz-focus-inner,
+		[type="button"]::-moz-focus-inner,
+		[type="reset"]::-moz-focus-inner,
+		[type="submit"]::-moz-focus-inner {
+			border-style: none;
+			padding: 0;
+		}
+
+		button:-moz-focusring,
+		[type="button"]:-moz-focusring,
+		[type="reset"]:-moz-focusring,
+		[type="submit"]:-moz-focusring {
+			outline: 1px dotted ButtonText;
+		}
+
+		fieldset {
+			padding: 0.35em 0.75em 0.625em;
+		}
+
+		legend {
+			box-sizing: border-box;
+			color: inherit;
+			display: table;
+			max-width: 100%;
+			padding: 0;
+			white-space: normal;
+		}
+
+		progress {
+			vertical-align: baseline;
+		}
+
+		textarea {
+			overflow: auto;
+		}
+
+		[type="checkbox"],
+		[type="radio"] {
+			box-sizing: border-box;
+			padding: 0;
+		}
+
+		[type="number"]::-webkit-inner-spin-button,
+		[type="number"]::-webkit-outer-spin-button {
+			height: auto;
+		}
+
+		[type="search"] {
+			-webkit-appearance: textfield;
+			outline-offset: -2px;
+		}
+
+		[type="search"]::-webkit-search-decoration {
+			-webkit-appearance: none;
+		}
+
+		::-webkit-file-upload-button {
+			-webkit-appearance: button;
+			font: inherit;
+		}
+
+		details {
+			display: block;
+		}
+
+		summary {
+			display: list-item;
+		}
+
+		template {
+			display: none;
+		}
+
+		[hidden] {
+			display: none;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			height: 100%;
+			width: 100%;
+		}
+
+		body {
+			background-color: #17212b;
+			color: #6c7883;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			font: 400 16px/1.5 "Open Sans", sans-serif;
+			text-rendering: optimizeSpeed;
+		}
+
+		main {
+			flex: 1 1 auto;
+
+		}
+
+		footer {
+			flex: 0 0 30px;
+			background-color: #0e1621;
+			color: #a7bed3;
+			text-align: right;
+			font-size: 14px;
+			padding: 5px 0;
+		}
+
+		.container {
+			max-width: 960px;
+			margin: 0 auto;
+			padding: 0 30px;
+			height: 100%;
+
+		}
+
+		.field {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.col {
+			margin: 0 0 30px 0;
+		}
+
+		.center {
+			text-align: center;
+		}
+
+		.button {
+			height: 40px;
+			color: azure;
+			display: inline-block;
+			font-size: 14px;
+			min-width: 100px;
+			padding: 6px 16px;
+			text-align: center;
+			white-space: nowrap;
+			border: 1px solid #65b9f4;
+			border-radius: 4px;
+			background-color: #17212b;
+			user-select: none;
+			cursor: pointer;
+			box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
+			transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, color 0.3s ease-in-out !important;
+
+		}
+
+		.button:hover {
+			border-color: #2b5278;
+			box-shadow: 0 1px 3px 0 rgb(0 0 0 / 50%);
+
+		}
+
+		.field {
+			max-width: 200px;
+		}
+
+		.field .info {
+			height: 20px;
+			color: #cc5555;
+		}
+
+		.field.error input {
+			border-color: #f24343;
+		}
+
+		.label {
+			margin-bottom: 10px;
+		}
+
+		.field input {
+			height: 42px;
+			padding: 5px 10px;
+			font-size: 0.875rem;
+			font-weight: 400;
+			border: 1px solid;
+			border-radius: 4px;
+			border-color: #6c7883;
+			transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+			width: 100%;
+			color: #fff;
+			background: #242f3d;
+			cursor: pointer;
+			display: block;
+			z-index: 103;
+		}
+
+		.field input:focus {
+			border: 1px solid #e7ecf5;
+		}
+
+		.pt-10 {
+			padding: 50px 0 0 0;
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+
+	</header>
+	<main>
+		<div class="container">
+			<div class="row pt-10">
+				<div class="col center">
+					<h1>Войти в <b>TERRA AI Laboratory</b></h1>
+				</div>
+				<div class="col pt-10">
+					<label class="field">
+						<span class="label">E-mail</span>
+						<input id="email" name="email" type="email" />
+						<span class="info"></span>
+					</label>
+				</div>
+				<div class="col">
+					<label class="field">
+						<span>Token</span>
+						<input id="token" name="token" type="password" />
+						<span class="info"></span>
+					</label>
+				</div>
+			</div>
+			<div class="col">
+				<button id="submit" class="button">Войти</button>
+			</div>
+		</div>
+	</main>
+	<footer>
+		<div class="container">
+			<div class="footer-copyright">Copyright © «Университет искусственного интеллекта», 2022</div>
+		</div>
+	</footer>
+	<script>
+		const email = document.getElementById('email');
+		const token = document.getElementById('token');
+		const submit = document.getElementById('submit');
+
+		const fields = document.querySelectorAll('.field');
+
+		const infoEmail = document.querySelector('#email + .info');
+		const infoToken = document.querySelector('#token + .info');
+
+		submit.addEventListener('click', onSubmit);
+		email.addEventListener('focus', onReset);
+		token.addEventListener('focus', onReset);
+
+		function onSubmit(e) {
+			if (!email.value || !token.value) {
+				[...fields].forEach(element => {
+					element.classList.add('error')
+				});
+				if (!email.value) infoEmail.innerHTML = 'Введите email'
+				if (!token.value) infoToken.innerHTML = 'Введите token'
+				return;
+			}
+
+			const data = {
+				email: email.value,
+				user_token: token.value
+			}
+
+			console.log(data)
+			fetch('/api/v1/login/', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json;charset=utf-8'
+				},
+				body: JSON.stringify(data)
+			})
+				.then(response => response.json())
+				.then((res) => {
+					console.log(res);
+					if (res.success) {
+						window.location = res.data.url;
+					} else {
+						infoEmail.innerHTML = res.error.title
+					}
+					// [...fields].forEach(element => {
+					// 	console.log(element.classList.remove('info'))
+					// });
+				});
+		}
+
+		function onReset() {
+			[...fields].forEach(element => {
+				console.log(element.classList.remove('error'))
+			});
+			infoEmail.innerHTML = ''
+			infoToken.innerHTML = ''
+		}
+	</script>
+</body>
+
+</html>
