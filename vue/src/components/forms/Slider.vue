@@ -189,6 +189,7 @@ export default {
     background: #ffffff;
     border: none;
     cursor: move;
+    padding: 0;
     &:before {
       content: ' ';
       display: block;
