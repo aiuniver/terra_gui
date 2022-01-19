@@ -113,7 +113,7 @@ const router = new Router({
         {
           path: 'training',
           name: 'Training',
-          component: () => import('@/views/datasets/Choice'),
+          component: () => import('@/views/completion/Training.vue'),
           meta: {
             title: 'Обучение',
             access: true,
@@ -123,7 +123,7 @@ const router = new Router({
         {
           path: 'deploy',
           name: 'Deploy',
-          component: () => import('@/views/datasets/Create'),
+          component: () => import('@/views/completion/Deploy.vue'),
           meta: {
             title: 'Деплой',
             access: true,

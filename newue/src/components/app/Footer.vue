@@ -119,7 +119,7 @@ export default {
 .footer {
   height: 60px;
   color: var(--color-text);
-  // background: #17212b;
+  background: #17212b;
   width: 100%;
   z-index: 900;
   font-size: 0.75rem;

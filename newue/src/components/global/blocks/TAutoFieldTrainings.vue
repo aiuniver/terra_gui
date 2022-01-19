@@ -1,0 +1,149 @@
+<template>
+  <div class="forms">
+    <DInputText
+      v-if="type === 'tuple'"
+      v-show="visible"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :inline="inline"
+      :disabled="disabled"
+      @parse="change"
+    />
+    <t-field v-if="type === 'number'" v-show="visible" :label="label" inline>
+      <DInputNumber
+        small
+        :style="{ width: '100px' }"
+        :value="getValue"
+        :type="type"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
+    <t-field v-if="type === 'text'" v-show="visible" :label="label" inline>
+      <DInputText
+        small
+        :style="{ width: '100px' }"
+        :value="getValue"
+        :type="type"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
+    <t-field v-if="type === 'checkbox'" :label="label" v-show="visible" inline >
+      <DCheckbox :value="getValue" :parse="parse" :name="name" :disabled="disabled" @change="change" class="forms__checkbox" />
+    </t-field>
+    <t-field v-if="type === 'select'" :label="label" v-show="visible" inline>
+      <DSelect
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :inline="inline"
+        small
+        :disabled="disabled"
+        @parse="change"
+        style="width: 120px;"
+      />
+    </t-field>
+
+    <t-field v-if="type === 'auto_complete'" :label="label" v-show="visible">
+      <t-auto-complete
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        all
+        @parse="change"
+      />
+    </t-field>
+    <MegaMultiSelect
+      v-if="type === 'multiselect'"
+      v-show="visible"
+      :value="getValue"
+      :label="label"
+      :list="list"
+      :parse="parse"
+      :name="name"
+      :inline="inline"
+      :disabled="disabled"
+      @parse="change"
+    />
+  </div>
+</template>
+
+<script>
+import MegaMultiSelect from '@/components/global/forms/MegaMultiSelect';
+export default {
+  name: 't-auto-field-trainings',
+  components: {
+    MegaMultiSelect,
+  },
+  props: {
+    type: String,
+    value: [String, Boolean, Number, Array],
+    list: Array,
+    event: String,
+    label: String,
+    parse: String,
+    name: String,
+    id: Number,
+    state: Object,
+    inline: Boolean,
+    changeable: Boolean,
+    visible: Boolean,
+    disabled: [Boolean, Array],
+  },
+  data: () => ({
+    valueIn: null
+  }),
+  computed: {
+    getValue() {
+      return this.state?.[this.parse] ?? this.value;
+    },
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
+    error() {
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
+    },
+  },
+  methods: {
+    change({ parse, name, value }) {
+      // this.valueIn = null;
+      this.$emit('parse', { parse, name, value, changeable: this.changeable });
+      // this.$nextTick(() => {
+      //   this.valueIn = value;
+      // });
+    },
+  },
+  created() {
+    // console.log(this.disabled);
+  },
+  mounted() {
+    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse, changeable: this.changeable, mounted: true });
+    // console.log(this.name, this.parameters, this.getValue)
+    this.$nextTick(() => {
+      this.valueIn = this.getValue;
+    });
+    // this.$emit('height', this.$el.clientHeight);
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.forms {
+  // padding-top: 10px;
+  &__checkbox {
+    margin: 5px 0;
+  }
+}
+</style>
