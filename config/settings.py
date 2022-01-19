@@ -18,11 +18,12 @@ from datetime import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = environ.Path(__file__) - 2
+ENV_FILE = BASE_DIR(".env")
 
 
 # Init environ
 env = environ.Env()
-env.read_env(BASE_DIR(".env"))
+env.read_env(ENV_FILE)
 
 
 # Quick-start development settings - unsuitable for production
@@ -33,7 +34,7 @@ SECRET_KEY = env.str("SECRET_KEY")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=False)
+DEBUG = True
 USE_GPU = env.bool("USE_GPU", default=True)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
@@ -52,6 +53,7 @@ EXTERNAL_APPS = [
     "rest_framework",
 ]
 INTERNAL_APPS = [
+    "apps.core.apps.CoreConfig",
     "apps.api.apps.APIConfig",
     "apps.media.apps.MediaConfig",
     "apps.periodic_task.apps.PeriodicTaskConfig",
@@ -126,8 +128,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-VUE_ROOT = BASE_DIR("vue/dist")
-VUE_URL = "/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR("vue/dist/static")
 
 
 # Django Rest Framework
@@ -154,7 +156,8 @@ USER_NAME = env.str("USER_NAME")
 USER_LASTNAME = env.str("USER_LASTNAME")
 USER_EMAIL = env.str("USER_EMAIL")
 USER_TOKEN = env.str("USER_TOKEN")
-USER_SESSION = env.str("USER_SESSION")
+USER_SESSION = env.str("USER_SESSION", default=None)
+USER_KEEP_SESSION = env.bool("USER_KEEP_SESSION", default=False)
 
 
 # Logging

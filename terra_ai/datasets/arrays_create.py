@@ -687,6 +687,7 @@ class CreateArray(object):
                         'parameters': {'prepare_method': options['prepare_method'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
+                                       'text_mode': options['text_mode'],
                                        'length': options['length'],
                                        'max_words_count': options['max_words_count'],
                                        'word_to_vec_size': options['word_to_vec_size'],
