@@ -283,11 +283,11 @@
 		}
 
 		.field .info::before {
-			display: block;
+			/* display: block;
 			content: '*';
 			position: absolute;
 			left: 15px;
-			top: 12px;
+			top: 12px; */
 		}
 
 		/* .field.error input {
@@ -344,6 +344,19 @@
 			font-size: 1.125rem;
 			font-weight: 600;
 		}
+
+		.alert {
+			margin: 0 0 20px 0;
+			font-size: .75rem;
+			margin: 1rem auto;
+			color: red;
+			text-align: center;
+			list-style-type: none;
+		}
+		ul {
+			list-style-type: none;
+			padding: 0;
+		}
 	</style>
 </head>
 
@@ -354,18 +367,23 @@
 				<div class="col center">
 					<h1>Войти в <b>TERRA AI <br />Laboratory</b></h1>
 				</div>
+				<div class="alert">
+					<ul class="m-0">
+						<li id="error"></li>
+					</ul>
+				</div>
 				<div class="col">
 					<label class="field">
 						<span class="label" data-name="email">E-mail <small>*</small></span>
 						<input id="email" name="email" type="email" />
-						<span class="info">Обязательное поле.</span>
+						<span class="info"></span>
 					</label>
 				</div>
 				<div class="col">
 					<label class="field">
 						<span class="label" data-name="token">Token <small>*</small></span>
 						<input id="token" name="token" type="password" />
-						<span class="info">Обязательное поле.</span>
+						<span class="info"></span>
 					</label>
 				</div>
 			</div>
@@ -383,6 +401,7 @@
 		const email = document.getElementById('email');
 		const token = document.getElementById('token');
 		const submit = document.getElementById('submit');
+		const error = document.getElementById('error');
 
 		const fields = document.querySelectorAll('.field');
 		const label = document.querySelectorAll('.label');
@@ -401,8 +420,8 @@
 				[...fields].forEach(element => {
 					element.classList.add('error')
 				});
-				if (!email.value) infoEmail.innerHTML = 'Введите email'
-				if (!token.value) infoToken.innerHTML = 'Введите token'
+				if (!email.value) infoEmail.innerHTML = '* Обязательное поле.'
+				if (!token.value) infoToken.innerHTML = '* Обязательное поле.'
 				return;
 			}
 
@@ -425,7 +444,7 @@
 					if (res.success) {
 						window.location = res.data.url;
 					} else {
-						infoEmail.innerHTML = res.error.title
+						error.innerHTML = res.error.title
 					}
 					// [...fields].forEach(element => {
 					// 	console.log(element.classList.remove('info'))
