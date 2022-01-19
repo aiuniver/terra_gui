@@ -204,8 +204,8 @@
 		}
 
 		body {
-			background-color: #17212b;
-			color: #6c7883;
+			background-color: #0e1621;
+			color: #fff;
 			display: flex;
 			flex-direction: column;
 			height: 100%;
@@ -220,18 +220,20 @@
 
 		footer {
 			flex: 0 0 30px;
-			background-color: #0e1621;
-			color: #a7bed3;
-			text-align: right;
-			font-size: 14px;
+
+			font-size: 11px;
 			padding: 5px 0;
+			line-height: 30px;
+			padding: 0 10px;
+			color: #a7bed3;
+			text-align: center;
+			background-color: #0e1621;
 		}
 
 		.container {
-			max-width: 960px;
+			max-width: 300px;
 			margin: 0 auto;
-			padding: 0 30px;
-			height: 100%;
+			padding: 40px 25px;
 
 		}
 
@@ -249,22 +251,16 @@
 		}
 
 		.button {
-			height: 40px;
-			color: azure;
-			display: inline-block;
-			font-size: 14px;
-			min-width: 100px;
-			padding: 6px 16px;
-			text-align: center;
-			white-space: nowrap;
+			height: 60px;
+			width: 100%;
+			color: #fff;
+			font-size: 1.125rem;
+			cursor: pointer;
+			background: #2b5278;
 			border: 1px solid #65b9f4;
 			border-radius: 4px;
-			background-color: #17212b;
-			user-select: none;
-			cursor: pointer;
-			box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
-			transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out, color 0.3s ease-in-out !important;
-
+			box-shadow: 0 1px 3px rgb(0 133 255 / 50%);
+			transition: border-color 0.3s ease-in-out, box-shadow 0.1s ease-in-out;
 		}
 
 		.button:hover {
@@ -274,69 +270,118 @@
 		}
 
 		.field {
-			max-width: 200px;
+			/* max-width: 200px; */
 		}
 
 		.field .info {
-			height: 20px;
-			color: #cc5555;
+			display: block;
+			position: relative;
+			line-height: 1.25;
+			padding: 10px 15px 0 25px;
+			color: #65B9F4;
+			font-size: .75rem;
 		}
 
-		.field.error input {
+		.field .info::before {
+			/* display: block;
+			content: '*';
+			position: absolute;
+			left: 15px;
+			top: 12px; */
+		}
+
+		/* .field.error input {
 			border-color: #f24343;
+		} */
+
+		label {
+			position: relative;
 		}
 
 		.label {
-			margin-bottom: 10px;
+			width: 100%;
+			line-height: 20px;
+			padding: 0 15px;
+			position: absolute;
+			left: 0;
+			top: 20px;
+			color: #A7BED3;
+			font-size: 1.125rem;
+			cursor: text;
+			transition: top .1s ease-in-out, font-size .1s ease-in-out;
 		}
 
 		.field input {
-			height: 42px;
-			padding: 5px 10px;
-			font-size: 0.875rem;
-			font-weight: 400;
-			border: 1px solid;
-			border-radius: 4px;
-			border-color: #6c7883;
-			transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
 			width: 100%;
+			height: 60px;
+			padding: 17px 15px 0 15px;
 			color: #fff;
-			background: #242f3d;
-			cursor: pointer;
-			display: block;
-			z-index: 103;
+			font-size: 1.125rem;
+			border: 1px solid #6C7883;
+			background: #242F3D;
+			transition: border-color .1s ease-in-out;
+			border-radius: 4px;
 		}
 
 		.field input:focus {
-			border: 1px solid #e7ecf5;
+			border: 1px solid #fff;
 		}
+
+		.focused {
+			top: 8px;
+			margin: 0;
+			font-size: 11px;
+		}
+
 
 		.pt-10 {
 			padding: 50px 0 0 0;
+		}
+
+		h1 {
+			line-height: 1.75;
+			margin: 0 0 30px 0;
+			font-size: 1.125rem;
+			font-weight: 600;
+		}
+
+		.alert {
+			margin: 0 0 20px 0;
+			font-size: .75rem;
+			margin: 1rem auto;
+			color: red;
+			text-align: center;
+			list-style-type: none;
+		}
+		ul {
+			list-style-type: none;
+			padding: 0;
 		}
 	</style>
 </head>
 
 <body>
-	<header>
-
-	</header>
 	<main>
 		<div class="container">
-			<div class="row pt-10">
+			<div class="row">
 				<div class="col center">
-					<h1>Войти в <b>TERRA AI Laboratory</b></h1>
+					<h1>Войти в <b>TERRA AI <br />Laboratory</b></h1>
 				</div>
-				<div class="col pt-10">
+				<div class="alert">
+					<ul class="m-0">
+						<li id="error"></li>
+					</ul>
+				</div>
+				<div class="col">
 					<label class="field">
-						<span class="label">E-mail</span>
+						<span class="label" data-name="email">E-mail <small>*</small></span>
 						<input id="email" name="email" type="email" />
 						<span class="info"></span>
 					</label>
 				</div>
 				<div class="col">
 					<label class="field">
-						<span>Token</span>
+						<span class="label" data-name="token">Token <small>*</small></span>
 						<input id="token" name="token" type="password" />
 						<span class="info"></span>
 					</label>
@@ -348,31 +393,35 @@
 		</div>
 	</main>
 	<footer>
-		<div class="container">
-			<div class="footer-copyright">Copyright © «Университет искусственного интеллекта», 2022</div>
-		</div>
+
+		<div class="footer-copyright">Copyright © «Университет искусственного интеллекта», 2022</div>
+
 	</footer>
 	<script>
 		const email = document.getElementById('email');
 		const token = document.getElementById('token');
 		const submit = document.getElementById('submit');
+		const error = document.getElementById('error');
 
 		const fields = document.querySelectorAll('.field');
+		const label = document.querySelectorAll('.label');
 
 		const infoEmail = document.querySelector('#email + .info');
 		const infoToken = document.querySelector('#token + .info');
 
 		submit.addEventListener('click', onSubmit);
-		email.addEventListener('focus', onReset);
-		token.addEventListener('focus', onReset);
+		email.addEventListener('blur', onBlur);
+		token.addEventListener('blur', onBlur);
+		email.addEventListener('focus', onFocus);
+		token.addEventListener('focus', onFocus);
 
 		function onSubmit(e) {
 			if (!email.value || !token.value) {
 				[...fields].forEach(element => {
 					element.classList.add('error')
 				});
-				if (!email.value) infoEmail.innerHTML = 'Введите email'
-				if (!token.value) infoToken.innerHTML = 'Введите token'
+				if (!email.value) infoEmail.innerHTML = '* Обязательное поле.'
+				if (!token.value) infoToken.innerHTML = '* Обязательное поле.'
 				return;
 			}
 
@@ -395,7 +444,7 @@
 					if (res.success) {
 						window.location = res.data.url;
 					} else {
-						infoEmail.innerHTML = res.error.title
+						error.innerHTML = res.error.title
 					}
 					// [...fields].forEach(element => {
 					// 	console.log(element.classList.remove('info'))
@@ -403,12 +452,23 @@
 				});
 		}
 
-		function onReset() {
-			[...fields].forEach(element => {
-				console.log(element.classList.remove('error'))
-			});
-			infoEmail.innerHTML = ''
-			infoToken.innerHTML = ''
+		function onFocus(e) {
+			const label = document.querySelector(`[data-name="${e.target.id}"]`);
+			label.classList.add('focused')
+		}
+
+		function onBlur({ target }) {
+			const label = document.querySelector(`[data-name="${target.id}"]`);
+			if (!target.value) {
+				label.classList.remove('focused')
+			}
+
+			// console.log(element.classList.remove('focused'))
+			// [...label].forEach(element => {
+			// 	console.log(element.classList.remove('focused'))
+			// });
+			// infoEmail.innerHTML = ''
+			// infoToken.innerHTML = ''
 		}
 	</script>
 </body>
