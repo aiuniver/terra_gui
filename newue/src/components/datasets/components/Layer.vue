@@ -87,7 +87,7 @@ $borderCircle: 2px;
     background: $color-orange;
     &::after {
       @include circle {
-        bottom: -(($containCircle + $borderCircle) / 2);
+        bottom: -(calc(($containCircle + $borderCircle) / 2));
         background: $color-orange;
       }
     }
@@ -102,11 +102,11 @@ $borderCircle: 2px;
       }
     }
     &::before {
-      top: -(($containCircle + $borderCircle) / 2);
+      top: -(calc(($containCircle + $borderCircle) / 2));
     }
 
     &::after {
-      bottom: -(($containCircle + $borderCircle) / 2);
+      bottom: -(calc(($containCircle + $borderCircle) / 2));
     }
   }
   &-output {
@@ -114,7 +114,7 @@ $borderCircle: 2px;
     background: $color-pirple;
     &::before {
       @include circle {
-        top: -(($containCircle + $borderCircle) / 2);
+        top: -(calc(($containCircle + $borderCircle) / 2));
         background: $color-pirple;
       }
     }

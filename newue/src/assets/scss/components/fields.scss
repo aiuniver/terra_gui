@@ -1,17 +1,17 @@
 
 $color-bg: #242f3d50;
 $color-bg-hover: #65b9f426;
-$color-border: #242f3d;
+$color-border: #65B9F4;
 $color-border-active: #65b9f4;
 $color-border-error: #ca5035;
+$color-border-disabled: #242F3D;
 
 $text-color: #ffffff;
 $text-color-error: #ca5035;
 
 .d-input {
   position: relative;
-  border-color: #242f3d;
-  border: 1px solid #242f3d;
+  border: 1px solid $color-border;
   background: $color-bg;
   border-radius: 4px;
   display: flex;
@@ -31,6 +31,7 @@ $text-color-error: #ca5035;
   }
   &--disabled {
     opacity: 0.5;
+    border-color: $color-border-disabled;
   }
   &--error {
     border-color: $color-border-error;
@@ -55,8 +56,9 @@ $text-color-error: #ca5035;
     &::placeholder {
       color: #6c7883;
     }
-    :disabled {
+    &:disabled {
       opacity: 1;
+      cursor: default;
     }
   }
   &--small {
@@ -79,7 +81,7 @@ $text-color-error: #ca5035;
     }
     &--number {
       height: 100%;
-      width: 35px;
+      width: 25px;
       display: flex;
       flex-direction: column;
       justify-content: space-around;

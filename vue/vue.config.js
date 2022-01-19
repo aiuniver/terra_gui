@@ -4,6 +4,8 @@ const proxy = {
   zabastx: 'http://104.248.93.132/',
 };
 module.exports = {
+  // outputDir: "./static/",
+  assetsDir: "./static/",
   productionSourceMap: false,
   devServer: {
     proxy: proxy[process.env.USERNAME] || 'http://localhost:8099/',
