@@ -17,7 +17,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <Slider :degree="degree" />
+      <Slider :degree="degree"  :disable="isHide"/>
     </div>
     <div class="block-footer__item block-footer__item--checkbox">
       <t-checkbox parse="[info][shuffle]" reverse inline>Сохранить последовательность</t-checkbox>
