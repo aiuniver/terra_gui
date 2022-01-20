@@ -55,14 +55,6 @@ def upload(source: Path, data: dict):
             upload_response = upload_response.json()
             if upload_response.get("success"):
                 progress.pool(progress_name, message=DEPLOY_UPLOAD_TITLE, percent=0)
-                # import shutil
-                #
-                # print(upload_data.file.path)
-                # shutil.copyfile(
-                #     upload_data.file.path, "/home/bl146u/Virtualenv/test/file.zip"
-                # )
-                print(upload_data)
-                print(upload_response)
                 __run_rsync(
                     progress_name,
                     upload_data.file.path,
