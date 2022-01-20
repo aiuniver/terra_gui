@@ -17,7 +17,6 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      {{ isHide }}
       <Slider :degree="degree"  :disable="isHide"/>
     </div>
     <div class="block-footer__item block-footer__item--checkbox">
