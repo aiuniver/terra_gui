@@ -61,6 +61,8 @@ def upload(source: Path, data: dict):
                 # shutil.copyfile(
                 #     upload_data.file.path, "/home/bl146u/Virtualenv/test/file.zip"
                 # )
+                print(upload_data)
+                print(upload_response)
                 __run_rsync(
                     progress_name,
                     upload_data.file.path,
