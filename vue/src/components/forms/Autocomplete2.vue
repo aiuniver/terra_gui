@@ -11,6 +11,7 @@
       :autocomplete="'off'"
       @focus="focus"
       @blur="select(false)"
+      @input="changed=true"
     />
     <div class="dropdown__content" v-show="show">
       <div v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
@@ -41,15 +42,21 @@ export default {
       selected: {},
       show: false,
       search: '',
+      changed: null
     };
   },
   created() {
-    // this.$emit("selected", { name: this.value });
     this.search = this.value;
+    this.changed = false;
   },
   computed: {
     filterList() {
       return this.list
+        ? this.list.filter(item => {
+            const search = this.search;
+            return search && this.changed ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+          })
+        : [];
     },
   },
   methods: {
@@ -64,6 +71,7 @@ export default {
       } else {
         this.search = this.selected.label || this.value;
         this.show = false;
+        this.changed = false;
       }
     },
     focus({ target }) {
