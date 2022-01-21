@@ -84,9 +84,9 @@ class UploadAPIView(BaseAPIView):
                 "deploy": serializer.validated_data.get("deploy"),
                 "env": "v1",
                 "user": {
-                    "login": settings.USER_LOGIN,
-                    "name": settings.USER_NAME,
-                    "lastname": settings.USER_LASTNAME,
+                    "login": settings.USER.get("login"),
+                    "name": settings.USER.get("first_name"),
+                    "lastname": settings.USER.get("last_name"),
                     "sec": hashlib.md5(sec.encode("utf-8")).hexdigest() if sec else "",
                 },
                 "project": {

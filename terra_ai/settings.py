@@ -80,7 +80,6 @@ CASCADE_CONFIG = "config.json"
 CASCADE_PATH = Path(TMP_DIR, "cascade")
 
 # Deploy
-DEPLOY_URL = "https://srv1.demo.neural-university.ru/autodeployterra_upload/"
 DEPLOY_PRESET_COUNT = 10
 DEPLOY_PRESET_PERCENT = 20
 DEPLOY_PATH = Path(TMP_DIR, "deploy")
