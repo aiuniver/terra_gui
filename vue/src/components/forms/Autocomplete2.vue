@@ -50,11 +50,6 @@ export default {
   computed: {
     filterList() {
       return this.list
-        ? this.list.filter(item => {
-            const search = this.search;
-            return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
-          })
-        : [];
     },
   },
   methods: {
