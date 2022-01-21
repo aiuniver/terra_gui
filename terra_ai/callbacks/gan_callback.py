@@ -298,7 +298,7 @@ class CGANCallback:
 
     @staticmethod
     def prepare_example_idx_to_show(
-            array: Optional[dict, np.ndarray], seed_array: Optional[dict], count: int,
+            array, seed_array: Optional[dict], count: int,
             choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed,
             return_mode='callback'
     ):
