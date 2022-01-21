@@ -1142,9 +1142,6 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # if self.callback.is_best():
-                #     self.save_weights(path_=self.file_path_model_best_weights)
-                #     logger.info("Веса лучшей эпохи успешно сохранены", extra={"front_level": "success"})
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1164,33 +1161,6 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         # self.y_true_array, self.y_true_text = self.__prepare_y_true(options, self.input_keys)
         self.seed: dict = self.__prepare_tti_gan_seed(options=options, noise=self.noise)
         pass
-
-    # @staticmethod
-    # def __prepare_y_true(options: PrepareDataset, input_keys):
-    #     method_name = '__prepare_y_true'
-    #     try:
-    #         batch = 1024
-    #         inp = input_keys.get('gen_labels')
-    #         logger.debug(f"{options.data.columns.keys()}")
-    #         column = list(options.data.columns.get(int(inp)).keys())[0]
-    #         y_true_text = options.dataframe.get('train')[column].tolist()
-    #         shape = [len(y_true_text)]
-    #         shape.extend(options.data.inputs.get(int(inp)).shape)
-    #         logger.debug(f"y_true shape: {shape}")
-    #         y_true_array = np.zeros(shape=shape)
-    #         cur_step = 0
-    #         for image_data, _ in options.dataset.get('train').batch(batch):
-    #             batch_length = image_data.get(input_keys.get('gen_labels')).shape[0]
-    #             logger.debug(f"batch_length: {cur_step, batch_length}")
-    #             y_true_array[cur_step*batch_length: (cur_step+1)*batch_length] = \
-    #                 image_data.get(input_keys.get('gen_labels')).numpy()
-    #             cur_step += 1
-    #         return y_true_array, y_true_text
-    #     except Exception as error:
-    #         exc = exception.ErrorInClassInMethodException(
-    #             TextToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
-    #         # logger.error(exc)
-    #         raise exc
 
     @staticmethod
     def __get_noise(options: PrepareDataset):
@@ -1212,12 +1182,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         method_name = '__prepare_tti_gan_seed'
         try:
             # logger.debug(f"{ConditionalGANTerraModel.name}, {ConditionalGANTerraModel.__prepare_seed.__name__}")
-            # seed = {'text': [], 'array': []}
             random_idx = np.random.choice(len(options.dataframe.get('train')), 10).tolist()
-            # for idx in random_idx:
-            #     seed['text'].append(y_true_text[idx])
-            #     seed['array'].append(np.expand_dims(y_true_array[idx], axis=0))
-            # seed[y_true_text[idx]] = np.expand_dims(y_true_array[idx], axis=0)
             shape = [10, 3]
             shape.extend(noise)
             seed = {"noise": tf.random.normal(shape=shape), "indexes": random_idx}
@@ -1311,8 +1276,8 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
             loss_dict = self._prepare_loss_dict(params)
             self.generator_loss_func = loss_dict.get('generator')
             self.discriminator_loss_func = loss_dict.get('discriminator')
-            output = self.input_keys.get('gen_labels')
-            column = list(dataset.data.columns.get(int(output)).keys())[0]
+            # output = self.input_keys.get('gen_labels')
+            # column = list(dataset.data.columns.get(int(output)).keys())[0]
 
             self.set_optimizer(params=params)
             current_epoch = self.callback.last_epoch
@@ -1357,6 +1322,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                             seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
                             seed_predict['text'].append(y_true_text[idx])
 
+
                             shape = [3]
                             shape.extend(self.noise)
                             random_idx = np.random.randint(len(dataset.dataframe.get('train')))
@@ -1380,8 +1346,8 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     if self.callback.stop_training:
                         break
 
-                    # if cur_step > 50:
-                    #     break
+                    if cur_step > 50:
+                        break
                 # logger.debug(f"\n\nepoch time - {time.time() - ep}\n\n")
                 # logger.info(f"Эпоха {epoch + 1}: сохранение весов текущей эпохи...", extra={"type": "info"})
                 self.save_weights()
@@ -1408,6 +1374,8 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     # logger.debug(f"seed_predict['text']: {seed_predict['text'][-1]}\n"
                     #              f"seed_predict['indexes']: {idx}\n"
                     #              f"seed_predict['predict']: {seed_predict['predict'][-1].shape}")
+                    logger.debug(f"y_true_text {i}: {y_true_text[i]}")
+                    logger.debug(f"y_true_array {i}: {y_true_array[i][:10]}")
 
                     shape = [3]
                     shape.extend(self.noise)

@@ -1,6 +1,7 @@
 import os
 from collections import Counter
 from random import shuffle
+from typing import Optional
 
 import matplotlib
 import numpy as np
@@ -9,7 +10,7 @@ from PIL import Image
 from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import get_y_true, round_loss_metric, sort_dict, fill_graph_front_structure, \
-    fill_graph_plot_data, get_link_from_dataframe
+    fill_graph_plot_data, get_link_from_dataframe, set_preset_count
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice
 import terra_ai.exceptions.callbacks as exception
@@ -18,6 +19,7 @@ from terra_ai.logging import logger
 from terra_ai.settings import DEPLOY_PRESET_PERCENT
 
 
+# noinspection PyUnresolvedReferences,PyTypeChecker
 class GANCallback:
     name = 'GANCallback'
 
@@ -37,42 +39,32 @@ class GANCallback:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
-            for i, output_id in enumerate(options.data.outputs.keys()):
-                true_array = get_y_true(options, output_id)
-                if len(options.data.outputs.keys()) > 1:
-                    postprocess_array = array[i]
-                else:
-                    postprocess_array = array
-                example_idx = GANCallback().prepare_example_idx_to_show(
-                    array=postprocess_array[:len(array)],
-                    seed_array=None,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+            if array is None:
+                logger.warning("postprocess_deploy: array is None")
+
+            count = set_preset_count(len_array=len(array), preset_percent=DEPLOY_PRESET_PERCENT)
+            example_idx = GANCallback.prepare_example_idx_to_show(
+                array=array,
+                seed_array=None,
+                count=count,
+                choice_type=ExampleChoiceTypeChoice.random,
+                return_mode='deploy'
+            )
+            return_data['output'] = []
+            _id = 1
+            for idx in example_idx:
+                source = GANCallback.postprocess_gan(
+                    predict_array=array[idx],
+                    image_id=_id,
+                    save_path=save_path,
+                    return_mode='deploy'
                 )
-                return_data[output_id] = {'preset': [], 'label': []}
-                source_col = []
-                for inp in options.data.inputs.keys():
-                    source_col.extend(list(options.data.columns.get(inp).keys()))
-                preprocess = options.preprocessing.preprocessing.get(output_id)
-                for idx in example_idx:
-                    row_list = []
-                    for inp_col in source_col:
-                        row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
-                    return_data[output_id]['preset'].append(row_list)
-                    channel_inverse_col = []
-                    for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
-                        channel_inverse_col = []
-                        if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
-                            inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
-                            inverse_col = inverse_col.squeeze().astype('float').tolist()
-                        else:
-                            inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
-                        channel_inverse_col.append(round_loss_metric(inverse_col))
-                    return_data[output_id]['label'].append(channel_inverse_col)  # [0]
+                return_data['output'].append({"source": source})
+                _id += 1
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                GANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+                GANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -90,13 +82,17 @@ class GANCallback:
         return {}
 
     @staticmethod
-    def prepare_example_idx_to_show(array: np.ndarray, seed_array: np.ndarray, count: int,
-                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed) -> np.ndarray:
+    def prepare_example_idx_to_show(array: np.ndarray, seed_array: Optional[np.ndarray], count: int,
+                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed,
+                                    return_mode='callback') -> np.ndarray:
         # logger.debug(f"{GANCallback.name}, {GANCallback.prepare_example_idx_to_show.__name__}")
         method_name = 'prepare_example_idx_to_show'
         try:
             if choice_type == ExampleChoiceTypeChoice.seed:
                 example_idx = np.array(seed_array[:count*5], dtype='float32')
+            elif choice_type == ExampleChoiceTypeChoice.random and return_mode == 'deploy':
+                range_id = np.arange(len(array))
+                example_idx = np.random.choice(range_id, count)
             else:
                 example_idx = np.array(array[:count * 5], dtype='float32')
                 # example_idx = np.array(array[np.random.randint(0, len(array), count*5)], dtype='float32')
@@ -226,6 +222,7 @@ class GANCallback:
             raise exc
 
 
+# noinspection PyUnresolvedReferences,PyTypeChecker
 class CGANCallback:
     name = 'CGANCallback'
 
@@ -237,48 +234,50 @@ class CGANCallback:
         return None, None
 
     @staticmethod
-    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
-        # TODO: актуализировать когда появятся темплейты для деплоя
+    def postprocess_deploy(array, options: PrepareDataset, save_path: str = "", dataset_path: str = "") -> dict:
         # logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_deploy.__name__}")
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
-            for i, output_id in enumerate(options.data.outputs.keys()):
-                true_array = get_y_true(options, output_id)
-                if len(options.data.outputs.keys()) > 1:
-                    postprocess_array = array[i]
-                else:
-                    postprocess_array = array
-                example_idx = GANCallback().prepare_example_idx_to_show(
-                    array=postprocess_array[:len(array)],
-                    seed_array=None,
-                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+            if array is None:
+                logger.warning("postprocess_deploy: array is None")
+
+            count = set_preset_count(len_array=len(array), preset_percent=DEPLOY_PRESET_PERCENT)
+            example_idx = CGANCallback.prepare_example_idx_to_show(
+                array=array,
+                seed_array=None,
+                count=count,
+                choice_type=ExampleChoiceTypeChoice.random,
+                return_mode='deploy'
+            )
+
+            return_data[output_id] = []
+            _id = 1
+            for idx in example_idx:
+                col_name = ''
+                for out in options.data.columns.keys():
+                    col_name = list(options.data.columns.get(out).keys())[0]
+                    if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
+                        break
+                lbl = f"{options.dataframe.get('train')[col_name][idx]}"
+                source = CGANCallback.postprocess_gan(
+                    predict_array=array[idx],
+                    image_id=_id,
+                    save_path=save_path,
+                    return_mode='deploy'
                 )
-                return_data[output_id] = {'preset': [], 'label': []}
-                source_col = []
-                for inp in options.data.inputs.keys():
-                    source_col.extend(list(options.data.columns.get(inp).keys()))
-                preprocess = options.preprocessing.preprocessing.get(output_id)
-                for idx in example_idx:
-                    row_list = []
-                    for inp_col in source_col:
-                        row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
-                    return_data[output_id]['preset'].append(row_list)
-                    channel_inverse_col = []
-                    for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
-                        channel_inverse_col = []
-                        if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
-                            _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
-                            inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
-                            inverse_col = inverse_col.squeeze().astype('float').tolist()
-                        else:
-                            inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
-                        channel_inverse_col.append(round_loss_metric(inverse_col))
-                    return_data[output_id]['label'].append(channel_inverse_col)  # [0]
+                return_data[output_id].append(
+                    {
+                        "source": source,
+                        "actual": lbl,
+                    }
+                )
+                _id += 1
+
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                CGANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+                CGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
 
@@ -298,8 +297,11 @@ class CGANCallback:
 
 
     @staticmethod
-    def prepare_example_idx_to_show(array: dict, seed_array: dict, count: int,
-                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed) -> dict:
+    def prepare_example_idx_to_show(
+            array: Optional[dict, np.ndarray], seed_array: Optional[dict], count: int,
+            choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed,
+            return_mode='callback'
+    ):
         # logger.debug(f"{CGANCallback.name}, {CGANCallback.prepare_example_idx_to_show.__name__}")
         method_name = 'prepare_example_idx_to_show'
         try:
@@ -310,16 +312,15 @@ class CGANCallback:
                 shuffle(shuffle_idx)
                 for i in shuffle_idx:
                     example_idx[name_list[i]] = np.array(seed_array[name_list[i]][:3], dtype='float32')
-                    # if i == count:
-                    #     break
+            if choice_type == ExampleChoiceTypeChoice.random and return_mode == 'depoy':
+                range_id = np.arange(len(array))
+                example_idx = np.random.choice(range_id, count)
             else:
                 name_list = list(array.keys())
                 shuffle(name_list)
                 for i, name in enumerate(name_list):
                     examples = np.random.choice(np.arange(len(array[name])), 3)
                     example_idx[name] = np.array(array[name][examples], dtype='float32')
-                    # if i == count:
-                    #     break
             return example_idx
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -328,7 +329,7 @@ class CGANCallback:
             raise exc
 
     @staticmethod
-    def postprocess_gan(predict_array: np.ndarray, label: str, image_id: int, save_path, return_mode='deploy'):
+    def postprocess_gan(predict_array: np.ndarray, image_id: int, save_path, return_mode='deploy'):
         # logger.debug(f"{CGANCallback.name}, {CGANCallback.postprocess_gan.__name__}")
         method_name = 'postprocess_gan'
         try:
@@ -467,7 +468,7 @@ class CGANCallback:
 
                     pred_data = CGANCallback().postprocess_gan(
                         predict_array=example_idx[label],
-                        label=label,
+                        # label=label,
                         image_id=idx,
                         save_path=preset_path,
                         return_mode='callback'

@@ -148,5 +148,6 @@ from . import (
     UNETBlock1D,
     UNETBlock3D,
     PretrainedYOLO,
-    ConditionalMergeLayer
+    ConditionalMergeLayer,
+    ResnetBlock2D
 )

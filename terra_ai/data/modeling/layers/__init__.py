@@ -693,6 +693,11 @@ class LayerConditionalMergeLayerData(LayerMixinData):
     )
 
 
+class LayerResnetBlock2DData(LayerMixinData):
+    main: types.ResnetBlock2D.ParametersMainData = types.ResnetBlock2D.ParametersMainData()
+    extra: types.ResnetBlock2D.ParametersExtraData = (types.ResnetBlock2D.ParametersExtraData())
+
+
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
         types.PretrainedYOLO.ParametersMainData()

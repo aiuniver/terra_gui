@@ -16,7 +16,7 @@ from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
-    SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig
+    SpaceToDepthDataFormatChoice, LayerConfigData, LayerValueConfig, MergeLayerChoice, ResblockActivationChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.exceptions import modeling as exceptions
 from terra_ai.logging import logger
@@ -595,6 +595,7 @@ class LayerValidation:
         self.input_dimension = (config.input_dimension.value, config.input_dimension.validation.value)
         self.module = importlib.import_module(config.module.value)
         self.module_type = config.module_type.value
+        # logger.debug(f"layer_type = {self.layer_type}")
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
@@ -627,10 +628,17 @@ class LayerValidation:
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
                     else:
+                        # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
+                        #     logger.debug(f"ResnetBlock2D inp_shape = {self.inp_shape}")
+                        #     logger.debug(f"ResnetBlock2D module = {self.module}")
+                        #     logger.debug(f"ResnetBlock2D params = {params}")
+                        #     logger.debug(f"ResnetBlock2D obj = {getattr(self.module, self.layer_type)(**params)}")
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
+                        # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
+                        #     logger.debug(f"ResnetBlock2D output_shape = {output_shape}")
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
@@ -640,6 +648,7 @@ class LayerValidation:
                         return new, None
                     return output_shape, None
                 except:
+                    # logger.debug(f"{self.layer_type} output_shape = {output_shape}")
                     return output_shape, self.parameters_validation()
 
             if self.module_type == ModuleTypeChoice.tensorflow:
@@ -1114,13 +1123,22 @@ class LayerValidation:
                     f"block_size = {self.layer_parameters.get('block_size')}"))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
-        # DarkNetResBlock exceptions
-        # if self.layer_type == LayerTypeChoice.DarkNetResBlock and \
-        #         self.layer_parameters.get("filter_num2") != self.inp_shape[0][-1]:
-        #     exc = f"Incorrect parameters: Parameter 'filter_num2'={self.layer_parameters.get('filter_num2')} " \
-        #           f"must be equal the number of channels={self.inp_shape[0][-1]} in input tensor"
-        #     logger.warning(f"Слой {self.layer_type}: {exc}")
-        #     return exc
+        # ResnetBlock2D exceptions
+        if self.layer_type == LayerTypeChoice.ResnetBlock2D and \
+                self.layer_parameters.get("merge_layer") != MergeLayerChoice.concatenate and \
+                self.layer_parameters.get("filters") != self.inp_shape[0][-1]:
+            exc = f"Incorrect parameters: With 'merge_layer'='{self.layer_parameters.get('merge_layer')}' " \
+                  f"parameter 'filters' and channels number in input tensor must be equal bot got " \
+                  f"'filters'={self.layer_parameters.get('filters')} and channels number={self.inp_shape[0][-1]}"
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
+        if self.layer_type == LayerTypeChoice.ResnetBlock2D and \
+                self.layer_parameters.get("activation") == ResblockActivationChoice.leaky_relu and \
+                not self.layer_parameters.get("use_activation_layer"):
+            exc = f"Incorrect parameters: Parameter 'activation'='{self.layer_parameters.get('activation')}' " \
+                  f"can only be used with 'use_activation_layer'=True"
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
         # OnlyYOLO exceptions
         if self.layer_type == LayerTypeChoice.PretrainedYOLO:
             if self.inp_shape[0][1:] != (416, 416, 3):

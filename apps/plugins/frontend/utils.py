@@ -19,6 +19,10 @@ from terra_ai.data.modeling.layers.extra import (
     VAELatentRegularizerChoice,
     SpaceToDepthDataFormatChoice,
     CONVBlockConfigChoice,
+    ResblockActivationChoice,
+    ResblockNormalizationChoice,
+    MergeLayerChoice,
+    ConditionalMergeModeChoice
 )
 
 from terra_ai.data.cascades.blocks.extra import (
@@ -29,7 +33,6 @@ from terra_ai.data.cascades.blocks.extra import (
 
 from .base import Field
 from .extra import FieldTypeChoice
-
 
 CHECKBOX_TYPES = [
     bool,
@@ -59,6 +62,10 @@ SELECT_TYPES = [
     BlockOutputDataSaveAsChoice,
     BlockFunctionGroupChoice,
     BlockCustomGroupChoice,
+    ResblockActivationChoice,
+    ResblockNormalizationChoice,
+    MergeLayerChoice,
+    ConditionalMergeModeChoice
 ]
 
 
@@ -114,7 +121,7 @@ def __prepare_choice_value(value: Any) -> Any:
             return ChoiceValues[value.value].value
         except KeyError:
             pass
-        
+
     return value
 
 
