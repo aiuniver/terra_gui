@@ -77,7 +77,7 @@ class ArchitectureTextToImageGANData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureImagetToImageGANData(ArchitectureBasicData):
+class ArchitectureImageToImageGANData(ArchitectureBasicData):
     pass
 
 

@@ -10,7 +10,7 @@ from ..extra import (
     LayerValidationMethodChoice,
     ModuleChoice,
     ModuleTypeChoice,
-    PaddingChoice, ActivationChoice, InitializerChoice, ResblockActivationChoice, ResblockNormalizationChoice,
+    PaddingChoice, ActivationChoice, InitializerChoice, ResblockActivationChoice, NormalizationChoice,
     MergeLayerChoice,
 )
 from ....mixins import BaseMixinData
@@ -43,7 +43,7 @@ class ParametersMainData(BaseMixinData):
 class ParametersExtraData(BaseMixinData):
     kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
-    normalization: Optional[ResblockNormalizationChoice] = ResblockNormalizationChoice.batch
+    normalization: Optional[NormalizationChoice] = NormalizationChoice.batch
     merge_layer: MergeLayerChoice = MergeLayerChoice.concatenate
     use_bias: bool = True
     pass

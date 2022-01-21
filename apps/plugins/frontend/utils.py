@@ -20,7 +20,7 @@ from terra_ai.data.modeling.layers.extra import (
     SpaceToDepthDataFormatChoice,
     CONVBlockConfigChoice,
     ResblockActivationChoice,
-    ResblockNormalizationChoice,
+    NormalizationChoice,
     MergeLayerChoice,
     ConditionalMergeModeChoice
 )
@@ -63,7 +63,7 @@ SELECT_TYPES = [
     BlockFunctionGroupChoice,
     BlockCustomGroupChoice,
     ResblockActivationChoice,
-    ResblockNormalizationChoice,
+    NormalizationChoice,
     MergeLayerChoice,
     ConditionalMergeModeChoice
 ]

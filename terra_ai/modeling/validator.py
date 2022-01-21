@@ -628,7 +628,7 @@ class LayerValidation:
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
                     else:
-                        # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
+                        # if self.layer_type == LayerTypeChoice.UNETBlock2D:
                         #     logger.debug(f"ResnetBlock2D inp_shape = {self.inp_shape}")
                         #     logger.debug(f"ResnetBlock2D module = {self.module}")
                         #     logger.debug(f"ResnetBlock2D params = {params}")
@@ -1058,12 +1058,12 @@ class LayerValidation:
                 exc = str(exceptions.InputShapeMustBeWholeDividedByException(self.inp_shape[0], 4))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
-            if ((self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1) and \
-                    ((self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) % 2 != 0 or
-                     (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 1):
+            if ((self.inp_shape[0][1] % (2 ** self.layer_parameters.get("n_pooling_branches"))) != 0 or
+                (self.inp_shape[0][1] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 2) and \
+                    ((self.inp_shape[0][2] % (2 ** self.layer_parameters.get("n_pooling_branches"))) != 0 or
+                     (self.inp_shape[0][2] // (2 ** self.layer_parameters.get("n_pooling_branches"))) < 2):
                 exc = str(exceptions.InputShapeMustBeInEchDimException(
-                    "equal multiple of 4",
+                    f"equal multiple of {2 ** self.layer_parameters.get('n_pooling_branches')}",
                     f"or decrease n_pooling_branches < {self.layer_parameters.get('n_pooling_branches')}",
                     self.inp_shape[0][1:]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")

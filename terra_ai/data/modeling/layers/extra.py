@@ -114,13 +114,13 @@ class ResblockActivationChoice(str, Enum):
         return list(map(lambda item: item.value, ResblockActivationChoice))
 
 
-class ResblockNormalizationChoice(str, Enum):
+class NormalizationChoice(str, Enum):
     instance = "instance"
     batch = "batch"
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, ResblockNormalizationChoice))
+        return list(map(lambda item: item.value, NormalizationChoice))
 
 
 class MergeLayerChoice(str, Enum):
