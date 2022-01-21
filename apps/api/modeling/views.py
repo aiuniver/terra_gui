@@ -139,7 +139,7 @@ class ValidateAPIView(BaseAPIView):
 class PreviewAPIView(BaseAPIView):
     @decorators.serialize_data(PreviewSerializer)
     def post(self, request, serializer, **kwargs):
-        filepath = NamedTemporaryFile(suffix=".png")
+        filepath = NamedTemporaryFile(suffix=".png", delete=False)
         filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
         autocrop_image_square(filepath.name, min_size=600)
         with open(filepath.name, "rb") as filepath_ref:
