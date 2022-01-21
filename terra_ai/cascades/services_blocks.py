@@ -11,24 +11,19 @@ import hmac
 import numpy as np
 
 from typing import Any
-from abc import ABC, abstractmethod
 from time import time
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 from mutagen import mp3
 
 from terra_ai.cascades.input_blocks import Input
-from terra_ai.cascades.main_blocks import CascadeBlock
+from terra_ai.cascades.main_blocks import CascadeBlock, BaseBlock
 from terra_ai.cascades.service.tracking import _Extractor, _NearestNeighborDistanceMetric, _Tracker, _Detection, \
     _non_max_suppression
 from terra_ai.cascades.utils import stt_pb2, longrunning_pb2
 
 
-class BaseService(ABC):
+class BaseService(BaseBlock):
 
-    def __init__(self):
-        self.inputs: dict = {}
-
-    @abstractmethod
     def execute(self):
         pass
 
@@ -68,7 +63,7 @@ class Wav2Vec(BaseService):
         super().__init__()
 
     def execute(self):
-        source = ""
+        source = list(self.inputs.values())[0].execute()
         speech_array = librosa.load(source, sr=16000)[0]
 
         inputs = self.processor(speech_array, sampling_rate=16_000, return_tensors="pt", padding=True)
@@ -100,7 +95,7 @@ class TinkoffAPI(BaseService):
                                                      "tinkoff.cloud.stt", self.expiration_time)
 
     def execute(self):
-        source = ""
+        source = list(self.inputs.values())[0].execute()
         __request = self._build_request(path=source, max_alternatives=self.max_alternatives,
                                         do_not_perform_vad=self.do_not_perform_vad,
                                         profanity_filter=self.profanity_filter,
@@ -200,15 +195,20 @@ class YoloV5(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.version: str = kwargs.get("version", "small")
+        self.version: str = f'yolov5{kwargs.get("version", "small")[0].lower()}'
         self.render_img: bool = kwargs.get("render_img", True)
-        self.model = torch.hub.load('ultralytics/yolov5', 'yolov5' + self.version[0].lower(),
-                                    pretrained=True, force_reload=True)
+        self.pretrained: bool = kwargs.get("pretrained", True)
+        self.force_reload: bool = kwargs.get("force_reload", True)
+        self.model_url = kwargs.get("model_url", 'ultralytics/yolov5')
+
+        self.model = None
 
     def execute(self):
+        if not self.model:
+            self.model = torch.hub.load(self.model_url, self.version,
+                                        pretrained=self.pretrained, force_reload=self.force_reload)
         frame = list(self.inputs.values())[0].execute()
         frame = np.squeeze(frame)
-        print("YOLO5: ", frame.shape)
         out = self.model(frame)
         if self.render_img:
             return out.render()[0]
@@ -239,11 +239,15 @@ class DeepSort(BaseService):
 
     def execute(self):
         bbox_xyxy, ori_img = None, None
+        print(self.inputs)
         for input_type in self.inputs.keys():
             if input_type in Input.__dict__.keys():
                 ori_img = self.inputs.get(input_type).execute()
             else:
                 bbox_xyxy = self.inputs.get(input_type).execute()
+                print("DEEP: ", type(bbox_xyxy), bbox_xyxy.shape, bbox_xyxy)
+                if not len(bbox_xyxy):
+                    return np.zeros((1, 5))
         confidences = bbox_xyxy[:, 4]
         bbox_xyxy = bbox_xyxy[:, :4].astype(int)
         self.height, self.width = ori_img.shape[:2]

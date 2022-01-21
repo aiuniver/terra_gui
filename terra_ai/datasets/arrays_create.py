@@ -56,8 +56,13 @@ class CreateArray(object):
         if not isinstance(sources, list):
             sources = [sources]
         executor = self.__dict__[array_class]
-        source, parameters = self.get_result_items(result=executor.prepare(sources, dataset_folder=None, **options))
-        array, parameters = self.get_result_items(result=executor.create(source, **parameters))
+        if isinstance(sources[0], str):
+            source, parameters = self.get_result_items(result=executor.prepare(sources, dataset_folder=None, **options))
+            array, parameters = self.get_result_items(result=executor.create(source, **parameters))
+        else:
+            array = sources[0]
+            # print(array)
+            parameters = options
         out_array = executor.preprocess(array, **parameters)
 
         return out_array
@@ -72,9 +77,11 @@ class CreateArray(object):
         for put_id, cols_names in instructions.items():
             temp_array[put_id] = {}
             for col_name, data in cols_names.items():
-                data['preprocess'] = self.preprocessing.preprocessing[put_id][col_name]
-                array = self.execute_array(array_class=array_class, sources=sources[put_id][col_name], **data)
-
+                data['preprocess'] = preprocessing.preprocessing[put_id][col_name]
+                if isinstance(sources, dict):
+                    array = self.execute_array(array_class=array_class, sources=sources[put_id][col_name], **data)
+                else:
+                    array = self.execute_array(array_class=array_class, sources=sources, **data)
                 temp_array[put_id][col_name] = array
 
             concat_list = []
@@ -89,7 +96,11 @@ class CreateArray(object):
     def get_array_params(dataset_path: str):
         instructions: dict = {}
 
-        with open(os.path.join(dataset_path, 'config.json'), 'r') as cfg:
+        check_path = os.path.join(dataset_path, "dataset.json")
+        if not os.path.exists(check_path):
+            check_path = os.path.join(dataset_path, 'config.json')
+
+        with open(check_path, 'r') as cfg:
             data = json.load(cfg)
 
         for put_id in data.get('inputs', {}).keys():
@@ -97,10 +108,9 @@ class CreateArray(object):
             for instr_json in os.listdir(os.path.join(dataset_path, 'instructions', 'parameters')):
                 idx, *name = os.path.splitext(instr_json)[0].split('_')
                 name = '_'.join(name)
-                if put_id == int(idx):
+                if put_id == idx:
                     with open(os.path.join(dataset_path, 'instructions', 'parameters', instr_json), 'r') as instr:
                         instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
-
         preprocessing: CreatePreprocessing = CreatePreprocessing(dataset_path)
         preprocessing.load_preprocesses(data.get('columns', {}))
 

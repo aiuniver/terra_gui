@@ -17,6 +17,7 @@ class AudioArray(Array):
         audio_files: list = []
         instructions_paths = []
         audio_arrays = []
+        cascade_mode = True if dataset_folder is None else False
 
         for elem in sources:
             try:

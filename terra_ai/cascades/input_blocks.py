@@ -1,18 +1,17 @@
 import cv2
 import os
 import json
-from abc import ABC, abstractmethod
 
 import numpy as np
 
-from .main_blocks import CascadeBlock
+from .main_blocks import CascadeBlock, BaseBlock
 from ..datasets.arrays_create import CreateArray
 
 
-class BaseInput(ABC):
+class BaseInput(BaseBlock):
 
     def __init__(self):
-        self.inputs: dict = {}
+        super().__init__()
         self.sources: dict = {}
         self.dataset_path: str = ''
 
@@ -29,14 +28,13 @@ class BaseInput(ABC):
     def set_dataset_path(self, path: str):
         self.dataset_path = path
 
-    @abstractmethod
     def execute(self):
         pass
 
 
 class ImageInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -45,7 +43,7 @@ class ImageInput(BaseInput):
 
 class TextInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -54,25 +52,38 @@ class TextInput(BaseInput):
 
 class AudioInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
+        self.array_class = 'audio'
+
+    def set_source(self, source):
+        self.sources = source
+
+    def prepare_sources(self):
+        # params = {}
+        # from terra_ai.data.datasets.creations.layers.input.types.Audio import ParametersData
+        # for key in ParametersData.__fields__.keys():
+        #     params[key] = self.__dict__.get(key, None)
+        # array = CreateArray().execute_array(array_class=self.array_class,
+        #                                     sources=self.sources, **params)
+        return self.sources
 
     def execute(self):
-        pass
+        return self.sources[0]
 
 
 class DataframeInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
-        pass
+        return self.sources
 
 
 class VideoInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -81,36 +92,43 @@ class VideoInput(BaseInput):
 
 class VideoFrameInput(BaseInput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
         self.array_class = 'video'
+        self.frame_mode = 'fit'
+        self.video_mode = 'completely'
 
     def set_source(self, source):
         self.sources = source
 
-    def prepare_sources(self):
-        # array = CreateArray().execute(array_class=self.array_class,
-        #                               dataset_path=self.dataset_path,
-        #                               sources=self.sources)
-        # return array
-        cap = cv2.VideoCapture(self.sources[0])
-        out_arr = []
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
+    def prepare_sources(self, shape):
+        params = {}
+        from terra_ai.data.datasets.creations.layers.input.types.Video import ParametersData
+        for key in ParametersData.__fields__.keys():
+            params[key] = self.__dict__.get(key, None)
+        params['width'] = shape[0]
+        params['height'] = shape[1]
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            out_arr.append(frame)
-        return np.array(out_arr)
+        array = CreateArray().execute_array(array_class=self.array_class,
+                                            sources=self.sources, **params)
+        return array
+        # cap = cv2.VideoCapture(self.sources[0])
+        # out_arr = []
+        # while True:
+        #     ret, frame = cap.read()
+        #     if not ret:
+        #         break
+        #
+        #     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        #
+        #     out_arr.append(frame)
+        # return np.array(out_arr)
 
     def execute(self):
         return self.sources
 
 
 class Input(CascadeBlock):
-
     Image = ImageInput
     Text = TextInput
     Audio = AudioInput

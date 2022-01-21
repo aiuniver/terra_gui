@@ -5,24 +5,28 @@ import tensorflow
 
 from tensorflow.keras.utils import load_img
 from typing import Any
-from abc import ABC, abstractmethod
 
-from terra_ai.cascades.main_blocks import CascadeBlock
+from terra_ai.cascades.main_blocks import CascadeBlock, BaseBlock
 
 
-class BaseOutput(ABC):
+class BaseOutput(BaseBlock):
 
-    def __init__(self):
-        self.inputs: dict = {}
+    cascade_input = None
+    output_file = None
 
-    @abstractmethod
+    def set_inputs(self, cascade_input):
+        self.cascade_input = cascade_input
+
+    def set_out(self, output_file):
+        self.output_file = output_file
+
     def execute(self):
         pass
 
 
 class ImageOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -31,16 +35,20 @@ class ImageOutput(BaseOutput):
 
 class TextOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
-        pass
+        source = self.cascade_input.prepare_sources()
+        self.cascade_input.set_source(source)
+        with open(self.output_file, 'a') as f:
+            f.write(str(list(self.inputs.values())[0].execute()) + '\n')
+        return self.output_file
 
 
 class AudioOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -49,7 +57,7 @@ class AudioOutput(BaseOutput):
 
 class DataframeOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -58,7 +66,7 @@ class DataframeOutput(BaseOutput):
 
 class VideoOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -67,21 +75,18 @@ class VideoOutput(BaseOutput):
 
 class VideoFrameOutput(BaseOutput):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
-        self.cascade_input = None
-
-    def set_inputs(self, cascade_input):
-        self.cascade_input = cascade_input
+        self.shape = (kwargs.get('width'), kwargs.get('height'))
 
     def execute(self):
         out = []
-        shape = (1280, 720)
 
         writer = cv2.VideoWriter(
-            "F:\\test.webm", cv2.VideoWriter_fourcc(*"VP80"), 30, shape
+            self.output_file, cv2.VideoWriter_fourcc(*"VP80"), 30, self.shape
         )
-        sources = self.cascade_input.prepare_sources()
+        sources = self.cascade_input.prepare_sources(self.shape)
+
         for source in sources:
             self.cascade_input.set_source(source)
             frame = list(self.inputs.values())[0].execute()
@@ -89,12 +94,12 @@ class VideoFrameOutput(BaseOutput):
                 for i in frame:
                     writer.write(frame(i))
             else:
-                img = tensorflow.image.resize(frame, shape[::-1]).numpy()
+                img = tensorflow.image.resize(frame, self.shape[::-1]).numpy()
                 img = img.astype(np.uint8)
                 img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
                 writer.write(img)
         writer.release()
-        return writer
+        return self.output_file
 
 
 class Output(CascadeBlock):

@@ -93,13 +93,13 @@ class TextArray(Array):
             text_list.append(text[elem])
 
         instructions = {'instructions': text_list,
-                        'data': text,
                         'parameters': {'prepare_method': options['prepare_method'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
-                                       'length': length,
+                                       'text_mode': options['text_mode'],
+                                       'length': options['length'],
                                        'max_words_count': options['max_words_count'],
-                                       'word_to_vec_size': options.get('word_to_vec_size'),
+                                       'word_to_vec_size': options['word_to_vec_size'],
                                        'filters': options['filters']
                                        }
                         }
