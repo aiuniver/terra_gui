@@ -15,7 +15,11 @@ from pydantic.errors import EnumMemberError
 
 from terra_ai import settings
 
-from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, CLASS_ARCHITECTURE, GAN_ARCHITECTURE
+from terra_ai.callbacks.utils import (
+    YOLO_ARCHITECTURE,
+    CLASS_ARCHITECTURE,
+    GAN_ARCHITECTURE,
+)
 from terra_ai.exceptions.training import TrainingAlreadyExistsException
 from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from terra_ai.data.training import optimizers, architectures
@@ -217,7 +221,6 @@ class ArchitectureData(BaseMixinData):
             value = {}
         _model = values.get("model")
         _outputs = value.get("outputs", [])
-        # print('\n _validate_parameters', values)
         for _index, _output in enumerate(_outputs):
             _layer = _model.layers.get(_output.get("id"))
             if _layer:

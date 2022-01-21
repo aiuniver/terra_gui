@@ -62,7 +62,7 @@ class StageUploadData(BaseMixinData):
     project: StageUploadProjectData
     task: str
     replace: bool = False
-    server: conint(ge=0)
+    server: dict
     file: StageUploadFileData
 
 

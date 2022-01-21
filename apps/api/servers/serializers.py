@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from ipaddress import IPv4Address
 from pydantic import validator, BaseModel
-from pydantic.types import PositiveInt
+from pydantic.types import conint, PositiveInt
 
 from rest_framework import serializers
 
@@ -31,7 +31,7 @@ class ServerStateData(BaseModel):
 
 
 class ServerData(BaseModel):
-    id: PositiveInt
+    id: conint(ge=0)
     state: ServerStateData
     domain_name: str
     ip_address: IPv4Address
@@ -39,6 +39,10 @@ class ServerData(BaseModel):
     port_ssh: PositiveInt = 22
     port_http: PositiveInt = 80
     port_https: PositiveInt = 443
+
+
+class ServerDeployData(ServerData):
+    private_ssh_key: str
 
 
 class ServerFullData(ServerData):
