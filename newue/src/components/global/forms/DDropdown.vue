@@ -51,7 +51,7 @@ export default {
       position: absolute;
       z-index: 1;
       top: 0;
-      right: 1.6rem;
+      right: 3px;
       bottom: 0;
       width: 0.8rem;
       height: 0.4rem;
@@ -72,7 +72,6 @@ export default {
     box-shadow: 0 0.3rem 3rem 0 #36363633;
     border: none;
     border-radius: 0;
-    background-color: #fff;
     overflow: hidden;
     min-height: 4rem;
   }
