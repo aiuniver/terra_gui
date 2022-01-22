@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="['block', { 'block--selected': selected || hover }, `block--${type}`]"
+    :class="['block', { 'block--selected': selected || hover }, `block--${type}`, { 'block--error': isError }]"
     :style="style"
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
@@ -27,7 +27,7 @@
       </div>
     </div>
     <div class="block__part">
-      <div class="block__point block__point--top" ></div>
+      <div class="block__point block__point--top"></div>
       <div class="block__point block__point--bottom" @mousedown="slotMouseDown($event, 0)"></div>
     </div>
   </div>
@@ -39,23 +39,43 @@ export default {
   props: {
     id: {
       type: Number,
+      default: 0,
     },
     linkingCheck: {
       type: Object,
+      default: () => ({}),
     },
     name: {
       type: String,
+      default: '',
     },
     position: {
       type: Array,
       default: () => [],
     },
-    selected: Boolean,
-    type: String,
-    inputs: Array,
-    outputs: Array,
+    selected: {
+      type: Boolean,
+      default: false,
+    },
+    type: {
+      type: String,
+      default: '',
+    },
+    inputs: {
+      type: Array,
+      default: () => [],
+    },
+    outputs: {
+      type: Array,
+      default: () => [],
+    },
     options: {
       type: Object,
+      default: () => ({}),
+    },
+    error: {
+      type: String,
+      default: '',
     },
   },
   data: () => ({
@@ -79,6 +99,9 @@ export default {
         transformOrigin: 'top left',
         zIndex: this.selected || this.hover ? 10 : 1,
       };
+    },
+    isError() {
+      return Boolean(this.error);
     },
   },
   mounted() {
@@ -176,7 +199,6 @@ $containCircle: 9px;
 $borderCircle: 2px;
 $bg-color: #0e1621;
 $borderBlock: 2px;
-
 
 .block {
   position: absolute;
@@ -276,7 +298,7 @@ $borderBlock: 2px;
     display: block;
   }
 
-  &:hover {
+  &:hover:not(.block--error) {
     .block__title {
       color: ivory;
     }
@@ -370,6 +392,15 @@ $borderBlock: 2px;
     border-radius: 23px 4px 24px 4px;
     & .block__point--bottom {
       display: none;
+    }
+  }
+  &--error {
+    .block__line-left,
+    .block__line-right {
+      background-color: #CA5035;
+    }
+    .block__title {
+      color: #CA5035;
     }
   }
 }

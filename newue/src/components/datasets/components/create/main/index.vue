@@ -437,7 +437,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .blocks {
   height: 100%;
   width: 100%;
