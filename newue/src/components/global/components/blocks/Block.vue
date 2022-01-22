@@ -1,36 +1,34 @@
 <template>
   <div
-    :class="['block', { 'block--selected': selected }, `block--${type}`]"
+    :class="['block', { 'block--selected': selected || hover }, `block--${type}`]"
     :style="style"
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
   >
-    <div :class="['block__header', type.toLowerCase()]">
-      {{ type }}
-      <i class="ci-last_page"></i>
-      {{ id }}
+    <div class="block__line-left"></div>
+    <div class="block__line-right"></div>
+    <div :class="['block__wrapper', `block__wrapper--${type}`]">
+      <div class="block__header">
+        <div class="block__title text--bold">{{ type }} {{ id }}</div>
+        <div class="block__subtitle text--bold">22,28,1</div>
+      </div>
+      <div class="block__inputs">
+        <div
+          v-for="(slot, index) in inputs"
+          :key="'input' + index"
+          class="input inputSlot"
+          :class="{
+            active: slot.active,
+            'input--linking-active': linkingCheck && !linking,
+          }"
+          @mouseup="slotMouseUp($event, index)"
+          @mousedown="slotBreak($event, index)"
+        ></div>
+      </div>
     </div>
-    <div class="block__inputs">
-      <div
-        v-for="(slot, index) in inputs"
-        :key="'input' + index"
-        class="input inputSlot"
-        :class="{
-          active: slot.active,
-          'input--linking-active': linkingCheck && !linking,
-        }"
-        @mouseup="slotMouseUp($event, index)"
-        @mousedown="slotBreak($event, index)"
-      ></div>
-    </div>
-    <div class="block__outputs">
-      <div
-        v-for="(slot, index) in outputs"
-        class="output"
-        :class="[{ active: hover && !linkingCheck }, typeLink[index]]"
-        :key="'output' + index"
-        @mousedown="slotMouseDown($event, index)"
-      ></div>
+    <div class="block__part">
+      <div class="block__point block__point--top" ></div>
+      <div class="block__point block__point--bottom" @mousedown="slotMouseDown($event, 0)"></div>
     </div>
   </div>
 </template>
@@ -169,45 +167,78 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 $ioFontSize: 14px;
 $circleSize: 10px;
 $circleNewColor: #00ff003b;
 $circleConnectedColor: #569dcf;
 $containCircle: 9px;
 $borderCircle: 2px;
+$bg-color: #0e1621;
+$borderBlock: 2px;
 
-@mixin circle {
-  content: '';
-  width: $containCircle;
-  height: $containCircle;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  border: $borderCircle solid $color-dark;
-  border-radius: 50%;
-  @content;
-}
 
 .block {
-  width: 140px;
-  height: 50px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  position: relative;
+  position: absolute;
+  background-color: $bg-color;
 
-  cursor: default;
-  &--selected {
-    background: #ac2b2b !important;
-    cursor: move;
+  &__wrapper {
+    position: relative;
+    width: 140px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 2px;
+    cursor: default;
+    margin: 5px;
+
+    clip-path: polygon(13px 0, 100% 0, 100% calc(100% - 13px), calc(100% - 13px) 100%, 0 100%, 0 13px);
+    &::after {
+      content: '';
+      height: 100%;
+      width: 100%;
+      display: none;
+      position: absolute;
+      clip-path: polygon(
+        13px $borderBlock,
+        calc(100% - $borderBlock) $borderBlock,
+        calc(100% - $borderBlock) calc(100% - 13px),
+        calc(100% - 13px) calc(100% - $borderBlock),
+        $borderBlock calc(100% - $borderBlock),
+        $borderBlock 13px
+      );
+      background-color: $bg-color;
+      z-index: 1;
+      border-radius: 2px;
+    }
   }
+
+  &__title {
+    font-size: 12px;
+  }
+  &__subtitle {
+    font-size: 10px;
+    color: #6c7883;
+  }
+
+  &--selected {
+    cursor: move;
+    .block__wrapper::after {
+      display: block;
+    }
+    .block__title {
+      color: ivory;
+    }
+  }
+
   &__header {
     min-height: 42px;
     padding: 0 10px;
     border-radius: 5px;
     color: #000;
+    z-index: 3;
   }
   &__inputs,
   &__outputs {
@@ -217,7 +248,7 @@ $borderCircle: 2px;
     .input,
     .output {
       position: absolute;
-      overflow: hidden;
+      // overflow: hidden;
       font-size: $ioFontSize;
       box-sizing: border-box;
       width: $circleSize;
@@ -239,62 +270,106 @@ $borderCircle: 2px;
         opacity: 0;
       }
     }
+  }
 
-    .output {
-      &.bottom {
-        bottom: -5px;
-      }
-      &.left {
-        left: -6px;
-        top: 18px;
-      }
-      &.right {
-        right: -6px;
-        top: 18px;
-      }
-      &:hover {
-        background: $circleNewColor;
-      }
-      &.active {
-        background: $circleNewColor;
-      }
+  &:hover::after {
+    display: block;
+  }
+
+  &:hover {
+    .block__title {
+      color: ivory;
     }
+    .block__point--bottom {
+      background-color: rgb(45, 42, 238);
+    }
+  }
+
+  &__part {
+    z-index: 5;
+  }
+  &__point {
+    position: absolute;
+    border-radius: 50%;
+    width: 11px;
+    height: 11px;
+    border: 2px solid $bg-color;
+    &--top {
+      transform: translate(-50%, -50%);
+      left: 50%;
+      top: 0px;
+    }
+    &--bottom {
+      transform: translate(-50%, 50%);
+      left: 50%;
+      bottom: 0px;
+      cursor: crosshair;
+    }
+  }
+  &__line-left {
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // background-color: $color-orange;
+    clip-path: polygon(0 70%, 0% 14px, 14px 0%, 70% 0%, 70% 1px, 14px 1px, 1px 14px, 1px 70%);
+  }
+  &__line-right {
+    z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    // background-color: $color-orange;
+    clip-path: polygon(
+      100% 30%,
+      100% calc(100% - 15px),
+      calc(100% - 15px) 100%,
+      30% 100%,
+      30% calc(100% - 1px),
+      calc(100% - 15px) calc(100% - 1px),
+      calc(100% - 1px) calc(100% - 15px),
+      calc(100% - 1px) 30%
+    );
   }
   &--input {
-    box-shadow: 0px 0px 4px transparentize($color-orange, 0.25);
-    background: $color-orange;
-    &::after {
-      @include circle {
-        bottom: calc(($containCircle + $borderCircle) / 2);
-        background: $color-orange;
-      }
+    & .block__point,
+    & .block__line-left,
+    & .block__line-right,
+    & .block__wrapper {
+      background-color: $color-orange;
+    }
+    box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
+    border-radius: 23px 4px 24px 4px;
+    & .block__point--top {
+      display: none;
     }
   }
-  &--middle {
-    background: $color-green;
-    box-shadow: 0px 0px 4px transparentize($color-green, 0.25);
-    &::after,
-    &::before {
-      @include circle {
-        background: $color-green;
-      }
-    }
-    &::before {
-      top: calc(($containCircle + $borderCircle) / 2);
-    }
 
-    &::after {
-      bottom: calc(($containCircle + $borderCircle) / 2);
+  &--middle {
+    & .block__point,
+    & .block__line-left,
+    & .block__line-right,
+    & .block__wrapper {
+      background-color: $color-green;
     }
+    box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
+    border-radius: 23px 4px 24px 4px;
   }
   &--output {
-    box-shadow: 0px 0px 4px transparentize($color-pirple, 0.25);
-    background: $color-pirple;
-    &::before {
-      @include circle {
-        top: calc(($containCircle + $borderCircle) / 2);
-        background: $color-pirple;
-      }
+    & .block__point,
+    & .block__line-left,
+    & .block__line-right,
+    & .block__wrapper {
+      background-color: $color-pirple;
+    }
+    box-shadow: 0px 0px 4px transparentize($color-pirple, 0.75);
+    border-radius: 23px 4px 24px 4px;
+    & .block__point--bottom {
+      display: none;
     }
   }
 }

@@ -7,7 +7,7 @@
       <Blocks />  
     </div>
 
-    <div class="page-datasets__params">
+    <!-- <div class="page-datasets__params">
       <BasePanel @action="handleActionPanel">
         <template v-if="component === 'DatasetTabsDownload'">
           <BasePanelContent noMargin>
@@ -47,7 +47,7 @@
           </BasePanelContent>
         </template>
       </BasePanel>
-    </div>
+    </div> -->
   </main>
 </template>
 
@@ -58,10 +58,10 @@ export default {
   components: {
     Toolbar,
     Blocks,
-    DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
-    DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),
-    DatasetDownloadTabs: () => import('@/components/datasets/components/create/DatasetDownloadTabs'),
-    DatasetHelpers: () => import('@/components/datasets/components/create/DatasetHelpers'),
+    // DatasetPreview: () => import('@/components/datasets/components/create/DatasetPreview'),
+    // DatasetSettings: () => import('@/components/datasets/components/create/DatasetSettings'),
+    // DatasetDownloadTabs: () => import('@/components/datasets/components/create/DatasetDownloadTabs'),
+    // DatasetHelpers: () => import('@/components/datasets/components/create/DatasetHelpers'),
 
   },
 

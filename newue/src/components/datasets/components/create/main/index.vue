@@ -15,7 +15,7 @@
       @select="blockSelect(block)"
       @position="position($event)"
     />
-    <Menu v-bind="menu" :select="selectLength" @click="event" />
+    <!-- <Menu v-bind="menu" :select="selectLength" @click="event" /> -->
   </div>
 </template>
 
@@ -25,7 +25,7 @@ import { mouseHelper } from '@/components/global/components/blocks/utils';
 import Block from '@/components/global/components/blocks/Block';
 import Link from '@/components/global/components/blocks/Link';
 // import Net from '@/components/global/components/blocks/Net';
-import Menu from '@/components/global/components/blocks/ContextMenu';
+// import Menu from '@/components/global/components/blocks/ContextMenu';
 
 export default {
   name: 'Blocks',
@@ -33,7 +33,7 @@ export default {
     Block,
     Link,
     // Net,
-    Menu,
+    // Menu,
   },
   props: {},
   data: () => ({
@@ -168,9 +168,9 @@ export default {
       this.key += 1;
     },
     contextmenu(e) {
-      e.preventDefault();
+      // e.preventDefault();
       console.log(e.clientX, e.clientY);
-      this.menu = { x: e.clientX, y: e.clientY };
+      // this.menu = { x: e.clientX, y: e.clientY };
     },
     handleMauseOver(e) {
       this.mouseIsOver = e.type === 'mouseenter';
@@ -268,10 +268,7 @@ export default {
           this.hasDragged = false;
         }
       }
-      if (
-        this.$el.contains(target) &&
-        (typeof target.className !== 'string' || !target.className.includes(this.inputSlotClassName))
-      ) {
+      if (this.$el.contains(target) && (typeof target.className !== 'string' || !target.className.includes(this.inputSlotClassName))) {
         this.linking = false;
         this.tempLink = null;
         this.linkStart = null;
@@ -304,21 +301,12 @@ export default {
       x += block.position[0];
       y += block.position[1];
       const { width = 0, heigth = 0 } = this.$refs?.['block_' + block.id]?.[0]?.getH() || {};
-      if (isInput && block.inputs.length > slot) {
-        if (block.inputs.length === 1) {
-          x += width / 2;
-          y += -3;
-        }
-      } else if (!isInput && block.outputs.length > slot) {
-        if (slot === 0) {
-          x += width / 2;
-          // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight() || 45;
-          // console.log(this.$refs?.['block_' + block.id]?.[0].getH());
-          y += heigth;
-        }
+      if (isInput) {
+        x += width / 2;
+        y += -3;
       } else {
-        console.error('slot ' + slot + ' not found, is input: ' + isInput, block);
-        return undefined;
+        x += width / 2;
+        y += heigth;
       }
 
       x *= this.scale;
@@ -357,16 +345,8 @@ export default {
         const targetSlot = slot;
         const links = this.links.filter(line => {
           return (
-            !(
-              line.targetID === targetID &&
-              line.targetSlot === targetSlot &&
-              line.originID === originID &&
-              line.originSlot === originSlot
-            ) &&
-            !(
-              (line.targetID === originID && line.originID === targetID) ||
-              (line.originID === originID && line.targetID === targetID)
-            )
+            !(line.targetID === targetID && line.targetSlot === targetSlot && line.originID === originID && line.originSlot === originSlot) &&
+            !((line.targetID === originID && line.originID === targetID) || (line.originID === originID && line.targetID === targetID))
           );
         });
         this.updateLink(links);
@@ -399,9 +379,7 @@ export default {
         let findLink = this.links.find(({ targetID, targetSlot }) => targetID === target.id && targetSlot === slot);
         if (findLink) {
           let findBlock = this.blocks.find(({ id }) => id === findLink.originID);
-          const links = this.links.filter(
-            ({ targetID, targetSlot }) => !(targetID === target.id && targetSlot === slot)
-          );
+          const links = this.links.filter(({ targetID, targetSlot }) => !(targetID === target.id && targetSlot === slot));
           this.updateLink(links);
           this.linkingStart(findBlock, findLink.originSlot);
           this.updateModel();

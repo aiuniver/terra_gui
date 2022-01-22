@@ -1,5 +1,5 @@
 const Block = class {
-  constructor({ id, name = 'Block', type = 'Input', position = [0, 0], selected = false }) {
+  constructor({ id, name = 'Block', type = 'input', position = [0, 0], selected = false }) {
     this.id = id
     this.name = name
     this.type = type
