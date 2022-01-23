@@ -11,7 +11,7 @@ from ..extra import (
     ModuleChoice,
     ModuleTypeChoice,
     PaddingChoice, ActivationChoice, InitializerChoice, ResblockActivationChoice, NormalizationChoice,
-    MergeLayerChoice,
+    MergeLayerChoice, RegularizerChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
@@ -43,7 +43,9 @@ class ParametersMainData(BaseMixinData):
 class ParametersExtraData(BaseMixinData):
     kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
+    kernel_regularizer: Optional[RegularizerChoice]
     normalization: Optional[NormalizationChoice] = NormalizationChoice.batch
     merge_layer: MergeLayerChoice = MergeLayerChoice.concatenate
     use_bias: bool = True
+
     pass

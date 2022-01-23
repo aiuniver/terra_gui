@@ -10,7 +10,7 @@ from ..extra import (
     LayerValidationMethodChoice,
     ModuleChoice,
     ModuleTypeChoice,
-    PaddingChoice, ActivationChoice, InitializerChoice, NormalizationChoice,
+    PaddingChoice, ActivationChoice, InitializerChoice, NormalizationChoice, RegularizerChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
@@ -49,6 +49,7 @@ class ParametersExtraData(BaseMixinData):
     use_bias: bool = True
     kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
+    kernel_regularizer: Optional[RegularizerChoice]
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     leaky_relu_alpha: PositiveFloat = 0.3
     pass

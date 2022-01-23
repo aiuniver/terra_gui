@@ -26,6 +26,7 @@ class DeployTypeChoice(str, Enum):
     GAN = "GAN"
     CGAN = "CGAN"
     TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
 
     @property
     def demo(self) -> str:

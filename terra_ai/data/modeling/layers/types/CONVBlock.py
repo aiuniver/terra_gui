@@ -10,7 +10,7 @@ from ..extra import (
     LayerValidationMethodChoice,
     ModuleChoice,
     ModuleTypeChoice,
-    PaddingChoice, ActivationChoice, CONVBlockConfigChoice, InitializerChoice, NormalizationChoice,
+    PaddingChoice, ActivationChoice, CONVBlockConfigChoice, InitializerChoice, NormalizationChoice, RegularizerChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
@@ -37,9 +37,9 @@ class ParametersMainData(BaseMixinData):
     filters: PositiveInt = 16
     activation: Optional[ActivationChoice] = ActivationChoice.relu
     normalization: Optional[NormalizationChoice] = NormalizationChoice.batch
-    dropout_layer: bool = True
     leaky_relu_layer: bool = False
     use_activation_layer: bool = False
+    dropout_layer: bool = True
 
 
 class ParametersExtraData(BaseMixinData):
@@ -49,6 +49,7 @@ class ParametersExtraData(BaseMixinData):
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     dilation: Tuple[PositiveInt, PositiveInt] = (1, 1)
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
+    kernel_regularizer: Optional[RegularizerChoice]
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_bn_lrelu_drop_conv_bn_lrelu_drop
     leaky_relu_alpha: PositiveFloat = 0.3

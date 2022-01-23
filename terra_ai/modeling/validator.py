@@ -220,7 +220,7 @@ class ModelValidator:
             for model_plan in self.separated_plans:
                 mc = ModelCreator(model_plan, self.input_shape, self.block_plans, self.layers_config)
                 model = mc.create_model()
-                if model.outputs[0].shape[1:] == (1,):
+                if model.outputs[0].shape[-1] == 1:
                     models['discriminator'] = model
                 else:
                     models['generator'] = model
