@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { debounce } from './utils';
+import { debounce } from '@/utils/blocks/utils';
 export default {
   props: {
     x: Number,

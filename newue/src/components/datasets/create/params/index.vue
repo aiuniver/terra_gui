@@ -43,10 +43,10 @@
 </template>
 
 <script>
-import DatasetPreview from '@/components/datasets/components/create/DatasetPreview';
-import DatasetSettings from '@/components/datasets/components/create/DatasetSettings';
-import DatasetDownloadTabs from '@/components/datasets/components/create/DatasetDownloadTabs';
-import DatasetHelpers from '@/components/datasets/components/create/DatasetHelpers';
+import DatasetPreview from './DatasetPreview';
+import DatasetSettings from './DatasetSettings';
+import DatasetDownloadTabs from './DatasetDownloadTabs';
+import DatasetHelpers from './DatasetHelpers';
 export default {
   components: {
     DatasetPreview,

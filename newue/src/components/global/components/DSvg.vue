@@ -440,7 +440,7 @@
 
 <script>
 export default {
-  name: 'SvgContainer',
+  name: 'd-svg',
   props: {
     name: {
       type: String,

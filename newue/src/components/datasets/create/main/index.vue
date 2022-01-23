@@ -21,11 +21,11 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import { mouseHelper } from '@/components/global/components/blocks/utils';
-import Block from '@/components/global/components/blocks/Block';
-import Link from '@/components/global/components/blocks/Link';
-// import Net from '@/components/global/components/blocks/Net';
-// import Menu from '@/components/global/components/blocks/ContextMenu';
+import { mouseHelper } from '@/utils/blocks/utils';
+import Block from '@/components/global/overflow/Block';
+import Link from '@/components/global/overflow/Link';
+// import Net from '@/components/global/overflow/Net';
+// import Menu from '@/components/global/overflow/ContextMenu';
 
 export default {
   name: 'Blocks',
