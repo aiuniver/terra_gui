@@ -802,7 +802,7 @@ class ImageToImageGANCallback:
                 logger.debug(f"predict_array {predict_array.shape}")
                 data = {"type": "image", "data": []}
                 # logger.debug(f"predict_array.min/max: {predict_array.min(), predict_array.max()}")
-                array = predict_array[0] / predict_array.max() if predict_array.max() > 1 else predict_array[0]
+                array = predict_array / predict_array.max() if predict_array.max() > 1 else predict_array
                 y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}.webp")
                 matplotlib.image.imsave(y_pred_save_path, array)
                 data["data"].append(

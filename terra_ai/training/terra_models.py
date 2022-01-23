@@ -1330,9 +1330,10 @@ class ImageToImageGANTerraModel(GANTerraModel):
         try:
             inp = self.input_keys.get('disc_images')
             self.train_length = len(dataset.dataframe.get('train'))
-            shape = [self.train_length]
+            shape = [10]
             shape.extend(dataset.data.inputs.get(int(inp)).shape)
-            y_pred_array = np.zeros(shape=shape)
+            y_random_array = np.zeros(shape=shape)
+            y_seed_array = np.zeros(shape=shape)
 
             self.generator_optimizer = self.set_optimizer(params=params)
             self.discriminator_optimizer = self.set_optimizer(params=params)
@@ -1346,11 +1347,14 @@ class ImageToImageGANTerraModel(GANTerraModel):
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
+                random_idx = list(np.random.randint(0, self.train_length, 10))
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
+                cur_position = 0
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
                     batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
+                    cur_range = np.arange(cur_position, cur_position+batch_length).tolist()
                     # image = GANTerraModel.add_noise_to_image(
                     #     image_data.get(self.input_keys.get('disc_images')))
                     results = self.__train_step(
@@ -1363,21 +1367,32 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
                     disc_fake_loss += results[3].numpy()
-                    y_pred_array[cur_step * batch_length: (cur_step + 1) * batch_length] = results[4].numpy()
+                    for i, idx in enumerate(self.seed['indexes']):
+                        if idx in cur_range:
+                            idx_position = self.seed['indexes'].index(idx)
+                            array_position = cur_range.index(idx)
+                            y_seed_array[idx_position] = results[4][array_position].numpy()
+                        if random_idx[i] in cur_range:
+                            idx_position = random_idx.index(random_idx[i])
+                            array_position = cur_range.index(random_idx[i])
+                            y_random_array[idx_position] = results[4][array_position].numpy()
+
+                    # y_pred_array[cur_step * batch_length: (cur_step + 1) * batch_length] = results[4].numpy()
                     cur_step += 1
+                    cur_position += batch_length
 
                     if interactive.urgent_predict:
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
-                        seed_predict = {'predict': [], 'indexes': self.seed['indexes']}
-                        random_predict = {'predict': [], 'indexes': []}
-                        for i, idx in enumerate(self.seed['indexes']):
-                            seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
-                            seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
-                            random_idx = np.random.randint(self.train_length)
-                            random_array_dict = {
-                                self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
-                            random_predict['indexes'].append(random_idx)
-                            random_predict['predict'].append(self.generator(random_array_dict).numpy())
+                        seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                        random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                        # for i, idx in enumerate(self.seed['indexes']):
+                        #     seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
+                        #     seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
+                        #     random_idx = np.random.randint(self.train_length)
+                        #     random_array_dict = {
+                        #         self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
+                        #     random_predict['indexes'].append(random_idx)
+                        #     random_predict['predict'].append(self.generator(random_array_dict).numpy())
 
                         self.callback.on_train_batch_end(
                             batch=cur_step,
@@ -1399,17 +1414,19 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 current_logs['loss']['disc_real_loss'] = {'train': disc_real_loss / cur_step}
                 current_logs['loss']['disc_fake_loss'] = {'train': disc_fake_loss / cur_step}
 
-                seed_predict = {'predict': [], 'indexes': self.seed['indexes']}
-                random_predict = {'predict': [], 'indexes': []}
-                for i, idx in enumerate(self.seed['indexes']):
-                    seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
-                    seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
-                    # logger.debug(
-                    #     f"self.generator(seed_array_dict).numpy(): {self.generator(seed_array_dict).numpy().shape}")
-                    random_idx = np.random.randint(self.train_length)
-                    random_array_dict = {self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
-                    random_predict['indexes'].append(random_idx)
-                    random_predict['predict'].append(self.generator(random_array_dict).numpy())
+                seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                # seed_predict = {'predict': [], 'indexes': self.seed['indexes']}
+                # random_predict = {'predict': [], 'indexes': []}
+                # for i, idx in enumerate(self.seed['indexes']):
+                #     seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
+                #     seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
+                #     # logger.debug(
+                #     #     f"self.generator(seed_array_dict).numpy(): {self.generator(seed_array_dict).numpy().shape}")
+                #     random_idx = np.random.randint(self.train_length)
+                #     random_array_dict = {self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
+                #     random_predict['indexes'].append(random_idx)
+                #     random_predict['predict'].append(self.generator(random_array_dict).numpy())
                     # logger.debug(
                     #     f"self.generator(seed_array_dict).numpy(): {self.generator(random_array_dict).numpy().shape}")
 
