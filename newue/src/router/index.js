@@ -51,7 +51,7 @@ const router = new Router({
         {
           path: 'marker',
           name: 'Marker',
-          component: () => import('@/views/datasets/View'),
+          component: () => import('@/views/datasets/Marking'),
           meta: {
             title: 'Разметка',
             access: true,

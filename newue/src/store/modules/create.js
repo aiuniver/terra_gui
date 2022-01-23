@@ -3,7 +3,7 @@ import { Block } from '../const/blocks';
 export default {
   namespaced: true,
   state: () => ({
-    blocks: [new Block({ id: 1 }), new Block({ id: 3, position: [20, 20] }), new Block({ id: 2, position: [40, 40] })],
+    blocks: [new Block({ id: 1 }), new Block({ id: 2, type: 'middle', position: [20, 20] }), new Block({ id: 3, type: 'middle', position: [40, 40] }), new Block({ id: 4, type: 'output', position: [60, 60] })],
     links: [],
     key: {}
   }),
