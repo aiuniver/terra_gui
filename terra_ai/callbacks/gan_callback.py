@@ -773,10 +773,10 @@ class ImageToImageGANCallback:
                                     choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed,
                                     input_keys: Optional[dict] = None) -> dict:
         method_name = 'prepare_example_idx_to_show'
-        logger.debug(f"{ImageToImageGANCallback.name}, {ImageToImageGANCallback.prepare_example_idx_to_show.__name__}")
+        # logger.debug(f"{ImageToImageGANCallback.name}, {ImageToImageGANCallback.prepare_example_idx_to_show.__name__}")
         try:
             self.input_keys = input_keys
-            logger.debug(f"input_keys: {self.input_keys}")
+            # logger.debug(f"input_keys: {self.input_keys}")
             if choice_type == ExampleChoiceTypeChoice.seed:
                 seed_array.update(self.input_keys)
                 return seed_array
@@ -799,7 +799,7 @@ class ImageToImageGANCallback:
                 return return_path
 
             if return_mode == 'callback':
-                logger.debug(f"predict_array {predict_array.shape}")
+                # logger.debug(f"predict_array {predict_array.shape}")
                 data = {"type": "image", "data": []}
                 # logger.debug(f"predict_array.min/max: {predict_array.min(), predict_array.max()}")
                 array = predict_array / predict_array.max() if predict_array.max() > 1 else predict_array
@@ -810,6 +810,7 @@ class ImageToImageGANCallback:
                         "title": "Изображение",
                         "value": y_pred_save_path,
                         "color_mark": None,
+                        "size": "large"
                     }
                 )
                 return data
@@ -852,6 +853,7 @@ class ImageToImageGANCallback:
                     "title": "Изображение",
                     "value": source,
                     "color_mark": None,
+                    "size": "large"
                 }
             )
             result_file_path = get_link_from_dataframe(
@@ -872,6 +874,7 @@ class ImageToImageGANCallback:
                     "title": "Изображение",
                     "value": result_source,
                     "color_mark": None,
+                    "size": "large"
                 }
             )
             return data
