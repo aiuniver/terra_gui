@@ -32,6 +32,7 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]], example_count):
+        logger.debug(f"CASCADE: {cascade_data.native()}")
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         sources = sources.get(inputs_ids[0])
