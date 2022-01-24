@@ -7,15 +7,15 @@
       <ul class="dataset-helpers-list__menu">
         <li class="flex align-center">
           <span class="panel-text-gray">1. Выбрать входные чистые данные</span>
-          <SvgContainer name="sloy-start-add" />
+          <d-svg name="sloy-start-add" />
         </li>
         <li class="flex align-center">
           <span class="panel-text-gray">2. Задать обработчик</span>
-          <SvgContainer name="sloy-middle-add" />
+          <d-svg name="sloy-middle-add" />
         </li>
         <li class="flex align-center">
           <span class="panel-text-gray">3. Соединить все в инпут вход один</span>
-          <SvgContainer name="sloy-end-add" />
+          <d-svg name="sloy-end-add" />
         </li>
       </ul>
     </div>

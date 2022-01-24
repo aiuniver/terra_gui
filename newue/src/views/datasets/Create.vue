@@ -1,21 +1,21 @@
 <template>
-  <main class="page page-datasets">
-    <div class="page-datasets__toolbar">
-      <Toolbar @action="handleWorkspaceAction" />
+  <main class="page-create">
+    <div class="page-create__toolbar">
+      <Toolbar @action="onToolbar" />
     </div>
-    <div class="page-datasets__main">
+    <div class="page-create__main">
       <Blocks />
     </div>
-    <div class="page-datasets__params">
+    <div class="page-create__params">
       <Params />
     </div>
   </main>
 </template>
 
 <script>
-import Toolbar from '@/components/datasets/components/create/toolbar/Toolbar';
-import Blocks from '@/components/datasets/components/create/main';
-import Params from '@/components/datasets/components/create/params/Params';
+import Toolbar from '@/components/datasets/create/toolbar/Toolbar';
+import Blocks from '@/components/datasets/create/main';
+import Params from '@/components/datasets/create/params';
 export default {
   name: 'Datasets',
   components: {
@@ -25,7 +25,7 @@ export default {
   },
 
   methods: {
-    handleWorkspaceAction(action) {
+    onToolbar(action) {
       console.log(action);
     },
   },
@@ -33,11 +33,11 @@ export default {
 </script>
 
 <style lang="scss">
-.page-datasets {
+.page-create {
   position: relative;
   display: flex;
 
-  &__toopbar {
+  &__toolbar {
   }
 
   &__main {
@@ -45,7 +45,7 @@ export default {
   }
 
   &__params {
-    flex: 0 0 600px;
+    flex: 0 0 400px;
     border-left: 1px solid #000;
   }
 }

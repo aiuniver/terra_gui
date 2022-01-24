@@ -8,7 +8,7 @@
       <div class="datasets-filter-header"  v-if="cardsDisplay">
         <div  class="flex align-center" @click="showSortOptions = !showSortOptions">
           <span>{{ selectedSort.title }}</span>
-          <SvgContainer name="arrow-chevron-down" />
+          <d-svg name="arrow-chevron-down" />
         </div>
         <div class="datasets-filter-dropdown" v-if="showSortOptions">
           <div v-for="(item, idx) in sortOptions" :key="idx" @click="selectSort(item.idx)">
@@ -18,12 +18,12 @@
       </div>
 
       <div class="datasets-filter-display" v-if="selectedType !== 2">
-        <SvgContainer
+        <d-svg
           name="grid-cube-outline"
           @click.native="$emit('changeDisplay', true)"
           :class="['ci-tile mr-4', { 'ci-tile--selected': cardsDisplay }]"
         />
-        <SvgContainer
+        <d-svg
           name="lines-justyfy"
           @click.native="$emit('changeDisplay', false), (showSortOptions = false)"
           :class="['ci-tile', { 'ci-tile--selected': !cardsDisplay }]"

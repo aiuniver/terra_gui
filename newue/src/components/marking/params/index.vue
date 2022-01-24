@@ -5,57 +5,46 @@
         <DatasetTab v-model="tab" />
       </div>
       <div class="params__items--item">
-        <MarkInput
-        :small="true"
-        :inline="true"
-        label="Название задачи"
-        ></MarkInput>
+        <d-input :small="true" :inline="true" label="Название задачи"></d-input>
       </div>
       <div class="params__items--item">
-        <MarkSelect
-        :small="true"
-        :inline="true"
-        label="Тип задачи"
-        :lists="options"
-        width="180px"
-        ></MarkSelect>
+        <d-select :small="true" :inline="true" label="Тип задачи" :lists="options" width="180px"></d-select>
       </div>
       <div class="params__items--item">
         <date-picker label="Срок выполнения" v-model="date" />
       </div>
       <div class="params__items--item">
-        <TagBlock title="Названия классов" :list="[
-        { name: 'Мерседес', color: '#89D764' },
-        { name: 'Рено', color: '#FFB054' },
-        { name: 'Феррари', color: '#8E51F2' }
-        ]" />
+        <TagBlock
+          title="Названия классов"
+          :list="[
+            { name: 'Мерседес', color: '#89D764' },
+            { name: 'Рено', color: '#FFB054' },
+            { name: 'Феррари', color: '#8E51F2' },
+          ]"
+        />
       </div>
       <div class="params__items--item">
         <TagBlock title="Назначено" :list="[{ name: 'Артур Казарян', color: '#D47200' }]" />
       </div>
     </div>
     <div class="params__items--btn">
-      <t-button :loading="loading" :disabled="disabled">Создать</t-button>
+      <d-button :loading="loading" :disabled="disabled">Создать</d-button>
     </div>
   </div>
 </template>
 
 <script>
-import DatePicker from './components/DatePicker.vue';
+import DatePicker from '../block/DatePicker.vue';
 import { mapGetters } from 'vuex';
-import DatasetTab from '@/components/marking/params/DatasetTab.vue';
-import TagBlock from './components/TagBlock.vue';
-import MarkInput from './components/Input.vue';
-import MarkSelect from './components/Select.vue'
+import DatasetTab from '../block/DatasetTab.vue';
+import TagBlock from '../block/TagBlock.vue';
 
 export default {
   name: 'Settings',
   components: {
     DatasetTab,
     TagBlock,
-    MarkInput,
-    MarkSelect,
-    DatePicker
+    DatePicker,
   },
   data: () => ({
     tab: 'GoogleDrive',
@@ -70,7 +59,7 @@ export default {
       required: len => len.length !== 0 || `Not be empty`,
     },
     options: [],
-    date: ''
+    date: '',
   }),
   computed: {
     ...mapGetters({

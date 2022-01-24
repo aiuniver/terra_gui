@@ -29,7 +29,7 @@
           </div>
         </div>
         <div class="t-card-marking__footer">
-          <t-range :value="[20, 50]" />
+          <!-- <t-range :value="[20, 50]" /> -->
         </div>
       </div>
     </div>
@@ -55,13 +55,9 @@
 </template>
 
 <script>
-import tRange from '../Range.vue'
 
 export default {
   name: 't-card-marking',
-  components: {
-    tRange
-  },
   props: {
     label: String,
     type: String,

@@ -4,7 +4,7 @@
     :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
   >
     <div v-if="icon" class="d-input__icon">
-      <SvgContainer :name="icon" />
+      <d-svg :name="icon" />
     </div>
     <input
       v-model="input"
