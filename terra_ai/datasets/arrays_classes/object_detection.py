@@ -35,6 +35,7 @@ class ObjectDetectionArray(Array):
                                        'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
                                        'put': options['put'],
+                                       'cols_names': options['cols_names'],
                                        'frame_mode': options['frame_mode']}
                         }
 

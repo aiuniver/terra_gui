@@ -116,32 +116,33 @@ class TextArray(Array):
     def preprocess(self, source: Any, **options):
 
         array = []
-        text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
+        # text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
         words_to_add = []
-
-        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
-            array = options['preprocess'].texts_to_sequences([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
-            array = options['preprocess'].texts_to_matrix([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-            for word in text:
-                try:
-                    array.append(options['preprocess'].wv[word])
-                except KeyError:
-                    array.append(np.zeros((options['length'],)))
-
-        if len(array) < options['length']:
-            if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
-                words_to_add = [0 for _ in range((options['length']) - len(array))]
+        if options['prepare_method'] != LayerPrepareMethodChoice.no_preparation:
+            text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
+            if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
+                array = options['preprocess'].texts_to_sequences([text])[0]
+            elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
+                array = options['preprocess'].texts_to_matrix([text])[0]
             elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
-                                range((options['length']) - len(array))]
-            array += words_to_add
-        elif len(array) > options['length']:
-            array = array[:options['length']]
-
+                for word in text:
+                    try:
+                        array.append(options['preprocess'].wv[word])
+                    except KeyError:
+                        array.append(np.zeros((options['length'],)))
+            if len(array) < options['length']:
+                if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                    words_to_add = [0 for _ in range((options['length']) - len(array))]
+                elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                    words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
+                                    range((options['length']) - len(array))]
+                array += words_to_add
+            elif len(array) > options['length']:
+                array = array[:options['length']]
+        else:
+            array = [source]
         array = np.array(array)
-        print("ARRAY: ", array)
+
         return array
 
     @staticmethod

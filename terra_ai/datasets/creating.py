@@ -93,16 +93,16 @@ class CreateDataset(object):
 
     def write_dataset_configure(self, creation_data):
 
-        tags_list = [{'alias': x, 'name': x.capitalize()} for x in decamelize(creation_data.task_type).split('_')]
-        for tag in creation_data.tags:
-            tags_list.append(tag.native())
+        # tags_list = [{'alias': x, 'name': x.capitalize()} for x in decamelize(creation_data.task_type).split('_')]
+        # for tag in creation_data.tags:
+        #     tags_list.append(tag.native())
         architecture = creation_data.task_type
         if architecture == LayerTaskTypeChoice.ObjectDetection:
             architecture = ArchitectureChoice.YoloV4 ###################################################################
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
                 'group': DatasetGroupChoice.trds,
-                'tags': tags_list,
+                # 'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'architecture': architecture,
                 }
@@ -186,7 +186,9 @@ class CreateVersion(object):
         self.write_instructions_to_files()
         self.zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, VERSION_EXT]))
-        shutil.rmtree(version_dir) if version_dir.is_dir() else os.makedirs(version_dir)
+        if version_dir.is_dir():
+            shutil.rmtree(version_dir)
+        os.makedirs(version_dir)
         shutil.move(self.dataset_paths_data.versions.joinpath('version.zip'), version_dir.joinpath('version.zip'))
         self.write_version_configure(version_data)
         shutil.rmtree(self.sources_temp_directory)
@@ -273,7 +275,7 @@ class CreateVersion(object):
                         tmp.append(j)
                 new_array.append(tmp)
             new_array = np.array(new_array)
-        return new_arraykk
+        return new_array
 
     def create_instructions(self, version_data):
 
@@ -300,13 +302,6 @@ class CreateVersion(object):
         def instructions(one_path, params):
 
             try:
-                # instr = getattr(CreateArray, f'instructions_{decamelize(params["type"])}')([one_path],
-                #                                                                            **params['parameters'])
-                # cut = getattr(CreateArray, f'cut_{decamelize(params["type"])}')(instr['instructions'],
-                #                                                                 self.version_paths_data.sources,
-                #                                                                 **instr['parameters'],
-                #                                                                 **{'cols_names': cols_names,
-                #                                                                    'put': idx})
                 cut = getattr(getattr(arrays_classes, decamelize(params["type"])), f'{params["type"]}Array')().prepare(
                     sources=[one_path],
                     dataset_folder=self.version_paths_data.sources,
@@ -319,13 +314,9 @@ class CreateVersion(object):
                 logger.debug(f'Создание инструкций провалилось на {one_path}')
                 raise
 
-            # if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-            #     self.y_cls += [os.path.basename(one_path) for _ in range(len(cut['instructions']))]
-
             return cut  # {'instructions': return_data, 'parameters': cut['parameters']}
 
         put_parameters = {}
-
         for idx in range(put_data[0].id, put_data[0].id + len(put_data)):
             self.tags[idx] = {}
             put_parameters[idx] = {}
@@ -334,7 +325,7 @@ class CreateVersion(object):
                     data = []
                     data_to_pass = []
                     parameters = processing[str(proc[0])].native()  # Аккуратно с [0]
-                    col_name = decamelize(parameters["type"])
+                    col_name = f'{idx}_{decamelize(parameters["type"])}'
 
                     if Path(self.sources_temp_directory).joinpath(name.split(':')[0]).is_dir():
                         # Собираем все пути к файлам в один список
@@ -345,18 +336,19 @@ class CreateVersion(object):
                                     for file_name in sorted(files_name):
                                         data_to_pass.append(os.path.join(current_path, file_name))
                     elif Path(self.sources_temp_directory).joinpath(path.split(':')[0]).is_file():
-                        col_name = name
+                        col_name = f'{idx}_{name}'
                         current_path = Path(self.sources_temp_directory).joinpath(path.split(':')[0])
                         # Собираем всю колонку в один список
                         _, enc = autodetect_encoding(str(current_path), True)
                         data_to_pass = pd.read_csv(current_path, sep=None, usecols=[name],
                                                    engine='python', encoding=enc)[name].to_list()
-                        if parameters['type'] == 'Image':  # in PATH_TYPE_LIST:
-                            data_to_pass = [str(Path(self.sources_temp_directory).joinpath(Path(x))) for x in data_to_pass]
-
+                        if decamelize(parameters['type']) in PATH_TYPE_LIST:  # in PATH_TYPE_LIST:
+                            data_to_pass = [str(Path(self.sources_temp_directory).joinpath(Path(x)))
+                                            for x in data_to_pass]
+                    print('data_to_pass', data_to_pass[:3])
                     with concurrent.futures.ThreadPoolExecutor() as executor:
                         results = executor.map(instructions, data_to_pass, repeat(parameters))
-                        progress.pool(version_progress_name, message=f'Формирование файлов для {os.path.basename(path)}')
+                        progress.pool(version_progress_name, message=f'Формирование файлов')  # Добавить конкретику
                         for i, result in enumerate(results):
                             progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
                             if decamelize(parameters['type']) in PATH_TYPE_LIST:
@@ -369,18 +361,6 @@ class CreateVersion(object):
                             if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
                                 self.y_cls += [os.path.basename(os.path.dirname(data_to_pass[i])) for _ in
                                                range(len(result['instructions']))]
-                    # if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                    #     for i in range(len(data)):
-                    #         data[i] = data[i].replace(str(self.version_paths_data.sources), '')[1:]  # data[i].replace(str(self.version_paths_data.sources), '')[1:])
-                            # data.append(cut['instructions'][i].replace(str(self.version_paths_data.sources), '')[1:]) # self.sources_temp_directory
-                        # else:
-                        #     data.append(cut['instructions'][i])
-                    #     # if idx - 1 > 0 and parameters['type'] != prev_type:
-                    #     # if idx == 0:
-                    #     # if parameters['type'] != LayerOutputTypeChoice.Classification and i == 0:
-                    #     #     self.y_cls.append(os.path.basename(path))
-                    # if idx == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                    #     self.y_cls += [os.path.basename(path) for _ in range(len(data))]
                     if parameters['type'] == LayerOutputTypeChoice.Classification:
                         data = self.y_cls
                         # ### Дальше идет не очень хороший код
@@ -397,8 +377,8 @@ class CreateVersion(object):
                         # ###
                     instructions_data = InstructionsData(instructions=data, parameters=result_params)
                     instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
-                    put_parameters[idx] = {f'{idx}_{col_name}': instructions_data}
-                    self.tags[idx].update({f'{idx}_{col_name}': decamelize(parameters['type'])})
+                    put_parameters[idx] = {col_name: instructions_data}
+                    self.tags[idx].update({col_name: decamelize(parameters['type'])})
 
         return put_parameters
 
@@ -524,16 +504,19 @@ class CreateVersion(object):
             self.columns[key] = {}
             for col_name, data in put_instructions[key].items():
                 data_to_pass = data.instructions[0]
+                options_to_pass = data.parameters.copy()
+                if self.preprocessing.preprocessing.get(key) and \
+                        self.preprocessing.preprocessing.get(key).get(col_name):
+                    prep = self.preprocessing.preprocessing.get(key).get(col_name)
+                    options_to_pass.update([('preprocess', prep)])
                 if self.tags[key][col_name] in PATH_TYPE_LIST:
                     data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))
-                create = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                    data_to_pass,
-                    **data.parameters,
-                    **{'preprocess': self.preprocessing.preprocessing[key][col_name]}
-                )
-                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(create['instructions'],
-                                                                                         **create['parameters'])
-
+                create = getattr(getattr(arrays_classes, data.parameters["put_type"]),
+                                 f'{camelize(data.parameters["put_type"])}Array')().create(
+                    source=data_to_pass, **options_to_pass)
+                array = getattr(getattr(arrays_classes, data.parameters["put_type"]),
+                                f'{camelize(data.parameters["put_type"])}Array')().preprocess(
+                    create['instructions'], **create['parameters'])
                 # array = array[0] if isinstance(array, tuple) else array
                 # if not array.shape:
                 #     array = np.expand_dims(array, 0)
@@ -589,10 +572,13 @@ class CreateVersion(object):
             full_array = []
             for h in range(len(row)):
                 try:
-                    arr = getattr(CreateArray(), f'create_{instructions[h]["put_type"]}')(row[h], **instructions[h])
-                    arr = getattr(CreateArray(), f'preprocess_{instructions[h]["put_type"]}')(arr['instructions'],
-                                                                                              **arr['parameters'])
-                    full_array.append(arr)
+                    create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                                     f'{camelize(instructions[h]["put_type"])}Array')().create(
+                        source=row[h], **instructions[h])
+                    prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                                    f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
+                        create['instructions'], **create['parameters'])
+                    full_array.append(prepr)
                 except Exception:
                     progress.pool(version_progress_name, error='Ошибка создания массивов данных')
                     raise
@@ -646,10 +632,11 @@ class CreateVersion(object):
 
                         elif self.tags[key][col_name] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
-                            tmp_im = Image.open(os.path.join(self.sources_temp_directory,
-                                                             self.dataframe[split].iloc[i, 0]))
-                            parameters_to_pass.update([('orig_x', tmp_im.width),
-                                                       ('orig_y', tmp_im.height)])
+                            height, width = self.dataframe[split].iloc[i, 0].split(';')[1].split(',')
+                            # tmp_im = Image.open(os.path.join(self.sources_temp_directory,
+                            #                                  self.dataframe[split].iloc[i, 0]))
+                            parameters_to_pass.update([('orig_x', int(width)),
+                                                       ('orig_y', int(height))])
                         else:
                             tmp_data.append(self.dataframe[split].loc[i, col_name])
                         tmp_parameter_data.append(parameters_to_pass)
@@ -683,6 +670,7 @@ class CreateVersion(object):
                                     array = self.postprocess_timeseries(result)
                             else:
                                 array = np.concatenate(result, axis=0)
+                            print(array)
                             hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
                         else:
                             for n in range(3):
@@ -716,7 +704,10 @@ class CreateVersion(object):
         """
         inputs, outputs, service, size, columns, date
         """
-
+        tags_list = []
+        for inp, tags in self.tags.items():
+            for col_name, value in tags.items():
+                tags_list.append({'alias': value, 'name': camelize(value)})
         size_bytes = 0
         for path, dirs, files in os.walk(self.version_paths_data.basepath):
             for file in files:
@@ -724,6 +715,7 @@ class CreateVersion(object):
 
         data = {'alias': version_data.alias,
                 'name': version_data.name,
+                'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'size': {'value': size_bytes},
                 'inputs': self.inputs,

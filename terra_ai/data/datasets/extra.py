@@ -19,6 +19,7 @@ class SourceModeChoice(str, Enum):
 
 
 class LayerPrepareMethodChoice(str, Enum):
+    no_preparation = "no_preparation"
     embedding = "embedding"
     bag_of_words = "bag_of_words"
     word_to_vec = "word_to_vec"

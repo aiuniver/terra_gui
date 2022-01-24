@@ -41,22 +41,61 @@ class TextSegmentationArray(Array):
             text_file = self.read_text(file_path=path, lower=True, del_symbols=options['filters'], split=' ',
                                        open_symbol=open_symbol, close_symbol=close_symbol)
             if text_file:
-                text_list[path] = self.get_samples(text_file, open_tags, close_tags)
+                text_list[path] = text_file  # self.get_samples(text_file, open_tags, close_tags)
+
+        # for key, value in sorted(text_list.items()):
+        #     if options['text_mode'] == LayerTextModeChoice.completely:
+        #         text_segm_data[';'.join([key, f'[0-{options["max_words"]}]'])] = \
+        #             value[:options['max_words']]
+        #     elif options['text_mode'] == LayerTextModeChoice.length_and_step:
+        #         max_length = len(value)
+        #         cur_step = 0
+        #         stop_flag = False
+        #         while not stop_flag:
+        #             text_segm_data[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = value[
+        #                                                                                    cur_step:cur_step + length]
+        #             cur_step += options['step']
+        #             if cur_step + length > max_length:
+        #                 stop_flag = True
 
         for key, value in sorted(text_list.items()):
-            if options['text_mode'] == LayerTextModeChoice.completely:
-                text_segm_data[';'.join([key, f'[0-{options["max_words"]}]'])] = \
-                    value[:options['max_words']]
-            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-                max_length = len(value)
+            # self.get_samples(text_file, open_tags, close_tags)
+            value = value.split(' ')
+            if options['text_mode'] == 'completely':
+                iter_count = 0
+                adjust_flag = False
+                adjusted_length = length
+                while not adjust_flag:
+                    adjust_length = length - len(
+                        text_to_word_sequence(' '.join(value[0: adjusted_length]), options['filters'], lower=False))
+                    adjusted_length += adjust_length
+                    if adjust_length == 0 or iter_count == 10:
+                        adjust_flag = True
+                    iter_count += 1
+                text_segm_data[';'.join([str(key), f'[0-{adjusted_length}]'])] = \
+                    self.get_samples(' '.join(value[0: adjusted_length]), open_tags, close_tags)
+
+            elif options['text_mode'] == 'length_and_step':
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text_segm_data[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = value[
-                                                                                           cur_step:cur_step + length]
-                    cur_step += options['step']
-                    if cur_step + length > max_length:
+                    adjusted_length = length
+                    if cur_step + length < len(value):
+                        iter_count = 0
+                        adjust_flag = False
+                        while not adjust_flag:
+                            adjust_length = length - len(
+                                text_to_word_sequence(' '.join(value[cur_step: cur_step + adjusted_length]),
+                                                      options['filters'], lower=False))
+                            adjusted_length += adjust_length
+                            if adjust_length == 0 or iter_count == 10:
+                                adjust_flag = True
+                            iter_count += 1
+                    else:
                         stop_flag = True
+                    text_segm_data[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = \
+                        self.get_samples(' '.join(value[cur_step: cur_step + adjusted_length]), open_tags, close_tags)
+                    cur_step += options['step'] + (adjusted_length - length)
 
         text_sorted = []
         for elem in sorted(text_segm_data.keys()):
@@ -66,6 +105,7 @@ class TextSegmentationArray(Array):
                         'parameters': {'open_tags': options['open_tags'],
                                        'close_tags': options['close_tags'],
                                        'put': options['put'],
+                                       'cols_names': options['cols_names'],
                                        'num_classes': len(open_tags),
                                        'classes_names': open_tags,
                                        'length': length
