@@ -54,7 +54,7 @@ class ParametersMainData(BaseMixinData):
             _keys += ["open_tag", "close_tag", "alpha"]
         elif _type == BlockFunctionTypeChoice.PostprocessBoxes:
             _keys += ["score_threshold", "iou_threshold", "method", "sigma"]
-        elif _type == BlockFunctionTypeChoice.PlotBBoxes:
+        elif _type == BlockFunctionTypeChoice.PlotBboxes:
             _keys += ["classes", "colors", "line_thickness"]
         elif _type == BlockFunctionTypeChoice.FilterClasses:
             _keys += ["filter_classes"]
@@ -85,7 +85,7 @@ class ParametersMainData(BaseMixinData):
                 == PostprocessBoxesMethodAvailableChoice.soft_nms
             ):
                 cls.__fields__["sigma"].required = True
-        elif value == BlockFunctionTypeChoice.PlotBBoxes:
+        elif value == BlockFunctionTypeChoice.PlotBboxes:
             cls.__fields__["line_thickness"].required = True
         return value
 

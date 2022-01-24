@@ -346,7 +346,10 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.CGAN]
+GAN_ARCHITECTURE = [
+    ArchitectureChoice.GAN, ArchitectureChoice.CGAN, ArchitectureChoice.TextToImageGAN,
+    ArchitectureChoice.ImageToImageGAN
+]
 
 
 def reformat_fit_array(array: dict, train_idx: list = None):
@@ -891,7 +894,7 @@ def segmentation_metric(true_array, pred_array):
 
 def get_dataset_length(options):
     method_name = 'get_dataset_length'
-    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
+    logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
         train_length, val_length = 0, 0
         if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \
@@ -917,3 +920,9 @@ def set_preset_count(len_array: int, preset_percent: int) -> int:
         return 10
     else:
         return len_array
+
+
+def get_link_from_dataframe(dataframe, column, index):
+    link = dataframe[column][index]
+    link = link.split(";")[0]
+    return link

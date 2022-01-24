@@ -2,7 +2,7 @@
   <div :class="['t-field', { 't-field--inline': inline }]">
     <div class="t-field__label flex align-center" @click="click">
       <template v-if="icon">
-        <SvgContainer :name="icon" class="mr-1" />
+        <d-svg :name="icon" class="mr-1" />
       </template>
       <span>
         <slot name="label">{{ label }}</slot>

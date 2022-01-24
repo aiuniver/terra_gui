@@ -19,6 +19,7 @@ class SourceModeChoice(str, Enum):
 
 
 class LayerPrepareMethodChoice(str, Enum):
+    no_preparation = "no_preparation"
     embedding = "embedding"
     bag_of_words = "bag_of_words"
     word_to_vec = "word_to_vec"
@@ -188,6 +189,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Timeseries = "Timeseries"
     GAN = "GAN"
     CGAN = "CGAN"
+    TextToImageGAN = "TextToImageGAN"
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
@@ -231,5 +233,6 @@ class LayerOutputTypeChoice(str, Enum):
     Text2Speech = "Text2Speech"
     GAN = "GAN"
     CGAN = "CGAN"
+    TextToImageGAN = "TextToImageGAN"
     Discriminator = "Discriminator"
     Generator = "Generator"

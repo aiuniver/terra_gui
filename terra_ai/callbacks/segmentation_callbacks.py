@@ -10,7 +10,8 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \
-    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count
+    fill_graph_plot_data, sequence_length_calculator, get_segmentation_confusion_matrix, set_preset_count, \
+    get_link_from_dataframe
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -59,7 +60,6 @@ class BaseSegmentationCallback:
                 BaseSegmentationCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
             # logger.error(exc)
             raise exc
-
 
     @staticmethod
     def get_inverse_array(array: dict, options, type="output"):
@@ -153,8 +153,13 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
                 for column_name in options.dataframe.get(data_type).columns:
                     if column_name.split('_')[0] == f"{inp}":
                         column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
+            initial_file_path = get_link_from_dataframe(
+                dataframe=options.dataframe.get(data_type),
+                column=options.dataframe.get(data_type).columns[column_idx[0]],
+                index=example_id
+            )
             initial_file_path = os.path.join(
-                dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
+                dataset_path, initial_file_path  # options.dataframe.get(data_type).iat[example_id, column_idx[0]]
             )
             if not save_id:
                 return str(os.path.abspath(initial_file_path))
@@ -171,7 +176,7 @@ class ImageSegmentationCallback(BaseSegmentationCallback):
             if return_mode == 'callback':
                 source = os.path.join(preset_path, f"initial_data_image_{save_id}_input_{input_id}.webp")
                 img.save(source, 'webp')
-                data = [{"title": "Изображение", "value": source, "color_mark": None }]
+                data = [{"title": "Изображение", "value": source, "color_mark": None}]
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(

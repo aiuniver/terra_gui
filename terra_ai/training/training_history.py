@@ -153,7 +153,7 @@ class History:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
             if options.data.architecture in YOLO_ARCHITECTURE:
-                log_history['output'] = OUTPUT_LOG_CONFIG
+                log_history['output'] = copy.deepcopy(OUTPUT_LOG_CONFIG)
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
@@ -581,11 +581,11 @@ class History:
                     overfitting = True
                 if mode == 'max' and max(mean_log) != 0:
                     overfitting = True
-            # elif not mean_log[-1] or not min(mean_log) or not max(mean_log):
-            #     if mode == 'min' and not min(mean_log):
-            #         overfitting = True
-            #     if mode == 'max' and not max(mean_log) != 0:
-            #         overfitting = True
+            elif mean_log[-1] is None or min(mean_log) is None or max(mean_log) is None:
+                if mode == 'min' and not min(mean_log):
+                    overfitting = False
+                if mode == 'max' and not max(mean_log) != 0:
+                    overfitting = False
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:

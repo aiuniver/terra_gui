@@ -104,6 +104,35 @@ class ActivationChoice(str, Enum):
         return list(map(lambda item: item.value, ActivationChoice))
 
 
+class ResblockActivationChoice(str, Enum):
+    leaky_relu = "leaky_relu"
+    relu = "relu"
+    prelu = "prelu"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ResblockActivationChoice))
+
+
+class ResblockNormalizationChoice(str, Enum):
+    instance = "instance"
+    batch = "batch"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ResblockNormalizationChoice))
+
+
+class MergeLayerChoice(str, Enum):
+    concatenate = "concatenate"
+    add = "add"
+    multiply = "multiply"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, MergeLayerChoice))
+
+
 class InterpolationChoice(str, Enum):
     nearest = "nearest"
     bilinear = "bilinear"
@@ -165,6 +194,7 @@ class PretrainedModelPoolingChoice(str, Enum):
 class YOLOModeChoice(str, Enum):
     YOLOv3 = "YOLOv3"
     YOLOv4 = "YOLOv4"
+
     # YOLOv5 = "YOLOv5"
 
     @staticmethod
@@ -243,7 +273,7 @@ class LayerValueConfig(BaseMixinData):
 
     @validator("validation")
     def _validate_validation(
-        cls, value: LayerValidationMethodChoice, values
+            cls, value: LayerValidationMethodChoice, values
     ) -> LayerValidationMethodChoice:
         __value = values.get("value")
         if not __value:

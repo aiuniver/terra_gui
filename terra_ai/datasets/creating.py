@@ -735,6 +735,8 @@ class CreateDataset(object):
                 encoding = LayerEncodingChoice.none
                 classes_colors, classes_names, = [], []
                 for c_name, data in self.columns[key].items():
+                    if len(self.columns[key]) == 1:
+                        task = data['task']
                     if data['classes_colors']:
                         classes_colors += data['classes_colors']
                     if data['classes_names']:
@@ -786,13 +788,13 @@ class CreateDataset(object):
                                             ('orig_y', int(tmp_im[1]))])
                 else:
                     data_to_pass = data.instructions[0]
-                array = np.array([1])
-                if not self.tags[key][col_name] in ['discriminator', 'generator']:
-                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
-                                                                                       **{'preprocess': prep})
+                # array = np.array([1])
+                # if not self.tags[key][col_name] in ['discriminator', 'generator']:
+                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
+                                                                                   **{'preprocess': prep})
 
-                    array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                             **arr['parameters'])
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                         **arr['parameters'])
                 if isinstance(array, list):  # Условие для ObjectDetection
                     output_array = [arr for arr in array]
                 elif isinstance(array, tuple):
@@ -1081,6 +1083,8 @@ class CreateDataset(object):
                         for i, result in enumerate(results):
                             if psutil.virtual_memory()._asdict().get("percent") > 90:
                                 current_arrays = []
+                                progress.pool(self.progress_name,
+                                              error='Создание датасета прервано. Превышен доступный лимит ОЗУ.')
                                 raise Resource
                             # if isinstance(result, tuple):
                             #     augm_data = result[1]
@@ -1231,11 +1235,20 @@ class CreateDataset(object):
         elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
                 and len(creation_data.inputs) == 2:
             architecture = ArchitectureChoice.GAN
-        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
-                and len(creation_data.inputs) > 2:
-            architecture = ArchitectureChoice.CGAN
+        # elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+        #         and len(creation_data.inputs) > 2:
+        #     architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
+
+        out_list = []
+        for key, val in self.outputs.items():
+            out_list.append(val['task'])
+        if out_list == ['Generator', 'Discriminator']:
+            if len(self.inputs) == 2:
+                architecture = ArchitectureChoice.GAN
+            elif len(self.inputs) == 3:
+                architecture = ArchitectureChoice.CGAN
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,

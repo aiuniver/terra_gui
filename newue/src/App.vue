@@ -23,6 +23,7 @@
   }
   &__main {
     flex: 1 1 auto;
+    max-height: calc(100vh - 112px);
   }
   &__footer {
     flex: 0 0 58px;

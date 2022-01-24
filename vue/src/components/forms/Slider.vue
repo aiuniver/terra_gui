@@ -1,7 +1,7 @@
 <template>
   <div class="t-field">
     <div class="t-field__label">Train / Val</div>
-    <div class="slider" @mouseleave="stopDrag" @mouseup="stopDrag" ref="slider">
+    <div :class="['slider', { 'slider--disable': disable }]" @mouseleave="stopDrag" @mouseup="stopDrag" ref="slider">
       <div class="slider__inputs">
         <input name="[info][part][train]" type="number" :value="btnFirstVal" :data-degree="degree" />
         <input name="[info][part][validation]" type="number" :value="100 - btnFirstVal" :data-degree="degree" />
@@ -59,6 +59,7 @@ export default {
   }),
   props: {
     degree: Number,
+    disable: Boolean,
   },
   methods: {
     focus({ target }) {
@@ -148,6 +149,15 @@ export default {
       };
     },
   },
+  watch: {
+    disable(value) {
+      if (value) {
+        this.btnFirstVal = 0;
+      } else {
+        this.btnFirstVal = 70;
+      }
+    },
+  },
 };
 </script>
 
@@ -176,6 +186,7 @@ export default {
   height: 24px;
   background: #0e1621;
   border-radius: 4px;
+  position: relative;
   &__between {
     position: absolute;
     display: flex;
@@ -189,6 +200,7 @@ export default {
     background: #ffffff;
     border: none;
     cursor: move;
+    padding: 0;
     &:before {
       content: ' ';
       display: block;
@@ -212,6 +224,17 @@ export default {
   }
   &__inputs {
     display: none;
+  }
+  &--disable {
+    cursor: default;
+    opacity: 0.5;
+    &::after {
+      content: '';
+      display: block;
+      position: absolute;
+      height: 100%;
+      width: 100%;
+    }
   }
 }
 .scales {

@@ -12,7 +12,7 @@ const settings = {
       showDelay: 500,
       onlyShowBarOnScroll: false,
       keepShow: true,
-      background: '#242f3d',
+      background: '#4d6078',
       opacity: 1,
       hoverStyle: false,
       specifyBorderRadius: false,

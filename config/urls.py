@@ -20,7 +20,7 @@ import posixpath
 from pathlib import Path
 
 from django.urls import path
-from django.http import HttpResponseNotModified, FileResponse
+from django.http import HttpResponseNotModified, HttpResponseNotFound, FileResponse
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
@@ -33,9 +33,9 @@ def static_view(request, path, document_root=None):
     path = posixpath.normpath(path).lstrip("/")
     fullpath = Path(safe_join(document_root, path))
     if fullpath.is_dir():
-        return static_view(request, "index.html", document_root=document_root)
+        return HttpResponseNotFound()
     if not fullpath.exists():
-        return static_view(request, "index.html", document_root=document_root)
+        return HttpResponseNotFound()
     statobj = fullpath.stat()
     if not was_modified_since(
         request.META.get("HTTP_IF_MODIFIED_SINCE"), statobj.st_mtime, statobj.st_size
@@ -50,7 +50,13 @@ def static_view(request, path, document_root=None):
     return response
 
 
-urlpatterns = [
-    path("api/v1/", include("apps.api.urls", namespace="apps_api")),
-    path("_media/", include("apps.media.urls", namespace="apps_media")),
-] + static(settings.VUE_URL, view=static_view, document_root=settings.VUE_ROOT)
+urlpatterns = (
+    [
+        path("api/v1/", include("apps.api.urls", namespace="apps_api")),
+        path("_media/", include("apps.media.urls", namespace="apps_media")),
+    ]
+    + static(settings.STATIC_URL, view=static_view, document_root=settings.STATIC_ROOT)
+    + [
+        path("", include("apps.core.urls", namespace="apps_core")),
+    ]
+)

@@ -9,25 +9,26 @@ from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
 
 terra_custom_layers = {
-    "InstanceNormalization": "custom_objects/customLayers",
-    "VAEBlock": "custom_objects/customLayers",
-    "YOLOResBlock": "custom_objects/customLayers",
-    "YOLOv3ResBlock": "custom_objects/customLayers",
-    "YOLOConvBlock": "custom_objects/customLayers",
-    "Mish": "custom_objects/customLayers",
-    "DarkNetBatchNormalization": "custom_objects/customLayers",
-    "DarkNetConvolutional": "custom_objects/customLayers",
-    "DarkNetResBlock": "custom_objects/customLayers",
-    "DarkNetUpsample": "custom_objects/customLayers",
-    "CONVBlock": "custom_objects/customLayers",
-    "PSPBlock2D": "custom_objects/customLayers",
-    "UNETBlock2D": "custom_objects/customLayers",
-    "UNETBlock1D": "custom_objects/customLayers",
-    "UNETBlock3D": "custom_objects/customLayers",
-    "PSPBlock1D": "custom_objects/customLayers",
-    "PretrainedYOLO": "custom_objects/customLayers",
+    "InstanceNormalization": "customLayers",
+    "VAEBlock": "customLayers",
+    "YOLOResBlock": "customLayers",
+    "YOLOv3ResBlock": "customLayers",
+    "YOLOConvBlock": "customLayers",
+    "Mish": "customLayers",
+    "DarkNetBatchNormalization": "customLayers",
+    "DarkNetConvolutional": "customLayers",
+    "DarkNetResBlock": "customLayers",
+    "DarkNetUpsample": "customLayers",
+    "CONVBlock": "customLayers",
+    "PSPBlock2D": "customLayers",
+    "UNETBlock2D": "customLayers",
+    "UNETBlock1D": "customLayers",
+    "UNETBlock3D": "customLayers",
+    "PSPBlock1D": "customLayers",
+    "PretrainedYOLO": "customLayers",
     # "DarknetBatchNormalization": "custom_objects/pretrained_yolo"
-    "OnlyYolo": "custom_objects/customLayers",
+    "OnlyYolo": "customLayers",
+    "ConditionalMergeLayer": "customLayers",
 }
 
 
@@ -2053,6 +2054,99 @@ class ConditionalMergeLayer(layers.Layer):
         return cls(**config)
 
 
+class ResnetBlock2D(Layer):
+    """
+    UNET Block2D layer
+    n_pooling_branches - defines amt of downsampling/upsampling operations
+    filters_coef - defines the multiplication factor for amt of filters in pooling branches
+    n_conv_layers - number of conv layers in one downsampling/upsampling segment
+    """
+
+    def __init__(self, filters=16, kernel_size=(3, 3), kernel_initializer='RandomNormal', n_conv_layers=2,
+                 activation='relu',  # leaky_relu, prelu
+                 use_bias=True, use_activation_layer=True,
+                 normalization='instance',  # Batch
+                 merge_layer="concatenate",  # Add, Multiply
+                 num_resblocks=1, **kwargs):
+
+        super(ResnetBlock2D, self).__init__(**kwargs)
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.kernel_initializer = kernel_initializer
+        self.n_conv_layers = n_conv_layers
+        self.activation = activation
+        self.normalization = normalization
+        self.merge_layer = merge_layer
+        self.num_resblocks = num_resblocks
+        self.use_bias = use_bias
+        self.use_activation_layer = use_activation_layer
+
+        for i in range(self.num_resblocks):
+            for c in range(self.n_conv_layers):
+                setattr(self, f"conv_{c+1}_block_{i+1}",
+                        layers.Conv2D(filters=self.filters, kernel_size=self.kernel_size,
+                                      activation=None if self.use_activation_layer else self.activation,
+                                      data_format='channels_last',
+                                      groups=1, use_bias=self.use_bias,
+                                      kernel_initializer=self.kernel_initializer, padding='same',
+                                      bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
+                                      activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+                if self.normalization:
+                    if self.normalization == "batch":
+                        setattr(self, f"norm_{c+1}_block_{i+1}", layers.BatchNormalization())
+                    if self.normalization == "instance":
+                        setattr(self, f"norm_{c+1}_block_{i+1}", InstanceNormalization())
+                if self.use_activation_layer and c+1 < self.n_conv_layers:
+                    if self.activation == "leaky_relu":
+                        setattr(self, f"activation_{c+1}_block_{i+1}", layers.LeakyReLU())
+                    if self.activation == "relu":
+                        setattr(self, f"activation_{c+1}_block_{i+1}", layers.ReLU())
+                    if self.activation == "prelu":
+                        setattr(self, f"activation_{c+1}_block_{i+1}", layers.PReLU())
+            if self.merge_layer == "concatenate":
+                setattr(self, f"concat_block_{i+1}", layers.Concatenate())
+            if self.merge_layer == "add":
+                setattr(self, f"concat_block_{i}", layers.Add())
+            if self.merge_layer == "multiply":
+                setattr(self, f"concat_block_{i}", layers.Multiply())
+
+    def call(self, input_, training=True, **kwargs):
+        y = input_
+        for i in range(self.num_resblocks):
+            for c in range(self.n_conv_layers):
+                x = getattr(self, f"conv_{c+1}_block_{i+1}")(y)
+                if self.normalization:
+                    x = getattr(self, f"norm_{c+1}_block_{i+1}")(x)
+                if self.use_activation_layer and c+1 < self.n_conv_layers:
+                    x = getattr(self, f"activation_{c+1}_block_{i+1}")(x)
+            if i == 0:
+                y = getattr(self, f"concat_block_{i+1}")([y, x])
+            else:
+                y = getattr(self, f"concat_block_{i+1}")([y, x])
+        return y
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'kernel_initializer': self.kernel_initializer,
+            'n_conv_layers': self.n_conv_layers,
+            'activation': self.activation,
+            'normalization': self.normalization,
+            'merge_layer': self.merge_layer,
+            'num_resblocks': self.num_resblocks,
+            # 'use_normalization': self.use_normalization,
+            'use_bias': self.use_bias,
+            'use_activation_layer': self.use_activation_layer
+        }
+        base_config = super(ResnetBlock2D, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -2086,10 +2180,19 @@ if __name__ == "__main__":
     #     layer_range=None, show_layer_activations=False)
     # x = InstanceNormalization()
     # print(x.compute_output_shape(input_shape=(None, 100)))
+    params = {
+        'filters': 32, 'num_resblocks': 1, 'n_conv_layers': 2, 'normalization': 'batch',
+        'use_activation_layer': False, 'activation': 'leaky_relu', 'merge_layer': 'concatenate',
+        'kernel_size': [3, 3], 'kernel_initializer': 'glorot_uniform',
+        'use_bias': True,
+        'name': 'ResnetBlock2D_3'
+    }
 
-    input1 = tensorflow.keras.Input(shape=(10,))
-    input2 = tensorflow.keras.Input(shape=(32, 32, 3))
+    layer = ResnetBlock2D(**params)
+    input1 = tensorflow.keras.Input(shape=(32, 32, 64))
+    # input2 = tensorflow.keras.Input(shape=(32, 32, 3))
     # print(input)
-    x = ConditionalMergeLayer()([input1, input2])
+    x = layer(input1)
     print(x.shape)
+    print(layer.compute_output_shape(input_shape=(None, 32, 32, 64)))
     pass

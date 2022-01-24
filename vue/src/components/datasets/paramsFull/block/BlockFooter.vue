@@ -5,7 +5,7 @@
         <t-input-new
           class="block-footer__input-custom"
           v-model="nameProject"
-          :style="{ width: '150px'}"
+          :style="{ width: '150px' }"
           parse="[name]"
           small
           :error="nameError"
@@ -17,7 +17,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <Slider :degree="degree" />
+      <Slider :degree="degree"  :disable="isHide"/>
     </div>
     <div class="block-footer__item block-footer__item--checkbox">
       <t-checkbox parse="[info][shuffle]" reverse inline>Сохранить последовательность</t-checkbox>
@@ -50,6 +50,11 @@ export default {
       const arr = this.$store.state.datasets.inputData.map(item => item.layer);
       return !(arr.includes('input') && arr.includes('output'));
     },
+    isHide() {
+      const arr = this.$store.getters['datasets/getInputData'];
+      const hide = arr.filter(i => ['Tracker', 'Speech2Text'].includes(i.type)).map(i => i.type);
+      return Boolean(hide.length)
+    },
   },
   methods: {
     getObj() {
@@ -71,9 +76,9 @@ export default {
   &__item {
     flex: 0 0 150px;
     margin-right: 36px;
-    &--checkbox{
+    &--checkbox {
       flex: 0 0 250px;
-      margin: 5px 0 0 0
+      margin: 5px 0 0 0;
     }
   }
   input {
