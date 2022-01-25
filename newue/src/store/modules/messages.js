@@ -29,7 +29,6 @@ export default {
       commit('SET_PROGRESS', 0);
     },
     setMessage({ commit }, { error, message, info }) {
-      // console.log(message)
       commit('SET_COLOR', error ? 'error' : message ? 'success' : 'info');
       commit('SET_MESSAGE', error || message || info);
     },
@@ -37,17 +36,9 @@ export default {
       commit('SET_PROGRESS_MESSAGE', message);
     },
     setProgress({ commit }, progress) {
-      // console.log(progress)
       commit('SET_PROGRESS', ~~progress);
     },
     async setModel(_, { context, title = 'Предупреждение!', width = 300, okText = 'OK', showClose = true, content = 'Что не так ?!' }) {
-      console.log({
-        title,
-        width,
-        content,
-        showClose,
-        okText,
-      })
       try {
         return await context.$Modal.alert({ title, width, content, showClose, okText, });
       } catch (error) {

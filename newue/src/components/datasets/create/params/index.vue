@@ -1,62 +1,51 @@
 <template>
   <div class="params">
-    <BasePanel @action="handleActionPanel">
-      <template v-if="component === 'DatasetTabsDownload'">
-        <BasePanelContent noMargin>
-          <template #header>Данные</template>
-          <template #content>
-            <DatasetDownloadTabs class="mt-4" />
-          </template>
-        </BasePanelContent>
-      </template>
-      <template v-if="component === 'DatasetHelpers'">
-        <BasePanelContent>
-          <template #header>Данные</template>
-          <template #content>
-            <DatasetHelpers />
-          </template>
-        </BasePanelContent>
-      </template>
-      <template v-if="component === 'DataEnterDataset'">
-        <BasePanelContent>
-          <template #header>Данные</template>
-          <template #content>
-            <div class="mb-4">Выберите папку/файл</div>
-            <FileManager @chooseFile="chooseFile" :list="list" />
-          </template>
-        </BasePanelContent>
-        <BasePanelContent>
-          <template #header>Предпросмотр</template>
-          <template #content>
-            <DatasetPreview @choosePreview="choosePreview" :list="preview" />
-          </template>
-        </BasePanelContent>
-        <BasePanelContent>
-          <template #header>Настройки</template>
-          <template #content>
-            <DatasetSettings />
-          </template>
-        </BasePanelContent>
-      </template>
-    </BasePanel>
+    <div class="params__body">
+      <div class="params__header">Данные</div>
+      <scrollbar>
+        <div class="params__inner">
+          <component :is="getComp.component" :list="preview" />
+          <!-- <Download class="mt-4" />
+
+          <Helpers />
+
+          <FileManager @chooseFile="chooseFile" :list="files" />
+
+          <Preview @choosePreview="choosePreview" :list="preview" />
+
+          <Settings /> -->
+        </div>
+      </scrollbar>
+    </div>
+    <div class="params__footer">
+      <Pagination v-model="value" :title="getComp.title" />
+    </div>
   </div>
 </template>
 
 <script>
-import DatasetPreview from './DatasetPreview';
-import DatasetSettings from './DatasetSettings';
-import DatasetDownloadTabs from './DatasetDownloadTabs';
-import DatasetHelpers from './DatasetHelpers';
+import Preview from './Preview';
+import Settings from './Settings';
+import Download from './Download';
+import Helpers from './Helpers';
+import Pagination from './Pagination';
 export default {
   components: {
-    DatasetPreview,
-    DatasetSettings,
-    DatasetDownloadTabs,
-    DatasetHelpers,
+    Preview,
+    Settings,
+    Download,
+    Pagination,
+    Helpers,
   },
   data: () => ({
-    component: 'DatasetHelpers',
-    allComponents: ['DatasetTabsDownload', 'DatasetHelpers', 'DataEnterDataset'],
+    value: 1,
+    list: [
+      { id: 1, title: 'Download', component: 'download' },
+      { id: 2, title: 'Preview', component: 'Preview' },
+      { id: 3, title: 'Settings', component: 'settings' },
+      { id: 4, title: 'Helpers', component: 'helpers' },
+    ],
+
     preview: [
       {
         id: 1,
@@ -74,7 +63,7 @@ export default {
         label: 'Мерседес 3',
       },
     ],
-    list: [
+    files: [
       {
         id: 1,
         label: 'Мерседес',
@@ -122,6 +111,11 @@ export default {
       },
     ],
   }),
+  computed: {
+    getComp() {
+      return this.list.find(i => i.id === this.value);
+    },
+  },
   methods: {
     chooseFile(item) {
       console.log(item);
@@ -132,28 +126,35 @@ export default {
     handleWorkspaceAction(action) {
       console.log(action);
     },
-    handleActionPanel(action) {
-      let idx = this.allComponents.findIndex(el => el === this.component);
-      if (action === 'next') {
-        if (+idx < this.allComponents.length - 1) {
-          this.component = this.allComponents[++idx];
-        } else {
-          this.component = this.allComponents[0];
-        }
-      } else if (action === 'prev') {
-        if (+idx !== 0) {
-          this.component = this.allComponents[--idx];
-        } else {
-          this.component = this.allComponents[this.allComponents.length - 1];
-        }
-      }
-    },
   },
 };
 </script>
 
 <style lang="scss">
 .params {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  &__header {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid black;
+    padding: 0 20px;
+  }
+  &__inner {
+    padding: 0 20px;
     height: 100%;
+  }
+  &__body {
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+  &__footer {
+    border-top: 1px solid black;
+    flex: 0 0 70px;
+    padding: 10px 20px;
+  }
 }
 </style>
