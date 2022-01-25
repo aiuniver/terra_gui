@@ -698,6 +698,11 @@ class LayerResnetBlock2DData(LayerMixinData):
     extra: types.ResnetBlock2D.ParametersExtraData = (types.ResnetBlock2D.ParametersExtraData())
 
 
+class LayerTransformerData(LayerMixinData):
+    main: types.Transformer.ParametersMainData = types.Transformer.ParametersMainData()
+    extra: types.Transformer.ParametersExtraData = (types.Transformer.ParametersExtraData())
+
+
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
         types.PretrainedYOLO.ParametersMainData()

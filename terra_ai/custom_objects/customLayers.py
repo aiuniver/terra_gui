@@ -33,6 +33,7 @@ terra_custom_layers = {
     "OnlyYolo": "customLayers",
     "ConditionalMergeLayer": "customLayers",
     "ResnetBlock2D": "customLayers",
+    "Transformer": "customLayers",
 }
 
 
@@ -2307,34 +2308,45 @@ class TransformerDecoder(layers.Layer):
 
 
 class Transformer(layers.Layer):
-    def __init__(self, embed_dim=256, latent_dim=2048, num_heads=8, vocab_size=15000, sequence_length=20, **kwargs):
+    def __init__(self, embed_dim=256, latent_dim=2048, num_heads=8, vocab_size=10000, sequence_length=20, **kwargs):
         super(Transformer, self).__init__(**kwargs)
         self.embed_dim = embed_dim
         self.latent_dim = latent_dim
         self.num_heads = num_heads
         self.vocab_size = vocab_size
         self.sequence_length = sequence_length
-        self.transformer = self.create_transformer()
+        self.pos_emb_encoder = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)
+        self.tr_encoder = TransformerEncoder(self.embed_dim, self.latent_dim, self.num_heads)
+        self.pos_emb_decoder = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)
+        self.tr_decoder = TransformerDecoder(self.embed_dim, self.latent_dim, self.num_heads)
+        self.dr_decoder = layers.Dropout(0.5)
+        self.fn_decoder = layers.Dense(self.vocab_size, activation="softmax")
 
-    def create_transformer(self):
-        encoder_inputs = tensorflow.keras.Input(shape=(None,), dtype="int64", name="encoder_inputs")
-        x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(encoder_inputs)
-        encoder_outputs = TransformerEncoder(self.embed_dim, self.latent_dim, self.num_heads)(x)
-        encoder = tensorflow.keras.Model(encoder_inputs, encoder_outputs)
-
-        decoder_inputs = tensorflow.keras.Input(shape=(None,), dtype="int64", name="decoder_inputs")
-        encoded_seq_inputs = tensorflow.keras.Input(shape=(None, self.embed_dim), name="decoder_state_inputs")
-        x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(decoder_inputs)
-        x = TransformerDecoder(self.embed_dim, self.latent_dim, self.num_heads)(x, encoded_seq_inputs)
-        x = layers.Dropout(0.5)(x)
-        decoder_outputs = layers.Dense(self.vocab_size, activation="softmax")(x)
-        decoder = tensorflow.keras.Model([decoder_inputs, encoded_seq_inputs], decoder_outputs)
-
-        decoder_outputs = decoder([decoder_inputs, encoder_outputs])
-        return tensorflow.keras.Model([encoder_inputs, decoder_inputs], decoder_outputs, name="transformer")
+    # def create_transformer(self):
+    #     # encoder_inputs = tensorflow.keras.Input(shape=(self.sequence_length,), dtype="int64", name="encoder_inputs")
+    #     # x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(encoder_inputs)
+    #     # encoder_outputs = TransformerEncoder(self.embed_dim, self.latent_dim, self.num_heads)(x)
+    #     # encoder = tensorflow.keras.Model(encoder_inputs, encoder_outputs, name="encoder")
+    #
+    #     decoder_inputs = tensorflow.keras.Input(shape=(self.sequence_length,), dtype="int64", name="decoder_inputs")
+    #     encoded_seq_inputs = tensorflow.keras.Input(shape=(self.sequence_length, self.embed_dim), name="decoder_state_inputs")
+    #     # x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(decoder_inputs)
+    #     # x = TransformerDecoder(self.embed_dim, self.latent_dim, self.num_heads)(x, encoded_seq_inputs)
+    #     # x = layers.Dropout(0.5)(x)
+    #     # decoder_outputs = layers.Dense(self.vocab_size, activation="softmax")(x)
+    #     decoder = tensorflow.keras.Model([decoder_inputs, encoded_seq_inputs], decoder_outputs)
+    #
+    #     decoder_outputs = decoder([decoder_inputs, encoder_outputs])
+    #     return tensorflow.keras.Model([encoder_inputs, decoder_inputs], decoder_outputs, name="transformer")
 
     def call(self, input_, training=True, **kwargs):
-        return self.transformer(input_)
+        x = self.pos_emb_encoder(input_[0])
+        encoder_outputs = self.tr_encoder(x)
+        x = self.pos_emb_decoder(input_[1])
+        x = self.tr_decoder(x, encoder_outputs)
+        x = self.dr_decoder(x)
+        decoder_outputs = self.fn_decoder(x)
+        return decoder_outputs
 
     def get_config(self):
         config = {
@@ -2352,7 +2364,7 @@ class Transformer(layers.Layer):
         return cls(**config)
 
     def compute_output_shape(self, input_shape):
-        output_shape = (None, self.sequence_length, self.vocab_size)
+        output_shape = (None, input_shape[0][1], self.vocab_size)
         return output_shape
 
 
@@ -2397,20 +2409,19 @@ if __name__ == "__main__":
     #     'use_bias': False, 'kernel_size': [3, 3], 'kernel_initializer': 'random_normal',
     #     'dropout_rate': 0.1, 'leaky_relu_alpha': 0.3, 'name': 'UNETBlock2D_3'
     # }
-    params = {'n_conv_layers': 1, 'filters': 16, 'strides': (2, 6), 'normalization': 'instance', 'transpose': True,
-              'padding': 'valid', 'kernel_size': [10, 5]}
+    params = {'embed_dim': 256, 'latent_dim': 2048, 'num_heads': 8, 'vocab_size': 10000, "sequence_length": 25}
     # params = {
     #     'filters': 256, 'num_resblocks': 9, 'n_conv_layers': 2, 'use_activation_layer': True,
     #     'activation': 'relu', 'kernel_size': (3, 3), 'kernel_initializer': 'glorot_uniform',
     #     'normalization': 'instance', "merge_layer": 'concatenate', "use_bias": True
     # }
     # # for i in range(5):
-    input_shape = (None, 64, 64, 3)
-    layer = CONVBlock(**params)
-    input1 = tensorflow.keras.Input(shape=input_shape[1:])
-    # input2 = tensorflow.keras.Input(shape=(32, 32, 3))
+    input_shape = [(20, ), (20, )]
+    layer = Transformer(**params)
+    input1 = tensorflow.keras.Input(shape=input_shape[0])
+    input2 = tensorflow.keras.Input(shape=input_shape[1])
     # print(input)
-    x = layer(input1)
+    x = layer([input1, input2])
     print(x.shape)
     print(layer.compute_output_shape(input_shape=input_shape))
     pass

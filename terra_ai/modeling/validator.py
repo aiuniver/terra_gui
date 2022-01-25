@@ -88,7 +88,7 @@ class ModelValidator:
 
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
-        # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
         logger.info("Компиляция керас-кода модели...")
         self._plan_separation()
         self.keras_code = ""
@@ -170,7 +170,7 @@ class ModelValidator:
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
-        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        logger.debug(f"{self.name}, {self.get_validated.__name__}")
         logger.info("Валидация модели...")
         self._model_validation()
         if self.valid:
@@ -214,7 +214,7 @@ class ModelValidator:
 
     def get_keras_model(self):
         self._plan_separation()
-        # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
+        logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
         if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
@@ -234,7 +234,7 @@ class ModelValidator:
             return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
-        # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
+        logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
         _layer_str = ""
         if _block_uplinks:
             _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
@@ -303,7 +303,7 @@ class ModelValidator:
         return _layer_str
 
     def _build_model_plan(self):
-        # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
         # logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
@@ -412,8 +412,10 @@ class ModelValidator:
             for layer in self.model_plan:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
+                    logger.debug(f"self.output_shape: {layer}, {self.output_shape}, {self.layer_output_shapes}")
                     if self.output_shape[layer[0]] and \
-                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
+                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:] and \
+                            layer[1] != LayerTypeChoice.Transformer:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
@@ -423,6 +425,8 @@ class ModelValidator:
                                   self.layer_output_shapes[layer[0]]]
                         ))
                         logger.warning(f"Выходной слой {layer[0]}: {self.val_dictionary[layer[0]]}")
+                # elif layer[1] == LayerTypeChoice.Transformer:
+
             # check unspecified output layers
             for idx in self.end_row:
                 if idx not in outputs:
@@ -637,6 +641,8 @@ class LayerValidation:
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
+                        logger.debug(f"Transformer input_shape = {self.inp_shape}")
+                        logger.debug(f"Transformer output_shape = {output_shape}")
                         # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
                         #     logger.debug(f"ResnetBlock2D output_shape = {output_shape}")
                     # LSTM and GRU can returns list of one tuple of tensor shapes
@@ -1151,7 +1157,11 @@ class LayerValidation:
                     3, '', len(self.kwargs.get('down_links'))))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
-
+        # vocab_size and sequence_length
+        if self.layer_type == LayerTypeChoice.Transformer:
+            self.layer_parameters["vocab_size"] = 15000
+            self.layer_parameters["sequence_length"] = self.inp_shape[0][1]
+            logger.debug(f"self.layer_parameters {self.layer_parameters} : {self.inp_shape}")
 
 class CustomLayer(tensorflow.keras.layers.Layer):
     """Pattern for create custom user block from block plan"""
