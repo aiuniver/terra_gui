@@ -32,6 +32,8 @@ class Tags(dict, Enum):
     tracker = {"alias": "tracker", "name": "Tracker"}
     text_to_speech = {"alias": "text_to_speech", "name": "Text-to-Speech"}
     speech_to_text = {"alias": "speech_to_text", "name": "Speech-to-Text"}
+    gan = {"alias": "gan", "name": "GAN"}
+    cgan = {"alias": "cgan", "name": "CGAN"}
 
 
 OutputLayersDefaults = {
@@ -4368,6 +4370,188 @@ DatasetsGroups = [
                 "tags": [
                     Tags.image.value,
                     Tags.object_detection.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "mnist_gan",
+                "name": "Mnist GAN",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Вход 1",
+                        "shape": (32, 32, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "float32",
+                        "name": "Шум",
+                        "shape": (100,),
+                        "task": LayerInputTypeChoice.Noise.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value
+                    }
+                },
+                "outputs": {
+                    3: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Генератор",
+                        "shape": (32, 32, 3),
+                        "task": LayerOutputTypeChoice.Generator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "2D",
+                        "dtype": "int64",
+                        "name": "Дискриминатор",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Discriminator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.gan.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "chasy_gan",
+                "name": "Часы GAN",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Вход 1",
+                        "shape": (128, 128, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "float32",
+                        "name": "Шум",
+                        "shape": (100,),
+                        "task": LayerInputTypeChoice.Noise.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value
+                    }
+                },
+                "outputs": {
+                    3: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Генератор",
+                        "shape": (128, 128, 3),
+                        "task": LayerOutputTypeChoice.Generator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    4: {
+                        "datatype": "2D",
+                        "dtype": "int64",
+                        "name": "Дискриминатор",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Discriminator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.gan.value,
+                    Tags.terra_ai.value,
+                ],
+            },
+            {
+                "alias": "mnist_cgan",
+                "name": "Mnist CGAN",
+                "group": DatasetGroupChoice.terra.value,
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Вход 1",
+                        "shape": (32, 32, 3),
+                        "task": LayerInputTypeChoice.Image.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Вход 2",
+                        "shape": (10,),
+                        "task": LayerInputTypeChoice.Dataframe.value,
+                        "num_classes": 10,
+                        "classes_names": ["5", "0", "4", "1", "9", "2", "3", "6", "7", "8"],
+                        "encoding": LayerEncodingChoice.none.value
+                    },
+                    3: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "name": "Вход 3",
+                        "shape": (10,),
+                        "task": LayerInputTypeChoice.Dataframe.value,
+                        "num_classes": 10,
+                        "classes_names": ["5", "0", "4", "1", "9", "2", "3", "6", "7", "8"],
+                        "encoding": LayerEncodingChoice.none.value
+                    },
+                    4: {
+                        "datatype": "DIM",
+                        "dtype": "float32",
+                        "name": "Шум",
+                        "shape": (100,),
+                        "task": LayerInputTypeChoice.Noise.value,
+                        "num_classes": 1,
+                        "classes_names": [],
+                        "encoding": LayerEncodingChoice.none.value
+                    }
+                },
+                "outputs": {
+                    5: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "name": "Генератор",
+                        "shape": (32, 32, 3),
+                        "task": LayerOutputTypeChoice.Generator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                    6: {
+                        "datatype": "2D",
+                        "dtype": "int64",
+                        "name": "Дискриминатор",
+                        "shape": (1,),
+                        "task": LayerOutputTypeChoice.Discriminator.value,
+                        "num_classes": 1,
+                        "classes_names": ["mnist.csv"],
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
+                },
+                "tags": [
+                    Tags.image.value,
+                    Tags.cgan.value,
                     Tags.terra_ai.value,
                 ],
             },
