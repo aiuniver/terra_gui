@@ -393,6 +393,7 @@ TasksGroups = [
         "task": Task.Generator,
         "losses": [
             Loss.BinaryCrossentropy,
+            Loss.MeanAbsoluteError
         ],
         "metrics": [
             Metric.BinaryCrossentropy
@@ -402,6 +403,7 @@ TasksGroups = [
         "task": Task.Discriminator,
         "losses": [
             Loss.BinaryCrossentropy,
+            Loss.MeanAbsoluteError
         ],
         "metrics": [
             Metric.BinaryCrossentropy

@@ -1,11 +1,7 @@
 <template>
-  <div
-    class="d-input"
-    :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
-    v-outside="outside"
-  >
+  <div class="d-input" :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]" v-outside="outside">
     <div v-if="icon" class="d-input__icon">
-      <SvgContainer :name="icon" />
+      <d-svg :name="icon" />
     </div>
     <input
       v-model="input"
@@ -24,12 +20,14 @@
         <i class="ci-icon ci-caret_down" />
       </div>
     </div>
-    <div class="d-content">
-      <template v-for="({ label, value }, i) of list" >
-        <div class="d-content__item"  :key="label + i"  v-if="showContent" @click="change({ label, value })">
-          {{ label }}
-        </div>
-      </template>
+    <div v-if="showContent" class="d-content">
+      <scrollbar>
+        <template v-for="({ label, value }, i) of list">
+          <div class="d-content__item" :key="label + i" @click="change({ label, value })">
+            {{ label }}
+          </div>
+        </template>
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -52,35 +50,39 @@ export default {
       type: String,
       default: 'Введите текст',
     },
-    icon: String,
-    parse: [String, Number]
+    icon: {
+      type: String,
+      default: '',
+    },
+    parse: [String, Number],
   },
   data: () => ({
     input: '',
-    showContent: false
+    showContent: false,
   }),
   methods: {
     clear() {
       this.change({
-        label: '', value: ''
-      })
+        label: '',
+        value: '',
+      });
     },
     change({ label, value }) {
       this.$emit('change', { name: label, value });
       this.$emit('parse', { name: this.name, parse: this.parse, value });
-      this.input = label
-      this.showContent = false
+      this.input = label;
+      this.showContent = false;
     },
     expand() {
-      this.showContent = !this.showContent
+      this.showContent = !this.showContent;
     },
     outside() {
-      this.showContent = false
-    }
+      this.showContent = false;
+    },
   },
   created() {
-    this.input = this.list[0]?.label
-  }
+    this.input = this.list[0]?.label;
+  },
 };
 </script>
 
@@ -111,12 +113,13 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   z-index: 2;
+  height: 200px;
   &__item {
     padding: 10px;
     cursor: pointer;
 
     &:hover {
-      background-color: #0e1621;
+      background-color: #1e2734;
       color: #65b9f4;
     }
   }

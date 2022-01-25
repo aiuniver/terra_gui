@@ -61,6 +61,8 @@ class ArchitectureChoice(str, Enum):
     Text2Speech = "Text2Speech"
     GAN = "GAN"
     CGAN = "CGAN"
+    TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

@@ -104,6 +104,35 @@ class ActivationChoice(str, Enum):
         return list(map(lambda item: item.value, ActivationChoice))
 
 
+class ResblockActivationChoice(str, Enum):
+    leaky_relu = "leaky_relu"
+    relu = "relu"
+    prelu = "prelu"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ResblockActivationChoice))
+
+
+class NormalizationChoice(str, Enum):
+    instance = "instance"
+    batch = "batch"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, NormalizationChoice))
+
+
+class MergeLayerChoice(str, Enum):
+    concatenate = "concatenate"
+    add = "add"
+    multiply = "multiply"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, MergeLayerChoice))
+
+
 class InterpolationChoice(str, Enum):
     nearest = "nearest"
     bilinear = "bilinear"

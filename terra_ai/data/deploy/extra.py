@@ -25,6 +25,8 @@ class DeployTypeChoice(str, Enum):
     TinkoffAPI = "TinkoffAPI"
     GAN = "GAN"
     CGAN = "CGAN"
+    TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
 
     @property
     def demo(self) -> str:

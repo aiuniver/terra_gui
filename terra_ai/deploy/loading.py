@@ -5,20 +5,31 @@ import requests
 
 from pathlib import Path
 from subprocess import Popen, PIPE, STDOUT
-from django.conf import settings as django_settings
 
-from .. import progress, settings
-from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
-from ..exceptions.deploy import RequestAPIException
+from terra_ai import progress
+from terra_ai.progress import utils as progress_utils
+from terra_ai.data.deploy.stages import (
+    StageUploadData,
+    StageCompleteData,
+    StageResponseData,
+)
+from terra_ai.exceptions.deploy import RequestAPIException
 
-from ..progress import utils as progress_utils
 
 DEPLOY_PREPARE_TITLE = "Подготовка данных"
 DEPLOY_UPLOAD_TITLE = "Загрузка архива"
 
 
-def __run_rsync(progress_name: str, file: str, destination: str):
-    cmd = f'rsync -P -avz -e "ssh -i {Path(django_settings.BASE_DIR, "rsa.key")} -o StrictHostKeyChecking=no" {file} terra@188.124.47.137:{destination}'
+def __run_rsync(progress_name: str, data: StageUploadData, destination: str):
+    rsa_path = Path(f'./{data.server.get("domain_name")}.rsa.key')
+    try:
+        os.remove(rsa_path)
+    except Exception:
+        pass
+    with open(rsa_path, "w") as rsa_path_ref:
+        rsa_path_ref.write(f'{data.server.get("private_ssh_key")}\n')
+        rsa_path.chmod(0o600)
+    cmd = f'rsync -P -avz -e "ssh -i {rsa_path} -o StrictHostKeyChecking=no" {data.file.path} {data.server.get("user")}@{data.server.get("ip_address")}:{destination}'
     proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     while True:
         output = proc.stdout.readline().decode("utf-8")
@@ -46,9 +57,14 @@ def upload(source: Path, data: dict):
         os.rename(zip_destination, destination)
         data.update({"file": {"path": destination.absolute()}})
         upload_data = StageUploadData(**data)
+        deploy_url = (
+            f'https://{upload_data.server.get("domain_name")}/autodeployterra_upload/'
+        )
+        upload_data_dict = upload_data.native()
+        upload_data_dict.pop("server")
         upload_response = requests.post(
-            settings.DEPLOY_URL,
-            json=upload_data.native(),
+            deploy_url,
+            json=upload_data_dict,
             headers={"Content-Type": "application/json"},
         )
         if upload_response.ok:
@@ -56,9 +72,7 @@ def upload(source: Path, data: dict):
             if upload_response.get("success"):
                 progress.pool(progress_name, message=DEPLOY_UPLOAD_TITLE, percent=0)
                 __run_rsync(
-                    progress_name,
-                    upload_data.file.path,
-                    upload_response.get("destination"),
+                    progress_name, upload_data, upload_response.get("destination")
                 )
                 complete_data = StageCompleteData(
                     stage=2,
@@ -67,7 +81,7 @@ def upload(source: Path, data: dict):
                     project=upload_data.project.slug,
                 )
                 complete_response = requests.post(
-                    settings.DEPLOY_URL,
+                    deploy_url,
                     json=complete_data.native(),
                     headers={"Content-Type": "application/json"},
                 )

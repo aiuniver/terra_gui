@@ -73,6 +73,14 @@ class ArchitectureCGANData(ArchitectureBasicData):
     pass
 
 
+class ArchitectureTextToImageGANData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureImageToImageGANData(ArchitectureBasicData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(

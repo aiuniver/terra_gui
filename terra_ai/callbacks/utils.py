@@ -346,7 +346,10 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-GAN_ARCHITECTURE = [ArchitectureChoice.GAN, ArchitectureChoice.CGAN]
+GAN_ARCHITECTURE = [
+    ArchitectureChoice.GAN, ArchitectureChoice.CGAN, ArchitectureChoice.TextToImageGAN,
+    ArchitectureChoice.ImageToImageGAN
+]
 
 
 def reformat_fit_array(array: dict, train_idx: list = None):
@@ -917,3 +920,9 @@ def set_preset_count(len_array: int, preset_percent: int) -> int:
         return 10
     else:
         return len_array
+
+
+def get_link_from_dataframe(dataframe, column, index):
+    link = dataframe[column][index]
+    link = link.split(";")[0]
+    return link
