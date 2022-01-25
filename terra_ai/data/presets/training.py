@@ -16,6 +16,7 @@ class Task(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     Generator = "Generator"
     Discriminator = "Discriminator"
+    Text = "Text"
 
 
 class Loss(str, Enum):
@@ -32,7 +33,7 @@ class Loss(str, Enum):
     MeanSquaredError = "MeanSquaredError"
     MeanSquaredLogarithmicError = "MeanSquaredLogarithmicError"
     Poisson = "Poisson"
-    # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SquaredHinge = "SquaredHinge"
     YoloLoss = "YoloLoss"
 
@@ -69,7 +70,7 @@ class Metric(str, Enum):
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
     TrueNegatives = "TrueNegatives"
     TruePositives = "TruePositives"
-    # SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
+    SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     # SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     # SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     DiceCoef = "DiceCoef"
@@ -78,7 +79,6 @@ class Metric(str, Enum):
     mAP50 = "mAP50"
     mAP95 = "mAP95"
     PercentMAE = "PercentMAE"
-
 
 TasksGroups = [
     {
@@ -409,4 +409,56 @@ TasksGroups = [
             Metric.BinaryCrossentropy
         ],
     },
+    {
+        "task": Task.Text,
+        "losses": [
+            # Loss.BinaryCrossentropy,
+            # Loss.MeanAbsoluteError,
+            # Loss.CategoricalCrossentropy,
+            # Loss.CategoricalHinge,
+            # Loss.MeanSquaredError,
+            # Loss.CosineSimilarity,
+            # Loss.Hinge,
+            # Loss.Huber,
+            # Loss.LogCosh,
+            # Loss.KLDivergence,
+            # Loss.MeanAbsolutePercentageError,
+            # Loss.MeanSquaredLogarithmicError,
+            # Loss.Poisson,
+            # Loss.SquaredHinge,
+            Loss.SparseCategoricalCrossentropy,
+        ],
+        "metrics": [
+            # Metric.BalancedDiceCoef,
+            # Metric.DiceCoef,
+            # Metric.MeanIoU,
+            # Metric.BinaryAccuracy,
+            # Metric.AUC,
+            # Metric.MeanAbsoluteError,
+            # Metric.MeanSquaredError,
+            # Metric.RootMeanSquaredError,
+            # Metric.CategoricalAccuracy,
+            # Metric.CategoricalCrossentropy,
+            # Metric.Accuracy,
+            # Metric.BinaryCrossentropy,
+            # Metric.CategoricalHinge,
+            # Metric.CosineSimilarity,
+            # Metric.FalseNegatives,
+            # Metric.FalsePositives,
+            # Metric.Hinge,
+            # Metric.KLDivergence,
+            # Metric.LogCoshError,
+            # Metric.MeanAbsolutePercentageError,
+            # Metric.MeanSquaredLogarithmicError,
+            # Metric.Poisson,
+            # Metric.Precision,
+            # Metric.Recall,
+            # Metric.SquaredHinge,
+            # Metric.TrueNegatives,
+            # Metric.TruePositives,
+            Metric.SparseCategoricalAccuracy,
+            # Metric.SparseCategoricalCrossentropy,
+            # Metric.SparseTopKCategoricalAccuracy,
+        ],
+    }
 ]

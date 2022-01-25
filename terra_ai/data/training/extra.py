@@ -63,7 +63,7 @@ class ArchitectureChoice(str, Enum):
     CGAN = "CGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
-
+    TextText = "TextText"
 
 class CheckpointIndicatorChoice(str, Enum):
     Val = "Val"
@@ -110,6 +110,7 @@ class TaskChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     Generator = "Generator"
     Discriminator = "Discriminator"
+    Text = "Text"
 
 
 class LossChoice(str, Enum):

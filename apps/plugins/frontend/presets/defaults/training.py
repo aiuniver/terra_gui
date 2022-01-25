@@ -604,4 +604,5 @@ Architectures = {
     ArchitectureChoice.CGAN: {**ArchitectureBasicForm},
     ArchitectureChoice.TextToImageGAN: {**ArchitectureBasicForm},
     ArchitectureChoice.ImageToImageGAN: {**ArchitectureBasicForm},
+    ArchitectureChoice.TextText: {**ArchitectureBasicForm},
 }

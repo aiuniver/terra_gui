@@ -33,6 +33,7 @@ class ParametersMainData(BaseMixinData):
         embed_dim: PositiveInt = 256
         latent_dim: PositiveInt = 2048
         num_heads: PositiveInt = 8
+        vocab_size: PositiveInt = 15000
 
 class ParametersExtraData(BaseMixinData):
     pass

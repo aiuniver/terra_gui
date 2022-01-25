@@ -170,7 +170,7 @@ class ModelValidator:
 
     def get_validated(self):
         """Returns all necessary info about modeling"""
-        logger.debug(f"{self.name}, {self.get_validated.__name__}")
+        # logger.debug(f"{self.name}, {self.get_validated.__name__}")
         logger.info("Валидация модели...")
         self._model_validation()
         if self.valid:
@@ -1159,9 +1159,9 @@ class LayerValidation:
                 return exc
         # vocab_size and sequence_length
         if self.layer_type == LayerTypeChoice.Transformer:
-            self.layer_parameters["vocab_size"] = 15000
+            # self.layer_parameters["vocab_size"] = 15000
             self.layer_parameters["sequence_length"] = self.inp_shape[0][1]
-            logger.debug(f"self.layer_parameters {self.layer_parameters} : {self.inp_shape}")
+            logger.debug(f"self.layer_parameters {self.layer_parameters} : {self.inp_shape}, {self.kwargs}")
 
 class CustomLayer(tensorflow.keras.layers.Layer):
     """Pattern for create custom user block from block plan"""

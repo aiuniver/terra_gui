@@ -139,7 +139,7 @@ class GUINN:
 
             inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
             out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
-
+            logger.debug(f"inp_task_name + out_task_name {inp_task_name}, {out_task_name}")
             if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
                 deploy_type = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
             elif out_task_name in ArchitectureChoice.__dict__.keys():

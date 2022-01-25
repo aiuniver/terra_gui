@@ -81,6 +81,7 @@ class InteractiveCallback:
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
         # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.set_attributes.__name__}")
+        logger.debug(f"self.callback: {self.callback}")
         method_name = "set attributes"
         try:
             self.options = dataset

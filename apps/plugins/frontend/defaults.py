@@ -736,6 +736,10 @@ class ArchitectureImageToImageGANForm(ArchitectureBasicForm):
     pass
 
 
+class ArchitectureDataframeText(ArchitectureBasicForm):
+    pass
+
+
 class DefaultsTrainingData(BaseMixinData):
     architecture: ArchitectureChoice
     base: Optional[ArchitectureBaseForm]
