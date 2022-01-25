@@ -577,8 +577,6 @@ class History:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
             overfitting = False
             while None in mean_log:
-                # logger.debug(f"_evaluate_overfitting - mean_log: {mean_log}")
-                # while None in mean_log:
                 mean_log.pop(mean_log.index(None))
             if not mean_log:
                 overfitting = False

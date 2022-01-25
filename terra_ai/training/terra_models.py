@@ -910,7 +910,7 @@ class ConditionalGANTerraModel(GANTerraModel):
             disc_inputs = [inp.name for inp in discriminator.inputs]
             for out in options.data.columns.keys():
                 col_name = list(options.data.columns.get(out).keys())[0]
-                if options.data.columns.get(out).get(col_name).get('task') == 'Text':
+                if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
                     if f"{out}" in gen_inputs:
                         keys['gen_labels'] = f"{out}"
                     if f"{out}" in disc_inputs:
@@ -983,6 +983,7 @@ class ConditionalGANTerraModel(GANTerraModel):
                         buffer_size=params.base.batch).batch(params.base.batch):
                     cur_step += 1
                     image = GANTerraModel.add_noise_to_image(image_data.get(self.input_keys.get('image')))
+                    # logger.debug(f"self.input_keys: {self.input_keys, image_data.keys()}")
                     results = self.__train_step(
                         images=image,
                         gen_labels=image_data.get(self.input_keys.get('gen_labels')),
