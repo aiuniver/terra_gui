@@ -1,6 +1,8 @@
 import os
+from collections import Counter
 
 import librosa
+import tensorflow_hub
 import torch
 import grpc
 import wave
@@ -10,56 +12,41 @@ import base64
 import hmac
 import numpy as np
 
-from typing import Any
 from time import time
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 from mutagen import mp3
+from gtts import gTTS
+from io import BytesIO
+from scipy.spatial.distance import cosine
 
-from terra_ai.cascades.input_blocks import Input
-from terra_ai.cascades.main_blocks import CascadeBlock, BaseBlock
-from terra_ai.cascades.service.tracking import _Extractor, _NearestNeighborDistanceMetric, _Tracker, _Detection, \
-    _non_max_suppression
-from terra_ai.cascades.utils import stt_pb2, longrunning_pb2
+from .common import _associate_detections_to_trackers, _non_max_suppression
+from .advansed_services import _SpeechToTextStub, _KalmanBoxTracker
+from .function_blocks import ChangeSize
+from .input_blocks import Input
+from .main_blocks import CascadeBlock, BaseBlock
+from .advansed_services import _Extractor, _NearestNeighborDistanceMetric, _Tracker, _Detection
+from .utils import stt_pb2
 
 
 class BaseService(BaseBlock):
 
+    def __init__(self, **kwargs):
+        super().__init__()
+
+        self.path: str = ""
+
+    def set_path(self, model_path: str):
+        self.path = os.path.join(model_path, self.path)
+
     def execute(self):
         pass
-
-
-class _SpeechToTextStub(object):
-    """Speech recognition.
-    """
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.Recognize = channel.unary_unary(
-            '/tinkoff.cloud.stt.v1.SpeechToText/Recognize',
-            request_serializer=stt_pb2.RecognizeRequest.SerializeToString,
-            response_deserializer=stt_pb2.RecognizeResponse.FromString,
-        )
-        self.StreamingRecognize = channel.stream_stream(
-            '/tinkoff.cloud.stt.v1.SpeechToText/StreamingRecognize',
-            request_serializer=stt_pb2.StreamingRecognizeRequest.SerializeToString,
-            response_deserializer=stt_pb2.StreamingRecognizeResponse.FromString,
-        )
-        self.LongRunningRecognize = channel.unary_unary(
-            '/tinkoff.cloud.stt.v1.SpeechToText/LongRunningRecognize',
-            request_serializer=stt_pb2.LongRunningRecognizeRequest.SerializeToString,
-            response_deserializer=longrunning_pb2.Operation.FromString,
-        )
 
 
 class Wav2Vec(BaseService):
     processor = Wav2Vec2Processor.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
     model = Wav2Vec2ForCTC.from_pretrained("jonatasgrosman/wav2vec2-large-xlsr-53-russian")
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
 
     def execute(self):
@@ -177,18 +164,19 @@ class TinkoffAPI(BaseService):
         return jwt.decode("utf-8")
 
 
-class TextToSpeech(BaseService):
+class GoogleTTS(BaseService):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super().__init__()
+        self.language = kwargs.get("language", "ru")
 
     def execute(self):
-        sources = []
-        if isinstance(sources, str):
-            sources = [sources]
-
-        for source in sources:
-            yield source
+        text = list(self.inputs.values())[0].execute()
+        tts = gTTS(text, lang=self.language)
+        fp = BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return fp
 
 
 class YoloV5(BaseService):
@@ -223,11 +211,8 @@ class DeepSort(BaseService):
         self.min_confidence = kwargs.get("min_confidence", 0.3)
         self.nms_max_overlap = kwargs.get("nms_max_overlap", 1.0)
         self.height, self.width = None, None
-        model_path = kwargs.get("model_path", "")
-        if not os.path.isabs(model_path):
-            parent_dir = os.path.split(os.path.split(os.path.dirname(__file__))[0])[0]
-            model_path = os.path.join(parent_dir, model_path)
-        self.extractor = _Extractor(model_path)
+        self.path = ''
+        self.extractor = None
 
         max_cosine_distance = kwargs.get("max_dist", 0.2)
         max_iou_distance = kwargs.get("max_iou_distance", 0.7)
@@ -237,17 +222,23 @@ class DeepSort(BaseService):
         metric = _NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = _Tracker(metric, max_iou_distance=max_iou_distance, max_age=deep_max_age, n_init=n_init)
 
+    def set_path(self, model_path: str):
+        self.path = model_path
+        print(self.path)
+        self.extractor = _Extractor(self.path)
+        print(self.extractor)
+
     def execute(self):
         bbox_xyxy, ori_img = None, None
-        print(self.inputs)
+
         for input_type in self.inputs.keys():
             if input_type in Input.__dict__.keys():
                 ori_img = self.inputs.get(input_type).execute()
             else:
                 bbox_xyxy = self.inputs.get(input_type).execute()
-                print("DEEP: ", type(bbox_xyxy), bbox_xyxy.shape, bbox_xyxy)
                 if not len(bbox_xyxy):
                     return np.zeros((1, 5))
+
         confidences = bbox_xyxy[:, 4]
         bbox_xyxy = bbox_xyxy[:, :4].astype(int)
         self.height, self.width = ori_img.shape[:2]
@@ -329,15 +320,152 @@ class DeepSort(BaseService):
             im = ori_img[y1:y2, x1:x2]
             im_crops.append(im)
         if im_crops:
-            features = self.extractor(im_crops)
+            try:
+                features = self.extractor(im_crops)
+            except Exception as e:
+                print(e)
+                raise e
         else:
             features = np.array([])
         return features
 
 
+class Sort(BaseService):
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.max_age = kwargs.get("max_age", 5)
+        self.min_hits = kwargs.get("min_hits", 3)
+        self.trackers = []
+        self.frame_count = 0
+
+    def execute(self):
+        """
+            Params:
+              dots - a numpy array of detections in the format [[x1,y1,x2,y2,score],[x1,y1,x2,y2,score],...]
+            Requires: this method must be called once for each frame even with empty detections
+                (use np.empty((0, 5)) for frames without detections).
+            Returns the a similar array, where the last column is the object ID.
+            NOTE: The number of objects returned may differ from the number of detections provided.
+        """
+
+        dets = list(self.inputs.values())[0].execute()
+        if not len(dets):
+            return np.empty((0, 5))
+
+        self.frame_count += 1
+
+        # get predicted locations from existing trackers.
+        tracks = np.zeros((len(self.trackers), 5))
+        to_del = []
+        ret = []
+        for t, trk in enumerate(tracks):
+            pos = self.trackers[t].predict()[0]
+            trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
+            if np.any(np.isnan(pos)):
+                to_del.append(t)
+        tracks = np.ma.compress_rows(np.ma.masked_invalid(tracks))
+
+        for t in reversed(to_del):
+            self.trackers.pop(t)
+        matched, unmatched_dets, unmatched_trks = _associate_detections_to_trackers(dets, tracks)
+
+        # update matched trackers with assigned detections
+        for m in matched:
+            self.trackers[m[1]].update(dets[m[0], :])
+
+        # create and initialise new trackers for unmatched detections
+        for i in unmatched_dets:
+            trk = _KalmanBoxTracker(dets[i, :])
+            self.trackers.append(trk)
+        i = len(self.trackers)
+        for trk in reversed(self.trackers):
+            d = trk.get_state()[0]
+            if (trk.time_since_update < 1) and (trk.hit_streak >= self.min_hits or self.frame_count <= self.min_hits):
+                ret.append(np.concatenate((d, [trk.id + 1])).reshape(1, -1))  # +1 as MOT benchmark requires positive
+            i -= 1
+            # remove dead tracklet
+            if trk.time_since_update > self.max_age:
+                self.trackers.pop(i)
+        if len(ret) > 0:
+            return np.concatenate(ret)
+        return np.empty((0, 5))
+
+
+class BiTBasedTracker(BaseService):
+
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.distance_threshold = kwargs.get("distance_threshold", 0.15)
+        self.max_age = kwargs.get("max_age", 5)
+        self.metric = kwargs.get("metric", "")
+        self.peoples = {}
+        self.people_count = 0
+        self.module = tensorflow_hub.KerasLayer("https://tfhub.dev/google/bit/m-r50x1/1")
+
+        self.resizer = ChangeSize((128, 128, 3))
+        self.dead_tracks = Counter()
+
+        self.start_flag = True
+
+    def __call__(self, dets: np.ndarray, image: np.ndarray) -> np.ndarray:
+        out = []
+        crops = []
+        dets = dets[:, :4].astype(np.int)
+
+        for b in dets:
+            if b[0] == b[2] or b[1] == b[3]:
+                b[:2] -= 5
+                b[2:] += 5
+                b[b < 0] = 0
+
+            i = image[b[1]: b[3], b[0]: b[2]]
+            crops.append(self.resizer.execute(i))
+        crops = np.array(crops).astype(np.float32)
+        vectors = self.module(crops).numpy()
+
+        ids = list(self.peoples.keys())
+
+        if self.start_flag:
+            self.peoples = {n: i for n, i in enumerate(vectors)}
+            self.people_count = len(vectors)
+            self.start_flag = not self.start_flag
+        else:
+            for new_vec, box in zip(vectors, dets):
+                min_dist = 1
+                min_id = 0
+                for id in ids:
+                    dist = cosine(self.peoples[id], new_vec)
+                    if dist < min_dist:
+                        min_dist = dist
+                        min_id = id
+                if min_dist < self.distance_threshold:
+                    self.peoples[min_id] = np.mean(np.concatenate(
+                        (new_vec[np.newaxis, ...], self.peoples[min_id][np.newaxis, ...]), axis=0
+                    ), axis=0)
+                    current_id = min_id
+                    ids.remove(id)
+                else:
+                    self.peoples[self.people_count] = new_vec
+                    current_id = self.people_count
+                    self.people_count += 1
+
+                out.append(list(box) + [current_id])
+
+        for id in ids:
+            self.dead_tracks[id] += 1
+            if self.dead_tracks[id] >= self.max_age:
+                del self.dead_tracks[id]
+                del self.peoples[id]
+
+        return np.array(out)
+
+
 class Service(CascadeBlock):
     Wav2Vec = Wav2Vec
     TinkoffAPI = TinkoffAPI
-    TextToSpeech = TextToSpeech
+    GoogleTTS = GoogleTTS
     YoloV5 = YoloV5
     DeepSort = DeepSort
+    Sort = Sort
+    BiTBasedTracker = BiTBasedTracker

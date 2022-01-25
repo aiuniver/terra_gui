@@ -1,8 +1,8 @@
-from terra_ai.cascades.input_blocks import Input, BaseInput
-from terra_ai.cascades.model_blocks import Model, BaseModel
-from terra_ai.cascades.output_blocks import Output, BaseOutput
-from terra_ai.cascades.services_blocks import Service
-from terra_ai.cascades.function_blocks import Function
+from .input_blocks import Input, BaseInput
+from .model_blocks import Model, BaseModel
+from .output_blocks import Output, BaseOutput
+from .services_blocks import Service, DeepSort
+from .function_blocks import Function
 from terra_ai.data.cascades.blocks.extra import ObjectDetectionFilterClassesList
 
 
@@ -33,7 +33,7 @@ class BlockClasses:
         return None
 
     @staticmethod
-    def get(cascade_config: dict, model_path=None):
+    def get(cascade_config: dict, model_path=None, weight_path=None):
         cascade_blocks = cascade_config.get("blocks", [])
         blocks_ = {}
         for block in cascade_blocks:
@@ -44,8 +44,6 @@ class BlockClasses:
                     blocks_["output"] = id_
                 if issubclass(blocks_[id_].__class__, BaseInput):
                     blocks_["input"] = id_
-                if issubclass(blocks_[id_].__class__, BaseModel):
-                    blocks_[id_].set_path(model_path)
             block_inputs = block.get("bind").get("up")
             for bind in block_inputs:
                 if bind not in blocks_.keys():
@@ -53,12 +51,18 @@ class BlockClasses:
                 bind_type = BlockClasses.get_bind(cascade_blocks, bind).get("parameters").get("main").get("type")
                 blocks_.get(id_).inputs[bind_type] = blocks_.get(bind)
 
+        for idx, block in blocks_.items():
+            if issubclass(block.__class__, BaseModel):
+                block.set_path(model_path)
+            if issubclass(block.__class__, DeepSort):
+                block.set_path(weight_path)
+
         return blocks_
 
 
 class Cascade:
-    def __init__(self, model_path=None, **config):
-        self.blocks = BlockClasses.get(cascade_config=config, model_path=model_path)
+    def __init__(self, model_path=None, weight_path=None, **config):
+        self.blocks = BlockClasses.get(cascade_config=config, model_path=model_path, weight_path=weight_path)
         self.input_block = self.blocks.get(self.blocks["input"])
         self.output_block = self.blocks.get(self.blocks["output"])
 

@@ -9,9 +9,15 @@ from tensorflow.keras.models import load_model, model_from_json
 from tensorflow.keras import Model as KerasModel
 from tensorflow.keras.layers import Input
 
-from terra_ai.cascades.common import yolo_decode
-from terra_ai.cascades.main_blocks import BaseBlock, CascadeBlock
-from terra_ai.datasets.arrays_create import CreateArray
+from .common import yolo_decode
+from .main_blocks import BaseBlock, CascadeBlock
+
+package_dataset = "terra_ai.datasets"
+module = "arrays_create"
+if not importlib.util.find_spec(f"{package_dataset}.{module}"):
+    package_dataset = "cascades"
+
+CreateArray = getattr(importlib.import_module(f".{module}", package=package_dataset), "CreateArray")
 
 
 class BaseModel(BaseBlock):

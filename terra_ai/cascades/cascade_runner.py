@@ -13,9 +13,10 @@ from PIL import Image
 from pydantic.color import Color
 
 from terra_ai import progress
+from .cascade_data import Cascade
 from terra_ai.exceptions.cascades import TypeMismatchException
 from terra_ai.utils import check_error
-from terra_ai.cascades.common import decamelize
+from .common import decamelize
 from terra_ai.cascades.create import json2cascade
 from terra_ai.data.cascades.blocks.extra import FunctionParamsChoice, ObjectDetectionFilterClassesList, \
     BlockServiceTypeChoice
@@ -32,8 +33,14 @@ class CascadeRunner:
 
     def start_cascade(self, cascade_data: CascadeDetailsData, training_path: Path,
                       sources: Dict[int, List[str]], example_count):
-        print("CASCADE: ", cascade_data.native())
+        method_name = "start cascade"
+        logger.info("Запуск сборки каскада", extra={"type": "info"})
+        weight_path = self._add_deepsort_weight_path(cascade_data=cascade_data)
+
+        cascade = Cascade(**cascade_data.native(), model_path=training_path, weight_path=weight_path)
+
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
+
         type_, model, inputs_ids = self._get_task_type(cascade_data=cascade_data, training_path=training_path)
         sources = sources.get(inputs_ids[0])
         if not example_count:
@@ -47,57 +54,67 @@ class CascadeRunner:
                                           f"Будет обработано {len(sources)} примеров."
                            })
             example_count = len(sources)
-        method_name = "start cascade"
-        logger.info("Запуск сборки каскада", extra={"type": "info"})
-        config = CascadeCreator()
+        # method_name = "start cascade"
+        # logger.info("Запуск сборки каскада", extra={"type": "info"})
+        # config = CascadeCreator()
         try:
-            presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-            if os.path.exists(DEPLOY_PATH):
-                shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
-                os.makedirs(DEPLOY_PATH, exist_ok=True)
-            if not os.path.exists(presets_path):
-                os.makedirs(presets_path, exist_ok=True)
-
-            if model:
-                dataset_path = os.path.join(training_path, model, "model", "dataset.json")
-                if not os.path.exists(dataset_path):
-                    dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
-                with open(dataset_path, "r", encoding="utf-8") as dataset_config:
-                    dataset_config_data = json.load(dataset_config)
-                model_path = Path(os.path.join(training_path, model, "model"))
-                cascade_path = os.path.join(training_path, model)
-                config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
-                model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
-            else:
-                dataset_config_data = None
-                cascade_path = None
-                model_task = type_
-
-            cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data,
-                                                                          model_task=model_task,
-                                                                          dataset_data=dataset_config_data,
-                                                                          presets_path=presets_path)
-            logger.info(f"Конфиг каскада: {cascade_config}")
-            main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
+            #     presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
+            #     if os.path.exists(DEPLOY_PATH):
+            #         shutil.rmtree(DEPLOY_PATH, ignore_errors=True)
+            #         os.makedirs(DEPLOY_PATH, exist_ok=True)
+            #     if not os.path.exists(presets_path):
+            #         os.makedirs(presets_path, exist_ok=True)
+            #
+            #     if model:
+            #         dataset_path = os.path.join(training_path, model, "model", "dataset.json")
+            #         if not os.path.exists(dataset_path):
+            #             dataset_path = os.path.join(training_path, model, "model", "dataset", "config.json")
+            #         with open(dataset_path, "r", encoding="utf-8") as dataset_config:
+            #             dataset_config_data = json.load(dataset_config)
+            #         model_path = Path(os.path.join(training_path, model, "model"))
+            #         cascade_path = os.path.join(training_path, model)
+            #         config.copy_model(deploy_path=DEPLOY_PATH, model_path=model_path)
+            #         model_task = list(set([val.get("task") for key, val in dataset_config_data.get("outputs").items()]))[0]
+            #     else:
+            #         dataset_config_data = None
+            #         cascade_path = None
+            #         model_task = type_
+            #
+            #     cascade_config, classes, classes_colors = self._create_config(cascade_data=cascade_data,
+            #                                                                   model_task=model_task,
+            #                                                                   dataset_data=dataset_config_data,
+            #                                                                   presets_path=presets_path)
+            #     logger.info(f"Конфиг каскада: {cascade_config}")
+            #     main_block = json2cascade(path=cascade_path, cascade_config=cascade_config, mode="run")
 
             logger.info("Сборка каскада завершена", extra={"type": "success"})
             logger.info("Идет подготовка примеров", extra={"type": "info"})
-            presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
-                                             predict_path=str(DEPLOY_PATH), classes=classes,
-                                             classes_colors=classes_colors, example_count=example_count)
-            out_data = dict([
-                ("path_deploy", str(DEPLOY_PATH)),
-                ("type", type_),
-                ("data", presets_data)
-            ])
+            # presets_data = self._get_presets(sources=sources, type_=type_, cascade=main_block,
+            #                                  predict_path=str(DEPLOY_PATH), classes=classes,
+            #                                  classes_colors=classes_colors, example_count=example_count)
+            out_data = []
+            i = 1
+            for source in sources[:example_count]:
+                res = cascade.execute([
+                    source],
+                    f"F:\\test_result\\test_{i}")
+                out_data.append(res)
+                i += 1
 
-            with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
-                json.dump(out_data, config)
+            print(out_data)
+            # out_data = dict([
+            #     ("path_deploy", str(DEPLOY_PATH)),
+            #     ("type", type_),
+            #     ("data", presets_data)
+            # ])
+            #
+            # with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
+            #     json.dump(out_data, config)
 
             logger.info("Подготовка примеров выполнена.",
                         extra={"type": "success", "details": f"Подготовлено примеров: {example_count}"})
             progress.pool("cascade_start", message=f"Работа каскада завершена.", percent=100, finished=True)
-            return cascade_config
+            # return cascade_config
         except Exception as error:
             out_error = check_error(error, str(self.__class__.__name__), method_name)
             logger.error(out_error)
@@ -141,6 +158,15 @@ class CascadeRunner:
                 deploy_type = DeployTypeChoice.VideoObjectDetection
 
         return deploy_type, model, _inputs
+
+    @staticmethod
+    def _add_deepsort_weight_path(cascade_data: CascadeDetailsData):
+        for block in cascade_data.blocks:
+            if block.group == BlockGroupChoice.Service and \
+                    block.parameters.main.type == BlockServiceTypeChoice.DeepSort:
+                model_path = str(block.parameters.model_path)
+                return model_path
+        return
 
     def _create_config(self, cascade_data: CascadeDetailsData, model_task: str,
                        dataset_data: dict, presets_path: str):

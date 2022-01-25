@@ -2,12 +2,11 @@ import numpy as np
 import tensorflow as tf
 import cv2
 
-from abc import ABC, abstractmethod
 from PIL import Image, ImageDraw
 from random import randrange
 
-from terra_ai.cascades.input_blocks import Input
-from terra_ai.cascades.main_blocks import CascadeBlock, BaseBlock
+from .input_blocks import Input
+from .main_blocks import CascadeBlock, BaseBlock
 from terra_ai.data.cascades.blocks.extra import ObjectDetectionFilterClassesList
 
 
@@ -34,8 +33,9 @@ class ChangeSize(BaseFunction):
         super().__init__()
         self.format_size = format_size if len(format_size) != 3 else format_size[:2]
 
-    def execute(self):
-        image_ = list(self.inputs.values())[0].execute()
+    def execute(self, image_=None):
+        if not image_:
+            image_ = list(self.inputs.values())[0].execute()
         return tf.image.resize(image_, self.format_size).numpy()
 
 
@@ -206,7 +206,9 @@ class PlotBboxes(BaseFunction):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.classes = kwargs.get("classes", [])
+        self.classes = kwargs.get("classes", None)
+        if self.classes is None:
+            self.classes = ObjectDetectionFilterClassesList
         self.colors = kwargs.get("colors", [])
         if not self.colors:
             self.colors = [tuple((randrange(1, 256) for _ in range(3))) for _ in range(len(self.classes))]

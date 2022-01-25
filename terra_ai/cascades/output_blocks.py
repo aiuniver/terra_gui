@@ -5,6 +5,7 @@ import tensorflow
 
 from tensorflow.keras.utils import load_img
 from typing import Any
+from pydub import AudioSegment
 
 from terra_ai.cascades.main_blocks import CascadeBlock, BaseBlock
 
@@ -37,22 +38,29 @@ class TextOutput(BaseOutput):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.result_type = ".txt"
 
     def execute(self):
         source = self.cascade_input.prepare_sources()
         self.cascade_input.set_source(source)
-        with open(self.output_file, 'a') as f:
+        with open(f"{self.output_file}{self.result_type}", 'a') as f:
             f.write(str(list(self.inputs.values())[0].execute()) + '\n')
-        return self.output_file
+        return f"{self.output_file}{self.result_type}"
 
 
 class AudioOutput(BaseOutput):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.result_type = ".webm"
 
     def execute(self):
-        pass
+        source = self.cascade_input.prepare_sources()
+        self.cascade_input.set_source(source)
+        audio = list(self.inputs.values())[0].execute()
+        result = AudioSegment.from_file(audio, format="mp3")
+        result.export(f"{self.output_file}{self.result_type}", format="webm")
+        return f"{self.output_file}{self.result_type}"
 
 
 class DataframeOutput(BaseOutput):
@@ -78,12 +86,13 @@ class VideoFrameOutput(BaseOutput):
     def __init__(self, **kwargs):
         super().__init__()
         self.shape = (kwargs.get('width'), kwargs.get('height'))
+        self.result_type = ".webm"
 
     def execute(self):
         out = []
 
         writer = cv2.VideoWriter(
-            self.output_file, cv2.VideoWriter_fourcc(*"VP80"), 30, self.shape
+            f"{self.output_file}{self.result_type}", cv2.VideoWriter_fourcc(*"VP80"), 30, self.shape
         )
         sources = self.cascade_input.prepare_sources(self.shape)
 
