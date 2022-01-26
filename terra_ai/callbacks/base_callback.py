@@ -94,9 +94,13 @@ class FitCallback:
         }
         # аттрибуты для чекпоинта
         self.checkpoint_config = training_details.base.architecture.parameters.checkpoint
-        self.checkpoint_mode = self._get_checkpoint_mode()  # min max
+        if dataset.data.architecture in GAN_ARCHITECTURE:
+            self.checkpoint_interval = training_details.base.architecture.parameters.checkpoint.epoch_interval
+        else:
+            self.checkpoint_mode = self._get_checkpoint_mode()  # min max
+            self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
+        # self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
 
         self.samples_train = []
         self.samples_val = []

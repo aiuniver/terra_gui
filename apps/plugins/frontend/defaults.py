@@ -169,6 +169,54 @@ StatesTrainingBasicParamsDisabled = {
     ],
 }
 
+StatesTrainingGANParamsDisabled = {
+    StateStatusChoice.no_train: [
+        "architecture_parameters_outputs_%s_classes_quantity",
+    ],
+    StateStatusChoice.training: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.trained: [
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.stopped: [
+        "epochs",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.addtrain: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+}
+
+
 StatesTrainingBaseParamsDisabled = {
     "Basic": {**StatesTrainingBasicParamsDisabled},
     "ImageClassification": {**StatesTrainingBasicParamsDisabled},
@@ -183,10 +231,10 @@ StatesTrainingBaseParamsDisabled = {
     "VideoClassification": {**StatesTrainingBasicParamsDisabled},
     "YoloV3": {**StatesTrainingYoloParamsDisabled},
     "YoloV4": {**StatesTrainingYoloParamsDisabled},
-    "GAN": {**StatesTrainingBasicParamsDisabled},
-    "CGAN": {**StatesTrainingBasicParamsDisabled},
-    "TextToImageGAN": {**StatesTrainingBasicParamsDisabled},
-    "ImageToImageGAN": {**StatesTrainingBasicParamsDisabled},
+    "GAN": {**StatesTrainingGANParamsDisabled},
+    "CGAN": {**StatesTrainingGANParamsDisabled},
+    "TextToImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageToImageGAN": {**StatesTrainingGANParamsDisabled},
 }
 
 
@@ -211,30 +259,30 @@ class ArchitectureMixinForm(BaseMixinData):
                 _method(getattr(data, _key), **kwargs)
 
     def disable_by_state(
-            self, field, architecture: str = None, status: str = None, **kwargs
+        self, field, architecture: str = None, status: str = None, **kwargs
     ):
         if not architecture or not status:
             return
         if field.name in StatesTrainingBaseParamsDisabled.get(architecture, {}).get(
-                status, []
+            status, []
         ):
             field.disabled = True
 
     def disable_by_state_layer(
-            self,
-            field,
-            layer_id: int,
-            architecture: str = None,
-            status: str = None,
-            **kwargs,
+        self,
+        field,
+        layer_id: int,
+        architecture: str = None,
+        status: str = None,
+        **kwargs,
     ):
         if not architecture or not status:
             return
         if field.name in list(
-                map(
-                    lambda item: item % str(layer_id) if "%s" in item else item,
-                    StatesTrainingBaseParamsDisabled.get(architecture, {}).get(status, []),
-                )
+            map(
+                lambda item: item % str(layer_id) if "%s" in item else item,
+                StatesTrainingBaseParamsDisabled.get(architecture, {}).get(status, []),
+            )
         ):
             field.disabled = True
 
@@ -388,7 +436,7 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
         self.disable_by_state(fields[0], **kwargs)
 
     def _set_optimizer_parameters_extra_initial_accumulator_value(
-            self, value, **kwargs
+        self, value, **kwargs
     ):
         fields = list(
             filter(
@@ -501,7 +549,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name
-                             == "architecture_parameters_checkpoint_metric_name",
+                == "architecture_parameters_checkpoint_metric_name",
                 self.checkpoint.fields,
             )
         )
@@ -518,7 +566,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
         fields_outputs = list(
             filter(
                 lambda item: item.name
-                             == f"architecture_parameters_outputs_{fields_layer[0].value}_metrics",
+                == f"architecture_parameters_outputs_{fields_layer[0].value}_metrics",
                 self.outputs.fields.get(fields_layer[0].value, {}).get("fields"),
             )
         )
@@ -576,7 +624,7 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name
-                             == "architecture_parameters_checkpoint_indicator",
+                == "architecture_parameters_checkpoint_indicator",
                 self.checkpoint.fields,
             )
         )
@@ -590,6 +638,20 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
         fields = list(
             filter(
                 lambda item: item.name == "architecture_parameters_checkpoint_mode",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+        self.disable_by_state(fields[0], **kwargs)
+
+    def _set_architecture_parameters_checkpoint_epoch_interval(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name
+                == "architecture_parameters_checkpoint_epoch_interval",
                 self.checkpoint.fields,
             )
         )
@@ -683,7 +745,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
         fields = list(
             filter(
                 lambda item: item.name
-                             == "architecture_parameters_yolo_yolo_iou_loss_thresh",
+                == "architecture_parameters_yolo_yolo_iou_loss_thresh",
                 self.yolo.fields,
             )
         )
@@ -697,7 +759,7 @@ class ArchitectureYoloBaseForm(ArchitectureBaseForm):
         fields = list(
             filter(
                 lambda item: item.name
-                             == "architecture_parameters_yolo_train_warmup_epochs",
+                == "architecture_parameters_yolo_train_warmup_epochs",
                 self.yolo.fields,
             )
         )
@@ -805,8 +867,8 @@ class DefaultsData(BaseMixinData):
         if deploy_model_fields:
             deploy_model_field = deploy_model_fields[0]
             deploy_model_field.list = [
-                                          {"value": "__current", "label": "Текущее обучение"}
-                                      ] + options
+                {"value": "__current", "label": "Текущее обучение"}
+            ] + options
             if deploy_model_field.value not in deploy_model_field.list:
                 deploy_model_field.value = (
                     deploy_model_field.list[0].get("value")
