@@ -1105,10 +1105,35 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
     def __init__(self, model: dict, model_name: str, model_path: Path, options: PrepareDataset):
         super().__init__(model=model, model_name=model_name, model_path=model_path, options=options)
         self.noise = ConditionalGANTerraModel.get_noise(options)
-        self.input_keys = ConditionalGANTerraModel.get_input_keys(
+        self.input_keys = TextToImageGANTerraModel.get_input_keys(
             generator=self.generator, discriminator=self.discriminator, options=options)
         self.seed: dict = self.__prepare_tti_gan_seed(options=options, noise=self.noise)
         pass
+
+    @staticmethod
+    def get_input_keys(generator, discriminator, options: PrepareDataset) -> dict:
+        method_name = '__get_input_keys'
+        try:
+            keys = {}
+            gen_inputs = [inp.name for inp in generator.inputs]
+            disc_inputs = [inp.name for inp in discriminator.inputs]
+            for out in options.data.columns.keys():
+                col_name = list(options.data.columns.get(out).keys())[0]
+                if options.data.columns.get(out).get(col_name).get('task') == 'Text':
+                    if f"{out}" in gen_inputs:
+                        keys['gen_labels'] = f"{out}"
+                    if f"{out}" in disc_inputs:
+                        keys['disc_labels'] = f"{out}"
+                if options.data.columns.get(out).get(col_name).get('task') == 'Image':
+                    keys['image'] = f"{out}"
+                if options.data.columns.get(out).get(col_name).get('task') == 'Noise':
+                    keys['noise'] = f"{out}"
+            logger.debug(f"__get_input_keys - keys - {keys}")
+            return keys
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
 
     @staticmethod
     def __prepare_tti_gan_seed(options: PrepareDataset, noise):
@@ -1159,7 +1184,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         method_name = 'fit'
         try:
             inp = self.input_keys.get('gen_labels')
-            # logger.
+            logger.debug(f"{inp, type(inp), dataset.data.columns.keys()}")
             column = list(dataset.data.columns.get(int(inp)).keys())[0]
             y_true_text = dataset.dataframe.get('train')[column].tolist()
             shape = [len(y_true_text)]
@@ -1483,7 +1508,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 ImageToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    @staticmethod
+    # @staticmethod
     def predict(self, data_array, options: Optional[PrepareDataset]):
         input_keys = self.__get_input_keys(options=options)
         gen_array = data_array.get(input_keys.get('gen_images'))
