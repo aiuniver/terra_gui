@@ -613,9 +613,9 @@ class GANTerraModel:
         self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
         self.generator_weights = "generator_weights"
-        self.file_path_gen_weights = os.path.join(self.saving_path, "last", self.generator_weights)
+        self.file_path_gen_weights = os.path.join(self.saving_path, self.generator_weights)
         self.discriminator_weights = "discriminator_weights"
-        self.file_path_disc_weights = os.path.join(self.saving_path, "last", self.discriminator_weights)
+        self.file_path_disc_weights = os.path.join(self.saving_path, self.discriminator_weights)
 
         if not model:
             self.load()
@@ -660,11 +660,11 @@ class GANTerraModel:
 
     def save_weights(self, gw_path_=None, dw_path_=None, save_type: str = "last"):
         if not gw_path_:
-            gw_path_ = os.path.join(self.saving_path, f"{save_type}", self.generator_weights)
+            gw_path_ = os.path.join(self.saving_path, self.generator_weights)
         self.generator.save_weights(gw_path_)
         logger.debug(f"self.generator.save_weights: {gw_path_}")
         if not dw_path_:
-            dw_path_ = os.path.join(self.saving_path, f"{save_type}", self.discriminator_weights)
+            dw_path_ = os.path.join(self.saving_path, self.discriminator_weights)
         self.discriminator.save_weights(dw_path_)
         logger.debug(f"self.discriminator.save_weights: {dw_path_}")
 
@@ -862,7 +862,7 @@ class GANTerraModel:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                self.predict(data_array=None, options=None)
+                # self.predict(data_array=None, options=None)
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1077,10 +1077,10 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
 
             self.callback.on_train_end()
         except Exception as error:
@@ -1298,10 +1298,10 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1498,10 +1498,10 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
