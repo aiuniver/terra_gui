@@ -237,6 +237,7 @@ DatasetsGroups = [
                 "alias": "mnist",
                 "name": "Mnist",
                 "group": "keras",
+                "architecture": ArchitectureChoice.ImageClassification.name,
                 "inputs": {
                     1: {
                         "datatype": "2D",
@@ -320,6 +321,7 @@ DatasetsGroups = [
                 "alias": "fashion_mnist",
                 "name": "Fashion mnist",
                 "group": DatasetGroupChoice.keras.value,
+                "architecture": ArchitectureChoice.ImageClassification.name,
                 "inputs": {
                     1: {
                         "datatype": "2D",
@@ -401,6 +403,7 @@ DatasetsGroups = [
                 "alias": "cifar10",
                 "name": "Cifar 10",
                 "group": DatasetGroupChoice.keras.value,
+                "architecture": ArchitectureChoice.ImageClassification.name,
                 "inputs": {
                     1: {
                         "datatype": "2D",
@@ -482,6 +485,7 @@ DatasetsGroups = [
                 "alias": "cifar100",
                 "name": "Сifar 100",
                 "group": DatasetGroupChoice.keras.value,
+                "architecture": ArchitectureChoice.ImageClassification.name,
                 "inputs": {
                     1: {
                         "datatype": "2D",
@@ -3980,7 +3984,7 @@ DatasetsGroups = [
                     Tags.terra_ai.value,
                 ],
             },
-{
+            {
                 "alias": "brain_tumor",
                 "name": "Опухоль мозга",
                 "architecture": ArchitectureChoice.ImageClassification.name,
@@ -4181,7 +4185,11 @@ DatasetsGroups = [
                         "shape": (52, 52, 3, 18),
                         "task": LayerOutputTypeChoice.ObjectDetection.value,
                         "num_classes": 3,
-                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "classes_names": [
+                            "mask_weared_incorrect",
+                            "with_mask",
+                            "without_mask",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     },
                     3: {
@@ -4191,7 +4199,11 @@ DatasetsGroups = [
                         "shape": (26, 26, 3, 18),
                         "task": LayerOutputTypeChoice.ObjectDetection.value,
                         "num_classes": 3,
-                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "classes_names": [
+                            "mask_weared_incorrect",
+                            "with_mask",
+                            "without_mask",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     },
                     4: {
@@ -4201,7 +4213,11 @@ DatasetsGroups = [
                         "shape": (13, 13, 3, 18),
                         "task": LayerOutputTypeChoice.ObjectDetection.value,
                         "num_classes": 3,
-                        "classes_names": ["mask_weared_incorrect", "with_mask", "without_mask"],
+                        "classes_names": [
+                            "mask_weared_incorrect",
+                            "with_mask",
+                            "without_mask",
+                        ],
                         "encoding": LayerEncodingChoice.none.value,
                     },
                 },
@@ -4396,8 +4412,8 @@ DatasetsGroups = [
                         "task": LayerInputTypeChoice.Noise.value,
                         "num_classes": 1,
                         "classes_names": [],
-                        "encoding": LayerEncodingChoice.none.value
-                    }
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
                 },
                 "outputs": {
                     3: {
@@ -4450,8 +4466,8 @@ DatasetsGroups = [
                         "task": LayerInputTypeChoice.Noise.value,
                         "num_classes": 1,
                         "classes_names": [],
-                        "encoding": LayerEncodingChoice.none.value
-                    }
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
                 },
                 "outputs": {
                     3: {
@@ -4503,8 +4519,19 @@ DatasetsGroups = [
                         "shape": (10,),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "num_classes": 10,
-                        "classes_names": ["5", "0", "4", "1", "9", "2", "3", "6", "7", "8"],
-                        "encoding": LayerEncodingChoice.none.value
+                        "classes_names": [
+                            "5",
+                            "0",
+                            "4",
+                            "1",
+                            "9",
+                            "2",
+                            "3",
+                            "6",
+                            "7",
+                            "8",
+                        ],
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                     3: {
                         "datatype": "DIM",
@@ -4513,8 +4540,19 @@ DatasetsGroups = [
                         "shape": (10,),
                         "task": LayerInputTypeChoice.Dataframe.value,
                         "num_classes": 10,
-                        "classes_names": ["5", "0", "4", "1", "9", "2", "3", "6", "7", "8"],
-                        "encoding": LayerEncodingChoice.none.value
+                        "classes_names": [
+                            "5",
+                            "0",
+                            "4",
+                            "1",
+                            "9",
+                            "2",
+                            "3",
+                            "6",
+                            "7",
+                            "8",
+                        ],
+                        "encoding": LayerEncodingChoice.none.value,
                     },
                     4: {
                         "datatype": "DIM",
@@ -4524,8 +4562,8 @@ DatasetsGroups = [
                         "task": LayerInputTypeChoice.Noise.value,
                         "num_classes": 1,
                         "classes_names": [],
-                        "encoding": LayerEncodingChoice.none.value
-                    }
+                        "encoding": LayerEncodingChoice.none.value,
+                    },
                 },
                 "outputs": {
                     5: {
