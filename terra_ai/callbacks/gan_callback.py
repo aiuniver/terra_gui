@@ -38,6 +38,7 @@ class GANCallback:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
+            array = np.array(array)
             if array is None:
                 logger.warning("postprocess_deploy: array is None")
 
@@ -109,6 +110,7 @@ class GANCallback:
         try:
             # data = {"y_true": {}, "y_pred": {}, "stat": {}}
             if return_mode == 'deploy':
+                # predict_array = predict_array / predict_array.max() if predict_array.max() > 1 else predict_array
                 # predict_array = predict_array.astype("uint8")
                 img_save_path = os.path.join(save_path, "deploy_presets", f"gan_postprocessing_{image_id}.webp")
                 return_path = os.path.join("deploy_presets", f"gan_postprocessing_{image_id}.webp")
@@ -243,6 +245,7 @@ class CGANCallback:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
+            array = np.array(array)
             if array is None:
                 logger.warning("postprocess_deploy: array is None")
 
@@ -532,6 +535,7 @@ class TextToImageGANCallback:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
+            array = np.array(array)
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
                 if len(options.data.outputs.keys()) > 1:
@@ -736,6 +740,7 @@ class ImageToImageGANCallback:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}
+            array = np.array(array)
             for i, output_id in enumerate(options.data.outputs.keys()):
                 true_array = get_y_true(options, output_id)
                 if len(options.data.outputs.keys()) > 1:
