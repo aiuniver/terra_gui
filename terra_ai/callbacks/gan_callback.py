@@ -316,7 +316,7 @@ class CGANCallback:
                 shuffle(shuffle_idx)
                 for i in shuffle_idx:
                     example_idx[name_list[i]] = np.array(seed_array[name_list[i]][:3], dtype='float32')
-            if choice_type == ExampleChoiceTypeChoice.random and return_mode == 'depoy':
+            elif choice_type == ExampleChoiceTypeChoice.random and return_mode == 'deploy':
                 range_id = np.arange(len(array))
                 example_idx = np.random.choice(range_id, count)
             else:
