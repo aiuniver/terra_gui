@@ -146,13 +146,20 @@ class GANCallback:
             total_length = len(options.dataframe.get('train'))
             idxs = np.random.randint(0, total_length, 3)
             column_disc = ''
-            for column in options.dataframe.get('train').columns:
-                if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
-                    column_disc = column
+            # logger.debug(f"{options.dataframe.get('train').columns}")
+            for out in options.data.columns.keys():
+                col_name = list(options.data.columns.get(out).keys())[0]
+                if options.data.columns.get(out).get(col_name).get('task') == 'Image':
+                    column_disc = col_name
                     break
+            # for column in options.dataframe.get('train').columns:
+            #     if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
+            #         column_disc = column
+            #         break
             _id = 1
             data = {"type": "image", "data": []}
             for idx in idxs:
+                # logger.debug(f"get_link_from_dataframe: {total_length, column_disc, idx}")
                 initial_file_path = get_link_from_dataframe(
                     dataframe=options.dataframe.get('train'),
                     column=column_disc,
@@ -365,10 +372,15 @@ class CGANCallback:
             # total_length = len(labels.get(label))
             idxs = np.random.choice(labels.get(label), 3)
             column_disc = ''
-            for column in options.dataframe.get('train').columns:
-                if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
-                    column_disc = column
+            for out in options.data.columns.keys():
+                col_name = list(options.data.columns.get(out).keys())[0]
+                if options.data.columns.get(out).get(col_name).get('task') == 'Image':
+                    column = col_name
                     break
+            # for column in options.dataframe.get('train').columns:
+            #     if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
+            #         column_disc = column
+            #         break
             _id = 1
             data = {"type": "image", "data": []}
             for idx in idxs:
