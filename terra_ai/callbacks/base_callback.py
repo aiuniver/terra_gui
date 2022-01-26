@@ -1,3 +1,5 @@
+import datetime
+
 import psutil
 import time
 import pynvml as N
@@ -347,6 +349,10 @@ class FitCallback:
             )
 
             self._set_result_data({'train_data': train_epoch_data})
+            if self.last_epoch % self.checkpoint_interval == 0:
+                name = f"{datetime.datetime.now().date()}_{self.dataset.data.name}_" \
+                       f"{self.dataset.data.architecture}_{self.last_epoch}".replace("-", "_").replace(" ", "_")
+                self.training_detail.save(name, overwrite=True)
             progress.pool(
                 self.progress_name,
                 percent=self.last_epoch / (
