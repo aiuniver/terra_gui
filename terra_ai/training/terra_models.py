@@ -862,7 +862,7 @@ class GANTerraModel:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                self.predict(data_array=None, options=None)
+                # self.predict(data_array=None, options=None)
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1077,10 +1077,10 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
 
             self.callback.on_train_end()
         except Exception as error:
@@ -1273,10 +1273,10 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1473,10 +1473,10 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                for image_data, _ in dataset.dataset.get('train').shuffle(
-                        buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                    self.predict(data_array=image_data, options=dataset)
-                    break
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
