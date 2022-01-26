@@ -652,11 +652,11 @@ class GANTerraModel:
 
     def save_weights(self, gw_path_=None, dw_path_=None, save_type: str = "last"):
         if not gw_path_:
-            gw_path_ = os.path.join(self.saving_path, f"{save_type}_", self.generator_weights)
+            gw_path_ = os.path.join(self.saving_path, f"{save_type}", self.generator_weights)
         self.generator.save_weights(gw_path_)
         logger.debug(f"self.generator.save_weights: {gw_path_}")
         if not dw_path_:
-            dw_path_ = os.path.join(self.saving_path, f"{save_type}_", self.discriminator_weights)
+            dw_path_ = os.path.join(self.saving_path, f"{save_type}", self.discriminator_weights)
         self.discriminator.save_weights(dw_path_)
         logger.debug(f"self.discriminator.save_weights: {dw_path_}")
 
