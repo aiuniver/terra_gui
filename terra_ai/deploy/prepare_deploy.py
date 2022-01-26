@@ -92,10 +92,17 @@ class DeployCreator:
                                 else:
                                     predict = copy(batch)
                         else:
-                            predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
+                            if dataset.data.architecture not in GAN_ARCHITECTURE:
+                                predict = model.predict(dataset.dataset.get('train').batch(1), batch_size=1)
+                            else:
+                                predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
                     else:
-                        predict = model.predict(dataset.X.get('val'),
-                                                batch_size=training_details.get("base").get("batch"))
+                        if dataset.data.architecture not in GAN_ARCHITECTURE:
+                            predict = model.predict(dataset.X.get('train'),
+                                                    batch_size=training_details.get("base").get("batch"))
+                        else:
+                            predict = model.predict(dataset.X.get('val'),
+                                                    batch_size=training_details.get("base").get("batch"))
                     if "Yolo" in deploy_type:
                         predict = [predict[1], predict[3], predict[5]]
                     if not len(predict):
@@ -107,7 +114,6 @@ class DeployCreator:
                 try:
                     presets = self._get_presets(predict=predict, dataset_data=dataset_data,
                                                 dataset=dataset, deploy_path=DEPLOY_PATH)
-                    print("PRESETS: ", presets)
                 except Exception as error:
                     if issubclass(error.__class__, TerraBaseException):
                         raise error
@@ -227,7 +233,6 @@ class DeployCreator:
                                      options=dataset,
                                      save_path=str(deploy_path),
                                      dataset_path=str(dataset_data.path))
-        print("result ------- ", result)
         deploy_presets = []
         if result:
             deploy_presets = list(result.values())[0]
