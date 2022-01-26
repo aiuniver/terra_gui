@@ -7,7 +7,7 @@ from copy import copy
 import numpy as np
 from tensorflow.keras.models import load_model
 
-from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, GAN_ARCHITECTURE
 from terra_ai.cascades.common import decamelize
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
@@ -20,7 +20,8 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException, DatasetCre
     DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException, \
     NoTrainedModelException
 from terra_ai.training import GUINN
-from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
+    TextToImageGANTerraModel, ImageToImageGANTerraModel
 from terra_ai.settings import DEPLOY_PATH
 from ..data.deploy.extra import DeployTypeChoice
 from ..exceptions.base import TerraBaseException
@@ -168,21 +169,38 @@ class DeployCreator:
         if os.path.exists(os.path.join(model_path, "trained_model.trm")):
             model = load_model(os.path.join(model_path, "trained_model.trm"))
         else:
-            model = BaseTerraModel(model=None,
-                                   model_name="trained_model",
-                                   model_path=model_path)
-            model.load()
-            if dataset.data.architecture in YOLO_ARCHITECTURE:
-                options = GUINN().get_yolo_init_parameters(dataset=dataset)
-                model = YoloTerraModel(model=None,
+            if dataset.data.architecture in GAN_ARCHITECTURE:
+                if dataset.data.architecture == ArchitectureChoice.GAN:
+                    model = GANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path)
+                elif dataset.data.architecture == ArchitectureChoice.CGAN:
+                    model = ConditionalGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+                elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
+                    model = TextToImageGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+                elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                    model = ImageToImageGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+            else:
+                model = BaseTerraModel(model=None,
                                        model_name="trained_model",
-                                       model_path=model_path,
-                                       **options)
+                                       model_path=model_path)
+                model.load()
+                if dataset.data.architecture in YOLO_ARCHITECTURE:
+                    options = GUINN().get_yolo_init_parameters(dataset=dataset)
+                    model = YoloTerraModel(model=None,
+                                           model_name="trained_model",
+                                           model_path=model_path,
+                                           **options)
 
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:
                 weight = i
-            elif 'model_best_weights.data' in i:
+            elif 'model_best_weights.data' in i or 'generator_weights.data' in i:
                 weight = i.split('.')[0]
             if not weight:
                 if i[-3:] == '.h5':
