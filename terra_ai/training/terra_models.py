@@ -869,7 +869,7 @@ class GANTerraModel:
                 GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
+    def predict(self, data_array, batch_size: Optional[int]):
         noise_shape = [100]
         noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
         noise = tf.random.normal(noise_shape)
@@ -1088,14 +1088,14 @@ class ConditionalGANTerraModel(GANTerraModel):
                 ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.get_input_keys(
-            generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = data_array.get(input_keys.get('gen_labels'))
+    def predict(self, data_array, batch_size: Optional[int]):
+        # input_keys = self.get_input_keys(
+        #     generator=self.generator, discriminator=self.discriminator, options=options)
+        gen_labels = data_array.get(self.input_keys.get('gen_labels'))
         noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.get_noise(options))
+        noise_shape.extend(self.noise)
         noise = tf.random.normal(noise_shape)
-        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
         return self.generator(gen_input)
 
 
@@ -1283,14 +1283,12 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                 TextToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.get_input_keys(
-            generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = data_array.get(input_keys.get('gen_labels'))
+    def predict(self, data_array, batch_size: Optional[int]):
+        gen_labels = data_array.get(self.input_keys.get('gen_labels'))
         noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.get_noise(options))
+        noise_shape.extend(self.noise)
         noise = tf.random.normal(noise_shape)
-        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
         return self.generator(gen_input)
 
 
@@ -1411,7 +1409,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 cur_position = 0
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
                     batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
-                    cur_range = np.arange(cur_position, cur_position+batch_length).tolist()
+                    cur_range = np.arange(cur_position, cur_position + batch_length).tolist()
                     # image = GANTerraModel.add_noise_to_image(image_data.get(self.input_keys.get('disc_images')))
                     results = self.__train_step(
                         # target_array=image_data.get(self.input_keys.get('disc_images')),
@@ -1483,9 +1481,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 ImageToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    @staticmethod
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.__get_input_keys(options=options)
-        gen_array = data_array.get(input_keys.get('gen_images'))
-        gen_input = {input_keys['gen_images']: gen_array}
+    def predict(self, data_array, batch_size: Optional[int]):
+        gen_array = data_array.get(self.input_keys.get('gen_images'))
+        gen_input = {self.input_keys['gen_images']: gen_array}
         return self.generator(gen_input)
