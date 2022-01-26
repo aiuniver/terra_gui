@@ -650,13 +650,13 @@ class GANTerraModel:
         self.generator_json = self.generator.to_json()
         self.discriminator_json = self.discriminator.to_json()
 
-    def save_weights(self, gw_path_=None, dw_path_=None):
+    def save_weights(self, gw_path_=None, dw_path_=None, save_type: str = "last"):
         if not gw_path_:
-            gw_path_ = os.path.join(self.saving_path, self.generator_weights)
+            gw_path_ = os.path.join(self.saving_path, f"{save_type}_", self.generator_weights)
         self.generator.save_weights(gw_path_)
         logger.debug(f"self.generator.save_weights: {gw_path_}")
         if not dw_path_:
-            dw_path_ = os.path.join(self.saving_path, self.discriminator_weights)
+            dw_path_ = os.path.join(self.saving_path, f"{save_type}_", self.discriminator_weights)
         self.discriminator.save_weights(dw_path_)
         logger.debug(f"self.discriminator.save_weights: {dw_path_}")
 
@@ -836,6 +836,9 @@ class GANTerraModel:
                         break
 
                 self.save_weights()
+                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+
                 if self.callback.stop_training:
                     break
 
@@ -1025,6 +1028,9 @@ class ConditionalGANTerraModel(GANTerraModel):
                         break
 
                 self.save_weights()
+                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+
                 if self.callback.stop_training:
                     break
 
@@ -1195,7 +1201,11 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:
                         break
+
                 self.save_weights()
+                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+
                 if self.callback.stop_training:
                     break
 
@@ -1408,6 +1418,9 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     #     break
 
                 self.save_weights()
+                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+
                 if self.callback.stop_training:
                     break
 
@@ -1418,20 +1431,6 @@ class ImageToImageGANTerraModel(GANTerraModel):
 
                 seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
                 random_predict = {'predict': y_random_array, 'indexes': random_idx}
-                # seed_predict = {'predict': [], 'indexes': self.seed['indexes']}
-                # random_predict = {'predict': [], 'indexes': []}
-                # for i, idx in enumerate(self.seed['indexes']):
-                #     seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
-                #     seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
-                #     # logger.debug(
-                #     #     f"self.generator(seed_array_dict).numpy(): {self.generator(seed_array_dict).numpy().shape}")
-                #     random_idx = np.random.randint(self.train_length)
-                #     random_array_dict = {self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
-                #     random_predict['indexes'].append(random_idx)
-                #     random_predict['predict'].append(self.generator(random_array_dict).numpy())
-                    # logger.debug(
-                    #     f"self.generator(seed_array_dict).numpy(): {self.generator(random_array_dict).numpy().shape}")
-
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
                     arrays={"train": random_predict, "seed": seed_predict, 'inputs': self.input_keys},
