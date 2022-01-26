@@ -1,6 +1,7 @@
 import importlib
 import json
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -19,6 +20,7 @@ from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.logging import logger
 from terra_ai.training.yolo_utils import decode, compute_loss, get_mAP
 import terra_ai.exceptions.callbacks as exception
+from typing import Optional
 
 
 class BaseTerraModel:
@@ -305,6 +307,9 @@ class BaseTerraModel:
             exc = exception.ErrorInClassInMethodException(
                 BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
+
+    def predict(self, data_array, options: Optional[PrepareDataset] = None):
+        return self.base_model(data_array)
 
 
 class YoloTerraModel(BaseTerraModel):
@@ -593,6 +598,9 @@ class YoloTerraModel(BaseTerraModel):
                 YoloTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
+    def predict(self, data_array, options: Optional[PrepareDataset] = None):
+        return self.yolo_model(data_array)
+
 
 class GANTerraModel:
     name = "GANTerraModel"
@@ -605,9 +613,9 @@ class GANTerraModel:
         self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
         self.generator_weights = "generator_weights"
-        self.file_path_gen_weights = os.path.join(self.saving_path, self.generator_weights)
+        self.file_path_gen_weights = os.path.join(self.saving_path, "last", self.generator_weights)
         self.discriminator_weights = "discriminator_weights"
-        self.file_path_disc_weights = os.path.join(self.saving_path, self.discriminator_weights)
+        self.file_path_disc_weights = os.path.join(self.saving_path, "last", self.discriminator_weights)
 
         if not model:
             self.load()
@@ -836,8 +844,8 @@ class GANTerraModel:
                         break
 
                 self.save_weights()
-                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -854,11 +862,18 @@ class GANTerraModel:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
+                # self.predict(data_array=None, options=None)
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
+
+    def predict(self, data_array, options: Optional[PrepareDataset]):
+        noise_shape = [100]
+        noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
+        noise = tf.random.normal(noise_shape)
+        return self.generator(noise)
 
 
 class ConditionalGANTerraModel(GANTerraModel):
@@ -1028,8 +1043,8 @@ class ConditionalGANTerraModel(GANTerraModel):
                         break
 
                 self.save_weights()
-                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1062,11 +1077,26 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
+
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
+
+    def predict(self, data_array, options: Optional[PrepareDataset]):
+        input_keys = self.get_input_keys(
+            generator=self.generator, discriminator=self.discriminator, options=options)
+        gen_labels = data_array.get(input_keys.get('gen_labels'))
+        noise_shape = [gen_labels.shape[0]]
+        noise_shape.extend(self.get_noise(options))
+        noise = tf.random.normal(noise_shape)
+        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        return self.generator(gen_input)
 
 
 class TextToImageGANTerraModel(ConditionalGANTerraModel):
@@ -1129,6 +1159,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         method_name = 'fit'
         try:
             inp = self.input_keys.get('gen_labels')
+            # logger.
             column = list(dataset.data.columns.get(int(inp)).keys())[0]
             y_true_text = dataset.dataframe.get('train')[column].tolist()
             shape = [len(y_true_text)]
@@ -1152,7 +1183,6 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, gen_loss, disc_loss, disc_real_loss, disc_fake_loss = 0, 0, 0, 0, 0
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
-
                     batch_length = image_data.get(self.input_keys.get('gen_labels')).shape[0]
                     y_true_array[cur_step * batch_length: (cur_step + 1) * batch_length] = \
                         image_data.get(self.input_keys.get('gen_labels')).numpy()
@@ -1203,8 +1233,8 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                         break
 
                 self.save_weights()
-                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1243,11 +1273,25 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 TextToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
+
+    def predict(self, data_array, options: Optional[PrepareDataset]):
+        input_keys = self.get_input_keys(
+            generator=self.generator, discriminator=self.discriminator, options=options)
+        gen_labels = data_array.get(input_keys.get('gen_labels'))
+        noise_shape = [gen_labels.shape[0]]
+        noise_shape.extend(self.get_noise(options))
+        noise = tf.random.normal(noise_shape)
+        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        return self.generator(gen_input)
 
 
 class ImageToImageGANTerraModel(GANTerraModel):
@@ -1397,14 +1441,6 @@ class ImageToImageGANTerraModel(GANTerraModel):
                         logger.debug(f"Эпоха {epoch + 1}: urgent_predict")
                         seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
                         random_predict = {'predict': y_random_array, 'indexes': random_idx}
-                        # for i, idx in enumerate(self.seed['indexes']):
-                        #     seed_array_dict = {self.input_keys['gen_images']: y_pred_array[idx:idx + 1]}
-                        #     seed_predict['predict'].append(self.generator(seed_array_dict).numpy())
-                        #     random_idx = np.random.randint(self.train_length)
-                        #     random_array_dict = {
-                        #         self.input_keys['gen_images']: y_pred_array[random_idx:random_idx + 1]}
-                        #     random_predict['indexes'].append(random_idx)
-                        #     random_predict['predict'].append(self.generator(random_array_dict).numpy())
 
                         self.callback.on_train_batch_end(
                             batch=cur_step,
@@ -1418,8 +1454,8 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     #     break
 
                 self.save_weights()
-                if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                    self.save_weights(save_type=f'epoch_{epoch + 1}')
+                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
+                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1437,8 +1473,19 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
+                # for image_data, _ in dataset.dataset.get('train').shuffle(
+                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
+                #     self.predict(data_array=image_data, options=dataset)
+                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
+
+    @staticmethod
+    def predict(self, data_array, options: Optional[PrepareDataset]):
+        input_keys = self.__get_input_keys(options=options)
+        gen_array = data_array.get(input_keys.get('gen_images'))
+        gen_input = {input_keys['gen_images']: gen_array}
+        return self.generator(gen_input)
