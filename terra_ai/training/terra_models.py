@@ -765,7 +765,9 @@ class GANTerraModel:
 
     @staticmethod
     def add_noise_to_image(image):
-        return tf.add(image, tf.random.normal(image.shape) * 0.02)
+        # image = tf.cast(image, dtype='float32')
+        # return tf.add(image, tf.random.normal(image.shape) * 0.02)
+        return image
 
     @tf.function
     def __train_step(self, images, gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
@@ -1356,8 +1358,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
                     batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
                     cur_range = np.arange(cur_position, cur_position+batch_length).tolist()
-                    # image = GANTerraModel.add_noise_to_image(
-                    #     image_data.get(self.input_keys.get('disc_images')))
+                    # image = GANTerraModel.add_noise_to_image(image_data.get(self.input_keys.get('disc_images')))
                     results = self.__train_step(
                         # target_array=image_data.get(self.input_keys.get('disc_images')),
                         gen_array=image_data.get(self.input_keys.get('gen_images')),

@@ -6,7 +6,7 @@
     <div class="app__main">
       <router-view />
     </div>
-    <div class="app_footer">
+    <div class="app__footer">
       <Footer />
     </div>
   </div>

@@ -45,7 +45,7 @@ export default {
   }
 
   &__params {
-    flex: 0 0 400px;
+    flex: 0 0 550px;
     border-left: 1px solid #000;
   }
 }

@@ -2,7 +2,7 @@
   <div :class="['t-field', { 't-field--inline': inline }]">
     <div class="t-field__label flex align-center" @click="click">
       <template v-if="icon">
-        <d-svg :name="icon" class="mr-1" />
+        <i class="ci-icon" :class="`ci-${icon}`"/>
       </template>
       <span>
         <slot name="label">{{ label }}</slot>
@@ -56,10 +56,11 @@ export default {
     user-select: none;
     text-overflow: ellipsis;
     line-height: 1;
-    &::v-deep svg {
-      width: 16px;
-      height: 16px;
+    & .ci-icon {
+      font-size: 20px;
+      margin-right: 5px;
     }
+
   }
   &--inline {
     flex-direction: row-reverse;
