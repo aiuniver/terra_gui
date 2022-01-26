@@ -97,6 +97,7 @@ class ProgressAPIView(BaseAPIView):
         if progress.finished:
             request.project.set_training_base(request.project.training.base.native())
             request.project.training.save(request.project.training.name)
+            defaults_data.update_models(request.project.trainings)
             request.project.save_config()
         return BaseResponseSuccess(
             TrainingResponseData(request.project, defaults_data).dict()

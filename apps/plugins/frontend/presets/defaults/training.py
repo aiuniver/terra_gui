@@ -281,6 +281,33 @@ ArchitectureGroupFit = {
 }
 
 
+ArchitectureGroupGANFit = {
+    "fields": [
+        {
+            "type": "number",
+            "label": "Размер батча",
+            "name": "batch",
+            "parse": "[batch]",
+            "value": 32,
+        },
+        {
+            "type": "number",
+            "label": "Количество эпох",
+            "name": "epochs",
+            "parse": "[epochs]",
+            "value": 20,
+        },
+        {
+            "type": "number",
+            "label": "Learning rate",
+            "name": "optimizer_main_learning_rate",
+            "parse": "optimizer[parameters][main][learning_rate]",
+            "value": 0.0002,
+        },
+    ],
+}
+
+
 ArchitectureGroupAutobalanceFit = {
     "fields": [
         {
@@ -583,7 +610,7 @@ ArchitectureYoloForm = {
 
 ArchitectureGANForm = {
     "main": ArchitectureGroupMain,
-    "fit": ArchitectureGroupFit,
+    "fit": ArchitectureGroupGANFit,
     "optimizer": ArchitectureGroupOptimizer,
     "outputs": {
         "name": "Параметры выходных слоев",
