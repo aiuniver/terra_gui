@@ -870,7 +870,7 @@ class GANTerraModel:
             raise exc
 
     def predict(self, data_array, options: Optional[PrepareDataset]):
-        noise_shape = [1000]
+        noise_shape = [100]
         noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
         noise = tf.random.normal(noise_shape)
         return self.generator(noise)
@@ -1159,6 +1159,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         method_name = 'fit'
         try:
             inp = self.input_keys.get('gen_labels')
+            # logger.
             column = list(dataset.data.columns.get(int(inp)).keys())[0]
             y_true_text = dataset.dataframe.get('train')[column].tolist()
             shape = [len(y_true_text)]
