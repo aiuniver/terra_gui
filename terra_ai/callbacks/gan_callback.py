@@ -258,13 +258,14 @@ class CGANCallback:
                 return_mode='deploy'
             )
             return_data['output'] = []
+            col_name = ''
+            for out in options.data.columns.keys():
+                col_name = list(options.data.columns.get(out).keys())[0]
+                if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
+                    break
+
             _id = 1
             for idx in example_idx:
-                col_name = ''
-                for out in options.data.columns.keys():
-                    col_name = list(options.data.columns.get(out).keys())[0]
-                    if options.data.columns.get(out).get(col_name).get('task') == 'Classification':
-                        break
                 lbl = f"{options.dataframe.get('train')[col_name][idx]}"
                 source = CGANCallback.postprocess_gan(
                     predict_array=array[idx],
@@ -378,7 +379,7 @@ class CGANCallback:
             for out in options.data.columns.keys():
                 col_name = list(options.data.columns.get(out).keys())[0]
                 if options.data.columns.get(out).get(col_name).get('task') == 'Image':
-                    column = col_name
+                    column_disc = col_name
                     break
             # for column in options.dataframe.get('train').columns:
             #     if 'Изображения' in column and 'sources' in options.dataframe.get('train')[column][0]:
