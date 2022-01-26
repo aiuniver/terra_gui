@@ -4,11 +4,7 @@ from ..extra import ArchitectureChoice
 from . import types
 
 
-class ArchitectureBaseData(types.Base.ParametersData):
-    pass
-
-
-class ArchitectureBasicData(ArchitectureBaseData, types.Basic.ParametersData):
+class ArchitectureBasicData(types.Basic.ParametersData):
     pass
 
 
@@ -52,11 +48,11 @@ class ArchitectureVideoClassificationData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV3Data(types.Base.ParametersData, types.YoloV3.ParametersData):
+class ArchitectureYoloV3Data(types.YoloV3.ParametersData):
     pass
 
 
-class ArchitectureYoloV4Data(types.Base.ParametersData, types.YoloV4.ParametersData):
+class ArchitectureYoloV4Data(types.YoloV4.ParametersData):
     pass
 
 
@@ -64,23 +60,19 @@ class ArchitectureTrackerData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureGANData(types.Base.ParametersData, types.GAN.ParametersData):
+class ArchitectureGANData(types.GAN.ParametersData):
     pass
 
 
-class ArchitectureCGANData(types.Base.ParametersData, types.GAN.ParametersData):
+class ArchitectureCGANData(types.GAN.ParametersData):
     pass
 
 
-class ArchitectureTextToImageGANData(
-    types.Base.ParametersData, types.GAN.ParametersData
-):
+class ArchitectureTextToImageGANData(types.GAN.ParametersData):
     pass
 
 
-class ArchitectureImageToImageGANData(
-    types.Base.ParametersData, types.GAN.ParametersData
-):
+class ArchitectureImageToImageGANData(types.GAN.ParametersData):
     pass
 
 

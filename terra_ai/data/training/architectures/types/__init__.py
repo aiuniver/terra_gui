@@ -1,1 +1,1 @@
-from . import Base, Basic, YoloV3, YoloV4, GAN
+from . import Basic, YoloV3, YoloV4, GAN

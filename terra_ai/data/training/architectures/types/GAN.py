@@ -1,8 +1,8 @@
 from typing import Optional
 
-from ....mixins import BaseMixinData
 from ...checkpoint import CheckpointGANData
+from . import Base
 
 
-class ParametersData(BaseMixinData):
+class ParametersData(Base.ParametersData):
     checkpoint: Optional[CheckpointGANData]

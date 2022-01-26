@@ -277,6 +277,13 @@ ArchitectureGroupFit = {
             "parse": "optimizer[parameters][main][learning_rate]",
             "value": 0.001,
         },
+        {
+            "type": "checkbox",
+            "label": "Автобалансировка",
+            "name": "autobalance",
+            "parse": "[autobalance]",
+            "value": False,
+        },
     ],
 }
 

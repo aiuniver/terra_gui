@@ -1,12 +1,12 @@
 from typing import Optional
 from pydantic import validator
 
-from ....mixins import BaseMixinData
 from ...checkpoint import CheckpointData
 from ...extra import TasksRelations
+from . import Base
 
 
-class ParametersData(BaseMixinData):
+class ParametersData(Base.ParametersData):
     checkpoint: Optional[CheckpointData]
 
     @validator("checkpoint", always=True)
