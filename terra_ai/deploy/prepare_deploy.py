@@ -163,7 +163,7 @@ class DeployCreator:
                 )
 
             deploy_data.update({"page": page})
-            print("DEPLOY DATA: ", deploy_data)
+            # print("DEPLOY DATA: ", deploy_data)
             return DeployData(**deploy_data)
         except Exception as error:
             raise error
