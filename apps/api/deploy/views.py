@@ -12,7 +12,7 @@ from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.deploy.extra import DeployTypePageChoice, DeployTypeDemoChoice
 
 from apps.api import decorators, remote
-from apps.api.base import BaseAPIView, BaseResponseSuccess, BaseResponseError
+from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.deploy.serializers import (
     GetSerializer,
     ReloadSerializer,
