@@ -104,3 +104,8 @@ class UploadProgressAPIView(BaseAPIView):
     @decorators.progress_error("deploy_upload")
     def post(self, request, progress, **kwargs):
         return BaseResponseSuccess(progress.native())
+
+
+class UploadStatusAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
