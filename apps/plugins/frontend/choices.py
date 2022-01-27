@@ -26,8 +26,8 @@ class LayerOutputTypeChoice(str, Enum):
     TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
 
     @staticmethod
     def items_tuple() -> list:

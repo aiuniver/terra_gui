@@ -184,7 +184,11 @@ class LayerParametersText2SpeechSerializer(serializers.Serializer):
     pass
 
 
-class LayerParametersGANSerializer(serializers.Serializer):
+class LayerParametersImageGANSerializer(serializers.Serializer):
+    pass
+
+
+class LayerParametersImageCGANSerializer(serializers.Serializer):
     pass
 
 
@@ -324,7 +328,6 @@ class CreateSerializer(serializers.Serializer):
                 f"LayerParameters{_type}Serializer",
                 None,
             )
-            print(f"LayerParameters{_type}Serializer")
             if _serializer_class:
                 _serializer_parameters = _serializer_class(
                     data=value.get("parameters", {})

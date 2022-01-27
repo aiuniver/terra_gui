@@ -16,6 +16,6 @@ from . import (
     GoogleTTS,
     Wav2Vec,
     TinkoffAPI,
-    GAN,
-    CGAN,
+    ImageGAN,
+    ImageCGAN,
 )
