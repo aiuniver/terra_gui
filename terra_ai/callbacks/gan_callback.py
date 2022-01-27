@@ -1,5 +1,6 @@
 import os
 from collections import Counter
+from pathlib import Path
 from random import shuffle
 from typing import Optional
 
@@ -241,7 +242,7 @@ class CGANCallback:
         return None, None
 
     @staticmethod
-    def postprocess_deploy(array, options: PrepareDataset, save_path: str = "", dataset_path: str = "") -> dict:
+    def postprocess_deploy(array, options: PrepareDataset, save_path: Path = "", dataset_path: str = "") -> dict:
         method_name = 'postprocess_deploy'
         try:
             return_data = {}

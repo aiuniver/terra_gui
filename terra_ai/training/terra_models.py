@@ -12,6 +12,7 @@ from tensorflow import keras
 from tensorflow.python.keras.models import Model
 
 from terra_ai.callbacks import interactive
+from terra_ai.callbacks.gan_callback import CGANCallback
 from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length, CLASSIFICATION_ARCHITECTURE
 from terra_ai.custom_objects.customLayers import terra_custom_layers
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -1077,10 +1078,20 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # for image_data, _ in dataset.dataset.get('train').shuffle(
-                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                #     self.predict(data_array=image_data, options=dataset)
-                #     break
+                # for image_data, _ in dataset.dataset.get('train').batch(256).take(1):
+                # batch_size = 16
+                # shape = [32*batch_size]
+                # image_size = (64, 64, 3)
+                # shape.extend(image_size)
+                # pred = np.zeros(shape)
+                # for i in range(32):
+                #     pred[i*batch_size:(i+1)*batch_size] = self.predict(data_array=dataset.dataset.get('train').batch(batch_size)).numpy()
+                # logger.debug(f"pred: {pred.shape}")
+                # postprocc = CGANCallback.postprocess_deploy(
+                #     array=pred, options=dataset, save_path=Path("D:\AI")
+                # )
+                # logger.debug(f"postprocc: {postprocc, len(postprocc['output'])}")
+                    # break
 
             self.callback.on_train_end()
         except Exception as error:
