@@ -51,6 +51,8 @@ class DeployTypeDemoChoice(str, Enum):
     GoogleTTS = "text_to_audio"
     Wav2Vec = "audio_to_text"
     TinkoffAPI = "audio_to_text"
+    GAN = "gan"
+    CGAN = "cgan"
 
 
 class DeployTypePageChoice(str, Enum):
