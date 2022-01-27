@@ -1244,10 +1244,10 @@ class CreateDataset(object):
             architecture = ArchitectureChoice.Text2Speech
         elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
                 and len(creation_data.inputs) == 2:
-            architecture = ArchitectureChoice.GAN
+            architecture = ArchitectureChoice.ImageGAN
         elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
                 and len(creation_data.inputs) > 2:
-            architecture = ArchitectureChoice.CGAN
+            architecture = ArchitectureChoice.ImageCGAN
         # elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
         #         and len(creation_data.inputs) > 2:
         #     architecture = ArchitectureChoice.CGAN
