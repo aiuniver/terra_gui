@@ -17,4 +17,5 @@ from . import (
     Wav2Vec,
     TinkoffAPI,
     GAN,
+    CGAN,
 )

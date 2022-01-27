@@ -9,6 +9,7 @@ from ..extra import DataBaseList, DataBase
 
 class Item(BaseMixinData):
     source: str
+    actual: str
 
 
 class DataList(DataBaseList):
