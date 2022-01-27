@@ -48,7 +48,7 @@ class DeployData(BaseMixinData):
     @property
     def config(self) -> dict:
         data = self.native()
-        data.update({"data": self.data.presets})
+        data.pop("data")
         return data
 
     def dict(self, **kwargs):
