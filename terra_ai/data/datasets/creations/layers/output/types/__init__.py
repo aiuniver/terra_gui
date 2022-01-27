@@ -15,4 +15,5 @@ from . import (
     Discriminator,
     Generator,
     GAN,
+    CGAN
 )

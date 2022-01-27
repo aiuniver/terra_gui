@@ -208,7 +208,7 @@ class CreateDataset(object):
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
-            elif out.type == LayerOutputTypeChoice.GAN:
+            elif out.type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
                 out_list = []
                 img_shape = ()
                 sources_paths = []
@@ -216,23 +216,35 @@ class CreateDataset(object):
                     if inp.type == LayerInputTypeChoice.Image:
                         img_shape = (inp.parameters.height, inp.parameters.width, 3)
                         sources_paths = inp.parameters.sources_paths
+                idx = 2
                 creation_data.inputs.append(
                     CreationInputData(
-                        id=2,
+                        id=idx,
                         name='Шум',
                         type=LayerInputTypeChoice.Noise,
                         parameters={'sources_paths': sources_paths,
                                     'shape': (100,)}))
+                idx += 1
+                if out.type == LayerOutputTypeChoice.CGAN:
+                    creation_data.inputs.append(
+                        CreationInputData(
+                            id=idx,
+                            name='Классы',
+                            type=LayerInputTypeChoice.Classification,
+                            parameters={'sources_paths': sources_paths,
+                                        'type_processing': 'categorical'}))
+                    idx += 1
                 out_list.append(
                     CreationOutputData(
-                        id=3,
+                        id=idx,
                         name='Генератор',
                         type=LayerOutputTypeChoice.Generator,
                         parameters={'sources_paths': sources_paths,
                                     'shape': img_shape}).native())
+                idx += 1
                 out_list.append(
                     CreationOutputData(
-                        id=4,
+                        id=idx,
                         name='Дискриминатор',
                         type=LayerOutputTypeChoice.Discriminator,
                         parameters={'sources_paths': sources_paths,
@@ -289,6 +301,10 @@ class CreateDataset(object):
         else:
             inputs = self.create_put_instructions(data=creation_data.inputs)
             outputs = self.create_put_instructions(data=creation_data.outputs)
+            for inp in creation_data.inputs:
+                if inp.type == LayerInputTypeChoice.Classification and self.y_cls:
+                    for col_name, data in inputs[inp.id].items():
+                        data.instructions = self.y_cls
             for out in creation_data.outputs:
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
@@ -1229,6 +1245,9 @@ class CreateDataset(object):
         elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
                 and len(creation_data.inputs) == 2:
             architecture = ArchitectureChoice.GAN
+        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+                and len(creation_data.inputs) > 2:
+            architecture = ArchitectureChoice.CGAN
         # elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
         #         and len(creation_data.inputs) > 2:
         #     architecture = ArchitectureChoice.CGAN
