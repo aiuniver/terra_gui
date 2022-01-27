@@ -29,6 +29,7 @@ class TextSegmentationArray(Array):
                 """
 
         text_list: dict = {}
+        text_segm: dict = {}
         text_segm_data: dict = {}
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
@@ -38,29 +39,20 @@ class TextSegmentationArray(Array):
             options['max_words']
 
         for path in sources:
-            text_file = self.read_text(file_path=path, lower=True, del_symbols=options['filters'], split=' ',
-                                       open_symbol=open_symbol, close_symbol=close_symbol)
+            text_file = self.read_text(file_path=path, op_symbol=open_symbol, cl_symbol=close_symbol)
             if text_file:
-                text_list[path] = text_file  # self.get_samples(text_file, open_tags, close_tags)
-
-        # for key, value in sorted(text_list.items()):
-        #     if options['text_mode'] == LayerTextModeChoice.completely:
-        #         text_segm_data[';'.join([key, f'[0-{options["max_words"]}]'])] = \
-        #             value[:options['max_words']]
-        #     elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-        #         max_length = len(value)
-        #         cur_step = 0
-        #         stop_flag = False
-        #         while not stop_flag:
-        #             text_segm_data[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = value[
-        #                                                                                    cur_step:cur_step + length]
-        #             cur_step += options['step']
-        #             if cur_step + length > max_length:
-        #                 stop_flag = True
+                text_file = text_file.split(' ')
+                text_segm[path] = self.get_samples(text_file, options['filters'], open_tags, close_tags)  # '\r\t\n\ufeff\xa0'
+                for word in text_file:
+                    if word in open_tags + close_tags:
+                        text_file.pop(text_file.index(word))
+                for word in text_file:
+                    if open_symbol in word or close_symbol in word and word in open_tags + close_tags:
+                        text_file.pop(text_file.index(word))
+                text_list[path] = text_file
 
         for key, value in sorted(text_list.items()):
-            # self.get_samples(text_file, open_tags, close_tags)
-            value = value.split(' ')
+            # value = value.split(' ')
             if options['text_mode'] == 'completely':
                 iter_count = 0
                 adjust_flag = False
@@ -72,9 +64,7 @@ class TextSegmentationArray(Array):
                     if adjust_length == 0 or iter_count == 10:
                         adjust_flag = True
                     iter_count += 1
-                text_segm_data[';'.join([str(key), f'[0-{adjusted_length}]'])] = \
-                    self.get_samples(' '.join(value[0: adjusted_length]), open_tags, close_tags)
-
+                text_segm_data[';'.join([str(key), f'[0-{adjusted_length}]'])] = text_segm[key][0: adjusted_length]
             elif options['text_mode'] == 'length_and_step':
                 cur_step = 0
                 stop_flag = False
@@ -93,8 +83,8 @@ class TextSegmentationArray(Array):
                             iter_count += 1
                     else:
                         stop_flag = True
-                    text_segm_data[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = \
-                        self.get_samples(' '.join(value[cur_step: cur_step + adjusted_length]), open_tags, close_tags)
+                    text_segm_data[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] =\
+                        text_segm[key][cur_step: cur_step + adjusted_length]
                     cur_step += options['step'] + (adjusted_length - length)
 
         text_sorted = []
@@ -115,17 +105,18 @@ class TextSegmentationArray(Array):
         return instructions
 
     def create(self, source: Any, **options):
-        if not isinstance(source, list):
-            source = literal_eval(source)
+
+        current_source = source.copy() if isinstance(source, list) else literal_eval(source).copy()
         array = []
-        if len(source) < options['length']:
-            source += [list() for _ in range(options['length'] - len(source))]
-        for elem in source:
-            tags = [0 for _ in range(options['num_classes'])]
-            if elem:
-                for cls_name in elem:
-                    tags[options['classes_names'].index(cls_name)] = 1
-            array.append(tags)
+        if len(current_source) < options['length']:
+            current_source += [list() for _ in range(options['length'] - len(current_source))]
+        for elem in current_source:
+            if elem is not None:
+                tags = [0 for _ in range(options['num_classes'])]
+                if elem:
+                    for cls_name in elem:
+                        tags[options['classes_names'].index(cls_name)] = 1
+                array.append(tags)
         array = np.array(array, dtype='uint8')
 
         instructions = {'instructions': array,
@@ -137,32 +128,36 @@ class TextSegmentationArray(Array):
         return array
 
     @staticmethod
-    def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+    def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
 
         text = autodetect_encoding(file_path)
 
-        if open_symbol:
-            text = re.sub(open_symbol, f" {open_symbol}", text)
-            text = re.sub(close_symbol, f"{close_symbol} ", text)
+        if op_symbol:
+            text = re.sub(op_symbol, f" {op_symbol}", text)
+            text = re.sub(cl_symbol, f"{cl_symbol} ", text)
 
-        text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+        text = ' '.join(text_to_word_sequence(text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '}))
 
         return text
 
     @staticmethod
-    def get_samples(doc_text: str, op_tags, cl_tags):
+    def get_samples(doc_text: list, filters: str, op_tags: list, cl_tags: list):
 
-        indexes = []
-        idx = []
-        for word in doc_text.split(' '):
+        segmentation = []
+        sample = []
+        for elem in doc_text:
             try:
-                if word in op_tags:
-                    idx.append(op_tags[op_tags.index(word)])
-                elif word in cl_tags:
-                    idx.remove(op_tags[cl_tags.index(word)])
+                response = text_to_word_sequence(elem, **{'lower': True, 'filters': filters, 'split': ' '})
+                if not response:
+                    segmentation.append(None)
+                    continue
+                if response[0] in op_tags:
+                    sample.append(op_tags[op_tags.index(response[0])])
+                elif response[0] in cl_tags:
+                    sample.remove(op_tags[cl_tags.index(response[0])])
                 else:
-                    indexes.append(idx.copy())
+                    segmentation.append(sample.copy())
             except ValueError:
                 pass
 
-        return indexes
+        return segmentation

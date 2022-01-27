@@ -377,6 +377,8 @@ class CreateVersion(object):
                         # ###
                     instructions_data = InstructionsData(instructions=data, parameters=result_params)
                     instructions_data.parameters.update({'put_type': decamelize(parameters['type'])})
+                    print(instructions_data.instructions[0])
+                    print(len(instructions_data.instructions[0]))
                     put_parameters[idx] = {col_name: instructions_data}
                     self.tags[idx].update({col_name: decamelize(parameters['type'])})
 
@@ -488,7 +490,7 @@ class CreateVersion(object):
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
             progress.pool(version_progress_name,
-                          error='Ошибка создания датасета. Нессответствие количества входных/выходных данных')
+                          error='Ошибка создания датасета. Несоответствие количества входных/выходных данных')
             for key, value in build_dataframe.items():
                 logger.debug(key, len(value))
             raise
@@ -670,7 +672,6 @@ class CreateVersion(object):
                                     array = self.postprocess_timeseries(result)
                             else:
                                 array = np.concatenate(result, axis=0)
-                            print(array)
                             hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
                         else:
                             for n in range(3):
