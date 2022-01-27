@@ -1091,7 +1091,9 @@ class ConditionalGANTerraModel(GANTerraModel):
     def predict(self, data_array, batch_size: Optional[int]):
         # input_keys = self.get_input_keys(
         #     generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = data_array.get(self.input_keys.get('gen_labels'))
+        gen_labels = None
+        for image_data, _ in data_array:
+            gen_labels = image_data.get(self.input_keys.get('gen_labels'))
         noise_shape = [gen_labels.shape[0]]
         noise_shape.extend(self.noise)
         noise = tf.random.normal(noise_shape)

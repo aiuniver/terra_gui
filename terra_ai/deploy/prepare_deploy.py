@@ -92,12 +92,12 @@ class DeployCreator:
                                 else:
                                     predict = copy(batch)
                         else:
-                            if dataset.data.architecture not in GAN_ARCHITECTURE:
+                            if dataset.data.architecture in GAN_ARCHITECTURE:
                                 predict = model.predict(dataset.dataset.get('train').batch(1), batch_size=1)
                             else:
                                 predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
                     else:
-                        if dataset.data.architecture not in GAN_ARCHITECTURE:
+                        if dataset.data.architecture in GAN_ARCHITECTURE:
                             predict = model.predict(dataset.X.get('train'),
                                                     batch_size=training_details.get("base").get("batch"))
                         else:
