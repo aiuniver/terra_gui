@@ -871,7 +871,7 @@ class GANTerraModel:
             raise exc
 
     def predict(self, data_array, batch_size: Optional[int]):
-        noise_shape = [100]
+        noise_shape = [128]
         noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
         noise = tf.random.normal(noise_shape)
         return self.generator(noise)
@@ -1086,6 +1086,7 @@ class ConditionalGANTerraModel(GANTerraModel):
                 # pred = np.zeros(shape)
                 # for i in range(32):
                 #     pred[i*batch_size:(i+1)*batch_size] = self.predict(data_array=dataset.dataset.get('train').batch(batch_size)).numpy()
+                # pred = self.predict(data_array=dataset.dataset.get('train'), batch_size=1)
                 # logger.debug(f"pred: {pred.shape}")
                 # postprocc = CGANCallback.postprocess_deploy(
                 #     array=pred, options=dataset, save_path=Path("D:\AI")
@@ -1100,16 +1101,22 @@ class ConditionalGANTerraModel(GANTerraModel):
             raise exc
 
     def predict(self, data_array, batch_size: Optional[int]):
-        # input_keys = self.get_input_keys(
-        #     generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = None
-        for image_data, _ in data_array:
+        bs = 16
+        shape = [32 * bs]
+        image_size = list(self.generator.outputs[0].shape[1:])
+        shape.extend(image_size)
+        predict = np.zeros(shape)
+        cur_step = 0
+        for image_data, _ in data_array.batch(bs).take(32):
             gen_labels = image_data.get(self.input_keys.get('gen_labels'))
-        noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.noise)
-        noise = tf.random.normal(noise_shape)
-        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
-        return self.generator(gen_input)
+            length = gen_labels.shape[0]
+            noise_shape = [gen_labels.shape[0]]
+            noise_shape.extend(self.noise)
+            noise = tf.random.normal(noise_shape)
+            gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
+            predict[cur_step:cur_step+length] = self.generator.predict(gen_input)
+            cur_step += length
+        return predict
 
 
 class TextToImageGANTerraModel(ConditionalGANTerraModel):
