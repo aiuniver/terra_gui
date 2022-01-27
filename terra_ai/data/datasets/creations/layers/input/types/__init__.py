@@ -6,3 +6,5 @@ from . import (
     Dataframe,
     Noise,
 )
+
+from ...output.types import Classification

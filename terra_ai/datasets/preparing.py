@@ -57,15 +57,21 @@ class PrepareDataset(object):
         for i in range(len(inputs)):
 
             with h5py.File(self.paths.arrays.joinpath('dataset.h5'), 'r') as hdf:
-                full_inp_arrays = [hdf[path][()] for path in inputs[i]]
-                full_out_arrays = [hdf[path][()] for path in outputs[i]]
+                # full_inp_arrays = [hdf[path][()] for path in inputs[i]]
+                # full_out_arrays = [hdf[path][()] for path in outputs[i]]
 
-                inp_dict = {str(j + 1): full_inp_arrays[j] for j in range(len(full_inp_arrays))}
-                out_dict = {str(len(inputs[i]) + j + 1): full_out_arrays[j] for j in range(len(full_out_arrays))}
+                # inp_dict = {str(j + 1): full_inp_arrays[j] for j in range(len(full_inp_arrays))}
+                # out_dict = {str(len(inputs[i]) + j + 1): full_out_arrays[j] for j in range(len(full_out_arrays))}
+
+                inp_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in inputs[i]}
+                out_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in outputs[i]}
 
                 if self.data.service:
-                    full_srv_arrays = [hdf[path][()] for path in service[i]]
-                    srv_dict = {str(len(inputs[i]) + j + 1): full_srv_arrays[j] for j in range(len(service[i]))}
+
+                    # full_srv_arrays = [hdf[path][()] for path in service[i]]
+                    # srv_dict = {str(len(inputs[i]) + j + 1): full_srv_arrays[j] for j in range(len(service[i]))}
+
+                    srv_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in service[i]}
                     yield inp_dict, out_dict, srv_dict
                 else:
                     yield inp_dict, out_dict

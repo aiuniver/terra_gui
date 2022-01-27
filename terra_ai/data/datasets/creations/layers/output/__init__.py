@@ -65,6 +65,10 @@ class LayerGANData(LayerBaseData, types.GAN.ParametersData):
     pass
 
 
+class LayerCGANData(LayerBaseData, types.CGAN.ParametersData):
+    pass
+
+
 class LayerGeneratorData(LayerBaseData, types.Generator.ParametersData):
     pass
 
