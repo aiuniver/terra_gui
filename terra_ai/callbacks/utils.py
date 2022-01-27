@@ -347,7 +347,7 @@ CLASSIFICATION_ARCHITECTURE = [
 ]
 
 GAN_ARCHITECTURE = [
-    ArchitectureChoice.GAN, ArchitectureChoice.CGAN, ArchitectureChoice.TextToImageGAN,
+    ArchitectureChoice.ImageGAN, ArchitectureChoice.ImageCGAN, ArchitectureChoice.TextToImageGAN,
     ArchitectureChoice.ImageToImageGAN
 ]
 

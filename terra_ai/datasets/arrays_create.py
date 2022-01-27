@@ -665,6 +665,7 @@ class CreateArray(object):
                                        'length': options['length'],
                                        'max_words_count': options['max_words_count'],
                                        'word_to_vec_size': options['word_to_vec_size'],
+                                       'pymorphy': options['pymorphy'],
                                        'filters': options['filters']
                                        }
                         }

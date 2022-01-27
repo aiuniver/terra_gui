@@ -656,8 +656,8 @@ Architectures = {
         "yolo": ArchitectureGroupYoloV4,
     },
     ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
-    ArchitectureChoice.GAN: {**ArchitectureGANForm},
-    ArchitectureChoice.CGAN: {**ArchitectureGANForm},
+    ArchitectureChoice.ImageGAN: {**ArchitectureGANForm},
+    ArchitectureChoice.ImageCGAN: {**ArchitectureGANForm},
     ArchitectureChoice.TextToImageGAN: {**ArchitectureGANForm},
     ArchitectureChoice.ImageToImageGAN: {**ArchitectureGANForm},
 }

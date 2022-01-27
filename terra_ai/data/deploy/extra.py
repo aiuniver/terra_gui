@@ -23,8 +23,8 @@ class DeployTypeChoice(str, Enum):
     GoogleTTS = "GoogleTTS"
     Wav2Vec = "Wav2Vec"
     TinkoffAPI = "TinkoffAPI"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
 
@@ -51,8 +51,8 @@ class DeployTypeDemoChoice(str, Enum):
     GoogleTTS = "text_to_audio"
     Wav2Vec = "audio_to_text"
     TinkoffAPI = "audio_to_text"
-    GAN = "gan"
-    CGAN = "cgan"
+    ImageGAN = "image_gan"
+    ImageCGAN = "image_cgan"
 
 
 class DeployTypePageChoice(str, Enum):

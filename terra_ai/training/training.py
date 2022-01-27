@@ -181,10 +181,10 @@ class GUINN:
                 validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
-            if dataset.data.architecture == ArchitectureChoice.GAN:
+            if dataset.data.architecture == ArchitectureChoice.ImageGAN:
                 train_model = GANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
-            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
                 train_model = ConditionalGANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
                     options=dataset)

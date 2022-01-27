@@ -213,7 +213,7 @@ class InteractiveCallback:
                         choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
                         input_keys=self.y_pred.get('inputs')
                     )
-                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.CGAN:
+                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.ImageCGAN:
                         logger.debug(f"{InteractiveCallback.name}: расчет баланса датасета...")
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
@@ -509,9 +509,9 @@ class InteractiveCallback:
                 self.callback = YoloV3Callback()
             elif dataset.data.architecture == ArchitectureChoice.YoloV4:
                 self.callback = YoloV4Callback()
-            elif dataset.data.architecture == ArchitectureChoice.GAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageGAN:
                 self.callback = GANCallback()
-            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
                 self.callback = CGANCallback()
             elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
                 self.callback = TextToImageGANCallback()
