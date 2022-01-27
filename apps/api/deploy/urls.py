@@ -15,5 +15,4 @@ urlpatterns = [
         views.UploadProgressAPIView.as_view(),
         name="upload_progress",
     ),
-    path("upload/status/", views.UploadStatusAPIView.as_view(), name="upload_status"),
 ]
