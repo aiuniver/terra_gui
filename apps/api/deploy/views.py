@@ -11,7 +11,7 @@ from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.deploy.extra import DeployTypePageChoice, DeployTypeDemoChoice
 
-from apps.api import decorators
+from apps.api import decorators, remote
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.deploy.serializers import (
     GetSerializer,
@@ -76,27 +76,41 @@ class UploadAPIView(BaseAPIView):
     @decorators.serialize_data(UploadSerializer)
     def post(self, request, serializer, **kwargs):
         sec = serializer.validated_data.get("sec")
-        self.terra_exchange(
-            "deploy_upload",
-            **{
-                "source": DEPLOY_PATH,
-                "stage": 1,
-                "deploy": serializer.validated_data.get("deploy"),
-                "env": "v1",
-                "user": {
-                    "login": settings.USER.get("login"),
-                    "name": settings.USER.get("first_name"),
-                    "lastname": settings.USER.get("last_name"),
-                    "sec": hashlib.md5(sec.encode("utf-8")).hexdigest() if sec else "",
-                },
-                "project": {
-                    "name": request.project.name,
-                },
-                "task": request.project.deploy.type.demo,
-                "replace": serializer.validated_data.get("replace"),
-                "server": serializer.validated_data.get("server"),
-            }
-        )
+        server_ready = True
+
+        server_id = serializer.validated_data.get("server").get("id")
+        if server_id:
+            server_ready = remote.request(
+                "/server/match-version/", data={"id": server_id}
+            )
+
+        if server_ready:
+            self.terra_exchange(
+                "deploy_upload",
+                **{
+                    "source": DEPLOY_PATH,
+                    "stage": 1,
+                    "deploy": serializer.validated_data.get("deploy"),
+                    "env": "v1",
+                    "user": {
+                        "login": settings.USER.get("login"),
+                        "name": settings.USER.get("first_name"),
+                        "lastname": settings.USER.get("last_name"),
+                        "sec": hashlib.md5(sec.encode("utf-8")).hexdigest()
+                        if sec
+                        else "",
+                    },
+                    "project": {
+                        "name": request.project.name,
+                    },
+                    "task": request.project.deploy.type.demo,
+                    "replace": serializer.validated_data.get("replace"),
+                    "server": serializer.validated_data.get("server"),
+                }
+            )
+        else:
+            raise ValueError("Необходимо обновить сервер")
+
         return BaseResponseSuccess()
 
 
@@ -104,8 +118,3 @@ class UploadProgressAPIView(BaseAPIView):
     @decorators.progress_error("deploy_upload")
     def post(self, request, progress, **kwargs):
         return BaseResponseSuccess(progress.native())
-
-
-class UploadStatusAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        return BaseResponseSuccess()

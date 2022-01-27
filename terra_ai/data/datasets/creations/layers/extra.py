@@ -128,6 +128,10 @@ class ParametersGANData(ColumnProcessingData):
     pass
 
 
+class ParametersCGANData(ColumnProcessingData):
+    pass
+
+
 class ParametersNoiseData(SourcesPathsData, ColumnProcessingData):
     shape: tuple
     put: Optional[PositiveInt]

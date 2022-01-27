@@ -26,7 +26,8 @@ class LayerOutputTypeChoice(str, Enum):
     TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
-    GAN = "Генеративно-состязательная НС"
+    GAN = "GAN"
+    CGAN = "CGAN"
 
     @staticmethod
     def items_tuple() -> list:
@@ -300,7 +301,7 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
     Regression = "Регрессия"
     Segmentation = "Сегментация"
     Timeseries = "Временные ряды"
-    GAN = "Генеративно-состязательные сети"
+    GAN = "GAN"
 
     @staticmethod
     def items_tuple() -> list:
