@@ -2639,7 +2639,7 @@ if __name__ == "__main__":
     #     'normalization': 'instance', "merge_layer": 'concatenate', "use_bias": True
     # }
     # # for i in range(5):
-    input_shape = (20,)
+    input_shape = (20,1)
 
     text_input = tensorflow.keras.Input(shape=(), dtype=tf.string)
     layer = PretrainedBERT(**params)
@@ -2653,5 +2653,5 @@ if __name__ == "__main__":
     pred = model(text)
     print(pred.shape)
     print(pred)
-    # print(layer.compute_output_shape(input_shape=input_shape))
+    print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
     pass
