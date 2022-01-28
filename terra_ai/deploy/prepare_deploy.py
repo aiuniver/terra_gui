@@ -165,7 +165,7 @@ class DeployCreator:
             deploy_data.update({"page": page})
             # print("DEPLOY DATA: ", deploy_data)
             result = DeployData(**deploy_data)
-            with open(os.path.join(DEPLOY_PATH, "deploy.json"), "w", encoding="utf-8") as deploy_conf:
+            with open(os.path.join(DEPLOY_PATH, "config.json"), "w", encoding="utf-8") as deploy_conf:
                 json.dump(result.config, deploy_conf)
             return result
         except Exception as error:
