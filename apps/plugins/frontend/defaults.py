@@ -231,8 +231,8 @@ StatesTrainingBaseParamsDisabled = {
     "VideoClassification": {**StatesTrainingBasicParamsDisabled},
     "YoloV3": {**StatesTrainingYoloParamsDisabled},
     "YoloV4": {**StatesTrainingYoloParamsDisabled},
-    "GAN": {**StatesTrainingGANParamsDisabled},
-    "CGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageCGAN": {**StatesTrainingGANParamsDisabled},
     "TextToImageGAN": {**StatesTrainingGANParamsDisabled},
     "ImageToImageGAN": {**StatesTrainingGANParamsDisabled},
 }
@@ -782,11 +782,11 @@ class ArchitectureTrackerForm(ArchitectureBasicForm):
     pass
 
 
-class ArchitectureGANForm(ArchitectureBasicForm):
+class ArchitectureImageGANForm(ArchitectureBasicForm):
     pass
 
 
-class ArchitectureCGANForm(ArchitectureBasicForm):
+class ArchitectureImageCGANForm(ArchitectureBasicForm):
     pass
 
 

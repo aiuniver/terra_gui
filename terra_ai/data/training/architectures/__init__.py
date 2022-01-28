@@ -60,11 +60,11 @@ class ArchitectureTrackerData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureGANData(types.GAN.ParametersData):
+class ArchitectureImageGANData(types.GAN.ParametersData):
     pass
 
 
-class ArchitectureCGANData(types.GAN.ParametersData):
+class ArchitectureImageCGANData(types.GAN.ParametersData):
     pass
 
 

@@ -12,6 +12,7 @@ from tensorflow import keras
 from tensorflow.python.keras.models import Model
 
 from terra_ai.callbacks import interactive
+from terra_ai.callbacks.gan_callback import CGANCallback
 from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length, CLASSIFICATION_ARCHITECTURE
 from terra_ai.custom_objects.customLayers import terra_custom_layers
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -869,7 +870,7 @@ class GANTerraModel:
                 GANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
+    def predict(self, data_array, batch_size: Optional[int]):
         noise_shape = [100]
         noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
         noise = tf.random.normal(noise_shape)
@@ -1077,10 +1078,20 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # for image_data, _ in dataset.dataset.get('train').shuffle(
-                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                #     self.predict(data_array=image_data, options=dataset)
-                #     break
+                # for image_data, _ in dataset.dataset.get('train').batch(256).take(1):
+                # batch_size = 16
+                # shape = [32*batch_size]
+                # image_size = (64, 64, 3)
+                # shape.extend(image_size)
+                # pred = np.zeros(shape)
+                # for i in range(32):
+                #     pred[i*batch_size:(i+1)*batch_size] = self.predict(data_array=dataset.dataset.get('train').batch(batch_size)).numpy()
+                # logger.debug(f"pred: {pred.shape}")
+                # postprocc = CGANCallback.postprocess_deploy(
+                #     array=pred, options=dataset, save_path=Path("D:\AI")
+                # )
+                # logger.debug(f"postprocc: {postprocc, len(postprocc['output'])}")
+                    # break
 
             self.callback.on_train_end()
         except Exception as error:
@@ -1088,14 +1099,16 @@ class ConditionalGANTerraModel(GANTerraModel):
                 ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.get_input_keys(
-            generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = data_array.get(input_keys.get('gen_labels'))
+    def predict(self, data_array, batch_size: Optional[int]):
+        # input_keys = self.get_input_keys(
+        #     generator=self.generator, discriminator=self.discriminator, options=options)
+        gen_labels = None
+        for image_data, _ in data_array:
+            gen_labels = image_data.get(self.input_keys.get('gen_labels'))
         noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.get_noise(options))
+        noise_shape.extend(self.noise)
         noise = tf.random.normal(noise_shape)
-        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
         return self.generator(gen_input)
 
 
@@ -1105,10 +1118,35 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
     def __init__(self, model: dict, model_name: str, model_path: Path, options: PrepareDataset):
         super().__init__(model=model, model_name=model_name, model_path=model_path, options=options)
         self.noise = ConditionalGANTerraModel.get_noise(options)
-        self.input_keys = ConditionalGANTerraModel.get_input_keys(
+        self.input_keys = TextToImageGANTerraModel.get_input_keys(
             generator=self.generator, discriminator=self.discriminator, options=options)
         self.seed: dict = self.__prepare_tti_gan_seed(options=options, noise=self.noise)
         pass
+
+    @staticmethod
+    def get_input_keys(generator, discriminator, options: PrepareDataset) -> dict:
+        method_name = '__get_input_keys'
+        try:
+            keys = {}
+            gen_inputs = [inp.name for inp in generator.inputs]
+            disc_inputs = [inp.name for inp in discriminator.inputs]
+            for out in options.data.columns.keys():
+                col_name = list(options.data.columns.get(out).keys())[0]
+                if options.data.columns.get(out).get(col_name).get('task') == 'Text':
+                    if f"{out}" in gen_inputs:
+                        keys['gen_labels'] = f"{out}"
+                    if f"{out}" in disc_inputs:
+                        keys['disc_labels'] = f"{out}"
+                if options.data.columns.get(out).get(col_name).get('task') == 'Image':
+                    keys['image'] = f"{out}"
+                if options.data.columns.get(out).get(col_name).get('task') == 'Noise':
+                    keys['noise'] = f"{out}"
+            logger.debug(f"__get_input_keys - keys - {keys}")
+            return keys
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ConditionalGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
 
     @staticmethod
     def __prepare_tti_gan_seed(options: PrepareDataset, noise):
@@ -1159,7 +1197,7 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
         method_name = 'fit'
         try:
             inp = self.input_keys.get('gen_labels')
-            # logger.
+            # logger.debug(f"{inp, type(inp), dataset.data.columns.keys()}")
             column = list(dataset.data.columns.get(int(inp)).keys())[0]
             y_true_text = dataset.dataframe.get('train')[column].tolist()
             shape = [len(y_true_text)]
@@ -1283,14 +1321,12 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                 TextToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.get_input_keys(
-            generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = data_array.get(input_keys.get('gen_labels'))
+    def predict(self, data_array, batch_size: Optional[int]):
+        gen_labels = data_array.get(self.input_keys.get('gen_labels'))
         noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.get_noise(options))
+        noise_shape.extend(self.noise)
         noise = tf.random.normal(noise_shape)
-        gen_input = {input_keys['noise']: noise, input_keys['gen_labels']: gen_labels}
+        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
         return self.generator(gen_input)
 
 
@@ -1411,7 +1447,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 cur_position = 0
                 for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
                     batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
-                    cur_range = np.arange(cur_position, cur_position+batch_length).tolist()
+                    cur_range = np.arange(cur_position, cur_position + batch_length).tolist()
                     # image = GANTerraModel.add_noise_to_image(image_data.get(self.input_keys.get('disc_images')))
                     results = self.__train_step(
                         # target_array=image_data.get(self.input_keys.get('disc_images')),
@@ -1483,9 +1519,7 @@ class ImageToImageGANTerraModel(GANTerraModel):
                 ImageToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
-    @staticmethod
-    def predict(self, data_array, options: Optional[PrepareDataset]):
-        input_keys = self.__get_input_keys(options=options)
-        gen_array = data_array.get(input_keys.get('gen_images'))
-        gen_input = {input_keys['gen_images']: gen_array}
+    def predict(self, data_array, batch_size: Optional[int]):
+        gen_array = data_array.get(self.input_keys.get('gen_images'))
+        gen_input = {self.input_keys['gen_images']: gen_array}
         return self.generator(gen_input)
