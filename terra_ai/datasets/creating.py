@@ -1259,9 +1259,9 @@ class CreateDataset(object):
             out_list.append(val['task'])
         if out_list == ['Generator', 'Discriminator']:
             if len(self.inputs) == 2:
-                architecture = ArchitectureChoice.GAN
+                architecture = ArchitectureChoice.ImageGAN
             elif len(self.inputs) == 3:
-                architecture = ArchitectureChoice.CGAN
+                architecture = ArchitectureChoice.ImageCGAN
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
