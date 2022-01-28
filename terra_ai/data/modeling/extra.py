@@ -140,6 +140,7 @@ class LayerTypeChoice(str, Enum):
     ConditionalMergeLayer = "ConditionalMergeLayer"
     ResnetBlock2D = "ResnetBlock2D"
     Transformer = "Transformer"
+    PretrainedBERT = "PretrainedBERT"
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, LayerTypeChoice))

@@ -307,3 +307,29 @@ class CONVBlockConfigChoice(str, Enum):
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, CONVBlockConfigChoice))
+
+
+class BertModelNameConfigChoice(str, Enum):
+    bert_multi_cased_L_12_H_768_A_12 = 'bert_multi_cased_L-12_H-768_A-12'
+    distilbert_multi_cased_L_6_H_768_A_12_32lang = 'distilbert_multi_cased_L-6_H-768_A-12_32lang'
+    use_cmlm_multilingual_base_br_100lang = 'use-cmlm_multilingual-base-br_100lang'
+    large_LaBSE_109lang = 'large_LaBSE_109lang'
+    smaller_LaBSE_15lang = "smaller_LaBSE_15lang"
+    xlm_roberta_multi_cased_L_12_H_768_A_12_53lang = 'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang'
+    bert_en_uncased_L_12_H_768_A_12 = "bert_en_uncased_L-12_H-768_A-12"
+    bert_en_cased_L_12_H_768_A_12 = "bert_en_cased_L-12_H-768_A-12"
+    small_bert_en_uncased_L_2_H_128_A_2 = "small_bert/bert_en_uncased_L-2_H-128_A-2"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, BertModelNameConfigChoice))
+
+
+class DtypeInputLayerChoice(str, Enum):
+    float32 = 'float32'
+    string = 'string'
+    uint8 = 'uint8'
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, DtypeInputLayerChoice))

@@ -414,8 +414,7 @@ class ModelValidator:
                     outputs.append(layer[0])
                     logger.debug(f"self.output_shape: {layer}, {self.output_shape}, {self.layer_output_shapes}")
                     if self.output_shape[layer[0]] and \
-                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:] and \
-                            layer[1] != LayerTypeChoice.Transformer:
+                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
@@ -599,7 +598,7 @@ class LayerValidation:
         self.input_dimension = (config.input_dimension.value, config.input_dimension.validation.value)
         self.module = importlib.import_module(config.module.value)
         self.module_type = config.module_type.value
-        # logger.debug(f"layer_type = {self.layer_type}")
+        logger.debug(f"layer_type = {self.layer_type}")
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
@@ -637,12 +636,14 @@ class LayerValidation:
                         #     logger.debug(f"ResnetBlock2D module = {self.module}")
                         #     logger.debug(f"ResnetBlock2D params = {params}")
                         #     logger.debug(f"ResnetBlock2D obj = {getattr(self.module, self.layer_type)(**params)}")
+                        logger.debug(f"{self.layer_type} input_shape = {self.inp_shape}")
+                        logger.debug(f"self.module = {self.module}")
+                        logger.debug(f"self.layer_type = {self.layer_type}")
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
-                        logger.debug(f"Transformer input_shape = {self.inp_shape}")
-                        logger.debug(f"Transformer output_shape = {output_shape}")
+                        logger.debug(f"{self.layer_type} output_shape = {output_shape}")
                         # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
                         #     logger.debug(f"ResnetBlock2D output_shape = {output_shape}")
                     # LSTM and GRU can returns list of one tuple of tensor shapes
@@ -1263,9 +1264,11 @@ class ModelCreator:
         # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
+            logger.debug(f"terra_layer[2] {terra_layer[2]}")
+
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
-                shape=_input_shape, name=terra_layer[2].get("name"))
+                shape=_input_shape, dtype=tensorflow.string, name=terra_layer[2].get("name"))
         else:
             marker = None
             yolo_out_idx = None
@@ -1285,6 +1288,9 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+            logger.debug(f"'input_tensors' {input_tensors}")
+            logger.debug(f"'terra_layer[1]' {terra_layer[1]}")
+            logger.debug(f"'terra_layer[2]' {terra_layer[2]}")
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):

@@ -151,4 +151,5 @@ from . import (
     ConditionalMergeLayer,
     ResnetBlock2D,
     Transformer,
+    PretrainedBERT,
 )

@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import tensorflow as tf
 import tensorflow
+import tensorflow_hub as hub
+import tensorflow_text as text
 from tensorflow.python.layers.base import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
@@ -34,6 +36,7 @@ terra_custom_layers = {
     "ConditionalMergeLayer": "customLayers",
     "ResnetBlock2D": "customLayers",
     "Transformer": "customLayers",
+    "PretrainedBERT": "customLayers",
 }
 
 
@@ -1091,7 +1094,7 @@ class UNETBlock2D(Layer):
             if self.maxpooling:
                 setattr(self, f"maxpool_{i + 1}", layers.MaxPool2D(pool_size=2, padding='same'))
         for i in range(self.n_pooling_branches):
-            up_filters = 1024 if self.filters * (2 ** (self.n_pooling_branches - 1 - i)) * self.filters_coef > 1024\
+            up_filters = 1024 if self.filters * (2 ** (self.n_pooling_branches - 1 - i)) * self.filters_coef > 1024 \
                 else self.filters * (2 ** (self.n_pooling_branches - 1 - i)) * self.filters_coef
             setattr(
                 self, f"upblock_{i + 1}",
@@ -2264,7 +2267,7 @@ class TransformerDecoder(layers.Layer):
             num_heads=num_heads, key_dim=embed_dim
         )
         self.dense_proj = tensorflow.keras.Sequential(
-            [layers.Dense(latent_dim, activation="relu"), layers.Dense(embed_dim),]
+            [layers.Dense(latent_dim, activation="relu"), layers.Dense(embed_dim), ]
         )
         self.layernorm_1 = layers.LayerNormalization()
         self.layernorm_2 = layers.LayerNormalization()
@@ -2322,23 +2325,6 @@ class Transformer(layers.Layer):
         self.dr_decoder = layers.Dropout(0.5)
         self.fn_decoder = layers.Dense(self.vocab_size, activation="softmax")
 
-    # def create_transformer(self):
-    #     # encoder_inputs = tensorflow.keras.Input(shape=(self.sequence_length,), dtype="int64", name="encoder_inputs")
-    #     # x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(encoder_inputs)
-    #     # encoder_outputs = TransformerEncoder(self.embed_dim, self.latent_dim, self.num_heads)(x)
-    #     # encoder = tensorflow.keras.Model(encoder_inputs, encoder_outputs, name="encoder")
-    #
-    #     decoder_inputs = tensorflow.keras.Input(shape=(self.sequence_length,), dtype="int64", name="decoder_inputs")
-    #     encoded_seq_inputs = tensorflow.keras.Input(shape=(self.sequence_length, self.embed_dim), name="decoder_state_inputs")
-    #     # x = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)(decoder_inputs)
-    #     # x = TransformerDecoder(self.embed_dim, self.latent_dim, self.num_heads)(x, encoded_seq_inputs)
-    #     # x = layers.Dropout(0.5)(x)
-    #     # decoder_outputs = layers.Dense(self.vocab_size, activation="softmax")(x)
-    #     decoder = tensorflow.keras.Model([decoder_inputs, encoded_seq_inputs], decoder_outputs)
-    #
-    #     decoder_outputs = decoder([decoder_inputs, encoder_outputs])
-    #     return tensorflow.keras.Model([encoder_inputs, decoder_inputs], decoder_outputs, name="transformer")
-
     def call(self, input_, training=True, **kwargs):
         x = self.pos_emb_encoder(input_[0])
         encoder_outputs = self.tr_encoder(x)
@@ -2364,8 +2350,244 @@ class Transformer(layers.Layer):
         return cls(**config)
 
     def compute_output_shape(self, input_shape):
-        output_shape = (None, input_shape[0][1], self.vocab_size)
+        output_shape = (None, input_shape[0][1])  # , self.vocab_size
         return output_shape
+
+
+bert_model_name = ['bert_multi_cased_L-12_H-768_A-12', 'distilbert_multi_cased_L-6_H-768_A-12_32lang',
+                   'use-cmlm_multilingual-base-br_100lang', 'large_LaBSE_109lang', "smaller_LaBSE_15lang",
+                   'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang', "bert_en_uncased_L-12_H-768_A-12",
+                   "bert_en_cased_L-12_H-768_A-12", "small_bert/bert_en_uncased_L-2_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-2_H-256_A-4", "small_bert/bert_en_uncased_L-2_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-2_H-768_A-12", "small_bert/bert_en_uncased_L-4_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-4_H-256_A-4", "small_bert/bert_en_uncased_L-4_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-4_H-768_A-12", "small_bert/bert_en_uncased_L-6_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-6_H-256_A-4", "small_bert/bert_en_uncased_L-6_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-6_H-768_A-12", "small_bert/bert_en_uncased_L-8_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-8_H-256_A-4", "small_bert/bert_en_uncased_L-8_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-8_H-768_A-12", "small_bert/bert_en_uncased_L-10_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-10_H-256_A-4", "small_bert/bert_en_uncased_L-10_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-10_H-768_A-12", "small_bert/bert_en_uncased_L-12_H-128_A-2",
+                   "small_bert/bert_en_uncased_L-12_H-256_A-4", "small_bert/bert_en_uncased_L-12_H-512_A-8",
+                   "small_bert/bert_en_uncased_L-12_H-768_A-12", "albert_en_base", "electra_small", "electra_base",
+                   "experts_pubmed", "experts_wiki_books", "talking-heads_base"]
+
+
+class PretrainedBERT(layers.Layer):
+    def __init__(self, model_name: str = '', set_trainable: bool = True, sequence_length: int = 128, **kwargs):
+        super(PretrainedBERT, self).__init__(**kwargs)
+        self.model_name = model_name
+        self.sequence_length = sequence_length
+        self.map_name_to_handle = {
+            'bert_multi_cased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_multi_cased_L-12_H-768_A-12/4',
+            'distilbert_multi_cased_L-6_H-768_A-12_32lang':
+                'https://tfhub.dev/jeongukjae/distilbert_multi_cased_L-6_H-768_A-12/1',
+            'use-cmlm_multilingual-base-br_100lang':
+                'https://tfhub.dev/google/universal-sentence-encoder-cmlm/multilingual-base-br/1',
+            'large_LaBSE_109lang':
+                'https://tfhub.dev/google/LaBSE/2',
+            'smaller_LaBSE_15lang':
+                'https://tfhub.dev/jeongukjae/smaller_LaBSE_15lang/1',
+            'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang':
+                'https://tfhub.dev/jeongukjae/xlm_roberta_multi_cased_L-12_H-768_A-12/1',
+            'bert_en_uncased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/3',
+            'bert_en_cased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_cased_L-12_H-768_A-12/3',
+            'small_bert/bert_en_uncased_L-2_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-2_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-2_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-2_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-2_H-768_A-12/1',
+            'small_bert/bert_en_uncased_L-4_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-4_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-4_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-4_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-4_H-768_A-12/1',
+            'small_bert/bert_en_uncased_L-6_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-6_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-6_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-6_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-6_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-6_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-6_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-6_H-768_A-12/1',
+            'small_bert/bert_en_uncased_L-8_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-8_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-8_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-8_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-8_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-8_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-8_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-8_H-768_A-12/1',
+            'small_bert/bert_en_uncased_L-10_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-10_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-10_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-10_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-10_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-10_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-10_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-10_H-768_A-12/1',
+            'small_bert/bert_en_uncased_L-12_H-128_A-2':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-12_H-128_A-2/1',
+            'small_bert/bert_en_uncased_L-12_H-256_A-4':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-12_H-256_A-4/1',
+            'small_bert/bert_en_uncased_L-12_H-512_A-8':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-12_H-512_A-8/1',
+            'small_bert/bert_en_uncased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/small_bert/bert_en_uncased_L-12_H-768_A-12/1',
+            'albert_en_base':
+                'https://tfhub.dev/tensorflow/albert_en_base/2',
+            'electra_small':
+                'https://tfhub.dev/google/electra_small/2',
+            'electra_base':
+                'https://tfhub.dev/google/electra_base/2',
+            'experts_pubmed':
+                'https://tfhub.dev/google/experts/bert/pubmed/2',
+            'experts_wiki_books':
+                'https://tfhub.dev/google/experts/bert/wiki_books/2',
+            'talking-heads_base':
+                'https://tfhub.dev/tensorflow/talkheads_ggelu_bert_en_base/1',
+        }
+        self.map_model_to_preprocess = {
+            'bert_multi_cased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_multi_cased_preprocess/3',
+            'distilbert_multi_cased_L-6_H-768_A-12_32lang':
+                'https://tfhub.dev/jeongukjae/distilbert_multi_cased_preprocess/2',
+            'use-cmlm_multilingual-base-br_100lang':
+                'https://tfhub.dev/google/universal-sentence-encoder-cmlm/multilingual-preprocess/2',
+            'large_LaBSE_109lang':
+                'https://tfhub.dev/google/universal-sentence-encoder-cmlm/multilingual-preprocess/2',
+            'smaller_LaBSE_15lang':
+                'https://tfhub.dev/jeongukjae/smaller_LaBSE_15lang_preprocess/1',
+            'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang':
+                'https://tfhub.dev/jeongukjae/xlm_roberta_multi_cased_preprocess/1',
+            'bert_en_uncased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'bert_en_cased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_cased_preprocess/3',
+            'small_bert/bert_en_uncased_L-2_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-2_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-2_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-2_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-4_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-4_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-4_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-4_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-6_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-6_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-6_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-6_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-8_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-8_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-8_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-8_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-10_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-10_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-10_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-10_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-12_H-128_A-2':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-12_H-256_A-4':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-12_H-512_A-8':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'small_bert/bert_en_uncased_L-12_H-768_A-12':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'albert_en_base':
+                'https://tfhub.dev/tensorflow/albert_en_preprocess/3',
+            'electra_small':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'electra_base':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'experts_pubmed':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'experts_wiki_books':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+            'talking-heads_base':
+                'https://tfhub.dev/tensorflow/bert_en_uncased_preprocess/3',
+        }
+        print('self.model_name', self.model_name)
+        self.tfhub_handle_encoder = self.map_name_to_handle[self.model_name]
+        self.tfhub_handle_preprocess = self.map_model_to_preprocess[self.model_name]
+        print('self.tfhub_handle_encoder', self.tfhub_handle_encoder)
+        print('self.tfhub_handle_preprocess', self.tfhub_handle_preprocess)
+        self.set_trainable = set_trainable
+        self.preprocessing_layer = hub.KerasLayer(self.tfhub_handle_preprocess, name='preprocessing')
+        self.encoder = hub.KerasLayer(self.tfhub_handle_encoder, trainable=self.set_trainable, name='BERT_encoder')
+    #     self.net_bert = self.build_classifier_model()
+    #     print(self.net_bert.summary())
+    #
+    # def build_classifier_model(self):
+    #     text_input = layers.Input(shape=(), dtype=tf.string, name='text')
+    #     preprocessing_layer = hub.KerasLayer(self.tfhub_handle_preprocess, name='preprocessing')
+    #     encoder_inputs = preprocessing_layer(text_input)
+    #     encoder = hub.KerasLayer(self.tfhub_handle_encoder, trainable=True, name='BERT_encoder')
+    #     outputs = encoder(encoder_inputs)
+    #     net = outputs['pooled_output']
+    #     return tf.keras.Model(text_input, net)
+
+    def call(self, input_, training=True, **kwargs):
+        encoder_inputs = self.preprocessing_layer(input_)
+        outputs = self.encoder(encoder_inputs)
+        return outputs['pooled_output']
+        # #
+        # return self.net_bert(input_)
+
+    def get_config(self):
+        config = {
+            'map_name_to_handle': self.map_name_to_handle,
+            'map_model_to_preprocess': self.map_model_to_preprocess,
+            'tfhub_handle_encoder': self.tfhub_handle_encoder,
+            'tfhub_handle_preprocess': self.tfhub_handle_preprocess,
+            'model_name': self.model_name,
+            'set_trainable': self.set_trainable,
+        }
+        base_config = super(PretrainedBERT, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        print('input_shape', input_shape)
+        input_ = tf.constant('text', shape=(input_shape[1]), dtype=tf.string)
+        print('input_', input_)
+        encoder_inputs = self.preprocessing_layer(input_)
+        print(encoder_inputs)
+        outputs = self.encoder(encoder_inputs)
+        print('tf.shape(outputs[pooled_output])', tf.shape(outputs['pooled_output']))
+        # outputs = self.net_bert(input_)
+        return outputs['pooled_output'].shape
+
 
 
 if __name__ == "__main__":
@@ -2409,19 +2631,27 @@ if __name__ == "__main__":
     #     'use_bias': False, 'kernel_size': [3, 3], 'kernel_initializer': 'random_normal',
     #     'dropout_rate': 0.1, 'leaky_relu_alpha': 0.3, 'name': 'UNETBlock2D_3'
     # }
-    params = {'embed_dim': 256, 'latent_dim': 2048, 'num_heads': 8, 'vocab_size': 10000, "sequence_length": 25}
+    params = {'model_name': 'bert_multi_cased_L-12_H-768_A-12', 'set_trainable': True}
+
     # params = {
     #     'filters': 256, 'num_resblocks': 9, 'n_conv_layers': 2, 'use_activation_layer': True,
     #     'activation': 'relu', 'kernel_size': (3, 3), 'kernel_initializer': 'glorot_uniform',
     #     'normalization': 'instance', "merge_layer": 'concatenate', "use_bias": True
     # }
     # # for i in range(5):
-    input_shape = [(20, ), (20, )]
-    layer = Transformer(**params)
-    input1 = tensorflow.keras.Input(shape=input_shape[0])
-    input2 = tensorflow.keras.Input(shape=input_shape[1])
+    input_shape = (20,)
+
+    text_input = tensorflow.keras.Input(shape=(), dtype=tf.string)
+    layer = PretrainedBERT(**params)
     # print(input)
-    x = layer([input1, input2])
+    x = layer(text_input)
     print(x.shape)
-    print(layer.compute_output_shape(input_shape=input_shape))
+    model = tf.keras.Model(text_input, x)
+    model.summary()
+    text = np.array([["text one two three 123125 . !"], ["text one two three 123125 data one. !"]])
+    print(text.shape)
+    pred = model(text)
+    print(pred.shape)
+    print(pred)
+    # print(layer.compute_output_shape(input_shape=input_shape))
     pass

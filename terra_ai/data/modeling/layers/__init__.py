@@ -702,6 +702,14 @@ class LayerTransformerData(LayerMixinData):
     main: types.Transformer.ParametersMainData = types.Transformer.ParametersMainData()
     extra: types.Transformer.ParametersExtraData = (types.Transformer.ParametersExtraData())
 
+class LayerPretrainedBERTData(LayerMixinData):
+    main: types.PretrainedBERT.ParametersMainData = (
+        types.PretrainedBERT.ParametersMainData()
+    )
+    extra: types.PretrainedBERT.ParametersExtraData = (
+        types.PretrainedBERT.ParametersExtraData()
+    )
+
 
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
