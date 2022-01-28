@@ -663,6 +663,8 @@ class CreateArray(object):
                                        'cols_names': options['cols_names'],
                                        'text_mode': options['text_mode'],
                                        'length': options['length'],
+                                       'step': options.get('step'),
+                                       'max_words': options.get('max_words'),
                                        'max_words_count': options['max_words_count'],
                                        'word_to_vec_size': options['word_to_vec_size'],
                                        'pymorphy': options['pymorphy'],
