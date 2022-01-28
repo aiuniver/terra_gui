@@ -1,12 +1,6 @@
 <template>
-  <div
-    :class="['t-auto-complete', { 't-auto-complete--active': show }, { 't-auto-complete--small': small }]"
-    v-outside="outside"
-  >
-    <i
-      :class="['t-auto-complete__icon t-icon icon-file-arrow', { 't-auto-complete__icon--rotate': show }]"
-      @click="click"
-    ></i>
+  <div :class="['t-auto-complete', { 't-auto-complete--active': show }, { 't-auto-complete--small': small }]" v-outside="outside">
+    <i :class="['t-auto-complete__icon t-icon icon-file-arrow', { 't-auto-complete__icon--rotate': show }]" @click="click"></i>
     <input
       class="t-auto-complete__input"
       v-model="input"
@@ -77,7 +71,7 @@ export default {
   },
   methods: {
     send(value) {
-      console.log('value', value)
+      console.log('value', value);
       this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
       this.$emit('parse', { name: this.name, parse: this.parse, value });
@@ -100,14 +94,14 @@ export default {
       this.show = !this.show;
       this.$emit('click', e);
     },
-  }
+  },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .t-auto-complete {
   position: relative;
-  height: 42px;
+  height: 40px;
   label {
     position: absolute;
     margin-left: 10px;
@@ -142,7 +136,7 @@ export default {
     transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
     cursor: pointer;
     background: rgba(36, 47, 61, 0.5);
-    border: 1px solid #65B9F4;
+    border: 1px solid #65b9f4;
     &:focus {
       border-color: #e7ecf5;
     }

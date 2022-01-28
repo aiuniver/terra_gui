@@ -1,8 +1,5 @@
 <template>
-  <div
-    :class="['d-input', { 'd-input--active': show }, { 'd-input--small': small, 'd-input--disabled': isDisabled }]"
-    v-outside="outside"
-  >
+  <div :class="['d-input', { 'd-input--active': show }, { 'd-input--small': small, 'd-input--disabled': isDisabled }]" v-outside="outside">
     <input
       class="d-input__input"
       v-model="input"
@@ -117,7 +114,7 @@ export default {
       this.show = false;
     },
     click(e) {
-      if (this.isDisabled) return
+      if (this.isDisabled) return;
       this.show = !this.show;
       this.$emit('click', e);
     },
@@ -128,7 +125,7 @@ export default {
         this.$emit('parse', { name: this.name, parse: this.parse, value });
       }
       // console.log(value)
-    }
+    },
   },
 };
 </script>
@@ -137,7 +134,7 @@ export default {
 @import '@/assets/scss/components/fields.scss';
 .d-input {
   position: relative;
-  height: 42px;
+  height: 40px;
   &__btn {
     &--down {
       height: 100%;
@@ -189,7 +186,7 @@ export default {
     overflow: auto;
     border-radius: 0 0 4px 4px;
     z-index: 3;
-    background: #242F3D;
+    background: #242f3d;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
     border-radius: 4px;
     &--item {
@@ -209,7 +206,7 @@ export default {
         padding: 8px 10px 12px;
       }
       &:hover {
-        background: #1E2734;
+        background: #1e2734;
       }
     }
     &--empty {

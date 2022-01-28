@@ -1,12 +1,7 @@
 <template>
   <div :class="['d-button', { 'd-button--disabled': disabled }]" @click="$emit('click', $event)">
-    <div
-      :class="['d-button__sloy', `d-button__sloy--${color}`, `d-button__sloy--${size}`, `d-button__sloy--${direction}`]"
-    ></div>
-    <button
-      :disabled="disabled"
-      :class="['d-button__btn', `d-button__btn--${color}`, `d-button__btn--${size}`, `d-button__btn--${direction}`]"
-    >
+    <div :class="['d-button__sloy', `d-button__sloy--${color}`, `d-button__sloy--${size}`, `d-button__sloy--${direction}`]"></div>
+    <button :disabled="disabled" :class="['d-button__btn', `d-button__btn--${color}`, `d-button__btn--${size}`, `d-button__btn--${direction}`]">
       <slot>{{ text }}</slot>
     </button>
   </div>
@@ -51,37 +46,37 @@ export default {
     &--small {
       height: 33px;
     }
-      width: calc(100% - 2px);
-      color: #0e1621;
-      background-color: #65b9f4;
-      &.d-button__sloy--right,
-      &.d-button__btn--right {
-        clip-path: polygon(
-          0% 100%,
-          0% 17px,
-          12px 6px,
-          78px 6px,
-          84px 0%,
-          100% 0%,
-          calc(100% - 8px) 21%,
-          calc(100% - 8px) calc(100% - 14px),
-          calc(100% - 22px) 100%
-        );
-      }
-      &.d-button__sloy--left,
-      &.d-button__btn--left {
-        clip-path: polygon(
-          0% 0%,
-          calc(100% - 84px) 0%,
-          calc(100% - 78px) 6px,
-          calc(100% - 12px) 6px,
-          100% 17px,
-          100% 100%,
-          22px 100%,
-          8px calc(100% - 14px),
-          8px 8px
-        );
-      }
+    width: calc(100% - 2px);
+    color: #0e1621;
+    background-color: #65b9f4;
+    &.d-button__sloy--right,
+    &.d-button__btn--right {
+      clip-path: polygon(
+        0% 100%,
+        0% 17px,
+        12px 6px,
+        78px 6px,
+        84px 0%,
+        100% 0%,
+        calc(100% - 8px) 21%,
+        calc(100% - 8px) calc(100% - 14px),
+        calc(100% - 22px) 100%
+      );
+    }
+    &.d-button__sloy--left,
+    &.d-button__btn--left {
+      clip-path: polygon(
+        0% 0%,
+        calc(100% - 84px) 0%,
+        calc(100% - 78px) 6px,
+        calc(100% - 12px) 6px,
+        100% 17px,
+        100% 100%,
+        22px 100%,
+        8px calc(100% - 14px),
+        8px 8px
+      );
+    }
     &--secondary {
       width: calc(100% - 2px);
       color: #65b9f4;
