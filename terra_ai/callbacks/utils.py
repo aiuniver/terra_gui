@@ -331,7 +331,8 @@ BASIC_ARCHITECTURE = [
     ArchitectureChoice.Basic, ArchitectureChoice.ImageClassification, ArchitectureChoice.ImageSegmentation,
     ArchitectureChoice.TextSegmentation, ArchitectureChoice.TextClassification, ArchitectureChoice.AudioClassification,
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
-    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend
+    ArchitectureChoice.DataframeRegression, ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend,
+    ArchitectureChoice.TextTransformer
 ]
 YOLO_ARCHITECTURE = [ArchitectureChoice.YoloV3, ArchitectureChoice.YoloV4]
 CLASS_ARCHITECTURE = [

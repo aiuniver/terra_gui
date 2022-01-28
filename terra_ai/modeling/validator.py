@@ -224,13 +224,13 @@ class ModelValidator:
                     models['discriminator'] = model
                 else:
                     models['generator'] = model
-            print(models, models['discriminator'].outputs, models['generator'].outputs)
+            # print(models, models['discriminator'].outputs, models['generator'].outputs)
             return models
         else:
             mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
             model = mc.create_model()
-            for layer in model.layers:
-                print(layer)
+            # for layer in model.layers:
+            #     print(layer)
             return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
@@ -1264,7 +1264,7 @@ class ModelCreator:
         # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
-            logger.debug(f"terra_layer[2] {terra_layer[2]}")
+            # logger.debug(f"terra_layer[2] {terra_layer[2]}")
 
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
@@ -1288,9 +1288,9 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
-            logger.debug(f"'input_tensors' {input_tensors}")
-            logger.debug(f"'terra_layer[1]' {terra_layer[1]}")
-            logger.debug(f"'terra_layer[2]' {terra_layer[2]}")
+            # logger.debug(f"'input_tensors' {input_tensors}")
+            # logger.debug(f"'terra_layer[1]' {terra_layer[1]}")
+            # logger.debug(f"'terra_layer[2]' {terra_layer[2]}")
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):

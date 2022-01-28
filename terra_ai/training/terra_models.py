@@ -183,16 +183,18 @@ class BaseTerraModel:
             train_pred, train_true, val_pred, val_true = {}, {}, {}, {}
             self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
+            logger.debug(f"loss: {loss}")
             output_list = list(dataset.data.outputs.keys())
             sample_weights = {}
             for out in output_list:
-                train_target_shape, val_target_shape = [self.train_length], [self.val_length]
-                train_target_shape.extend(list(dataset.data.outputs.get(out).shape))
-                val_target_shape.extend(list(dataset.data.outputs.get(out).shape))
-                train_pred[f"{out}"] = np.zeros(train_target_shape).astype('float32')
-                train_true[f"{out}"] = np.zeros(train_target_shape).astype('float32')
-                val_pred[f"{out}"] = np.zeros(val_target_shape).astype('float32')
-                val_true[f"{out}"] = np.zeros(val_target_shape).astype('float32')
+                if dataset.data.architecture != ArchitectureChoice.TextTransformer:
+                    train_target_shape, val_target_shape = [self.train_length], [self.val_length]
+                    train_target_shape.extend(list(dataset.data.outputs.get(out).shape))
+                    val_target_shape.extend(list(dataset.data.outputs.get(out).shape))
+                    train_pred[f"{out}"] = np.zeros(train_target_shape).astype('float32')
+                    train_true[f"{out}"] = np.zeros(train_target_shape).astype('float32')
+                    val_pred[f"{out}"] = np.zeros(val_target_shape).astype('float32')
+                    val_true[f"{out}"] = np.zeros(val_target_shape).astype('float32')
                 sample_weights[f"{out}"] = None
 
             train_data_idxs = np.arange(self.train_length).tolist()
@@ -217,9 +219,10 @@ class BaseTerraModel:
                         x_batch=x_batch_train, y_batch=y_batch_train,
                         losses=loss, set_optimizer=self.optimizer, sample_weights=batch_weights
                     )
-                    for i, out in enumerate(output_list):
-                        train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
-                        train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
+                    if dataset.data.architecture != ArchitectureChoice.TextTransformer:
+                        for i, out in enumerate(output_list):
+                            train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
+                            train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
                     current_idx += length
                     train_steps += 1
 
@@ -255,9 +258,10 @@ class BaseTerraModel:
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
                     val_pred_array, val_true_array = self.__test_step(x_batch=x_batch_val, y_batch=y_batch_val)
                     length = val_true_array[0].shape[0]
-                    for i, out in enumerate(output_list):
-                        val_pred[f"{out}"][current_val_idx: current_val_idx + length] = val_pred_array[i].numpy()
-                        val_true[f"{out}"][current_val_idx: current_val_idx + length] = val_true_array[i].numpy()
+                    if dataset.data.architecture != ArchitectureChoice.TextTransformer:
+                        for i, out in enumerate(output_list):
+                            val_pred[f"{out}"][current_val_idx: current_val_idx + length] = val_pred_array[i].numpy()
+                            val_true[f"{out}"][current_val_idx: current_val_idx + length] = val_true_array[i].numpy()
                     current_val_idx += length
                     val_steps += 1
 

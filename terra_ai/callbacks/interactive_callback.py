@@ -14,6 +14,7 @@ from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
+from terra_ai.callbacks.transformer_callbacks import TextTransformerCallback
 from terra_ai.callbacks.utils import loss_metric_config, fill_graph_plot_data, fill_graph_front_structure, \
     get_classes_colors, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, \
     class_metric_list, reformat_fit_array, GAN_ARCHITECTURE
@@ -518,7 +519,8 @@ class InteractiveCallback:
                 self.callback = TextToImageGANCallback()
             elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
                 self.callback = ImageToImageGANCallback()
-                # logger.debug("self.callback = ImageToImageGANCallback()")
+            elif dataset.data.architecture == ArchitectureChoice.TextTransformer:
+                self.callback = TextTransformerCallback()
             else:
                 pass
         except Exception as error:

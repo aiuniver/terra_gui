@@ -63,7 +63,7 @@ class ArchitectureChoice(str, Enum):
     ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
-    TextText = "TextText"
+    TextTransformer = "TextTransformer"
 
 class CheckpointIndicatorChoice(str, Enum):
     Val = "Val"

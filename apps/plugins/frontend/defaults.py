@@ -229,6 +229,7 @@ StatesTrainingBaseParamsDisabled = {
     "TimeseriesTrend": {**StatesTrainingBasicParamsDisabled},
     "AudioClassification": {**StatesTrainingBasicParamsDisabled},
     "VideoClassification": {**StatesTrainingBasicParamsDisabled},
+    "TextTransformer": {**StatesTrainingBasicParamsDisabled},
     "YoloV3": {**StatesTrainingYoloParamsDisabled},
     "YoloV4": {**StatesTrainingYoloParamsDisabled},
     "ImageGAN": {**StatesTrainingGANParamsDisabled},
@@ -799,6 +800,10 @@ class ArchitectureImageToImageGANForm(ArchitectureBasicForm):
 
 
 class ArchitectureDataframeText(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTextTransformerForm(ArchitectureBasicForm):
     pass
 
 

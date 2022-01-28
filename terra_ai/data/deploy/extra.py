@@ -27,6 +27,7 @@ class DeployTypeChoice(str, Enum):
     ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
+    TextTransformer = "TextTransformer"
 
     @property
     def demo(self) -> str:
@@ -53,6 +54,7 @@ class DeployTypeDemoChoice(str, Enum):
     TinkoffAPI = "audio_to_text"
     ImageGAN = "image_gan"
     ImageCGAN = "image_cgan"
+    TextTransformer = "text_transformer"
 
 
 class DeployTypePageChoice(str, Enum):

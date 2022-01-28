@@ -647,6 +647,7 @@ Architectures = {
     ArchitectureChoice.TimeseriesTrend: {**ArchitectureBasicAutobalanceForm},
     ArchitectureChoice.AudioClassification: {**ArchitectureBasicAutobalanceForm},
     ArchitectureChoice.VideoClassification: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.TextTransformer: {**ArchitectureBasicForm},
     ArchitectureChoice.YoloV3: {
         **ArchitectureYoloForm,
         "yolo": ArchitectureGroupYoloV3,
