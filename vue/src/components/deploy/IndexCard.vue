@@ -1,12 +1,9 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="['GAN', 'CGAN', 'image_gan'].includes(type)">
+      <div v-if="['image_gan', 'image_cgan'].includes(type)">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
-        </div>
-        <div class="card__result">
-          <TextCard></TextCard>
         </div>
       </div>
       <div v-if="type == 'image_classification'">
