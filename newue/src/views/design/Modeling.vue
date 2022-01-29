@@ -17,7 +17,7 @@ import Blocks from '@/components/modeling/block/Blocks';
 import Params from '@/components/modeling/Params';
 import LoadModel from '@/components/modeling/modals/LoadModel';
 import SaveModel from '@/components/modeling/modals/SaveModel';
-import CopyModal from '../components/global/modals/CopyModal';
+import CopyModal from '@/components/global/modals/CopyModal';
 
 export default {
   name: 'Modeling',
@@ -42,7 +42,7 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = await this.$store.dispatch('dialogs/training', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
