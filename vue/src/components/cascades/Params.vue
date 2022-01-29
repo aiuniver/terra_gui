@@ -40,10 +40,10 @@
 </template>
 
 <script>
-import Input from '@/components/forms/Input.vue';
 import { mapGetters } from 'vuex';
-import BlockInfo from '@/components/cascades/comp/Info.vue';
 import { debounce } from '@/utils/core/utils';
+import Input from '@/components/forms/Input.vue';
+import BlockInfo from '@/components/cascades/comp/Info.vue';
 export default {
   name: 'Params',
   components: {
