@@ -1,5 +1,5 @@
 <template>
-  <main class="page-projects">
+  <div class="page-projects">
     <div class="wrapper">
       <h2>Мои проекты</h2>
       <div class="projects">
@@ -20,11 +20,11 @@
       </t-field>
       <DUpload />
       <template slot="footer">
-        <DButton color="secondary" @click="dialogCreate = false"/>
+        <DButton color="secondary" @click="dialogCreate = false" />
         <DButton color="primary" direction="left" />
       </template>
     </DModal>
-  </main>
+  </div>
 </template>
 
 <script>
@@ -108,6 +108,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.page-projects {
+  height: 100%;
+}
 .wrapper {
   background: #17212b;
   border-top: 0;

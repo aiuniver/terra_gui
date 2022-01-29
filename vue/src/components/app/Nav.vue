@@ -70,9 +70,9 @@ export default {
 <style lang="scss" scoped>
 .nav {
   width: 100%;
-  position: fixed;
-  left: 0;
-  top: 54px;
+  // position: fixed;
+  // left: 0;
+  // top: 54px;
   z-index: 700;
   &__menu {
     list-style: none;

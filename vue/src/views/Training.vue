@@ -1,11 +1,9 @@
 <template>
-  <main class="page-training">
-    <div class="cont">
-      <Toolbar :collabse="collabse" />
-      <Graphics @collabse="collabse = $event" />
-      <Params />
-    </div>
-  </main>
+  <div class="page-training">
+    <Toolbar :collabse="collabse" />
+    <Graphics @collabse="collabse = $event" />
+    <Params />
+  </div>
 </template>
 
 <script>
@@ -32,7 +30,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.cont {
+.page-training {
   background: #17212b;
   padding: 0;
   display: flex;

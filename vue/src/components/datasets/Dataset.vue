@@ -3,7 +3,7 @@
     <div class="wrapper">
       <Filters />
       <div class="project-datasets-block datasets" :style="height">
-        <div class="title mb-4" @click="click('name')">Выберите датасет</div>
+        <div class="title" @click="click('name')">Выберите датасет</div>
         <scrollbar>
           <div class="inner">
             <div class="dataset-card-container">

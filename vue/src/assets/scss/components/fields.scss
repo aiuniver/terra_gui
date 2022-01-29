@@ -1,0 +1,107 @@
+
+$color-bg: #242f3d50;
+$color-bg-hover: #65b9f426;
+$color-border: #65B9F4;
+$color-border-active: #65b9f4;
+$color-border-error: #ca5035;
+$color-border-disabled: #242F3D;
+
+$text-color: #ffffff;
+$text-color-error: #ca5035;
+
+.d-input {
+  position: relative;
+  border: 1px solid $color-border;
+  background: $color-bg;
+  border-radius: 4px;
+  display: flex;
+  width: 100%;
+  height: 40px;
+  color: $text-color;
+  transition: all 0.2s ease-in-out;
+  // overflow: hidden;
+  :focus-visible {
+    outline: none;
+  }
+  &:not(.d-input--error):focus-within,
+  &:not(.d-input--disabled):not(.d-input--error):hover {
+    background-color: $color-bg-hover;
+    border-color: $color-border-active;
+    box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
+  }
+  &--disabled {
+    opacity: 0.5;
+    border-color: $color-border-disabled;
+  }
+  &--error {
+    border-color: $color-border-error;
+    color: $text-color-error;
+  }
+  &__icon {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 0 0 5px;
+  }
+  &__input {
+    height: 100%;
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 14px;
+    line-height: 24px;
+    font-weight: 400;
+    border: none;
+    background: none;
+    color: inherit;
+    &::placeholder {
+      color: #6c7883;
+    }
+    &:disabled {
+      opacity: 1;
+      cursor: default;
+    }
+  }
+  &--small {
+    height: 30px;
+    .d-input__input {
+      padding: 3px 10px;
+    }
+  }
+  &__btn {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-color: inherit;
+    .ci-icon {
+      cursor: pointer;
+    }
+    &--cleener {
+      margin: 0 5px 0 0;
+    }
+    &--number {
+      height: 100%;
+      width: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      border-left: 1px solid;
+      border-color: inherit;
+      .ci-icon {
+        height: 100%;
+        text-align: center;
+        &:hover {
+          background-color: #222e3b;
+        }
+      }
+    }
+    &--disabled {
+      .ci-icon {
+        &:hover {
+          background: none;
+          cursor: default;
+        }
+      }
+    }
+  }
+}

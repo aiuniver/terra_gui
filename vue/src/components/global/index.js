@@ -25,6 +25,11 @@ import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 import TAutoComplete from './new/forms/TAutoComplete';
 import TAutoCompleteTwo from './new/forms/TAutoCompleteTwo';
+import DDropdown from './forms/DDropdown';
+
+
+
+
 
 export default [
   FilesMenu,
@@ -50,5 +55,6 @@ export default [
   TSelect,
   TAutoComplete,
   TAutoCompleteTwo,
-  TField
+  TField,
+  DDropdown,
 ];
