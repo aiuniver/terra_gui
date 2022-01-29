@@ -20,7 +20,6 @@ from terra_ai.data.modeling.layers.extra import (
     YOLOModeChoice,
 )
 
-
 WEIGHT_FILES = {
     YOLOModeChoice.YOLOv3: "yolov3.weights",
     YOLOModeChoice.YOLOv4: "yolov4.weights",
@@ -606,6 +605,15 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
     extra: types.SpaceToDepth.ParametersExtraData = (
         types.SpaceToDepth.ParametersExtraData()
+    )
+
+
+class LayerDepthToSpaceData(LayerMixinData):
+    main: types.DepthToSpace.ParametersMainData = (
+        types.DepthToSpace.ParametersMainData()
+    )
+    extra: types.DepthToSpace.ParametersExtraData = (
+        types.DepthToSpace.ParametersExtraData()
     )
 
 

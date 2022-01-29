@@ -137,6 +137,7 @@ from . import (
     VAEBlock,
     CustomBlock,
     SpaceToDepth,
+    DepthToSpace,
     # DarkNetConvolutional,
     # DarkNetUpsample,
     # DarkNetResBlock,

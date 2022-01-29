@@ -1101,7 +1101,7 @@ class LayerValidation:
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
         # space_to_depth dimensions
-        if self.layer_type == LayerTypeChoice.SpaceToDepth:
+        if self.layer_type == LayerTypeChoice.SpaceToDepth or LayerTypeChoice.DepthToSpace:
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
                     or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC \
                     and len(self.inp_shape[0]) != 4:
@@ -1115,7 +1115,8 @@ class LayerValidation:
                     5, "`data_format`=`NCHW_VECT_C`", len(self.inp_shape[0]), self.inp_shape[0]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
-            if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
+            if self.layer_type == LayerTypeChoice.SpaceToDepth and \
+                    self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
                     (self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0 or
                      self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0):
                 exc = str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(

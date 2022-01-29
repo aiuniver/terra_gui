@@ -125,6 +125,7 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
+    DepthToSpace = "depth_to_space"
     # DarkNetConvolutional = "DarkNetConvolutional"
     # DarkNetUpsample = "DarkNetUpsample"
     # DarkNetResBlock = "DarkNetResBlock"
