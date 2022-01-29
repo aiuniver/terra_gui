@@ -1,6 +1,14 @@
 <template>
   <div class="card">
     <div class="card__content">
+      <div v-if="['GAN', 'CGAN'].includes(type)">
+        <div class="card__original">
+          <ImgCard :imgUrl="card.source" />
+        </div>
+        <div class="card__result">
+          <TextCard></TextCard>
+        </div>
+      </div>
       <div v-if="type == 'image_classification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
@@ -56,7 +64,7 @@
       </div>
       <div v-if="type == 'audio_classification'">
         <div class="card__original">
-          <AudioCard :value="card.source" :key="card.source"/>
+          <AudioCard :value="card.source" :key="card.source" />
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '80px' }">
