@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <div class="card__content">
-      <div v-if="['GAN', 'CGAN'].includes(type)">
+      <div v-if="['GAN', 'CGAN', 'image_gan'].includes(type)">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
