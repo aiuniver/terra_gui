@@ -2150,9 +2150,9 @@ class ResnetBlock2D(Layer):
             if self.merge_layer == "concatenate":
                 setattr(self, f"concat_block_{i + 1}", layers.Concatenate(axis=-1))
             if self.merge_layer == "add":
-                setattr(self, f"concat_block_{i}", layers.Add())
+                setattr(self, f"concat_block_{i + 1}", layers.Add())
             if self.merge_layer == "multiply":
-                setattr(self, f"concat_block_{i}", layers.Multiply())
+                setattr(self, f"concat_block_{i + 1}", layers.Multiply())
 
     def call(self, input_, training=True, **kwargs):
         y = input_
