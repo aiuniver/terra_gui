@@ -9,7 +9,7 @@ from config import settings
 from terra_ai import progress
 from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE, GAN_ARCHITECTURE
 from terra_ai.data.deploy.extra import DeployTypeChoice
-from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
+from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.callbacks import ErrorInClassInMethodException
@@ -324,7 +324,7 @@ class FitCallback:
         logger.debug(f"{method_name}, epoch {self.last_epoch}")
 
         try:
-            if self.is_yolo or self.is_gan:
+            if self.is_yolo or self.is_gan or self.dataset.data.architecture == ArchitectureChoice.TextTransformer:
                 self.history.current_logs = logs
             else:
                 self.history.current_basic_logs(epoch=epoch, arrays=arrays, train_idx=train_data_idxs)

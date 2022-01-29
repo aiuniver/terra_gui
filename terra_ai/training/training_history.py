@@ -14,7 +14,7 @@ from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOL
     CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list, GAN_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.training import NoHistoryLogsException
@@ -124,7 +124,25 @@ class History:
         method_name = '_prepare_log_history_template'
         try:
             log_history = {"epochs": []}
-            if options.data.architecture in BASIC_ARCHITECTURE:
+            if options.data.architecture == ArchitectureChoice.TextTransformer:
+                for output_layer in params.base.architecture.parameters.outputs:
+                    out = f"{output_layer.id}"
+                    log_history[out] = {
+                        "loss": {}, "metrics": {},
+                        "class_loss": {}, "class_metrics": {},
+                        "progress_state": {"loss": {}, "metrics": {}}
+                    }
+                    log_history[out]["loss"][output_layer.loss.name] = {"train": [], "val": []}
+                    log_history[out]["progress_state"]["loss"][output_layer.loss.name] = {
+                        "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                    }
+                    for metric in output_layer.metrics:
+                        log_history[out]["metrics"][metric.name] = {"train": [], "val": []}
+                        log_history[out]["progress_state"]["metrics"][metric.name] = {
+                            "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
+                        }
+
+            elif options.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in params.base.architecture.parameters.outputs:
                     out = f"{output_layer.id}"
                     log_history[out] = {
@@ -389,7 +407,70 @@ class History:
             if self.current_logs['epochs'] in self.log_history['epochs']:
                 logger.warning(f"Текущая эпоха {self.current_logs['epochs']} уже записана ранее в логи")
             self.log_history['epochs'].append(self.current_logs['epochs'])
-            if self.dataset.data.architecture in BASIC_ARCHITECTURE:
+
+            if self.dataset.data.architecture == ArchitectureChoice.TextTransformer:
+                for output_layer in self.training_detail.base.architecture.parameters.outputs:
+                    out = f"{output_layer.id}"
+                    loss_name = output_layer.loss.name
+                    for data_type in ['train', 'val']:
+                        self.log_history[out]['loss'][loss_name][data_type].append(
+                            round_loss_metric(self.current_logs.get(out).get('loss').get(data_type))
+                        )
+                    self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                        round_loss_metric(
+                            self._get_mean_log(self.log_history.get(out).get('loss').get(loss_name).get('val')))
+                    )
+                    loss_underfitting = self._evaluate_underfitting(
+                        metric_name=loss_name, train_log=self.log_history[out]['loss'][loss_name]['train'][-1],
+                        val_log=self.log_history[out]['loss'][loss_name]['val'][-1], metric_type='loss'
+                    )
+                    loss_overfitting = self._evaluate_overfitting(
+                        metric_name=loss_name, metric_type='loss',
+                        mean_log=self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history']
+                    )
+                    if loss_underfitting or loss_overfitting:
+                        normal_state = False
+                    else:
+                        normal_state = True
+
+                    self.log_history[out]['progress_state']['loss'][loss_name][
+                        'underfitting'].append(loss_underfitting)
+                    self.log_history[out]['progress_state']['loss'][loss_name][
+                        'overfitting'].append(loss_overfitting)
+                    self.log_history[out]['progress_state']['loss'][loss_name][
+                        'normal_state'].append(normal_state)
+
+                    for metric_name in output_layer.metrics:
+                        metric_name = metric_name.name
+                        for data_type in ['train', 'val']:
+                            self.log_history[out]['metrics'][metric_name][data_type].append(
+                                round_loss_metric(
+                                    self.current_logs.get(out).get('metrics').get(metric_name).get(data_type)))
+                        self.log_history[out]['progress_state']['metrics'][metric_name]['mean_log_history'].append(
+                            round_loss_metric(self._get_mean_log(self.log_history[out]['metrics'][metric_name]['val']))
+                        )
+                        metric_underfittng = self._evaluate_underfitting(
+                            metric_name=metric_name, metric_type='metric',
+                            train_log=self.log_history[f"{out}"]['metrics'][metric_name]['train'][-1],
+                            val_log=self.log_history[f"{out}"]['metrics'][metric_name]['val'][-1]
+                        )
+                        metric_overfitting = self._evaluate_overfitting(
+                            metric_name=metric_name, metric_type='metric',
+                            mean_log=self.log_history[out]['progress_state']['metrics']
+                            [metric_name]['mean_log_history']
+                        )
+                        if metric_underfittng or metric_overfitting:
+                            normal_state = False
+                        else:
+                            normal_state = True
+                        self.log_history[out]['progress_state']['metrics'][metric_name][
+                            'underfitting'].append(metric_underfittng)
+                        self.log_history[out]['progress_state']['metrics'][metric_name][
+                            'overfitting'].append(metric_overfitting)
+                        self.log_history[out]['progress_state']['metrics'][metric_name][
+                            'normal_state'].append(normal_state)
+
+            elif self.dataset.data.architecture in BASIC_ARCHITECTURE:
                 for output_layer in self.training_detail.base.architecture.parameters.outputs:
                     out = f"{output_layer.id}"
                     classes_names = self.dataset.data.outputs.get(output_layer.id).classes_names
@@ -468,7 +549,7 @@ class History:
                                 self.log_history[out]['class_metrics'][cls][metric_name]["val"].append(
                                     round_loss_metric(self.current_logs[out]['class_metrics'][metric_name][cls]["val"]))
 
-            if self.dataset.data.architecture in YOLO_ARCHITECTURE:
+            elif self.dataset.data.architecture in YOLO_ARCHITECTURE:
                 out = list(self.dataset.data.outputs.keys())[0]
                 classes_names = self.dataset.data.outputs.get(out).classes_names
                 for key in self.log_history['output']["loss"].keys():
@@ -538,7 +619,7 @@ class History:
                     self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
 
-            if self.dataset.data.architecture in GAN_ARCHITECTURE:
+            elif self.dataset.data.architecture in GAN_ARCHITECTURE:
                 for key in self.log_history['output']["loss"].keys():
                     self.log_history['output']["loss"][key]['train'].append(
                             round_loss_metric(self.current_logs.get('loss').get(key).get('train')))
