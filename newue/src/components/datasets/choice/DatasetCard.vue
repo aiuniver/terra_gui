@@ -1,5 +1,5 @@
 <template>
-  <div class="dataset-card-new">
+  <div class="dataset-card-new" @click="onClick">
     <div class="card-borders"></div>
     <div class="dataset-card-new__wrapper">
       <p class="dataset-card-new__title">{{ dataset.name }}</p>
@@ -22,26 +22,10 @@ export default {
       type: Object,
       default: () => {},
     },
-    cardIndex: {
-      type: Number,
-    },
-    loaded: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  data: () => ({
-    index: 0,
-  }),
-  computed: {
   },
   methods: {
-    click() {
-      if (this.dataset.tags.length > this.index + 4) {
-        this.index = this.index + 4;
-      } else {
-        this.index = 0;
-      }
+    onClick() {
+      this.$emit('click', this.dataset)
     },
   },
 };
