@@ -10,15 +10,10 @@ import store from "./store/index";
 import '@/assets/css/coolicons.css'
 import '@/assets/css/reset.css';
 import '@/assets/css/fonts.css';
-import '@/assets/css/farbtastic.css';
 import '@/assets/css/layout.css';
-import '@/assets/css/icons.css';
 import '@/assets/css/new/icons.css';
 import '@/assets/css/project/layout.css';
-import '@/assets/css/project/datasets.css';
-import '@/assets/css/media.css';
-import '@/assets/css/theme-dark.css';
-import '@/assets/css/new/main.min.css';
+import '@/assets/css/new/vuetify.css';
 import '@/assets/scss/main.scss'
 
 import AtComponents from '@/at-ui/src'

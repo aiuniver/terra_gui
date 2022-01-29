@@ -7,7 +7,6 @@
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
-      <t-button v-if="isDir" class="block-file__body--btn" @click="moveAll" >Перенести всё</t-button>
       <scrollbar>
       <files-menu v-model="filesSource" />
       </scrollbar>
@@ -51,9 +50,6 @@ export default {
     text() {
       return this.toggle ? "Выбор папки/файла" : "";
     },
-    isDir() {
-      return this.filesSource.filter(item => item.type !== 'table').length
-    },
     filesSource: {
       set(value) {
         this.$store.dispatch('datasets/setFilesSource', value)
@@ -64,26 +60,6 @@ export default {
 
     },
   },
-  methods: {
-    moveAll() {
-      const files = this.$store.getters['datasets/getFilesSource'].flatMap(this.getFiles)
-      const drop = files.filter(item => (item.dragndrop && item.type === 'folder')).map(item => ({
-        value: item.path,
-        label: item.title,
-        type: item.type,
-        id: 0,
-        cover: item.cover,
-        table: item.type === 'table' ? item.data : null
-      }))
-      this.$store.dispatch('datasets/setFilesDrop', drop)
-    },
-    getFiles(item) {
-      if (item.children) {
-        return [...item.children.flatMap(this.getFiles), item]
-      }
-      return item
-    }
-  }
 };
 </script>
 
@@ -108,8 +84,11 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     &.toggle {
       padding: 0px;
+      flex: 0 0 24px;
     }
     &--icon {
       cursor: pointer;
@@ -131,15 +110,6 @@ export default {
   &__body {
     padding-top: 30px;
     height: 100%;
-    &--btn {
-      font-size: 12px;
-      line-height: 16px;
-      width: max-content;
-      height: 24px;
-      margin: 10px auto;
-      padding: 0 10px;
-      display: block;
-    }
   }
 }
 </style>
