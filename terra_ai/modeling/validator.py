@@ -1100,6 +1100,7 @@ class LayerValidation:
                     self.inp_shape[0][1:]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth or LayerTypeChoice.DepthToSpace:
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
