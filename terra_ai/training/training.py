@@ -24,7 +24,7 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
-    TextToImageGANTerraModel, ImageToImageGANTerraModel
+    TextToImageGANTerraModel, ImageToImageGANTerraModel, TransformerTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive
@@ -200,6 +200,10 @@ class GUINN:
                 options = self.get_yolo_init_parameters(dataset=dataset)
                 train_model = YoloTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path, **options)
+            elif dataset.data.architecture == ArchitectureChoice.TextTransformer:
+                # options = self.get_yolo_init_parameters(dataset=dataset)
+                train_model = TransformerTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
             else:
                 train_model = BaseTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
