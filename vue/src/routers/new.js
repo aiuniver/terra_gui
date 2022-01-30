@@ -18,7 +18,7 @@ const newRouter = [
             access: true,
             text: ''
         },
-        component: () => import('@/views/Datasets'),
+        component: () => import('@/views/new/datasets/Choice'),
     },
     {
         path: '/new/create',
@@ -29,7 +29,7 @@ const newRouter = [
             access: true,
             text: ''
         },
-        component: () => import('@/views/Datasets'),
+        component: () => import('@/views/new/datasets/Create'),
     },
     {
         path: '/new/marking',
@@ -43,7 +43,7 @@ const newRouter = [
         component: () => import('@/views/Marking'),
     },
     {
-        path: '/new/modeling',
+        path: '/new/view',
         name: 'View',
         meta: {
             parent: 'data',
@@ -51,7 +51,7 @@ const newRouter = [
             access: true,
             text: ''
         },
-        component: () => import('@/views/Modeling'),
+        component: () => import('@/views/new/datasets/View'),
     },
     {
         path: '/new/modeling',
@@ -113,7 +113,7 @@ const newRouter = [
         path: '/new/profile',
         name: 'Profile',
         meta: {
-            parent: 'project',
+            // parent: 'project',
             title: 'Профиль',
             access: true,
             text: ``,
@@ -129,7 +129,7 @@ const newRouter = [
             access: true,
             text: ``,
         },
-        component: () => import('@/views/Projects'),
+        component: () => import('@/views/new/project/Projects'),
     },
 
 ]

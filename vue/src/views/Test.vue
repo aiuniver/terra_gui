@@ -1,6 +1,5 @@
 <template>
   <main class="page-test">
-    <NewHeader/>
     <scrollbar>
       <div class="cont">
         <div class="row">
@@ -42,37 +41,37 @@
           <div class="col">
             <h3>Input number</h3>
             <t-field label="Disabled">
-              <DInputNumber disabled @change="change" />
+              <d-input-number disabled @change="change" />
             </t-field>
             <t-field label="Error">
-              <DInputNumber :error="errorNumber" @change="change" @focus="errorNumber = ''" />
+              <d-input-number :error="errorNumber" @change="change" @focus="errorNumber = ''" />
             </t-field>
             <t-field label="Medium">
-              <DInputNumber v-model="inputNumber" @change="change" />
+              <d-input-number v-model="inputNumber" @change="change" />
             </t-field>
             <t-field label="Small">
-              <DInputNumber small icon="search" @change="change" />
+              <d-input-number small icon="search" @change="change" />
             </t-field>
           </div>
           <div class="col">
             <h3>Input text</h3>
             <t-field label="Disabled">
-              <DInputText disabled @change="change" />
+              <d-input-text disabled @change="change" />
             </t-field>
             <t-field label="Error">
-              <DInputText v-model="errorText" :error="errorText" @change="change" @focus="errorText = ''" />
+              <d-input-text v-model="errorText" :error="errorText" @change="change" @focus="errorText = ''" />
             </t-field>
             <t-field label="Medium">
-              <DInputText v-model="inputString" icon="search" @change="change" />
+              <d-input-text v-model="inputString" icon="search" @change="change" />
             </t-field>
             <t-field label="Small">
-              <DInputText small icon="search" @change="change" />
+              <d-input-text small icon="search" @change="change" />
             </t-field>
           </div>
           <div class="col">
             <h3>Select</h3>
             <t-field label="Medium">
-              <DSelect icon="search" :list="list"/>
+              <d-select icon="search" :list="list"/>
             </t-field>
           </div>
         </div>
@@ -80,22 +79,22 @@
         <div class="row">
           <div class="col">
             <h3>Button primary</h3>
-            <DButton color="primary" disabled>Disabled</DButton>
-            <DButton color="primary" direction="left">Left</DButton>
-            <DButton color="primary" size="small">Small</DButton>
-            <DButton color="primary" size="small" direction="left">Small left</DButton>
+            <d-button color="primary" disabled>Disabled</d-button>
+            <d-button color="primary" direction="left">Left</d-button>
+            <d-button color="primary" size="small">Small</d-button>
+            <d-button color="primary" size="small" direction="left">Small left</d-button>
           </div>
           <div class="col">
             <h3>Button secondary</h3>
-            <DButton color="secondary" disabled>Disabled</DButton>
-            <DButton color="secondary" direction="left">Left</DButton>
-            <DButton color="secondary" size="small">Small</DButton>
-            <DButton color="secondary" size="small" direction="left">Small left</DButton>
+            <d-button color="secondary" disabled>Disabled</d-button>
+            <d-button color="secondary" direction="left">Left</d-button>
+            <d-button color="secondary" size="small">Small</d-button>
+            <d-button color="secondary" size="small" direction="left">Small left</d-button>
           </div>
           <div class="col">
             <h3>Button clear</h3>
-            <DButton disabled>Disabled clear</DButton>
-            <DButton @click="click">Clear</DButton>
+            <d-button disabled>Disabled clear</d-button>
+            <d-button @click="click">Clear</d-button>
           </div>
         </div>
       </div>
@@ -106,13 +105,7 @@
 <script>
 export default {
   name: 'page-not-found',
-  components: {
-    DInputText: () => import("@/components/global/design/forms/components/DInputText"),
-    DInputNumber: () => import("@/components/global/design/forms/components/DInputNumber"),
-    DSelect: () => import("@/components/global/design/forms/components/DSelect"),
-    DButton: () => import("@/components/global/design/forms/components/DButton"),
-    NewHeader: () => import("@/components/app/NewHeader"),
-},
+  components: {},
   data: () => ({
     inputNumber: 0,
     inputString: 'Текст',

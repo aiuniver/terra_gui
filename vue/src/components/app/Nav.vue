@@ -24,6 +24,7 @@ export default {
     items() {
       return this.$router.options.routes
         .filter(item => item?.meta?.title)
+        .filter(item => !item?.path.includes('new'))
         .map(item => {
           return {
             title: item.meta.title,

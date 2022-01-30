@@ -191,6 +191,7 @@ export default {
 </script>
 
 <style lang="scss">
+@import "@/assets/scss/variables/default.scss";
 $ioFontSize: 14px;
 $circleSize: 10px;
 $circleNewColor: #00ff003b;

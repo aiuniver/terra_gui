@@ -31,7 +31,7 @@ import DDropdown from './forms/DDropdown';
 
 
 
-export default [
+const components = [
   FilesMenu,
   TAutoField,
   TAutoFieldHeandler,
@@ -58,3 +58,15 @@ export default [
   TField,
   DDropdown,
 ];
+
+import Vue from 'vue';
+const requireComponent = require.context('@/components/global', true, /\.vue$/);
+
+components.forEach(component => Vue.component(component.name, component))
+
+requireComponent.keys().forEach(fileName => {
+  const componentConfig = requireComponent(fileName);
+  const componentName = fileName.replace(/^.*[\\/]/, '').replace(/\.\w+$/, '');
+  Vue.component(componentName, componentConfig.default || componentConfig);
+});
+

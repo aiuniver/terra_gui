@@ -83,9 +83,13 @@ Vue.prototype.$config = {
 import directives from '@/utils/directives'
 directives.forEach(directive => Vue.directive(directive.name, directive))
 
+// // import global components
+// import components from '@/components/global'
+// components.forEach(component => Vue.component(component.name, component))
+
 // import global components
-import components from '@/components/global'
-components.forEach(component => Vue.component(component.name, component))
+import './components/global'
+
 
 import AudioVisual from 'vue-audio-visual'
 Vue.use(AudioVisual)
