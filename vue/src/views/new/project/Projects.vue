@@ -23,7 +23,7 @@
       </t-field>
       <d-upload />
       <template slot="footer">
-        <d-button color="primary" @click="onSave({ name, overwrite })" :disabled="isSave" >Сохранить</d-button>
+        <d-button color="primary" @click="onSave({ name, overwrite })" :disabled="isSave">Сохранить</d-button>
         <d-button color="secondary" direction="left" @click="dialogCreate = false">Отменить</d-button>
       </template>
     </d-modal>
@@ -67,8 +67,8 @@ export default {
       projects: 'projects/getProjectsList',
     }),
     isSave() {
-      return Boolean(!this.name)
-    }
+      return Boolean(!this.name);
+    },
   },
   methods: {
     ...mapActions({
@@ -118,6 +118,7 @@ export default {
           this.dialog = false;
           this.overwrite = false;
         }
+        this.infoProject();
         this.dialogCreate = false;
       } catch (error) {
         console.log(error);
