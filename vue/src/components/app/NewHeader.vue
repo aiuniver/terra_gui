@@ -105,6 +105,7 @@ export default {
   align-items: center;
   border-bottom: 1px solid var(--color-border);
   background-color: #17212b;
+    z-index: 800;
   &__right {
     height: 100%;
     margin-left: auto;

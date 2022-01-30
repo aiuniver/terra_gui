@@ -5,23 +5,32 @@
       <div class="projects">
         <CardCreateProject @click.native="closeDialogs(), (dialogCreate = true)" />
         <CardProject
-          v-bind="project"
           v-for="(project, i) in projects"
-          :key="project.headline + i"
+          v-bind="project"
+          :key="project.label + i"
           @deleteProject="closeDialogs(), (dialogDelete = true)"
           @editProject="closeDialogs(), (dialogEdit = true)"
-          @click.native="activeProject(project)"
+          @load="onLoad(project)"
         />
       </div>
     </div>
     <d-modal v-model="dialogCreate" title="Мой профиль">
       <t-field label="Название проекта *">
-        <d-input-text placeholder="Введите название проекта" />
+        <d-input-text v-model="name" placeholder="Введите название проекта" />
+      </t-field>
+      <t-field label="Перезаписать">
+        <d-checkbox v-model="overwrite" />
       </t-field>
       <d-upload />
       <template slot="footer">
-        <d-button color="secondary" @click="dialogCreate = false"/>
-        <d-button color="primary" direction="left" />
+        <d-button color="primary" @click="onSave({ name, overwrite })" :disabled="isSave" >Сохранить</d-button>
+        <d-button color="secondary" direction="left" @click="dialogCreate = false">Отменить</d-button>
+      </template>
+    </d-modal>
+    <d-modal v-model="dialogLoad" title="Загрузить проект">
+      <template slot="footer">
+        <d-button color="primary" @click="loadProject">Загрузить</d-button>
+        <d-button color="secondary" direction="left" @click="dialogLoad = false">Отменить</d-button>
       </template>
     </d-modal>
   </main>
@@ -30,47 +39,120 @@
 <script>
 import CardProject from '@/components/projects/CardProject';
 import CardCreateProject from '@/components/projects/CardCreateProject';
-
+import { debounce } from '@/utils/core/utils';
+import { mapActions, mapGetters } from 'vuex';
 export default {
   name: 'Projects',
   components: {
     CardProject,
-    CardCreateProject
+    CardCreateProject,
   },
   data: () => ({
+    name: '',
+    overwrite: false,
+    selected: {},
+    show: true,
+    list: [],
+    debounce: null,
     dialogCreate: false,
     dialogDelete: false,
     dialogEdit: false,
+    dialogLoad: false,
     loading: false,
     selectProject: {},
-    projects: [
-      {
-        id: 1,
-        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg',
-        active: false,
-        created: '17 апреля 2021',
-        edited: '3 дня назад',
-        headline: 'Проект 1. Название максимум одна ст',
-      },
-      {
-        id: 2,
-        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg',
-        active: false,
-        created: '17 апреля 2021',
-        edited: '3 дня назад',
-        headline: 'Проект 1. Название максимум одна ст',
-      },
-      {
-        id: 3,
-        image: 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg',
-        active: false,
-        created: '17 апреля 2021',
-        edited: '3 дня назад',
-        headline: 'Проект 1. Название максимум одна ст',
-      },
-    ],
+    tempProject: {},
   }),
+  computed: {
+    ...mapGetters({
+      projects: 'projects/getProjectsList',
+    }),
+    isSave() {
+      return Boolean(!this.name)
+    }
+  },
   methods: {
+    ...mapActions({
+      infoProject: 'projects/infoProject',
+    }),
+    async progress() {
+      const res = await this.$store.dispatch('projects/progress', {});
+      // console.log(res?.data?.progress)
+      if (res && res?.data) {
+        const { finished, message, percent } = res.data;
+        this.$store.dispatch('messages/setProgressMessage', message);
+        this.$store.dispatch('messages/setProgress', percent);
+        if (!finished) {
+          this.debounce(true);
+        } else {
+          this.$store.dispatch('projects/get');
+          this.$store.dispatch('settings/setOverlay', false);
+          this.$emit('message', { message: `Проект загружен` });
+          this.dialog = false;
+        }
+      }
+      if (res?.error) this.$store.dispatch('settings/setOverlay', false);
+    },
+    remove(list) {
+      // this.show = false;
+      this.$Modal
+        .confirm({
+          title: 'Удаление проекта',
+          content: `Вы действительно хотите удалить проект «${list.label}»?`,
+          width: 300,
+          maskClosable: false,
+          showClose: false,
+        })
+        .then(() => {
+          this.removeProject(list);
+          // this.show = true;
+        })
+        .catch(() => {
+          // this.show = true;
+        });
+    },
+    async onSave(data) {
+      try {
+        this.loading = true;
+        const res = await this.$store.dispatch('projects/saveProject', data);
+        if (res && !res.error) {
+          this.dialog = false;
+          this.overwrite = false;
+        }
+        this.dialogCreate = false;
+      } catch (error) {
+        console.log(error);
+        this.loading = false;
+      }
+    },
+    onLoad(project) {
+      this.tempProject = project;
+      this.dialogLoad = true;
+    },
+    async loadProject() {
+      this.dialogLoad = false;
+      try {
+        const res = await this.$store.dispatch('projects/load', { value: this.tempProject.value });
+        console.log(res);
+        if (res?.success) {
+          this.$store.dispatch('settings/setOverlay', true);
+          this.debounce(true);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async removeProject(list) {
+      console.log(list);
+      try {
+        const res = await this.$store.dispatch('projects/remove', { path: list.value });
+        if (res && !res.error) {
+          this.$emit('message', { message: `Проект «${list.label}» удален` });
+          await this.infoProject();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
     closeDialogs() {
       this.dialogCreate = false;
       this.dialogDelete = false;
@@ -90,15 +172,20 @@ export default {
     deleteProject(project) {
       console.log('Delete project', project);
     },
-    activeProject(project) {
-      this.projects = this.projects.map(el => {
-        return {
-          ...el,
-          active: el.id === project.id ? true : false,
-        };
-      });
-      this.selectProject = this.projects.find(el => el.id === project.id);
-    },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      if (status) {
+        this.progress();
+      }
+    }, 1000);
+    this.debounce(this.isLearning);
+  },
+  beforeDestroy() {
+    this.debounce(false);
+  },
+  mounted() {
+    this.infoProject();
   },
 };
 </script>

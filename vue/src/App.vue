@@ -115,6 +115,7 @@ export default {
   flex-direction: column;
   header {
     flex: 0 0 92px;
+    z-index: 999;
   }
   main {
     height: calc(100% - 152px);
