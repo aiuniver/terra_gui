@@ -338,11 +338,11 @@ class TransformerTerraModel(BaseTerraModel):
             return metric_dict
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+                TransformerTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
     @tf.function
-    def __train_step(self, x_batch, y_batch, losses: dict, metrics: dict, set_optimizer, sample_weights: dict):
+    def __train_step(self, x_batch, y_batch, losses: dict, metrics: dict, set_optimizer):
         """
         losses = {'2': loss_fn}
         """
@@ -354,26 +354,26 @@ class TransformerTerraModel(BaseTerraModel):
             if not isinstance(logits_, list):
                 out = list(losses.keys())[0]
                 metric_out[out] = {}
-                total_loss = losses[out](y_true_[0], logits_, sample_weights[out])
+                total_loss = losses[out](y_true_[0], logits_)
                 loss_out[out] = total_loss
                 for metric in metrics[out]:
-                    metric.update_state(y_true_[0], logits_)
-                    metric_out[metric] = metric.result()
+                    metrics[out][metric].update_state(y_true_[0], logits_)
+                    metric_out[out][metric] = metrics[out][metric].result()
             else:
                 total_loss = tf.convert_to_tensor(0.)
                 for k, out in enumerate(losses.keys()):
                     loss_fn = losses[out]
-                    loss_out[out] = loss_fn(y_true_[k], logits_[k], sample_weights[out])
-                    total_loss = tf.add(loss_fn(y_true_[k], logits_[k], sample_weights[out]), total_loss)
+                    loss_out[out] = loss_fn(y_true_[k], logits_[k])
+                    total_loss = tf.add(loss_fn(y_true_[k], logits_[k]), total_loss)
                     for metric in metrics[out]:
-                        metric.update_state(y_true_[k], logits_[k])
-                        metric_out[metric] = metric.result()
+                        metrics[out][metric].update_state(y_true_[k], logits_[k])
+                        metric_out[out][metric] = metrics[out][metric].result()
         grads = tape.gradient(total_loss, self.base_model.trainable_weights)
         set_optimizer.apply_gradients(zip(grads, self.base_model.trainable_weights))
         return [logits_] if not isinstance(logits_, list) else logits_, y_true_, loss_out, metric_out
 
     @tf.function
-    def __test_step(self, x_batch, y_batch, losses: dict, metrics: dict, sample_weights: dict):
+    def __test_step(self, x_batch, y_batch, losses: dict, metrics: dict):
         with tf.GradientTape() as tape:
             test_logits = self.base_model(x_batch)
             true_array = list(y_batch.values())
@@ -383,20 +383,21 @@ class TransformerTerraModel(BaseTerraModel):
         if not isinstance(test_logits, list):
             out = list(losses.keys())[0]
             metric_out[out] = {}
-            total_loss = losses[out](true_array[0], test_logits, sample_weights[out])
+            total_loss = losses[out](true_array[0], test_logits[0])
             loss_out[out] = total_loss
             for metric in metrics[out]:
-                metric.update_state(true_array[0], test_logits)
-                metric_out[metric] = metric.result()
+                metrics[out][metric].update_state(true_array[0], test_logits[0])
+                metric_out[out][metric] = metrics[out][metric].result()
         else:
             total_loss = tf.convert_to_tensor(0.)
             for k, out in enumerate(losses.keys()):
                 loss_fn = losses[out]
-                loss_out[out] = loss_fn(true_array[k], test_logits[k], sample_weights[out])
-                total_loss = tf.add(loss_fn(true_array[k], test_logits[k], sample_weights[out]), total_loss)
+                metric_out[out] = {}
+                loss_out[out] = loss_fn(true_array[k], test_logits[k])
+                total_loss = tf.add(loss_fn(true_array[k], test_logits[k]), total_loss)
                 for metric in metrics[out]:
-                    metric.update_state(true_array[k], test_logits[k])
-                    metric_out[metric] = metric.result()
+                    metrics[out][metric].update_state(true_array[k], test_logits[k])
+                    metric_out[out][metric] = metrics[out][metric].result()
         return test_logits, true_array, loss_out, metric_out
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
@@ -409,41 +410,43 @@ class TransformerTerraModel(BaseTerraModel):
                 "train": list(np.random.choice(np.arange(self.train_length), 10)),
                 "val": list(np.random.choice(range(self.val_length), 10))
             }
-            seed_pred = seed_true = random_pred = random_true = {'train': {}, 'val': {}}
+            seed_pred = {'train': {}, 'val': {}}
+            seed_true = {'train': {}, 'val': {}}
+            random_pred = {'train': {}, 'val': {}}
+            random_true = {'train': {}, 'val': {}}
             self.set_optimizer(params=params)
             loss = self._prepare_loss_dict(params=params)
             metric = self._prepare_metric_dict(params=params)
-            logger.debug(f"loss: {loss}")
-            logger.debug(f"metric: {metric}")
 
             output_list = list(dataset.data.outputs.keys())
-            sample_weights = {}
             loss_metric_output = {}
             for out in output_list:
-                loss_metric_output[out] = {"loss": {'train': 0., 'val': 0.}, "metric": {}}
-                for metric_name in metric[out].keys():
-                    loss_metric_output[out]["metric"][metric_name] = {'train': 0., 'val': 0.}
-                train_target_shape, val_target_shape = [self.train_length], [self.val_length]
-                train_true_shape, val_true_shape = [self.train_length], [self.val_length]
-                train_target_shape.extend(list(list(self.base_model.outputs)[0].shape))
-                val_target_shape.extend(list(list(self.base_model.outputs)[0].shape))
+                loss_metric_output[f"{out}"] = {"loss": {'train': 0., 'val': 0.}, "metrics": {}}
+                for metric_name in metric[f"{out}"].keys():
+                    loss_metric_output[f"{out}"]["metrics"][metric_name] = {'train': 0., 'val': 0.}
+                train_target_shape, val_target_shape, train_true_shape, val_true_shape = [10], [10], [10], [10]
+                train_target_shape.extend(list(list(self.base_model.outputs)[0].shape[1:]))
+                val_target_shape.extend(list(list(self.base_model.outputs)[0].shape[1:]))
                 train_true_shape.extend(list(dataset.data.outputs.get(out).shape))
                 val_true_shape.extend(list(dataset.data.outputs.get(out).shape))
+
                 seed_pred['train'][f"{out}"] = np.zeros(train_target_shape).astype('float32')
                 seed_true['train'][f"{out}"] = np.zeros(train_true_shape).astype('float32')
                 random_pred['train'][f"{out}"] = np.zeros(train_target_shape).astype('float32')
                 random_true['train'][f"{out}"] = np.zeros(train_true_shape).astype('float32')
+
                 seed_pred['val'][f"{out}"] = np.zeros(val_target_shape).astype('float32')
                 seed_true['val'][f"{out}"] = np.zeros(val_true_shape).astype('float32')
                 random_pred['val'][f"{out}"] = np.zeros(val_target_shape).astype('float32')
                 random_true['val'][f"{out}"] = np.zeros(val_true_shape).astype('float32')
-                sample_weights[f"{out}"] = None
 
-            # train_data_idxs = np.arange(self.train_length).tolist()
-            first_epoch = True
-            weight_dataset = False
             self.callback.on_train_begin()
             for epoch in range(current_epoch, end_epoch):
+                loss_metric_output['epochs'] = epoch + 1
+                for out in output_list:
+                    loss_metric_output[f"{out}"] = {"loss": {'train': 0., 'val': 0.}, "metrics": {}}
+                    for metric_name in metric[f"{out}"].keys():
+                        loss_metric_output[f"{out}"]["metrics"][metric_name] = {'train': 0., 'val': 0.}
                 logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
                 random_idx = {
@@ -456,35 +459,28 @@ class TransformerTerraModel(BaseTerraModel):
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
                     length = list(y_batch_train.values())[0].shape[0]
                     cur_range = np.arange(current_idx, current_idx + length).tolist()
-                    batch_weights = {}
-                    for out in sample_weights.keys():
-                        if sample_weights[out] is None:
-                            batch_weights[out] = None
-                        else:
-                            batch_weights[out] = sample_weights[out][current_idx: current_idx + length]
                     logits, y_true, loss_out, metric_out = self.__train_step(
                         x_batch=x_batch_train, y_batch=y_batch_train,
-                        losses=loss, metrics=metric, set_optimizer=self.optimizer, sample_weights=batch_weights
+                        losses=loss, metrics=metric, set_optimizer=self.optimizer
                     )
                     for i, out in enumerate(output_list):
-                        loss_metric_output[out]['loss']['train'] += loss_out[out].numpy()
-                        for metric_name in metric_out[out].keys():
-                            loss_metric_output[out]['metric'][metric_name]['train'] += \
-                                metric_out[out][metric_name].numpy()
+                        loss_metric_output[f"{out}"]['loss']['train'] += loss_out[f"{out}"].numpy()
+                        for metric_name in metric_out[f"{out}"].keys():
+                            loss_metric_output[f"{out}"]['metrics'][metric_name]['train'] += \
+                                metric_out[f"{out}"][metric_name].numpy()
                         for j, idx in enumerate(seed_idx['train']):
                             if idx in cur_range:
                                 idx_position = seed_idx['train'].index(idx)
                                 array_position = cur_range.index(idx)
-                                seed_pred['train'][f"{out}"][idx_position] = y_true[i][array_position].numpy()
-                                seed_true['train'][f"{out}"][idx_position] = logits[i][array_position].numpy()
+                                seed_pred['train'][f"{out}"][idx_position] = logits[i][array_position].numpy()
+                                seed_true['train'][f"{out}"][idx_position] = y_true[i][array_position].numpy()
+
                             if random_idx['train'][j] in cur_range:
                                 idx_position = random_idx['train'].index(random_idx['train'][j])
                                 array_position = cur_range.index(random_idx['train'][j])
-                                random_pred['train'][f"{out}"][idx_position] = y_true[i][array_position].numpy()
-                                random_true['train'][f"{out}"][idx_position] = logits[i][array_position].numpy()
-                    # for i, out in enumerate(output_list):
-                    #     train_pred[f"{out}"][current_idx: current_idx + length] = logits[i].numpy()
-                    #     train_true[f"{out}"][current_idx: current_idx + length] = y_true[i].numpy()
+                                random_pred['train'][f"{out}"][idx_position] = logits[i][array_position].numpy()
+                                random_true['train'][f"{out}"][idx_position] = y_true[i][array_position].numpy()
+
                     current_idx += length
                     train_steps += 1
 
@@ -505,34 +501,25 @@ class TransformerTerraModel(BaseTerraModel):
                         for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
                             val_length = list(y_batch_val.values())[0].shape[0]
                             val_cur_range = np.arange(current_val_idx, current_val_idx + val_length).tolist()
-                            val_batch_weights = {}
-                            for out in sample_weights.keys():
-                                if sample_weights[out] is None:
-                                    val_batch_weights[out] = None
-                                else:
-                                    val_batch_weights[out] = \
-                                        sample_weights[out][current_val_idx: current_val_idx + val_length]
                             val_pred_array, val_true_array, _, _ = \
                                 self.__test_step(
-                                    x_batch=x_batch_val, y_batch=y_batch_val, losses=loss, metrics=metric,
-                                    sample_weights=batch_weights)
-                            # length = val_true_array[0].shape[0]
+                                    x_batch=x_batch_val, y_batch=y_batch_val, losses=loss, metrics=metric)
                             for i, out in enumerate(output_list):
                                 for j, idx in enumerate(seed_idx['val']):
                                     if idx in val_cur_range:
                                         idx_position = seed_idx['val'].index(idx)
                                         array_position = val_cur_range.index(idx)
                                         seed_pred['val'][f"{out}"][idx_position] = \
-                                            val_true_array[i][array_position].numpy()
-                                        seed_true['val'][f"{out}"][idx_position] = \
                                             val_pred_array[i][array_position].numpy()
+                                        seed_true['val'][f"{out}"][idx_position] = \
+                                            val_true_array[i][array_position].numpy()
                                     if random_idx['val'][j] in val_cur_range:
                                         idx_position = random_idx['val'].index(random_idx['val'][j])
                                         array_position = val_cur_range.index(random_idx['val'][j])
                                         random_pred['val'][f"{out}"][idx_position] = \
-                                            val_true_array[i][array_position].numpy()
-                                        random_true['val'][f"{out}"][idx_position] = \
                                             val_pred_array[i][array_position].numpy()
+                                        random_true['val'][f"{out}"][idx_position] = \
+                                            val_true_array[i][array_position].numpy()
                             seed_predict['val'] = {
                                 'true_array': seed_true['val'],
                                 'predict': seed_pred['val'],
@@ -543,11 +530,6 @@ class TransformerTerraModel(BaseTerraModel):
                                 'predict': random_pred['val'],
                                 'indexes': random_idx['val']
                             }
-                            # for i, out in enumerate(output_list):
-                            #     val_pred[f"{out}"][current_val_idx: current_val_idx + length] = \
-                            #         val_pred_array[i].numpy()
-                            #     val_true[f"{out}"][current_val_idx: current_val_idx + length] = \
-                            #         val_true_array[i].numpy()
                             current_val_idx += val_length
                             val_steps += 1
                         self.callback.on_train_batch_end(
@@ -561,10 +543,11 @@ class TransformerTerraModel(BaseTerraModel):
                         break
 
                 for i, out in enumerate(output_list):
-                    loss_metric_output[out]['loss']['train'] = loss_metric_output[out]['loss']['train'] / train_steps
-                    for metric_name in metric_out[out].keys():
-                        loss_metric_output[out]['metric'][metric_name]['train'] = \
-                            loss_metric_output[out]['metric'][metric_name]['train'] / train_steps
+                    loss_metric_output[f"{out}"]['loss']['train'] = \
+                        loss_metric_output[f"{out}"]['loss']['train'] / train_steps
+                    for metric_name in metric_out[f"{out}"].keys():
+                        loss_metric_output[f"{out}"]['metrics'][metric_name]['train'] = \
+                            loss_metric_output[f"{out}"]['metrics'][metric_name]['train'] / train_steps
 
                 self.save_weights()
                 if self.callback.stop_training:
@@ -586,38 +569,28 @@ class TransformerTerraModel(BaseTerraModel):
                 for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
                     val_length = list(y_batch_val.values())[0].shape[0]
                     val_cur_range = np.arange(current_val_idx, current_val_idx + val_length).tolist()
-                    val_batch_weights = {}
-                    for out in sample_weights.keys():
-                        if sample_weights[out] is None:
-                            val_batch_weights[out] = None
-                        else:
-                            val_batch_weights[out] = \
-                                sample_weights[out][current_val_idx: current_val_idx + val_length]
                     val_pred_array, val_true_array, val_loss_out, val_metric_out = \
-                        self.__test_step(
-                            x_batch=x_batch_val, y_batch=y_batch_val, losses=loss, metrics=metric,
-                            sample_weights=batch_weights)
-                    # length = val_true_array[0].shape[0]
+                        self.__test_step(x_batch=x_batch_val, y_batch=y_batch_val, losses=loss, metrics=metric)
                     for i, out in enumerate(output_list):
-                        loss_metric_output[out]['loss']['val'] += val_loss_out[out].numpy()
-                        for metric_name in val_metric_out[out].keys():
-                            loss_metric_output[out]['metric'][metric_name]['val'] += \
-                                val_metric_out[out][metric_name].numpy()
+                        loss_metric_output[f"{out}"]['loss']['val'] += val_loss_out[f"{out}"].numpy()
+                        for metric_name in val_metric_out[f"{out}"].keys():
+                            loss_metric_output[f"{out}"]['metrics'][metric_name]['val'] += \
+                                val_metric_out[f"{out}"][metric_name].numpy()
                         for j, idx in enumerate(seed_idx['val']):
                             if idx in val_cur_range:
                                 idx_position = seed_idx['val'].index(idx)
                                 array_position = val_cur_range.index(idx)
                                 seed_pred['val'][f"{out}"][idx_position] = \
-                                    val_true_array[i][array_position].numpy()
-                                seed_true['val'][f"{out}"][idx_position] = \
                                     val_pred_array[i][array_position].numpy()
+                                seed_true['val'][f"{out}"][idx_position] = \
+                                    val_true_array[i][array_position].numpy()
                             if random_idx['val'][j] in val_cur_range:
                                 idx_position = random_idx['val'].index(random_idx['val'][j])
                                 array_position = val_cur_range.index(random_idx['val'][j])
                                 random_pred['val'][f"{out}"][idx_position] = \
-                                    val_true_array[i][array_position].numpy()
-                                random_true['val'][f"{out}"][idx_position] = \
                                     val_pred_array[i][array_position].numpy()
+                                random_true['val'][f"{out}"][idx_position] = \
+                                    val_true_array[i][array_position].numpy()
                     seed_predict['val'] = {
                         'true_array': seed_true['val'],
                         'predict': seed_pred['val'],
@@ -632,54 +605,11 @@ class TransformerTerraModel(BaseTerraModel):
                     val_steps += 1
 
                 for i, out in enumerate(output_list):
-                    loss_metric_output[out]['loss']['val'] = loss_metric_output[out]['loss']['val'] / val_steps
-                    for metric_name in metric_out[out].keys():
-                        loss_metric_output[out]['metric'][metric_name]['val'] = \
-                            loss_metric_output[out]['metric'][metric_name]['val'] / val_steps
-                # val_steps = 0
-                # current_val_idx = 0
-                # for x_batch_val, y_batch_val in dataset.dataset.get('val').batch(params.base.batch):
-                #     val_pred_array, val_true_array = self.__test_step(x_batch=x_batch_val, y_batch=y_batch_val)
-                #     length = val_true_array[0].shape[0]
-                #     cur_range = np.arange(cur_position, cur_position + length).tolist()
-                #     if dataset.data.architecture != ArchitectureChoice.TextTransformer:
-                #         for i, out in enumerate(output_list):
-                #             val_pred[f"{out}"][current_val_idx: current_val_idx + length] = val_pred_array[i].numpy()
-                #             val_true[f"{out}"][current_val_idx: current_val_idx + length] = val_true_array[i].numpy()
-                #     current_val_idx += length
-                #     val_steps += 1
-
-                # if weight_dataset and first_epoch and (
-                #         dataset.data.architecture in CLASSIFICATION_ARCHITECTURE or
-                #         dataset.data.architecture in [ArchitectureChoice.TextSegmentation,
-                #                                       ArchitectureChoice.ImageSegmentation]
-                # ):
-                #     for out in output_list:
-                #         if dataset.data.outputs.get(int(out)).task == 'Classification':
-                #             classes = np.argmax(train_true[f"{out}"], axis=-1)
-                #             count = {}
-                #             for i in set(sorted(classes)):
-                #                 count[i] = 0
-                #             for i in classes:
-                #                 count[i] += 1
-                #             weighted_count = {}
-                #             for k, v in count.items():
-                #                 weighted_count[k] = max(count.values()) / v
-                #             sample_weights[f"{out}"] = []
-                #             for i in classes:
-                #                 sample_weights[f"{out}"].append(weighted_count[i])
-                #             sample_weights[f"{out}"] = tf.constant(sample_weights[f"{out}"])
-                #             logger.debug(f"weighted_count: {weighted_count}")
-                #         if dataset.data.outputs.get(int(out)).task in ['Segmentation', 'TextSegmentation'] and \
-                #                 dataset.data.outputs.get(int(out)).encoding == 'ohe':
-                #             weights_dict = {}
-                #             for i in range(train_true[f"{out}"].shape[-1]):
-                #                 weights_dict[i] = train_true[f"{out}"][..., i].sum()
-                #             weights = [max(weights_dict.values()) / weights_dict[i] for i in weights_dict.keys()]
-                #             sample_weights[f"{out}"] = self._add_sample_weights(
-                #                 np.argmax(train_true[f"{out}"], axis=-1), weights)
-                #             logger.debug(f"weights: {weights}")
-                #     first_epoch = False
+                    loss_metric_output[f"{out}"]['loss']['val'] = \
+                        loss_metric_output[f"{out}"]['loss']['val'] / val_steps
+                    for metric_name in metric_out[f"{out}"].keys():
+                        loss_metric_output[f"{out}"]['metrics'][metric_name]['val'] = \
+                            loss_metric_output[f"{out}"]['metrics'][metric_name]['val'] / val_steps
 
                 self.callback.on_epoch_end(
                     epoch=epoch + 1,
@@ -692,7 +622,7 @@ class TransformerTerraModel(BaseTerraModel):
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
-                BaseTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+                TransformerTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
     def predict(self, data_array, options: Optional[PrepareDataset] = None):

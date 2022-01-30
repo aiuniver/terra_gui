@@ -121,7 +121,19 @@ class InteractiveCallback:
             if arrays:
                 logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
-                if self.options.data.architecture in BASIC_ARCHITECTURE:
+                if self.options.data.architecture == ArchitectureChoice.TextTransformer:
+                    logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
+                    self.y_pred = arrays
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    logger.debug(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...")
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
+                        array=self.y_pred.get('random'),
+                        seed_array=self.y_pred.get('seed'),
+                        count=count,
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type
+                    )
+
+                elif self.options.data.architecture in BASIC_ARCHITECTURE:
                     logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
                     self.y_true = reformat_fit_array(
                         array={"train": arrays.get("train_true"), "val": arrays.get("val_true")}, train_idx=train_idx)
@@ -159,7 +171,7 @@ class InteractiveCallback:
                                  :self.training_details.interactive.intermediate_result.num_examples]
                     )
 
-                if self.options.data.architecture in YOLO_ARCHITECTURE:
+                elif self.options.data.architecture in YOLO_ARCHITECTURE:
                     logger.info(f"{InteractiveCallback.name}: обработка массивов...", extra={"front_level": "info"})
                     self.raw_y_pred = arrays.get("val_pred")
                     sensitivity = self.training_details.interactive.intermediate_result.sensitivity \
@@ -203,7 +215,7 @@ class InteractiveCallback:
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
 
-                if self.options.data.architecture in GAN_ARCHITECTURE:
+                elif self.options.data.architecture in GAN_ARCHITECTURE:
                     logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
                     self.y_pred = arrays
                     count = self.training_details.interactive.intermediate_result.num_examples

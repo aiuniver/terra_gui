@@ -318,7 +318,7 @@ class TextTransformerCallback:
             raise exc
 
     @staticmethod
-    def prepare_example_idx_to_show(array: np.ndarray, true_array: np.ndarray, count: int, options=None, output=None,
+    def prepare_example_idx_to_show(array: np.ndarray, seed_array: np.ndarray, count: int, options=None, output=None,
                                     choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.best,
                                     seed_idx: list = None) -> dict:
         method_name = 'prepare_example_idx_to_show'
