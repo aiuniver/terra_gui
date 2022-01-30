@@ -767,7 +767,7 @@ class CONVBlock(Layer):
             dilation=(1, 1), padding='same', activation='relu', transpose=False, use_bias=True,
             use_activation_layer=False, leaky_relu_layer=True, leaky_relu_alpha=0.3,
             normalization='batch', dropout_layer=True, dropout_rate=0.1, kernel_regularizer=None,
-            layers_seq_config: str = 'conv_bn_lrelu_drop_conv_bn_lrelu_drop',
+            layers_seq_config: str = 'conv_bn_lrelu_drop_conv_bn_lrelu_drop', bn_momentum=0.99,
             **kwargs
     ):
 
@@ -790,6 +790,7 @@ class CONVBlock(Layer):
         self.transpose = transpose
         self.use_bias = use_bias
         self.kernel_regularizer = kernel_regularizer
+        self.bn_momentum = bn_momentum
 
         conv_activation = None if self.use_activation_layer else self.activation
         for i in range(self.n_conv_layers):
@@ -815,7 +816,7 @@ class CONVBlock(Layer):
                     )
                 )
             if self.normalization == "batch":
-                setattr(self, f"norm_{i}", layers.BatchNormalization(axis=-1))
+                setattr(self, f"norm_{i}", layers.BatchNormalization(axis=-1, momentum=self.bn_momentum))
             if self.normalization == "instance":
                 setattr(self, f"norm_{i}", InstanceNormalization(axis=-1))
             if self.use_activation_layer and self.activation:
