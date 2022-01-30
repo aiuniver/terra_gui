@@ -63,6 +63,7 @@ class ArchitectureChoice(str, Enum):
     ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
+    ImageSRGAN = "ImageSRGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

@@ -706,6 +706,11 @@ class LayerResnetBlock2DData(LayerMixinData):
     extra: types.ResnetBlock2D.ParametersExtraData = (types.ResnetBlock2D.ParametersExtraData())
 
 
+class LayerRGBNormalizationData(LayerMixinData):
+    main: types.RGBNormalization.ParametersMainData = types.RGBNormalization.ParametersMainData()
+    extra: types.RGBNormalization.ParametersExtraData = (types.RGBNormalization.ParametersExtraData())
+
+
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
         types.PretrainedYOLO.ParametersMainData()

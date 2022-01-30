@@ -76,6 +76,10 @@ class ArchitectureImageToImageGANData(types.GAN.ParametersData):
     pass
 
 
+class ArchitectureImageSRGANData(types.GAN.ParametersData):
+    pass
+
+
 Architecture = Enum(
     "Architecture",
     dict(
