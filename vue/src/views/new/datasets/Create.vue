@@ -7,7 +7,7 @@
       <Blocks />
     </div>
     <div class="page-create__params">
-      <Params />
+      <Params v-model="state" />
     </div>
   </div>
 </template>
@@ -23,7 +23,9 @@ export default {
     Blocks,
     Params,
   },
-
+  data: () => ({
+    state: 1
+  }),
   methods: {
     onToolbar(action) {
       console.log(action);
@@ -39,7 +41,6 @@ export default {
   height: 100%;
   &__toolbar {
   }
-
   &__main {
     flex: 1 1 auto;
   }

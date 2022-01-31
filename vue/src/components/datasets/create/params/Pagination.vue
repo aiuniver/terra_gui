@@ -1,6 +1,6 @@
 <template>
   <div class="d-pagination">
-    <button @click="onPrev" class="d-pagination__btn">
+    <button class="d-pagination__btn" :disabled="isDisabled" @click="$emit('prev', $event)">
       <d-svg name="arrow-carret-left-longer-big" />
     </button>
     <div class="d-pagination__inner">
@@ -11,11 +11,12 @@
         <span>{{ title }}</span>
       </div>
     </div>
-    <DButton @click="onNext" style="width: 40%" color="secondary" direction="left" text="Далее" />
+    <d-button style="width: 40%" color="secondary" direction="left" text="Далее" :disabled="isStatus" @click="$emit('next', $event)" />
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 export default {
   name: 'DPagination',
   props: {
@@ -33,14 +34,20 @@ export default {
     },
   },
   data: () => ({}),
-  computed: {},
+  computed: {
+    ...mapGetters({
+      select: 'createDataset/getSelectSource',
+    }),
+    isDisabled() {
+      return this.value === 1;
+    },
+    isStatus() {
+      console.log(this.select);
+      if (this.value === 1 && !this?.select?.value) return true;
+      return false;
+    },
+  },
   methods: {
-    onNext() {
-      if (this.value < this.qty) this.$emit('input', this.value + 1);
-    },
-    onPrev() {
-      if (this.value > 1) this.$emit('input', this.value - 1);
-    },
     isActive(value) {
       return this.value === value;
     },
@@ -49,7 +56,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/assets/scss/variables/default.scss";
+@import '@/assets/scss/variables/default.scss';
 .d-pagination {
   display: flex;
   align-items: center;
@@ -64,10 +71,14 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
-    &:hover {
+    &:hover:not(.d-pagination__btn:disabled) {
+      cursor: pointer;
       background: $color-black;
       box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
+    }
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
   }
   &__list {

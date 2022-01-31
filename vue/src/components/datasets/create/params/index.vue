@@ -4,26 +4,19 @@
       <div class="params__header">Данные</div>
       <scrollbar>
         <div class="params__inner">
-          <component :is="getComp.component" :list="preview" />
-          <!-- <Download class="mt-4" />
-
-          <Helpers />
-
-          <FileManager @chooseFile="chooseFile" :list="files" />
-
-          <Preview @choosePreview="choosePreview" :list="preview" />
-
-          <Settings /> -->
+          <component :is="getComp.component" />
         </div>
       </scrollbar>
     </div>
     <div class="params__footer">
-      <Pagination v-model="value" :title="getComp.title" />
+      <Pagination :value="value" :title="getComp.title" @next="onNext" @prev="onPrev" />
     </div>
   </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+import { debounce } from '@/utils/core/utils';
 import Preview from './Preview';
 import Settings from './Settings';
 import Download from './Download';
@@ -39,93 +32,61 @@ export default {
   },
   data: () => ({
     value: 1,
+    debounce: null,
     list: [
       { id: 1, title: 'Download', component: 'download' },
       { id: 2, title: 'Preview', component: 'Preview' },
       { id: 3, title: 'Settings', component: 'settings' },
       { id: 4, title: 'Helpers', component: 'helpers' },
     ],
-
-    preview: [
-      {
-        id: 1,
-        path: 'http://u01.appmifile.com/images/2017/04/15/c9b37bf4-2bed-466f-b2a1-e3bee2e54d7c.jpg',
-        label: 'Мерседес 1',
-      },
-      {
-        id: 2,
-        path: 'https://i.pinimg.com/originals/b3/cf/82/b3cf8221bf35baf3d4faa68473811fc9.jpg',
-        label: 'Мерседес 2',
-      },
-      {
-        id: 3,
-        path: 'https://storge.pic2.me/c/1360x800/510/029.jpg',
-        label: 'Мерседес 3',
-      },
-    ],
-    files: [
-      {
-        id: 1,
-        label: 'Мерседес',
-        list: [
-          {
-            label: 'model_1_10_06_mnistasd',
-          },
-          {
-            label: 'model_asda_06_mnisasdt',
-          },
-          {
-            label: 'moasdl_asdasdasda_06_mnisasdtasd',
-          },
-        ],
-      },
-      {
-        id: 2,
-        label: 'Рено',
-        list: [
-          {
-            label: 'model_1_10_06_mnist23d23',
-          },
-        ],
-      },
-      {
-        id: 3,
-        label: 'Рено',
-        list: [
-          {
-            label: 'model_1_10_06_mnistd23dsae',
-          },
-          {
-            label: 'model_1_10_06_mnistfe24c',
-          },
-          {
-            label: 'model_1_10_06_mnistbg5rgvt',
-          },
-          {
-            label: 'model_1_10_06_mnisttbyg3v5',
-          },
-          {
-            label: 'model_1_10_06_mnistn5h4e',
-          },
-        ],
-      },
-    ],
   }),
   computed: {
+    ...mapGetters({
+      select: 'createDataset/getSelectSource',
+    }),
     getComp() {
       return this.list.find(i => i.id === this.value);
     },
   },
   methods: {
-    chooseFile(item) {
-      console.log(item);
+    ...mapActions({
+      setSourceLoad: 'createDataset/setSourceLoad',
+      sourceLoadProgress: 'createDataset/sourceLoadProgress',
+      setOverlay: 'settings/setOverlay',
+    }),
+    onNext() {
+      if (this.value === 1) this.onDownload();
+      if (this.value < this.list.length) this.value = this.value + 1;
     },
-    choosePreview(id) {
-      console.log(id);
+    onPrev() {
+      if (this.value > 1) this.value = this.value - 1;
     },
-    handleWorkspaceAction(action) {
-      console.log(action);
+    async onProgress() {
+      const res = await this.sourceLoadProgress();
+      if (!res?.data?.finished) {
+        this.debounce(true);
+      } else {
+        this.setOverlay(false);
+      }
     },
+    async onDownload() {
+      const { mode, value } = this.select;
+      const success = await this.setSourceLoad({ mode, value });
+      if (success) {
+        this.setOverlay(true);
+        this.debounce(true);
+      }
+    },
+  },
+  created() {
+    this.debounce = debounce(status => {
+      if (status) {
+        this.onProgress();
+      }
+    }, 1000);
+  },
+  beforeDestroy() {
+    this.debounce(false);
   },
 };
 </script>

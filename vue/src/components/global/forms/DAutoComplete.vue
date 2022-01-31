@@ -92,10 +92,9 @@ export default {
     },
   },
   methods: {
-    send(value) {
-      this.$emit('input', value);
-      this.$emit('change', { name: this.name, value });
-      this.$emit('parse', { name: this.name, parse: this.parse, value });
+    send(item) {
+      this.$emit('input', item.value);
+      this.$emit('change', item);
     },
     label() {
       this.show = !this.show;
@@ -106,8 +105,8 @@ export default {
     select(item) {
       if (item) {
         this.selected = item;
-        this.send(item.value);
-        this.input = item.value;
+        this.send(item);
+        this.input = item.label;
       } else {
         this.search = this.selected.label || this.value || '';
       }
@@ -117,14 +116,6 @@ export default {
       if (this.isDisabled) return;
       this.show = !this.show;
       this.$emit('click', e);
-    },
-  },
-  watch: {
-    search(value) {
-      if (!value) {
-        this.$emit('parse', { name: this.name, parse: this.parse, value });
-      }
-      // console.log(value)
     },
   },
 };
@@ -169,7 +160,7 @@ export default {
   }
 
   &__input {
-    height: 42px;
+    height: 40px;
     width: 100%;
     padding: 0 10px;
     font-size: 14px;
@@ -189,6 +180,7 @@ export default {
     background: #242f3d;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
     border-radius: 4px;
+    max-height: 300px;
     &--item {
       color: inherit;
       font-size: 14px;
