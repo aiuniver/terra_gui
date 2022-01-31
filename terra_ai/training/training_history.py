@@ -14,7 +14,7 @@ from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOL
     CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list, GAN_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.training import NoHistoryLogsException
@@ -152,35 +152,67 @@ class History:
                             for metric in output_layer.metrics:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
-            if options.data.architecture in YOLO_ARCHITECTURE:
+            elif options.data.architecture in YOLO_ARCHITECTURE:
                 log_history['output'] = copy.deepcopy(OUTPUT_LOG_CONFIG)
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
                     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
 
-            if options.data.architecture in GAN_ARCHITECTURE:
-                log_history['output'] = {
-                    "loss": {
-                        'gen_loss': {"train": [], "val": []},
-                        'disc_loss': {"train": [], "val": []},
-                        'disc_real_loss': {"train": [], "val": []},
-                        'disc_fake_loss': {"train": [], "val": []}
-                    },
-                    "metrics": {},
-                    "progress_state": {
+            elif options.data.architecture in GAN_ARCHITECTURE:
+                if options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                    log_history['output'] = {
                         "loss": {
-                            'gen_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_real_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_fake_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            'pretrain_loss': {"train": [], "val": []},
+                            'perception_loss': {"train": [], "val": []},
+                            'content_loss': {"train": [], "val": []},
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'pretrain_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'perception_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'content_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
                         }
                     }
-                }
+                else:
+                    log_history['output'] = {
+                        "loss": {
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
+                        }
+                    }
                 # out = list(options.data.outputs.keys())[0]
                 # for class_name in options.data.outputs.get(out).classes_names:
                 #     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
@@ -468,7 +500,7 @@ class History:
                                 self.log_history[out]['class_metrics'][cls][metric_name]["val"].append(
                                     round_loss_metric(self.current_logs[out]['class_metrics'][metric_name][cls]["val"]))
 
-            if self.dataset.data.architecture in YOLO_ARCHITECTURE:
+            elif self.dataset.data.architecture in YOLO_ARCHITECTURE:
                 out = list(self.dataset.data.outputs.keys())[0]
                 classes_names = self.dataset.data.outputs.get(out).classes_names
                 for key in self.log_history['output']["loss"].keys():
@@ -538,8 +570,10 @@ class History:
                     self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
 
-            if self.dataset.data.architecture in GAN_ARCHITECTURE:
+            elif self.dataset.data.architecture in GAN_ARCHITECTURE:
                 for key in self.log_history['output']["loss"].keys():
+                    # print(f'self.current_logs: {key, self.log_history["output"]["loss"], self.current_logs.get("loss").get(key)}')
+                    # if key in self.current_logs.get("loss").keys():
                     self.log_history['output']["loss"][key]['train'].append(
                             round_loss_metric(self.current_logs.get('loss').get(key).get('train')))
                 for loss_name in self.log_history['output']["loss"].keys():
