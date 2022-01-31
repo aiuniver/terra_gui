@@ -1,13 +1,13 @@
 <template>
-  <div :class="['project', {'project--selected': active}]">
+  <div :class="['project', {'project--selected': active}]" v-outside="onOutside">
     <div class="project-edging">
-      <svg width="300" height="196" viewBox="0 0 300 196" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="300" height="196" viewBox="0 0 300 196" fill="none" xmlns="http://www.w3.org/2000/svg" @click="onLoad">
         <defs>
           <pattern :id="image" x="0" y="0" patternUnits="userSpaceOnUse" height="100%" width="100%">
-            <image x="0" y="0" width="100%" height="100%" :xlink:href="image" />
+            <image x="0" y="0" width="100%" height="100%" :xlink:href="image || '@/assets/images/def_image_project.png'" />
           </pattern>
         </defs>
-        <path :fill="`url(#${image})`" d="M167.712 15.5H1.26079L16.1875 1.4513C16.8368 0.84025 17.6947 0.5 18.5863 0.5H149.947C150.821 0.5 151.664 0.827078 152.309 1.4169L167.712 15.5ZM169 16.5H170.288H260.304L280.5 35.2183V165.276C280.5 166.239 280.103 167.159 279.403 167.82L263.813 182.545C263.163 183.158 262.303 183.5 261.41 183.5H122.711C122.02 183.5 121.345 183.295 120.77 182.912L97.285 167.256C96.5458 166.763 95.6773 166.5 94.7889 166.5H26.149L0.5 149.73V16.5H168.806H169Z" stroke="#65B9F4"/>
+        <path :fill="`url(#${image || '@/assets/images/def_image_project.png'})`" d="M167.712 15.5H1.26079L16.1875 1.4513C16.8368 0.84025 17.6947 0.5 18.5863 0.5H149.947C150.821 0.5 151.664 0.827078 152.309 1.4169L167.712 15.5ZM169 16.5H170.288H260.304L280.5 35.2183V165.276C280.5 166.239 280.103 167.159 279.403 167.82L263.813 182.545C263.163 183.158 262.303 183.5 261.41 183.5H122.711C122.02 183.5 121.345 183.295 120.77 182.912L97.285 167.256C96.5458 166.763 95.6773 166.5 94.7889 166.5H26.149L0.5 149.73V16.5H168.806H169Z" stroke="#65B9F4"/>
         <path d="M16.1875 1.4513C16.8368 0.84025 17.6947 0.5 18.5863 0.5H150.181C151.063 0.5 151.913 0.833577 152.561 1.4339L167.726 15.5H1.26079L16.1875 1.4513Z" fill="#65B9F4" stroke="#65B9F4"/>
         <path d="M280.5 19.7214V30.8866L264.315 16.5L277.243 16.5001C279.046 16.5001 280.5 17.9467 280.5 19.7214Z" stroke="#65B9F4"/>
         <path d="M0 152L23 167H4C1.79086 167 0 165.209 0 163V152Z" fill="#65B9F4"/>
@@ -50,7 +50,7 @@
       <img :src="image" :alt="headline">
     </div> -->
     <div class="project-headline">
-      <h3>{{ headline }}</h3>
+      <h3>{{ label }}</h3>
     </div>
   </div>
 </template>
@@ -58,10 +58,18 @@
 <script>
 export default {
   name: 'CardProject',
-  props:['image', 'created', 'edited', 'headline', 'active', 'id'],
+  props:['image', 'created', 'edited', 'label', 'active', 'id'],
   data: () => ({
     isSettings: false
-  })
+  }),
+  methods: {
+    onOutside() {
+      this.isSettings = false
+    },
+    onLoad() {
+      this.$emit('load', this.id)
+    }
+  }
 }
 </script>
 

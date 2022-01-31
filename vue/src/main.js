@@ -12,9 +12,10 @@ import '@/assets/css/reset.css';
 import '@/assets/css/fonts.css';
 import '@/assets/css/layout.css';
 import '@/assets/css/new/icons.css';
-import '@/assets/css/project/layout.css';
+// import '@/assets/css/project/layout.css';
 import '@/assets/css/new/vuetify.css';
-import '@/assets/scss/main.scss'
+
+import '@/assets/scss/index.scss'
 
 import AtComponents from '@/at-ui/src'
 import '@/at-ui/scss/index.scss'
@@ -82,9 +83,13 @@ Vue.prototype.$config = {
 import directives from '@/utils/directives'
 directives.forEach(directive => Vue.directive(directive.name, directive))
 
+// // import global components
+// import components from '@/components/global'
+// components.forEach(component => Vue.component(component.name, component))
+
 // import global components
-import components from '@/components/global'
-components.forEach(component => Vue.component(component.name, component))
+import './components/global'
+
 
 import AudioVisual from 'vue-audio-visual'
 Vue.use(AudioVisual)

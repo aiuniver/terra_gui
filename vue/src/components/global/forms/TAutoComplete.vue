@@ -31,7 +31,7 @@
 
 <script>
 export default {
-  name: 'd-auto-complete',
+  name: 't-auto-complete',
   props: {
     type: String,
     placeholder: String,

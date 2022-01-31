@@ -68,6 +68,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/assets/scss/variables/default.scss";
 .tabs-download {
   &-list {
     height: 50px;

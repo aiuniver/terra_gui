@@ -25,8 +25,13 @@ import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 import TAutoComplete from './new/forms/TAutoComplete';
 import TAutoCompleteTwo from './new/forms/TAutoCompleteTwo';
+import DDropdown from './forms/DDropdown';
 
-export default [
+
+
+
+
+const components = [
   FilesMenu,
   TAutoField,
   TAutoFieldHeandler,
@@ -50,5 +55,18 @@ export default [
   TSelect,
   TAutoComplete,
   TAutoCompleteTwo,
-  TField
+  TField,
+  DDropdown,
 ];
+
+import Vue from 'vue';
+const requireComponent = require.context('@/components/global', true, /\.vue$/);
+
+components.forEach(component => Vue.component(component.name, component))
+
+requireComponent.keys().forEach(fileName => {
+  const componentConfig = requireComponent(fileName);
+  const componentName = fileName.replace(/^.*[\\/]/, '').replace(/\.\w+$/, '');
+  Vue.component(componentName, componentConfig.default || componentConfig);
+});
+

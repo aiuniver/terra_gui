@@ -455,8 +455,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/assets/scss/variables/default.scss";
 svg {
-  cursor: pointer;
   fill: $color-gray;
   vertical-align: middle;
 }
