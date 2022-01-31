@@ -137,15 +137,17 @@ from . import (
     VAEBlock,
     CustomBlock,
     SpaceToDepth,
-    DarkNetConvolutional,
-    DarkNetUpsample,
-    DarkNetResBlock,
-    DarkNetBatchNormalization,
+    # DarkNetConvolutional,
+    # DarkNetUpsample,
+    # DarkNetResBlock,
+    # DarkNetBatchNormalization,
     PSPBlock1D,
     PSPBlock2D,
     PSPBlock3D,
     UNETBlock2D,
     UNETBlock1D,
     UNETBlock3D,
-    PretrainedYOLO
+    PretrainedYOLO,
+    ConditionalMergeLayer,
+    ResnetBlock2D
 )

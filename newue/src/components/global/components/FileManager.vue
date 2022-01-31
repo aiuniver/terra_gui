@@ -2,11 +2,11 @@
   <div class="file-manager">
     <div class="file-manager-catalog" v-for="catalog in list" :key="JSON.stringify(catalog)">
       <div class="file-manager-catalog__header flex align-center mb-2" @click="handleClick(catalog.id)">
-        <SvgContainer
+        <d-svg
           :name="active.includes(catalog.id) ? 'arrow-carret-right-active-fill' : 'arrow-carret-right-outline'"
           class="mr-1"
         />
-        <SvgContainer name="folder" class="mr-1" />
+        <d-svg name="folder" class="mr-1" />
         <span>{{ catalog.label }}</span>
       </div>
       <div class="file-manager-catalog__list ml-14" v-show="active.includes(catalog.id)">
@@ -18,7 +18,7 @@
         >
           <BaseFileManager v-if="item.list" :list="item.list" />
           <div v-else class="flex align-center mb-2">
-            <SvgContainer name="file-outline" class="mr-1" />
+            <d-svg name="file-outline" class="mr-1" />
             <span>{{ item.label }}</span>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default {
     &__list {
       &-item {
         cursor: pointer;
-        tramsition: background 0.3s ease, fill 0.3s ease, color 0.3s ease;
+        transition: background 0.3s ease, fill 0.3s ease, color 0.3s ease;
         border-radius: 4px;
 
         &:hover {

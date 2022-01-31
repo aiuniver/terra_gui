@@ -8,7 +8,9 @@
       <scrollbar>
         <div class="error-modal__content">
           <pre v-if="isMore" ref="message-modal-copy" class="message" v-html="message"></pre>
-          <span v-else class="error-modal__btn" @click="isMore = true">Подробней</span>
+          <template v-else>
+            <span v-if="Boolean(message)" class="error-modal__btn" @click="isMore = true">Подробней</span>
+          </template>
         </div>
       </scrollbar>
     </div>
@@ -20,7 +22,7 @@
         </p>
       </div>
       <div>
-        <span class="error-modal__time">{{ time | formatDate }}</span>
+        <span class="error-modal__time">{{ (time * 1000) | formatDate }}</span>
       </div>
     </div>
   </at-modal>

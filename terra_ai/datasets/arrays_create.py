@@ -16,7 +16,6 @@ import librosa.feature as librosa_feature
 import imgaug
 from PIL import UnidentifiedImageError
 from ast import literal_eval
-from sklearn.cluster import KMeans
 from pydub import AudioSegment
 from librosa import load as librosa_load
 from pydantic.color import Color
@@ -37,8 +36,8 @@ class CreateArray(object):
         p_list = []
         for elem in paths_list:
             try:
-                load_img(elem).verify()
-                p_list.append(elem)
+                img = load_img(elem)
+                p_list.append(';'.join([str(elem), f'{img.height},{img.width}']))
             except (UnidentifiedImageError, IOError):
                 pass
 
@@ -494,9 +493,10 @@ class CreateArray(object):
     def cut_image(paths_list: list, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
-            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem))), exist_ok=True)
-            shutil.copyfile(elem, os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)),
-                                               os.path.basename(elem)))
+            img_path = elem.split(';')[0]
+            os.makedirs(os.path.join(dataset_folder, os.path.basename(os.path.dirname(img_path))), exist_ok=True)
+            shutil.copyfile(img_path, os.path.join(dataset_folder, os.path.basename(os.path.dirname(img_path)),
+                                                   os.path.basename(img_path)))
 
         paths_list = [os.path.join(dataset_folder, os.path.basename(os.path.dirname(elem)), os.path.basename(elem))
                       for elem in paths_list]
@@ -832,6 +832,8 @@ class CreateArray(object):
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
+        if ';' in image_path:
+            image_path = image_path.split(';')[0]
         img = load_img(image_path)
         array = np.array(img)
 
@@ -1349,30 +1351,31 @@ class CreateArray(object):
     def preprocess_text(text: str, **options) -> np.ndarray:
 
         array = []
-        text = text_to_word_sequence(text, filters=options['filters'], lower=False, split=' ')
         words_to_add = []
 
-        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
-            array = options['preprocess'].texts_to_sequences([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
-            array = options['preprocess'].texts_to_matrix([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-            for word in text:
-                try:
-                    array.append(options['preprocess'].wv[word])
-                except KeyError:
-                    array.append(np.zeros((options['length'],)))
-
-        if len(array) < options['length']:
-            if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
-                words_to_add = [0 for _ in range((options['length']) - len(array))]
+        if options['prepare_method'] != LayerPrepareMethodChoice.no_preparation:
+            text = text_to_word_sequence(text, filters=options['filters'], lower=False, split=' ')
+            if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
+                array = options['preprocess'].texts_to_sequences([text])[0]
+            elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
+                array = options['preprocess'].texts_to_matrix([text])[0]
             elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
-                                range((options['length']) - len(array))]
-            array += words_to_add
-        elif len(array) > options['length']:
-            array = array[:options['length']]
-
+                for word in text:
+                    try:
+                        array.append(options['preprocess'].wv[word])
+                    except KeyError:
+                        array.append(np.zeros((options['length'],)))
+            if len(array) < options['length']:
+                if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                    words_to_add = [0 for _ in range((options['length']) - len(array))]
+                elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                    words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
+                                    range((options['length']) - len(array))]
+                array += words_to_add
+            elif len(array) > options['length']:
+                array = array[:options['length']]
+        else:
+            array = [text]
         array = np.array(array)
 
         return array

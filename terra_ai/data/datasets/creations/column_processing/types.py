@@ -32,7 +32,6 @@ class ParametersBaseData(BaseMixinData):
 
 
 class ParametersImageData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик изображений.
     Inputs:
@@ -51,7 +50,6 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersTextData(ParametersBaseData):
-
     """
     Обработчик текстовых данных.
     Inputs:
@@ -98,7 +96,6 @@ class ParametersTextData(ParametersBaseData):
 
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик аудиофайлов.
     Inputs:
@@ -137,7 +134,6 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик видеофайлов.
     Inputs:
@@ -173,7 +169,6 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик числовых значений.
     Inputs:
@@ -196,7 +191,6 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "классификация".
     Inputs:
@@ -215,7 +209,7 @@ class ParametersClassificationData(ParametersBaseData):
 
     @validator("type_processing")
     def _validate_type_processing(
-        cls, value: LayerTypeProcessingClassificationChoice
+            cls, value: LayerTypeProcessingClassificationChoice
     ) -> LayerTypeProcessingClassificationChoice:
         if value == LayerTypeProcessingClassificationChoice.ranges:
             cls.__fields__["ranges"].required = True
@@ -223,7 +217,6 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик типа задачи "регрессия".
     Inputs:
@@ -234,7 +227,6 @@ class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersSegmentationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "сегментация".
     Inputs:
@@ -257,7 +249,6 @@ class ParametersSegmentationData(ParametersBaseData):
 
 
 class ParametersTextSegmentationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "сегментация текстов".
     Inputs:
@@ -290,7 +281,6 @@ class ParametersTextSegmentationData(ParametersBaseData):
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик видеофайлов.
     Inputs:
@@ -331,7 +321,6 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersGANData(ParametersBaseData):
-
     """
     Обработчик типа задачи "GAN".
     """
@@ -340,7 +329,14 @@ class ParametersGANData(ParametersBaseData):
 
 
 class ParametersCGANData(ParametersBaseData):
+    """
+    Обработчик типа задачи "CGAN".
+    """
 
+    pass
+
+
+class ParametersTextToImageGANData(ParametersBaseData):
     """
     Обработчик типа задачи "CGAN".
     """

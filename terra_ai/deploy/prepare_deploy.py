@@ -7,7 +7,7 @@ from copy import copy
 import numpy as np
 from tensorflow.keras.models import load_model
 
-from terra_ai.callbacks.utils import YOLO_ARCHITECTURE
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, GAN_ARCHITECTURE
 from terra_ai.cascades.common import decamelize
 from terra_ai.data.datasets.dataset import DatasetData, DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
@@ -20,7 +20,8 @@ from terra_ai.exceptions.deploy import MethodNotImplementedException, DatasetCre
     DatasetPrepareException, ModelCreateException, PredictionException, NoPredictException, PresetsException, \
     NoTrainedModelException
 from terra_ai.training import GUINN
-from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
+    TextToImageGANTerraModel, ImageToImageGANTerraModel
 from terra_ai.settings import DEPLOY_PATH
 from ..data.deploy.extra import DeployTypeChoice
 from ..exceptions.base import TerraBaseException
@@ -34,7 +35,7 @@ class DeployCreator:
         try:
             model_path = Path(os.path.join(training_path, page.get("name"), "model"))
             presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
-            print(model_path, presets_path, page)
+
             if page.get("type") == "model":
                 self._check_model_on_training(model_path=model_path)
                 if os.path.exists(DEPLOY_PATH):
@@ -91,11 +92,25 @@ class DeployCreator:
                                 else:
                                     predict = copy(batch)
                         else:
-                            predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
+                            if dataset.data.architecture in GAN_ARCHITECTURE:
+                                # batch_size = 16
+                                # shape = [32 * batch_size]
+                                # image_size = (64, 64, 3)
+                                # shape.extend(image_size)
+                                # predict = np.zeros(shape)
+                                # for i in range(32):
+                                #     predict[i*batch_size:(i+1)*batch_size] = \
+                                #         model.predict(dataset.dataset.get('train').batch(batch_size), batch_size=1).numpy()
+                                predict = model.predict(dataset.dataset.get('train').batch(128), batch_size=1)
+                            else:
+                                predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
                     else:
-                        predict = model.predict(dataset.X.get('val'),
-                                                batch_size=training_details.get("base").get("batch"))
-
+                        if dataset.data.architecture in GAN_ARCHITECTURE:
+                            predict = model.predict(dataset.X.get('train'),
+                                                    batch_size=training_details.get("base").get("batch"))
+                        else:
+                            predict = model.predict(dataset.X.get('val'),
+                                                    batch_size=training_details.get("base").get("batch"))
                     if "Yolo" in deploy_type:
                         predict = [predict[1], predict[3], predict[5]]
                     if not len(predict):
@@ -118,9 +133,9 @@ class DeployCreator:
                 if "Dataframe" in deploy_type:
                     self._create_form_data_for_dataframe_deploy(deploy_path=deploy_path,
                                                                 dataset=dataset, dataset_data=dataset_data)
-
-                self._create_cascade(presets=presets, dataset=dataset, dataset_data=dataset_data,
-                                     deploy_path=deploy_path, model_path=model_path, deploy_type=deploy_type)
+                if dataset.data.architecture not in GAN_ARCHITECTURE:
+                    self._create_cascade(presets=presets, dataset=dataset, dataset_data=dataset_data,
+                                         deploy_path=deploy_path, model_path=model_path, deploy_type=deploy_type)
 
                 deploy_data = self._prepare_deploy(presets=presets, dataset=dataset,
                                                    deploy_path=deploy_path, model_path=model_path,
@@ -148,8 +163,11 @@ class DeployCreator:
                 )
 
             deploy_data.update({"page": page})
-            print(deploy_data)
-            return DeployData(**deploy_data)
+            # print("DEPLOY DATA: ", deploy_data)
+            result = DeployData(**deploy_data)
+            with open(os.path.join(DEPLOY_PATH, "config.json"), "w", encoding="utf-8") as deploy_conf:
+                json.dump(result.config, deploy_conf)
+            return result
         except Exception as error:
             raise error
 
@@ -164,20 +182,42 @@ class DeployCreator:
 
         weight = None
         out_model = None
+        model = None
 
         if os.path.exists(os.path.join(model_path, "trained_model.trm")):
             model = load_model(os.path.join(model_path, "trained_model.trm"))
         else:
-            model = BaseTerraModel(model=None,
-                                   model_name="trained_model",
-                                   model_path=model_path)
-            model.load()
-            if dataset.data.architecture in YOLO_ARCHITECTURE:
-                options = GUINN().get_yolo_init_parameters(dataset=dataset)
-                model = YoloTerraModel(model=None,
+            if dataset.data.architecture in GAN_ARCHITECTURE:
+                if dataset.data.architecture == ArchitectureChoice.ImageGAN:
+                    model = GANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path)
+                elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
+                    model = ConditionalGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+                elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
+                    model = TextToImageGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+                elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                    model = ImageToImageGANTerraModel(
+                        model={}, model_name="trained_model", model_path=model_path,
+                        options=dataset)
+            else:
+                model = BaseTerraModel(model=None,
                                        model_name="trained_model",
-                                       model_path=model_path,
-                                       **options)
+                                       model_path=model_path)
+                model.load()
+                if dataset.data.architecture in YOLO_ARCHITECTURE:
+                    options = GUINN().get_yolo_init_parameters(dataset=dataset)
+                    model = YoloTerraModel(model=None,
+                                           model_name="trained_model",
+                                           model_path=model_path,
+                                           **options)
+
+        if dataset.data.architecture in GAN_ARCHITECTURE:
+            model.load_weights()
+            return model
 
         for i in os.listdir(model_path):
             if i[-3:] == '.h5' and 'best' in i:

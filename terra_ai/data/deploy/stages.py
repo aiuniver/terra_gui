@@ -2,13 +2,13 @@ import re
 
 from typing import Optional
 from pydantic import validator
-from pydantic.types import constr, PositiveInt
+from pydantic.types import constr, conint, PositiveInt
 from pydantic.networks import HttpUrl
 from transliterate import slugify
 
 from ..mixins import BaseMixinData
 from ..types import confilepath
-from .extra import DeployTypeChoice, EnvVersionChoice
+from .extra import EnvVersionChoice
 
 
 class StageUploadUserData(BaseMixinData):
@@ -62,6 +62,7 @@ class StageUploadData(BaseMixinData):
     project: StageUploadProjectData
     task: str
     replace: bool = False
+    server: dict
     file: StageUploadFileData
 
 

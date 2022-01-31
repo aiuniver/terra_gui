@@ -61,6 +61,22 @@ class LayerText2SpeechData(LayerBaseData, types.Text2Speech.ParametersData):
     pass
 
 
+class LayerGANData(LayerBaseData, types.GAN.ParametersData):
+    pass
+
+
+class LayerCGANData(LayerBaseData, types.CGAN.ParametersData):
+    pass
+
+
+class LayerGeneratorData(LayerBaseData, types.Generator.ParametersData):
+    pass
+
+
+class LayerDiscriminatorData(LayerBaseData, types.Discriminator.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(

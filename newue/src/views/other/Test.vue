@@ -5,7 +5,7 @@
         <div class="row">
           <div class="col">
             <h3>All svg</h3>
-            <SvgContainer all />
+            <d-svg all />
           </div>
         </div>
         

@@ -6,7 +6,7 @@
     <div class="app__main">
       <router-view />
     </div>
-    <div class="app_footer">
+    <div class="app__footer">
       <Footer />
     </div>
   </div>
@@ -23,6 +23,7 @@
   }
   &__main {
     flex: 1 1 auto;
+    max-height: calc(100vh - 112px);
   }
   &__footer {
     flex: 0 0 58px;

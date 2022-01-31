@@ -7,6 +7,13 @@ import datasets from './modules/datasets';
 import logging from './modules/logging';
 import projects from './modules/projects';
 import themes from './modules/themes';
+import create from './modules/create';
+import deploy from './modules/deploy';
+import settings from './modules/settings';
+import cascades from './modules/cascades';
+import trainings from './modules/trainings';
+import modeling from './modules/modeling';
+import servers from './modules/servers';
 
 Vue.use(Vuex);
 
@@ -16,7 +23,14 @@ export default new Vuex.Store({
     messages,
     datasets,
     projects,
-    themes
+    themes,
+    create,
+    deploy,
+    settings,
+    cascades,
+    trainings,
+    modeling,
+    servers
   },
   state: {},
   mutations: {},

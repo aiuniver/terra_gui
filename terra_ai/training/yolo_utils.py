@@ -430,7 +430,6 @@ def compute_loss(pred, conv, label, bboxes, i=0, CLASSES=None, STRIDES=None, YOL
 
 
 ### CREATE AND FIT MODEL ###
-
 def decode(conv_output, NUM_CLASS, i=0, YOLO_TYPE="v3", STRIDES=None):
     method_name = 'decode'
     try:
@@ -696,7 +695,7 @@ def voc_ap(rec, prec):
         raise exc
 
 
-def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.25, iou_threshold: object = None,
+def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.05, iou_threshold: object = None,
             TEST_INPUT_SIZE: int = 416, TRAIN_CLASSES: list = None,
             pred: np.ndarray = None, dataset_path: str = '') -> dict:
     method_name = 'get_mAP'

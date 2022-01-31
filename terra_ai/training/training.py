@@ -9,9 +9,8 @@ from typing import Optional, Union
 from tensorflow.keras.models import Model
 from tensorflow import keras
 
-
 from terra_ai import progress
-from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, get_dataset_length
+from terra_ai.callbacks.utils import YOLO_ARCHITECTURE, get_dataset_length, GAN_ARCHITECTURE
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerInputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -24,14 +23,14 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
     NoYoloParamsException, TrainingException
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
+    TextToImageGANTerraModel, ImageToImageGANTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive
 import terra_ai.exceptions.callbacks as exception
 
 __version__ = 0.02
-
 
 # noinspection PyTypeChecker,PyBroadException
 from terra_ai.utils import check_error
@@ -65,8 +64,9 @@ class GUINN:
         self.progress_name = "training"
 
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
+        # logger.debug(f"{GUINN.name}, {GUINN._set_training_params.__name__}")
         method_name = '_set_training_params'
-        # logger.info("Установка параметров обучения...", extra={"type": "info"})
+        logger.info("Установка параметров обучения...", extra={"type": "info"})
         try:
             self.params = params
             self.dataset = self._prepare_dataset(
@@ -97,12 +97,14 @@ class GUINN:
             raise check_error(error, self.__class__.__name__, method_name)
 
     def _set_callbacks(self, dataset: PrepareDataset, train_details: TrainingDetailsData) -> None:
+        # logger.debug(f"{GUINN.name}, {GUINN._set_callbacks.__name__}")
         self.callback = FitCallback(dataset=dataset, training_details=train_details, model_name=self.nn_name,
                                     deploy_type=self.deploy_type.name)
-        # logger.info("Добавление колбэков выполнено", extra={"type": "success"})
+        logger.info("Добавление колбэков выполнено", extra={"type": "success"})
 
     @staticmethod
     def _set_deploy_type(dataset: PrepareDataset) -> str:
+        # logger.debug(f"{GUINN.name}, {GUINN._set_deploy_type.__name__}")
         method_name = '_set_deploy_type'
         try:
             data = dataset.data
@@ -153,9 +155,10 @@ class GUINN:
             raise check_error(error, GUINN().name, method_name)
 
     def _prepare_dataset(self, dataset: DatasetData, model_path: Path, state: str) -> PrepareDataset:
+        # logger.debug(f"{GUINN.name}, {GUINN._prepare_dataset.__name__}")
         method_name = '_prepare_dataset'
         try:
-            # logger.info("Загрузка датасета...", extra={"type": "info"})
+            logger.info("Загрузка датасета...", extra={"type": "info"})
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
@@ -169,24 +172,38 @@ class GUINN:
 
     def _set_model(self, model: ModelDetailsData, train_details: TrainingDetailsData,
                    dataset: PrepareDataset) -> Union[BaseTerraModel, YoloTerraModel]:
+        # logger.debug(f"{GUINN.name}, {GUINN._set_model.__name__}")
         method_name = 'set model'
         try:
-            # logger.info("Загрузка модели...", extra={"type": "info"})
+            logger.info("Загрузка модели...", extra={"type": "info"})
             base_model = None
             if train_details.state.status == "training":
                 validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
-            if dataset.data.architecture not in YOLO_ARCHITECTURE:
-                train_model = BaseTerraModel(model=base_model,
-                                             model_name=self.nn_name,
-                                             model_path=train_details.model_path)
-            else:
+            if dataset.data.architecture == ArchitectureChoice.ImageGAN:
+                train_model = GANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
+                train_model = ConditionalGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
+            elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
+                train_model = TextToImageGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
+            elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                train_model = ImageToImageGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
+            elif dataset.data.architecture in YOLO_ARCHITECTURE:
                 options = self.get_yolo_init_parameters(dataset=dataset)
-                train_model = YoloTerraModel(model=base_model,
-                                             model_name=self.nn_name,
-                                             model_path=train_details.model_path,
-                                             **options)
+                train_model = YoloTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path, **options)
+            else:
+                train_model = BaseTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
+
             logger.info("Загрузка модели завершена", extra={"type": "success"})
             return train_model
         except Exception as error:
@@ -195,6 +212,7 @@ class GUINN:
             ).with_traceback(error.__traceback__)
 
     def get_yolo_init_parameters(self, dataset: PrepareDataset):
+        # logger.debug(f"{GUINN.name}, {GUINN.get_yolo_init_parameters.__name__}")
         method_name = 'get_yolo_init_parameters'
         try:
             version = dataset.instructions.get(list(dataset.data.outputs.keys())[0]).get(
@@ -208,6 +226,7 @@ class GUINN:
             ).with_traceback(error.__traceback__)
 
     def _kill_last_training(self, state):
+        # logger.debug(f"{GUINN.name}, {GUINN._kill_last_training.__name__}")
         method_name = '_kill_last_training'
         try:
             for one_thread in threading.enumerate():
@@ -222,8 +241,9 @@ class GUINN:
             raise check_error(error, self.__class__.__name__, method_name)
 
     def terra_fit(self, dataset: DatasetData, gui_model: ModelDetailsData, training: TrainingDetailsData) -> None:
+        # logger.debug(f"{GUINN.name}, {GUINN.terra_fit.__name__}")
         method_name = 'terra_fit'
-        # logger.info(f"start {method_name}")
+        logger.info(f"start {method_name}")
         try:
             # check and kill last training if it detect
             self._kill_last_training(state=training)
@@ -242,6 +262,7 @@ class GUINN:
             raise check_error(error, self.__class__.__name__, method_name)
 
     def nn_cleaner(self, retrain: bool = False) -> None:
+        # logger.debug(f"{GUINN.name}, {GUINN.nn_cleaner.__name__}")
         keras.backend.clear_session()
         self.dataset = None
         self.deploy_type = None
@@ -256,9 +277,10 @@ class GUINN:
 
     @progress.threading
     def model_fit(self, params: TrainingDetailsData, model: ModelDetailsData, dataset: PrepareDataset) -> None:
+        # logger.debug(f"{GUINN.name}, {GUINN.model_fit.__name__}")
         method_name = 'model_fit'
         try:
-            # logger.info(f"Старт обучения модели...", extra={"front_level": "info"})
+            logger.info(f"Старт обучения модели...", extra={"front_level": "info"})
             self._set_callbacks(dataset=dataset, train_details=params)
             threading.enumerate()[-1].setName("current_train")
             progress.pool(self.progress_name, finished=False, message="Компиляция модели ...")

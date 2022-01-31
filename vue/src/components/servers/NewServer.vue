@@ -14,20 +14,18 @@
       </t-field>
       <div class="new-server__ports">
         <t-field label="SSH порт">
-          <DInputNumber placeholder="" v-model="port_ssh" />
+          <d-input-number placeholder="" v-model="port_ssh" />
         </t-field>
         <t-field label="HTTP порт">
-          <DInputNumber placeholder="" v-model="port_http" />
+          <d-input-number placeholder="" v-model="port_http" />
         </t-field>
         <t-field label="HTTPS порт">
-          <DInputNumber placeholder="" v-model="port_https" />
+          <d-input-number placeholder="" v-model="port_https" />
         </t-field>
       </div>
-      <t-button class="new-server__btn"
-			:disabled="!validForm || loading" 
-			>Добавить</t-button>
+      <t-button class="new-server__btn" :disabled="!validForm || loading">Добавить</t-button>
     </form>
-    <LoadSpiner v-show="loading" text=""/>
+    <LoadSpiner v-show="loading" text="" />
     <!-- <div class="new-server__error">
       <p class="new-server__error--header">Ошибка добавления сервера демо-панели</p>
       <p class="new-server__error--info">
@@ -39,49 +37,47 @@
 
 <script>
 import VueIP from './VueIp.vue';
-import DInputNumber from './DInputNumber.vue'
-import LoadSpiner from "@/components/forms/LoadSpiner"
+import LoadSpiner from '@/components/forms/LoadSpiner';
 
 export default {
   name: 'NewServer',
+  components: {
+    VueIP,
+    LoadSpiner,
+  },
   data: () => ({
     ip_address: '',
     ipValid: null,
-		domain_name: '',
-		user: '',
-		port_ssh: 22,
-		port_http: 80,
-		port_https: 443,
-		loading: false
+    domain_name: '',
+    user: '',
+    port_ssh: 22,
+    port_http: 80,
+    port_https: 443,
+    loading: false,
   }),
-  components: {
-    VueIP,
-    DInputNumber,
-    LoadSpiner
+  computed: {
+    validForm() {
+      return !!(this.ipValid && this.domain_name && this.user && this.port_ssh && this.port_http && this.port_https);
+    },
   },
-	computed: {
-		validForm() {
-			return !!(this.ipValid && this.domain_name && this.user && this.port_ssh && this.port_http && this.port_https)
-		}
-	},
   methods: {
     change(ip, x, valid) {
       this.ip_address = ip;
       this.ipValid = valid;
     },
-		async addServer() {
-      this.loading = true
-			const { id } = await this.$store.dispatch('servers/addServer', {
-				domain_name: this.domain_name, 
-				ip_address: this.ip_address, 
-				user: this.user, 
-				port_ssh: this.port_ssh, 
-				port_http: this.port_http, 
-				port_https: this.port_https
-			})
-      this.$emit('addServer', id)
-      this.loading = false
-		}
+    async addServer() {
+      this.loading = true;
+      const { id } = await this.$store.dispatch('servers/addServer', {
+        domain_name: this.domain_name,
+        ip_address: this.ip_address,
+        user: this.user,
+        port_ssh: this.port_ssh,
+        port_http: this.port_http,
+        port_https: this.port_https,
+      });
+      this.$emit('addServer', id);
+      this.loading = false;
+    },
   },
 };
 </script>

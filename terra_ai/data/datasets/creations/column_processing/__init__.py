@@ -49,6 +49,10 @@ class ColumnProcessingCGANData(types.ParametersCGANData):
     pass
 
 
+class ColumnProcessingTextToImageGANData(types.ParametersTextToImageGANData):
+    pass
+
+
 class ColumnProcessingNoiseData(types.ParametersNoiseData):
     pass
 

@@ -12,6 +12,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 import terra_ai.exceptions.callbacks as exception
+from terra_ai.logging import logger
 from terra_ai.utils import camelize
 
 loss_metric_config = {
@@ -345,17 +346,15 @@ CLASSIFICATION_ARCHITECTURE = [
     ArchitectureChoice.VideoClassification, ArchitectureChoice.DataframeClassification,
 ]
 
-
-# def print_error(class_name: str, method_name: str, message: Exception):
-#     return print(f'\n_________________________________________________\n'
-#                  f'Error in class {class_name} method {method_name}: {message}'
-#                  f'\n_________________________________________________\n')
+GAN_ARCHITECTURE = [
+    ArchitectureChoice.ImageGAN, ArchitectureChoice.ImageCGAN, ArchitectureChoice.TextToImageGAN,
+    ArchitectureChoice.ImageToImageGAN
+]
 
 
 def reformat_fit_array(array: dict, train_idx: list = None):
     method_name = 'reformat_fit_array'
     try:
-        # print(method_name)
         reformat_true = {}
         for data_type in array.keys():
             reformat_true[data_type] = {}
@@ -895,7 +894,7 @@ def segmentation_metric(true_array, pred_array):
 
 def get_dataset_length(options):
     method_name = 'get_dataset_length'
-    # logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
+    logger.debug(f"{MODULE_NAME}, {get_dataset_length.__name__}")
     try:
         train_length, val_length = 0, 0
         if options.data.architecture not in [ArchitectureChoice.Timeseries, ArchitectureChoice.TimeseriesTrend] and \
@@ -921,3 +920,9 @@ def set_preset_count(len_array: int, preset_percent: int) -> int:
         return 10
     else:
         return len_array
+
+
+def get_link_from_dataframe(dataframe, column, index):
+    link = dataframe[column][index]
+    link = link.split(";")[0]
+    return link

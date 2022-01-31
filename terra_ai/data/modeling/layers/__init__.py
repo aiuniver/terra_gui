@@ -609,40 +609,40 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
 
 
-class LayerDarkNetConvolutionalData(LayerMixinData):
-    main: types.DarkNetConvolutional.ParametersMainData = (
-        types.DarkNetConvolutional.ParametersMainData()
-    )
-    extra: types.DarkNetConvolutional.ParametersExtraData = (
-        types.DarkNetConvolutional.ParametersExtraData()
-    )
-
-
-class LayerDarkNetUpsampleData(LayerMixinData):
-    main: types.DarkNetUpsample.ParametersMainData = (
-        types.DarkNetUpsample.ParametersMainData()
-    )
-    extra: types.DarkNetUpsample.ParametersExtraData = (
-        types.DarkNetUpsample.ParametersExtraData()
-    )
-
-
-class LayerDarkNetResBlockData(LayerMixinData):
-    main: types.DarkNetResBlock.ParametersMainData = (
-        types.DarkNetResBlock.ParametersMainData()
-    )
-    extra: types.DarkNetResBlock.ParametersExtraData = (
-        types.DarkNetResBlock.ParametersExtraData()
-    )
-
-
-class LayerDarkNetBatchNormalizationData(LayerMixinData):
-    main: types.DarkNetBatchNormalization.ParametersMainData = (
-        types.DarkNetBatchNormalization.ParametersMainData()
-    )
-    extra: types.DarkNetBatchNormalization.ParametersExtraData = (
-        types.DarkNetBatchNormalization.ParametersExtraData()
-    )
+# class LayerDarkNetConvolutionalData(LayerMixinData):
+#     main: types.DarkNetConvolutional.ParametersMainData = (
+#         types.DarkNetConvolutional.ParametersMainData()
+#     )
+#     extra: types.DarkNetConvolutional.ParametersExtraData = (
+#         types.DarkNetConvolutional.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetUpsampleData(LayerMixinData):
+#     main: types.DarkNetUpsample.ParametersMainData = (
+#         types.DarkNetUpsample.ParametersMainData()
+#     )
+#     extra: types.DarkNetUpsample.ParametersExtraData = (
+#         types.DarkNetUpsample.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetResBlockData(LayerMixinData):
+#     main: types.DarkNetResBlock.ParametersMainData = (
+#         types.DarkNetResBlock.ParametersMainData()
+#     )
+#     extra: types.DarkNetResBlock.ParametersExtraData = (
+#         types.DarkNetResBlock.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetBatchNormalizationData(LayerMixinData):
+#     main: types.DarkNetBatchNormalization.ParametersMainData = (
+#         types.DarkNetBatchNormalization.ParametersMainData()
+#     )
+#     extra: types.DarkNetBatchNormalization.ParametersExtraData = (
+#         types.DarkNetBatchNormalization.ParametersExtraData()
+#     )
 
 
 class LayerCONVBlockData(LayerMixinData):
@@ -684,6 +684,18 @@ class LayerUNETBlock3DData(LayerMixinData):
     extra: types.UNETBlock3D.ParametersExtraData = (
         types.UNETBlock3D.ParametersExtraData()
     )
+
+
+class LayerConditionalMergeLayerData(LayerMixinData):
+    main: types.ConditionalMergeLayer.ParametersMainData = types.ConditionalMergeLayer.ParametersMainData()
+    extra: types.ConditionalMergeLayer.ParametersExtraData = (
+        types.ConditionalMergeLayer.ParametersExtraData()
+    )
+
+
+class LayerResnetBlock2DData(LayerMixinData):
+    main: types.ResnetBlock2D.ParametersMainData = types.ResnetBlock2D.ParametersMainData()
+    extra: types.ResnetBlock2D.ParametersExtraData = (types.ResnetBlock2D.ParametersExtraData())
 
 
 class LayerPretrainedYOLOData(LayerMixinData):

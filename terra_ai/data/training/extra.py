@@ -59,8 +59,10 @@ class ArchitectureChoice(str, Enum):
     Tracker = "Tracker"
     Speech2Text = "Speech2Text"
     Text2Speech = "Text2Speech"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
+    TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):
@@ -106,6 +108,8 @@ class TaskChoice(str, Enum):
     Dataframe = "Dataframe"
     TextSegmentation = "TextSegmentation"
     TimeseriesTrend = "TimeseriesTrend"
+    Generator = "Generator"
+    Discriminator = "Discriminator"
 
 
 class LossChoice(str, Enum):

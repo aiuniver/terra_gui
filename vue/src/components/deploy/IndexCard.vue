@@ -1,12 +1,21 @@
 <template>
   <div class="card">
     <div class="card__content">
+      <div v-if="['image_gan', 'image_cgan'].includes(type)">
+        <div class="card__original">
+          <ImgCard :imgUrl="card.source" />
+        </div>
+      </div>
       <div v-if="type == 'image_classification'">
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '224px', height: '80px' }">{{ classificationResult }}</TextCard>
+          <TextCard :style="{ width: '224px', height: '80px' }">
+            <template v-for="{ name, value } of getData">
+              <div class="video_classification__item" :key="name">{{ `${name}: ${value}%` }}</div>
+            </template>
+          </TextCard>
         </div>
       </div>
       <div v-if="type == 'video_classification'">
@@ -28,7 +37,9 @@
           <TextCard :style="{ width: '600px', color: '#A7BED3', height: '324px' }">{{ card.source }}</TextCard>
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">
+            <div v-for="{ name, value } of getData" :key="name">{{ `${name}: ${value}%` }}</div>
+          </TextCard>
         </div>
       </div>
       <div v-if="type == 'text_segmentation'">
@@ -50,18 +61,18 @@
       </div>
       <div v-if="type == 'audio_classification'">
         <div class="card__original">
-          <AudioCard :value="card.source" />
+          <AudioCard :value="card.source" :key="card.source" />
         </div>
         <div class="card__result">
-          <TextCard :style="{ width: '600px', height: '80px' }">{{ classificationResult }}</TextCard>
+          <TextCard :style="{ width: '600px', height: '80px' }">
+            <div v-for="{ name, value } of getData" :key="name">{{ `${name}: ${value}%` }}</div>
+          </TextCard>
         </div>
       </div>
       <div v-if="type == 'text_to_audio'">
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '200px' }">
-            <scrollbar :ops="ops">
-              {{ card.source }}
-            </scrollbar>
+            {{ card.source }}
           </TextCard>
         </div>
         <div class="card__original">
@@ -74,9 +85,7 @@
         </div>
         <div class="card__result">
           <TextCard :style="{ width: '600px', height: '200px' }">
-            <scrollbar :ops="ops">
-              {{ card.predict }}
-            </scrollbar>
+            {{ card.predict }}
           </TextCard>
         </div>
       </div>
@@ -212,13 +221,13 @@ export default {
       }
       return layer;
     },
-    classificationResult() {
-      let text = this.card.data;
-      let prepareText = '';
-      text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
-      for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}%`;
-      return prepareText;
-    },
+    // classificationResult() {
+    //   let text = this.card.data;
+    //   let prepareText = '';
+    //   text.sort((a, b) => (a[1] < b[1] ? 1 : -1));
+    //   for (let i = 0; i < text.length; i++) prepareText += `${text[i][0]} - ${text[i][1]}%`;
+    //   return prepareText;
+    // },
     getData() {
       const arr = this.card?.data || [];
       const text = arr.map(i => ({ name: i[0], value: i[1] }));

@@ -1,3 +1,5 @@
+import datetime
+
 import psutil
 import time
 import pynvml as N
@@ -5,7 +7,7 @@ import pynvml as N
 from config import settings
 
 from terra_ai import progress
-from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE
+from terra_ai.callbacks.utils import loss_metric_config, YOLO_ARCHITECTURE, GAN_ARCHITECTURE
 from terra_ai.data.deploy.extra import DeployTypeChoice
 from terra_ai.data.training.extra import CheckpointTypeChoice, StateStatusChoice
 from terra_ai.data.training.train import TrainingDetailsData
@@ -40,6 +42,7 @@ class FitCallback:
         self.dataset_path = dataset.data.path
         self.deploy_type = getattr(DeployTypeChoice, deploy_type)
         self.is_yolo = True if dataset.data.architecture in YOLO_ARCHITECTURE else False
+        self.is_gan = True if dataset.data.architecture in GAN_ARCHITECTURE else False
         self.batch_size = training_details.base.batch
         self.nn_name = model_name
         self.deploy_path = training_details.deploy_path
@@ -93,9 +96,13 @@ class FitCallback:
         }
         # аттрибуты для чекпоинта
         self.checkpoint_config = training_details.base.architecture.parameters.checkpoint
-        self.checkpoint_mode = self._get_checkpoint_mode()  # min max
+        if dataset.data.architecture in GAN_ARCHITECTURE:
+            self.checkpoint_interval = training_details.base.architecture.parameters.checkpoint.epoch_interval
+        else:
+            self.checkpoint_mode = self._get_checkpoint_mode()  # min max
+            self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
+        # self.metric_checkpoint = self.checkpoint_config.metric_name  # "val_mAP50" if self.is_yolo else "loss"
 
         self.samples_train = []
         self.samples_val = []
@@ -317,7 +324,7 @@ class FitCallback:
         logger.debug(f"{method_name}, epoch {self.last_epoch}")
 
         try:
-            if self.is_yolo:
+            if self.is_yolo or self.is_gan:
                 self.history.current_logs = logs
             else:
                 self.history.current_basic_logs(epoch=epoch, arrays=arrays, train_idx=train_data_idxs)
@@ -342,6 +349,12 @@ class FitCallback:
             )
 
             self._set_result_data({'train_data': train_epoch_data})
+            if self.dataset.data.architecture in GAN_ARCHITECTURE:
+                if self.last_epoch % self.checkpoint_interval == 0:
+                    self.history.save_logs()
+                    name = f"{datetime.datetime.now().date()}_{self.dataset.data.name}_" \
+                           f"{self.dataset.data.architecture}_{self.last_epoch}".replace("-", "_").replace(" ", "_")
+                    self.training_detail.save(name, overwrite=True)
             progress.pool(
                 self.progress_name,
                 percent=self.last_epoch / (

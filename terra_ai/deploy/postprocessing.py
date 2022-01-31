@@ -6,6 +6,7 @@ from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
+from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.exceptions.deploy import PostprocessException
 from terra_ai.logging import logger
@@ -66,6 +67,14 @@ def postprocess_results(array, options, save_path: str = "", dataset_path: str =
             return_data = YoloV4Callback.postprocess_deploy(
                 array=array, options=options, save_path=save_path, dataset_path=dataset_path,
                 sensitivity=sensitivity, threashold=threashold
+            )
+        elif options.data.architecture == ArchitectureChoice.ImageGAN:
+            return_data = GANCallback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path
+            )
+        elif options.data.architecture == ArchitectureChoice.ImageCGAN:
+            return_data = CGANCallback.postprocess_deploy(
+                array=array, options=options, save_path=save_path, dataset_path=dataset_path
             )
         else:
             pass

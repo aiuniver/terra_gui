@@ -1,4 +1,3 @@
-from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
@@ -29,10 +28,8 @@ import tempfile
 import shutil
 import zipfile
 import concurrent.futures
-import logging
 import h5py
 from math import ceil
-from PIL import Image
 from itertools import repeat
 from pathlib import Path
 from typing import Union
@@ -154,11 +151,12 @@ class CreateDataset(object):
     @staticmethod
     def preprocess_creation_data(creation_data):
 
+        noise_flag = False
         for inp in range(len(creation_data.inputs)):
             for worker_name, worker_params in creation_data.columns_processing.items():
                 if creation_data.columns_processing[worker_name].type == 'Image':
                     shape = (worker_params.parameters.height, worker_params.parameters.width, 3)
-                elif creation_data.columns_processing[worker_name].type == 'GAN':
+                elif creation_data.columns_processing[worker_name].type == 'GAN' and not noise_flag:
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
                         **{"type": "Noise", "parameters": {'shape': (100,)}})
@@ -171,6 +169,7 @@ class CreateDataset(object):
                                'cols_names': {list(output_copy.parameters.cols_names.keys())[0]: [new_worker_id]},
                                'sources_paths': output_copy.parameters.sources_paths}})
                     )
+                    noise_flag = True
                     break
 
         for out in creation_data.outputs:
@@ -209,6 +208,48 @@ class CreateDataset(object):
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
+            elif out.type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+                out_list = []
+                img_shape = ()
+                sources_paths = []
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Image:
+                        img_shape = (inp.parameters.height, inp.parameters.width, 3)
+                        sources_paths = inp.parameters.sources_paths
+                idx = 2
+                creation_data.inputs.append(
+                    CreationInputData(
+                        id=idx,
+                        name='Шум',
+                        type=LayerInputTypeChoice.Noise,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': (100,)}))
+                idx += 1
+                if out.type == LayerOutputTypeChoice.CGAN:
+                    creation_data.inputs.append(
+                        CreationInputData(
+                            id=idx,
+                            name='Классы',
+                            type=LayerInputTypeChoice.Classification,
+                            parameters={'sources_paths': sources_paths,
+                                        'type_processing': 'categorical'}))
+                    idx += 1
+                out_list.append(
+                    CreationOutputData(
+                        id=idx,
+                        name='Генератор',
+                        type=LayerOutputTypeChoice.Generator,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': img_shape}).native())
+                idx += 1
+                out_list.append(
+                    CreationOutputData(
+                        id=idx,
+                        name='Дискриминатор',
+                        type=LayerOutputTypeChoice.Discriminator,
+                        parameters={'sources_paths': sources_paths,
+                                    'shape': (1,)}).native())
+                creation_data.outputs = CreationOutputsList(out_list)
 
         if creation_data.columns_processing:
             for worker_name, worker_params in creation_data.columns_processing.items():
@@ -260,6 +301,10 @@ class CreateDataset(object):
         else:
             inputs = self.create_put_instructions(data=creation_data.inputs)
             outputs = self.create_put_instructions(data=creation_data.outputs)
+            for inp in creation_data.inputs:
+                if inp.type == LayerInputTypeChoice.Classification and self.y_cls:
+                    for col_name, data in inputs[inp.id].items():
+                        data.instructions = self.y_cls
             for out in creation_data.outputs:
                 if out.type == LayerOutputTypeChoice.Classification and self.y_cls:
                     for col_name, data in outputs[out.id].items():
@@ -449,6 +494,7 @@ class CreateDataset(object):
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
 
                 results_list = []
+                parameters = {}
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(instructions, temp_paths_list, repeat(put))
                     progress.pool(self.progress_name,
@@ -456,17 +502,19 @@ class CreateDataset(object):
                     for i, result in enumerate(results):
                         progress.pool(self.progress_name, percent=ceil(i / len(temp_paths_list) * 100))
                         results_list += result[0]['instructions']
+                        parameters = result[0]['parameters']
                         if put.type not in [LayerOutputTypeChoice.Classification, LayerOutputTypeChoice.Segmentation,
                                             LayerOutputTypeChoice.TextSegmentation,
                                             LayerOutputTypeChoice.ObjectDetection, LayerOutputTypeChoice.Timeseries,
                                             LayerOutputTypeChoice.TimeseriesTrend, LayerOutputTypeChoice.Regression,
                                             LayerOutputTypeChoice.Tracker, LayerOutputTypeChoice.Speech2Text,
-                                            LayerOutputTypeChoice.Text2Speech]:
+                                            LayerOutputTypeChoice.Text2Speech, LayerOutputTypeChoice.Generator,
+                                            LayerOutputTypeChoice.Discriminator, LayerInputTypeChoice.Noise]:
                             y_classes = result[1] if len(result) > 1 else [os.path.basename(os.path.dirname(dir_name))
                                                                            for dir_name in result[0]['instructions']]
                             self.y_cls += y_classes
-                instructions_data = InstructionsData(instructions=results_list, parameters=result[0]['parameters'])
 
+                instructions_data = InstructionsData(instructions=results_list, parameters=parameters)
                 if decamelize(put.type) in PATH_TYPE_LIST:
                     new_paths = [path.replace(str(self.paths.basepath) + os.path.sep, '')
                                  for path in instructions_data.instructions]
@@ -702,6 +750,8 @@ class CreateDataset(object):
                 encoding = LayerEncodingChoice.none
                 classes_colors, classes_names, = [], []
                 for c_name, data in self.columns[key].items():
+                    if len(self.columns[key]) == 1:
+                        task = data['task']
                     if data['classes_colors']:
                         classes_colors += data['classes_colors']
                     if data['classes_names']:
@@ -748,19 +798,18 @@ class CreateDataset(object):
                 elif decamelize(creation_data.outputs.get(key).type) == decamelize(
                         LayerOutputTypeChoice.ObjectDetection):
                     data_to_pass = self.dataframe['train'].iloc[0, 1]
-                    tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                     self.dataframe['train'].iloc[0, 0]))
-                    data.parameters.update([('orig_x', tmp_im.width),
-                                            ('orig_y', tmp_im.height)])
+                    tmp_im = self.dataframe['train'].iloc[0, 0].split(';')[1].split(',')
+                    data.parameters.update([('orig_x', int(tmp_im[0])),
+                                            ('orig_y', int(tmp_im[1]))])
                 else:
                     data_to_pass = data.instructions[0]
-                array = np.array([1])
-                if not self.tags[key][col_name] in ['discriminator', 'generator']:
-                    arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
-                                                                                       **{'preprocess': prep})
+                # array = np.array([1])
+                # if not self.tags[key][col_name] in ['discriminator', 'generator']:
+                arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(data_to_pass, **data.parameters,
+                                                                                   **{'preprocess': prep})
 
-                    array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
-                                                                                             **arr['parameters'])
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key][col_name]}')(arr['instructions'],
+                                                                                         **arr['parameters'])
                 if isinstance(array, list):  # Условие для ObjectDetection
                     output_array = [arr for arr in array]
                 elif isinstance(array, tuple):
@@ -1013,10 +1062,9 @@ class CreateDataset(object):
                                 #     tmp_data.append(self.augmentation[split]['1_image'][i])
                                 # else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
-                                tmp_im = Image.open(os.path.join(self.paths.basepath,
-                                                                 self.dataframe[split].iloc[i, 0]))
-                                parameters_to_pass.update([('orig_x', tmp_im.width),
-                                                           ('orig_y', tmp_im.height)])
+                                tmp_im = self.dataframe['train'].iloc[i, 0].split(';')[1].split(',')
+                                parameters_to_pass.update([('orig_x', int(tmp_im[0])),
+                                                           ('orig_y', int(tmp_im[1]))])
                             else:
                                 tmp_data.append(self.dataframe[split].loc[i, col_name])
                             # if self.tags[key][col_name] == decamelize(LayerInputTypeChoice.Image) and\
@@ -1048,6 +1096,8 @@ class CreateDataset(object):
                         for i, result in enumerate(results):
                             if psutil.virtual_memory()._asdict().get("percent") > 90:
                                 current_arrays = []
+                                progress.pool(self.progress_name,
+                                              error='Создание датасета прервано. Превышен доступный лимит ОЗУ.')
                                 raise Resource
                             # if isinstance(result, tuple):
                             #     augm_data = result[1]
@@ -1192,12 +1242,26 @@ class CreateDataset(object):
             architecture = ArchitectureChoice.Speech2Text
         elif out_task_name == LayerOutputTypeChoice.Text2Speech:
             architecture = ArchitectureChoice.Text2Speech
-        elif creation_data.outputs[0].type == LayerOutputTypeChoice.GAN:
-            architecture = ArchitectureChoice.GAN
-        elif creation_data.outputs[0].type == LayerOutputTypeChoice.CGAN:
-            architecture = ArchitectureChoice.CGAN
+        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+                and len(creation_data.inputs) == 2:
+            architecture = ArchitectureChoice.ImageGAN
+        elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+                and len(creation_data.inputs) > 2:
+            architecture = ArchitectureChoice.ImageCGAN
+        # elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
+        #         and len(creation_data.inputs) > 2:
+        #     architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
+
+        out_list = []
+        for key, val in self.outputs.items():
+            out_list.append(val['task'])
+        if out_list == ['Generator', 'Discriminator']:
+            if len(self.inputs) == 2:
+                architecture = ArchitectureChoice.ImageGAN
+            elif len(self.inputs) == 3:
+                architecture = ArchitectureChoice.ImageCGAN
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,

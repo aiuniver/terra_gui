@@ -1,14 +1,12 @@
 <template>
-  <main class="page-modeling">
-    <div class="cont">
-      <LoadModel v-model="dialogLoadModel" />
-      <SaveModel v-model="dialogSaveModel" :image="imageModel" />
-      <Toolbar @actions="actions" />
-      <Blocks ref="container" />
-      <Params />
-      <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
-    </div>
-  </main>
+  <div class="page-modeling">
+    <LoadModel v-model="dialogLoadModel" />
+    <SaveModel v-model="dialogSaveModel" :image="imageModel" />
+    <Toolbar @actions="actions" />
+    <Blocks ref="container" />
+    <Params />
+    <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
+  </div>
 </template>
 
 <script>
@@ -92,7 +90,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.cont {
+.page-modeling {
   background: #17212b;
   padding: 0;
   display: flex;
