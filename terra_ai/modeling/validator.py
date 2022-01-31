@@ -1268,7 +1268,7 @@ class ModelCreator:
 
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
-                shape=_input_shape, name=terra_layer[2].get("name")) #shape=(), dtype=tensorflow.string
+                shape=(), dtype=tensorflow.string, name=terra_layer[2].get("name")) #shape=(), dtype=tensorflow.string
         else:
             marker = None
             yolo_out_idx = None
