@@ -2,7 +2,6 @@ from terra_ai.data.training.extra import (
     OptimizerChoice,
     CheckpointIndicatorChoice,
     CheckpointTypeChoice,
-    # CheckpointModeChoice,
     ArchitectureChoice,
 )
 
@@ -282,6 +281,67 @@ ArchitectureGroupFit = {
 }
 
 
+ArchitectureGroupGANFit = {
+    "fields": [
+        {
+            "type": "number",
+            "label": "Размер батча",
+            "name": "batch",
+            "parse": "[batch]",
+            "value": 32,
+        },
+        {
+            "type": "number",
+            "label": "Количество эпох",
+            "name": "epochs",
+            "parse": "[epochs]",
+            "value": 20,
+        },
+        {
+            "type": "number",
+            "label": "Learning rate",
+            "name": "optimizer_main_learning_rate",
+            "parse": "optimizer[parameters][main][learning_rate]",
+            "value": 0.0002,
+        },
+    ],
+}
+
+
+ArchitectureGroupAutobalanceFit = {
+    "fields": [
+        {
+            "type": "number",
+            "label": "Размер батча",
+            "name": "batch",
+            "parse": "[batch]",
+            "value": 32,
+        },
+        {
+            "type": "number",
+            "label": "Количество эпох",
+            "name": "epochs",
+            "parse": "[epochs]",
+            "value": 20,
+        },
+        {
+            "type": "number",
+            "label": "Learning rate",
+            "name": "optimizer_main_learning_rate",
+            "parse": "optimizer[parameters][main][learning_rate]",
+            "value": 0.001,
+        },
+        {
+            "type": "checkbox",
+            "label": "Автобалансировка",
+            "name": "autobalance",
+            "parse": "[autobalance]",
+            "value": False,
+        },
+    ],
+}
+
+
 ArchitectureGroupFitYolo = {
     "fields": [
         {
@@ -421,19 +481,155 @@ ArchitectureBasicForm = {
                     )
                 ),
             },
-            # {
-            #     "type": "select",
-            #     "label": "Режим",
-            #     "name": "architecture_parameters_checkpoint_mode",
-            #     "parse": "architecture[parameters][checkpoint][mode]",
-            #     "value": CheckpointModeChoice.Max.name,
-            #     "list": list(
-            #         map(
-            #             lambda item: {"value": item.name, "label": item.value},
-            #             list(CheckpointModeChoice),
-            #         )
-            #     ),
-            # },
+        ],
+    },
+}
+
+
+ArchitectureBasicAutobalanceForm = {
+    "main": ArchitectureGroupMain,
+    "fit": ArchitectureGroupAutobalanceFit,
+    "optimizer": ArchitectureGroupOptimizer,
+    "outputs": {
+        "name": "Параметры выходных слоев",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": {},
+    },
+    "checkpoint": {
+        "name": "Чекпоинты",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": [
+            {
+                "type": "select",
+                "label": "Функция",
+                "name": "architecture_parameters_checkpoint_metric_name",
+                "parse": "architecture[parameters][checkpoint][metric_name]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Монитор",
+                "name": "architecture_parameters_checkpoint_layer",
+                "parse": "architecture[parameters][checkpoint][layer]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Indicator",
+                "name": "architecture_parameters_checkpoint_indicator",
+                "parse": "architecture[parameters][checkpoint][indicator]",
+                "value": CheckpointIndicatorChoice.Val.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointIndicatorChoice),
+                    )
+                ),
+            },
+            {
+                "type": "select",
+                "label": "Тип",
+                "name": "architecture_parameters_checkpoint_type",
+                "parse": "architecture[parameters][checkpoint][type]",
+                "value": CheckpointTypeChoice.Metrics.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointTypeChoice),
+                    )
+                ),
+            },
+        ],
+    },
+}
+
+
+ArchitectureYoloForm = {
+    "main": ArchitectureGroupMain,
+    "fit": ArchitectureGroupFitYolo,
+    "optimizer": ArchitectureGroupOptimizer,
+    "outputs": {
+        "name": "Параметры выходных слоев",
+        "collapsable": True,
+        "collapsed": False,
+        "visible": False,
+        "fields": [],
+    },
+    "checkpoint": {
+        "name": "Чекпоинты",
+        "collapsable": True,
+        "collapsed": False,
+        "visible": False,
+        "fields": [
+            {
+                "type": "select",
+                "label": "Функция",
+                "name": "architecture_parameters_checkpoint_metric_name",
+                "parse": "architecture[parameters][checkpoint][metric_name]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Монитор",
+                "name": "architecture_parameters_checkpoint_layer",
+                "parse": "architecture[parameters][checkpoint][layer]",
+                "list": [],
+            },
+            {
+                "type": "select",
+                "label": "Indicator",
+                "name": "architecture_parameters_checkpoint_indicator",
+                "parse": "architecture[parameters][checkpoint][indicator]",
+                "value": CheckpointIndicatorChoice.Val.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointIndicatorChoice),
+                    )
+                ),
+            },
+            {
+                "type": "select",
+                "label": "Тип",
+                "name": "architecture_parameters_checkpoint_type",
+                "parse": "architecture[parameters][checkpoint][type]",
+                "value": CheckpointTypeChoice.Metrics.name,
+                "list": list(
+                    map(
+                        lambda item: {"value": item.name, "label": item.value},
+                        list(CheckpointTypeChoice),
+                    )
+                ),
+            },
+        ],
+    },
+}
+
+
+ArchitectureGANForm = {
+    "main": ArchitectureGroupMain,
+    "fit": ArchitectureGroupGANFit,
+    "optimizer": ArchitectureGroupOptimizer,
+    "outputs": {
+        "name": "Параметры выходных слоев",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": {},
+    },
+    "checkpoint": {
+        "name": "Чекпоинты",
+        "collapsable": True,
+        "collapsed": False,
+        "fields": [
+            {
+                "type": "number",
+                "label": "Интервал эпох для сохранения",
+                "name": "architecture_parameters_checkpoint_epoch_interval",
+                "parse": "architecture[parameters][checkpoint][epoch_interval]",
+                "value": 10,
+            }
         ],
     },
 }
@@ -441,167 +637,27 @@ ArchitectureBasicForm = {
 
 Architectures = {
     ArchitectureChoice.Basic: {**ArchitectureBasicForm},
-    ArchitectureChoice.ImageClassification: {**ArchitectureBasicForm},
-    ArchitectureChoice.ImageSegmentation: {**ArchitectureBasicForm},
-    ArchitectureChoice.TextClassification: {**ArchitectureBasicForm},
-    ArchitectureChoice.TextSegmentation: {**ArchitectureBasicForm},
-    ArchitectureChoice.DataframeClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.ImageClassification: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.ImageSegmentation: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.TextClassification: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.TextSegmentation: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.DataframeClassification: {**ArchitectureBasicAutobalanceForm},
     ArchitectureChoice.DataframeRegression: {**ArchitectureBasicForm},
     ArchitectureChoice.Timeseries: {**ArchitectureBasicForm},
-    ArchitectureChoice.TimeseriesTrend: {**ArchitectureBasicForm},
-    ArchitectureChoice.AudioClassification: {**ArchitectureBasicForm},
-    ArchitectureChoice.VideoClassification: {**ArchitectureBasicForm},
+    ArchitectureChoice.TimeseriesTrend: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.AudioClassification: {**ArchitectureBasicAutobalanceForm},
+    ArchitectureChoice.VideoClassification: {**ArchitectureBasicAutobalanceForm},
     ArchitectureChoice.YoloV3: {
-        "main": ArchitectureGroupMain,
-        "fit": ArchitectureGroupFitYolo,
-        "optimizer": ArchitectureGroupOptimizer,
-        "outputs": {
-            "name": "Параметры выходных слоев",
-            "collapsable": True,
-            "collapsed": False,
-            "visible": False,
-            "fields": [],
-        },
-        "checkpoint": {
-            "name": "Чекпоинты",
-            "collapsable": True,
-            "collapsed": False,
-            "visible": False,
-            "fields": [
-                {
-                    "type": "select",
-                    "label": "Функция",
-                    "name": "architecture_parameters_checkpoint_metric_name",
-                    "parse": "architecture[parameters][checkpoint][metric_name]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Монитор",
-                    "name": "architecture_parameters_checkpoint_layer",
-                    "parse": "architecture[parameters][checkpoint][layer]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Indicator",
-                    "name": "architecture_parameters_checkpoint_indicator",
-                    "parse": "architecture[parameters][checkpoint][indicator]",
-                    "value": CheckpointIndicatorChoice.Val.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointIndicatorChoice),
-                        )
-                    ),
-                },
-                {
-                    "type": "select",
-                    "label": "Тип",
-                    "name": "architecture_parameters_checkpoint_type",
-                    "parse": "architecture[parameters][checkpoint][type]",
-                    "value": CheckpointTypeChoice.Metrics.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointTypeChoice),
-                        )
-                    ),
-                },
-                # {
-                #     "type": "select",
-                #     "label": "Режим",
-                #     "name": "architecture_parameters_checkpoint_mode",
-                #     "parse": "architecture[parameters][checkpoint][mode]",
-                #     "value": CheckpointModeChoice.Max.name,
-                #     "list": list(
-                #         map(
-                #             lambda item: {"value": item.name, "label": item.value},
-                #             list(CheckpointModeChoice),
-                #         )
-                #     ),
-                # },
-            ],
-        },
+        **ArchitectureYoloForm,
         "yolo": ArchitectureGroupYoloV3,
     },
     ArchitectureChoice.YoloV4: {
-        "main": ArchitectureGroupMain,
-        "fit": ArchitectureGroupFitYolo,
-        "optimizer": ArchitectureGroupOptimizer,
-        "outputs": {
-            "name": "Параметры выходных слоев",
-            "collapsable": True,
-            "collapsed": False,
-            "visible": False,
-            "fields": [],
-        },
-        "checkpoint": {
-            "name": "Чекпоинты",
-            "collapsable": True,
-            "collapsed": False,
-            "visible": False,
-            "fields": [
-                {
-                    "type": "select",
-                    "label": "Функция",
-                    "name": "architecture_parameters_checkpoint_metric_name",
-                    "parse": "architecture[parameters][checkpoint][metric_name]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Монитор",
-                    "name": "architecture_parameters_checkpoint_layer",
-                    "parse": "architecture[parameters][checkpoint][layer]",
-                    "list": [],
-                },
-                {
-                    "type": "select",
-                    "label": "Indicator",
-                    "name": "architecture_parameters_checkpoint_indicator",
-                    "parse": "architecture[parameters][checkpoint][indicator]",
-                    "value": CheckpointIndicatorChoice.Val.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointIndicatorChoice),
-                        )
-                    ),
-                },
-                {
-                    "type": "select",
-                    "label": "Тип",
-                    "name": "architecture_parameters_checkpoint_type",
-                    "parse": "architecture[parameters][checkpoint][type]",
-                    "value": CheckpointTypeChoice.Metrics.name,
-                    "list": list(
-                        map(
-                            lambda item: {"value": item.name, "label": item.value},
-                            list(CheckpointTypeChoice),
-                        )
-                    ),
-                },
-                # {
-                #     "type": "select",
-                #     "label": "Режим",
-                #     "name": "architecture_parameters_checkpoint_mode",
-                #     "parse": "architecture[parameters][checkpoint][mode]",
-                #     "value": CheckpointModeChoice.Max.name,
-                #     "list": list(
-                #         map(
-                #             lambda item: {"value": item.name, "label": item.value},
-                #             list(CheckpointModeChoice),
-                #         )
-                #     ),
-                # },
-            ],
-        },
+        **ArchitectureYoloForm,
         "yolo": ArchitectureGroupYoloV4,
     },
     ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
-    ArchitectureChoice.GAN: {**ArchitectureBasicForm},
-    ArchitectureChoice.CGAN: {**ArchitectureBasicForm},
-    ArchitectureChoice.TextToImageGAN: {**ArchitectureBasicForm},
-    ArchitectureChoice.ImageToImageGAN: {**ArchitectureBasicForm},
+    ArchitectureChoice.ImageGAN: {**ArchitectureGANForm},
+    ArchitectureChoice.ImageCGAN: {**ArchitectureGANForm},
+    ArchitectureChoice.TextToImageGAN: {**ArchitectureGANForm},
+    ArchitectureChoice.ImageToImageGAN: {**ArchitectureGANForm},
 }

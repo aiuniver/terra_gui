@@ -95,6 +95,7 @@ export default {
 .board {
   flex: 1 1 auto;
   overflow: hidden;
+  height: 100%;
 }
 .wrapper {
   padding: 20px;

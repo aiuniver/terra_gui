@@ -45,5 +45,8 @@ export default {
       margin: 20px;
     }
   }
+  &__main {
+    width: 100%;
+  }
 }
 </style>

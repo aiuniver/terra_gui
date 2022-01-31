@@ -3,6 +3,7 @@ export default {
   state: () => ({
     project: {},
     user: {},
+    projectsList: []
   }),
   mutations: {
     SET_PROJECT (state, value) {
@@ -10,6 +11,9 @@ export default {
     },
     SET_USER (state, value) {
       state.user = { ...state.user, ...value }
+    },
+    SET_PROJECTS_LIST (state, value) {
+      state.projectsList = value;
     },
   },
   actions: {
@@ -70,8 +74,21 @@ export default {
     async remove ({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/delete/", data }, { root: true });
     },
-    async infoProject ({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/info/", data }, { root: true });
+    async infoProject ({ dispatch, commit }, params) {
+      const { data: { projects } } = await dispatch("axios", { url: "/project/info/", params }, { root: true });
+      const list = (projects || []).map((p, i) => {
+        return {
+          id: p.id || i + 1,
+          image: p.image || 'https://www.zastavki.com/pictures/1920x1080/2013/Fantasy__038385_23.jpg',
+          active: p.active || false,
+          created: p.created || '17 апреля 2021',
+          edited: p.edited || '3 дня назад',
+          value: p.value,
+          label: p.label,
+        }
+      })
+      commit('SET_PROJECTS_LIST', list)
+      return list
     },
     async saveProject ({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/project/save/", data }, { root: true });
@@ -80,14 +97,9 @@ export default {
     },
   },
   getters: {
-    getProject ({ project }) {
-      return project;
-    },
-    getProjectData: ({ project }) => key => {
-      return project[key];
-    },
-    getUser ({ user }) {
-      return user;
-    },
+    getProject: ({ project }) => project,
+    getProjectsList: ({ projectsList }) => projectsList,
+    getProjectData: ({ project }) => key => project[key],
+    getUser: ({ user }) => user,
   },
 };

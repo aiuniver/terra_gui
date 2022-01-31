@@ -1,5 +1,5 @@
 <template>
-  <main class="page-deploy">
+  <div class="page-deploy">
     <div class="cont">
       <div class="board">
         <scrollbar>
@@ -56,7 +56,7 @@
         @clear="clearParams"
       />
     </div>
-  </main>
+  </div>
 </template>
 
 <script>

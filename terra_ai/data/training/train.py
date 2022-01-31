@@ -233,6 +233,7 @@ class ArchitectureData(BaseMixinData):
 
 class TrainData(BaseMixinData):
     model: Any
+    autobalance: bool = False
     batch: PositiveInt = 32
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)

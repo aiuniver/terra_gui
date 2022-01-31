@@ -9,7 +9,7 @@ import tensorflow
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback, TextToImageGANCallback
+from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback, TextToImageGANCallback, ImageToImageGANCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
@@ -117,7 +117,7 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
-                # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
+                logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
                     logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
@@ -210,9 +210,10 @@ class InteractiveCallback:
                         array=self.y_pred.get('train'),
                         seed_array=self.y_pred.get('seed'),
                         count=count,
-                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
+                        input_keys=self.y_pred.get('inputs')
                     )
-                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.CGAN:
+                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.ImageCGAN:
                         logger.debug(f"{InteractiveCallback.name}: расчет баланса датасета...")
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
@@ -508,12 +509,15 @@ class InteractiveCallback:
                 self.callback = YoloV3Callback()
             elif dataset.data.architecture == ArchitectureChoice.YoloV4:
                 self.callback = YoloV4Callback()
-            elif dataset.data.architecture == ArchitectureChoice.GAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageGAN:
                 self.callback = GANCallback()
-            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
                 self.callback = CGANCallback()
             elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
                 self.callback = TextToImageGANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                self.callback = ImageToImageGANCallback()
+                # logger.debug("self.callback = ImageToImageGANCallback()")
             else:
                 pass
         except Exception as error:
@@ -953,11 +957,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -1041,7 +1045,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'

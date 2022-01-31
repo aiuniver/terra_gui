@@ -24,7 +24,7 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
-    TextToImageGANTerraModel
+    TextToImageGANTerraModel, ImageToImageGANTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive
@@ -181,15 +181,19 @@ class GUINN:
                 validator = ModelValidator(model, dataset.data.architecture)
                 base_model = validator.get_keras_model()
 
-            if dataset.data.architecture == ArchitectureChoice.GAN:
+            if dataset.data.architecture == ArchitectureChoice.ImageGAN:
                 train_model = GANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path)
-            elif dataset.data.architecture == ArchitectureChoice.CGAN:
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
                 train_model = ConditionalGANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
                     options=dataset)
             elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
                 train_model = TextToImageGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
+            elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                train_model = ImageToImageGANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
                     options=dataset)
             elif dataset.data.architecture in YOLO_ARCHITECTURE:

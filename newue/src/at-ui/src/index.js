@@ -6,6 +6,7 @@ import Dialog from './components/dialog'
 import Message from './components/message'
 import LoadingBar from './components/loading-bar'
 import Notification from './components/notification'
+import Button from './components/button'
 
 const components = {
   Collapse,
@@ -14,7 +15,8 @@ const components = {
   Dialog,
   Message,
   LoadingBar,
-  Notification
+  Notification,
+  Button
 }
 
 function install (Vue, opts = {}) {
