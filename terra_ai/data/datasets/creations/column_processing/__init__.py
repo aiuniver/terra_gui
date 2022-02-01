@@ -65,6 +65,10 @@ class ColumnProcessingDiscriminatorData(types.ParametersDiscriminatorData):
     pass
 
 
+class ColumnProcessingTransformerData(types.ParametersTransformerData):
+    pass
+
+
 ColumnProcessing = Enum(
     "ColumnProcessing",
     dict(
