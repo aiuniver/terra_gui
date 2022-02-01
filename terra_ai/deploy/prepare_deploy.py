@@ -188,10 +188,10 @@ class DeployCreator:
             model = load_model(os.path.join(model_path, "trained_model.trm"))
         else:
             if dataset.data.architecture in GAN_ARCHITECTURE:
-                if dataset.data.architecture == ArchitectureChoice.GAN:
+                if dataset.data.architecture == ArchitectureChoice.ImageGAN:
                     model = GANTerraModel(
                         model={}, model_name="trained_model", model_path=model_path)
-                elif dataset.data.architecture == ArchitectureChoice.CGAN:
+                elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
                     model = ConditionalGANTerraModel(
                         model={}, model_name="trained_model", model_path=model_path,
                         options=dataset)

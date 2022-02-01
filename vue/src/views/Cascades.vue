@@ -1,15 +1,13 @@
 <template>
-  <main class="page-cascades">
-    <div class="cont">
-      <LoadModel v-model="dialogLoadModel" />
-      <SaveModel v-model="dialogSaveModel" :image="imageModel" />
-      <Toolbar @actions="actions" />
-      <Blocks ref="container" />
-      <Params />
-      <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
-      <DatasetsModal v-model="dialogDatasets" />
-    </div>
-  </main>
+  <div class="page-cascades">
+    <LoadModel v-model="dialogLoadModel" />
+    <SaveModel v-model="dialogSaveModel" :image="imageModel" />
+    <Toolbar @actions="actions" />
+    <Blocks ref="container" />
+    <Params />
+    <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
+    <DatasetsModal v-model="dialogDatasets" />
+  </div>
 </template>
 
 <script>
@@ -19,7 +17,7 @@ import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
 import CopyModal from '../components/global/modals/CopyModal';
-import DatasetsModal from '../components/cascades/modals/DatasetsModal.vue'
+import DatasetsModal from '../components/cascades/modals/DatasetsModal.vue';
 
 export default {
   name: 'cascades',
@@ -30,7 +28,7 @@ export default {
     LoadModel,
     SaveModel,
     CopyModal,
-    DatasetsModal
+    DatasetsModal,
   },
   data: () => ({
     dialogLoadModel: false,
@@ -46,7 +44,7 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = true// = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = true; // = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
@@ -61,8 +59,8 @@ export default {
       if (data) this.imageModel = data;
     },
     async start() {
-      this.dialogDatasets = true
-      await this.$store.dispatch('cascades/setDatasets')
+      this.dialogDatasets = true;
+      await this.$store.dispatch('cascades/setDatasets');
       // await this.$store.dispatch('cascades/start', {});
     },
     async validation() {
@@ -103,7 +101,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.cont {
+.page-cascades {
   background: #17212b;
   padding: 0;
   display: flex;

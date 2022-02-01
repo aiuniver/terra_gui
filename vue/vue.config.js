@@ -10,4 +10,21 @@ module.exports = {
   devServer: {
     proxy: proxy[process.env.USERNAME] || 'http://localhost:8099/',
   },
+  configureWebpack: {
+    optimization: {
+      splitChunks: {
+        cacheGroups: {
+          default: false,
+          // Merge all the CSS into one file
+          styles: {
+            name: 'styles',
+            test: m => m.constructor.name === 'CssModule',
+            chunks: 'all',
+            minChunks: 1,
+            enforce: true
+          },
+        },
+      },
+    },
+  }
 };

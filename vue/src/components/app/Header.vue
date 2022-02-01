@@ -105,9 +105,9 @@ export default {
   height: 52px;
   margin: 1px 0 0 0;
   padding: 0 10px;
-  position: fixed;
-  left: 0;
-  top: 0;
+  // position: fixed;
+  // left: 0;
+  // top: 0;
   z-index: 800;
   display: flex;
   flex-direction: row;

@@ -68,11 +68,11 @@ def postprocess_results(array, options, save_path: str = "", dataset_path: str =
                 array=array, options=options, save_path=save_path, dataset_path=dataset_path,
                 sensitivity=sensitivity, threashold=threashold
             )
-        elif options.data.architecture == ArchitectureChoice.GAN:
+        elif options.data.architecture == ArchitectureChoice.ImageGAN:
             return_data = GANCallback.postprocess_deploy(
                 array=array, options=options, save_path=save_path, dataset_path=dataset_path
             )
-        elif options.data.architecture == ArchitectureChoice.CGAN:
+        elif options.data.architecture == ArchitectureChoice.ImageCGAN:
             return_data = CGANCallback.postprocess_deploy(
                 array=array, options=options, save_path=save_path, dataset_path=dataset_path
             )
