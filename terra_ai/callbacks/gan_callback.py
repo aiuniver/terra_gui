@@ -454,7 +454,8 @@ class CGANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    label = list(example_idx.keys())[idx]
+                    # label = list(example_idx.keys())[idx]
+                    label = np.random.choice(list(example_idx.keys()))
                     # logger.debug(f"label: {label}")
                     return_data[f"{idx + 1}"]['initial_data'][f"Класс"] = {
                         "type": "str",
