@@ -1670,7 +1670,7 @@ class ImageSRGANTerraModel(GANTerraModel):
             }
             if params.state.status != "addtrain":
                 pretrain_epochs = 25
-                self.callback.total_epochs += pretrain_epochs
+                # self.callback.total_epochs += pretrain_epochs
                 self.callback.on_train_begin()
                 for epoch in range(pretrain_epochs):
                     self.callback.on_epoch_begin()
