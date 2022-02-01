@@ -25,6 +25,13 @@ class LayerPrepareMethodChoice(str, Enum):
     word_to_vec = "word_to_vec"
 
 
+class LayerTransformerMethodChoice(str, Enum):
+    none = 'none'
+    enc_inp = "enc_inp"
+    dec_inp = "dec_inp"
+    dec_out = "dec_out"
+
+
 class LayerTaskTypeChoice(str, Enum):
     timeseries = "timeseries"
     regression = "regression"
@@ -193,6 +200,7 @@ class ColumnProcessingTypeChoice(str, Enum):
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
+    Transformer = "Transformer"
 
 
 class LayerInputTypeChoice(str, Enum):
