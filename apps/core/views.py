@@ -5,6 +5,10 @@ from django.http.response import HttpResponseRedirect
 from apps.api import remote
 
 
+class NotebookView(TemplateView):
+    template_name = "notebook.html"
+
+
 class MainView(TemplateView):
     template_name = "index.html"
 
