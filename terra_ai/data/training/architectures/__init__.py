@@ -48,11 +48,11 @@ class ArchitectureVideoClassificationData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV3Data(types.YoloV3.ParametersData):
+class ArchitectureYoloV3Data(types.YoloV3.ParametersData, ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV4Data(types.YoloV4.ParametersData):
+class ArchitectureYoloV4Data(types.YoloV4.ParametersData, ArchitectureBasicData):
     pass
 
 
