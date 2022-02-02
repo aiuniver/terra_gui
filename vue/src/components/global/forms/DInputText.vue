@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="d-input"
-    :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
-  >
+  <div class="d-input" :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]">
     <div v-if="icon" class="d-input__icon">
       <i :class="`ci-icon ci-${icon}`" />
     </div>
@@ -17,6 +14,7 @@
       :disabled="isDisabled"
       @input="debounce"
       @focus="focus"
+      @blur="$emit('blur', $event)"
     />
     <div class="d-input__btn">
       <div v-show="input && !isDisabled" class="d-input__btn--cleener">
@@ -76,6 +74,4 @@ export default {
 <style lang="scss" scoped>
 @import '@/assets/scss/components/fields.scss';
 
-.d-input {
-}
 </style>
