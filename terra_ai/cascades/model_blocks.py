@@ -153,20 +153,18 @@ class BaseModel(BaseBlock):
                 self.model = self.__make_yolo(self.model, self.config, self.yolo_version)
 
         array = CreateArray().execute(array_class='image', dataset_path=self.path,
-                                      sources=source)
+                                         sources=source)
+
         array = array.get("1")[np.newaxis, :]
 
-        print(array.shape)
-        bboxes = self.model.predict(x=array)
-        print(len(bboxes))
+        result = self.model.predict(x=array)
 
-        while len(bboxes) == 1:
-            bboxes = bboxes[0]
-        bboxes = list(bboxes)
-        bboxes.pop()
+        if self.model_architecture == 'yolo':
+            result = self.get_bboxes(result)
 
-        out_bbox = tf.concat([tf.reshape(x, (-1, tf.shape(x)[-1])) for x in bboxes], 0)
-        print(type(out_bbox))
+        for block, params in self.config.get('outputs', {}).items():
+            if params.get('task', '').lower() == 'classification':
+                classes = params.get('classes_names')
 
         # postprocessing = []
         # if object_detection:
@@ -211,6 +209,16 @@ class BaseModel(BaseBlock):
         #
         # model = BuildModelCascade(preprocess, model, postprocessing, output=output_types, input=input_types)
 
+        return result, classes
+
+    @staticmethod
+    def get_bboxes(array):
+        while len(array) == 1:
+            array = array[0]
+        bboxes = list(array)
+        bboxes.pop()
+
+        out_bbox = tf.concat([tf.reshape(x, (-1, tf.shape(x)[-1])) for x in bboxes], 0)
         return out_bbox
 
 

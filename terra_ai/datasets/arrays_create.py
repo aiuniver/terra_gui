@@ -58,7 +58,7 @@ class CreateArray(object):
         executor = self.__dict__[array_class]
         if isinstance(sources[0], str):
             source, parameters = self.get_result_items(result=executor.prepare(sources, dataset_folder=None, **options))
-            array, parameters = self.get_result_items(result=executor.create(source, **parameters))
+            array, parameters = self.get_result_items(result=executor.create(source[0], **parameters))
         else:
             array = sources[0]
             # print(array)

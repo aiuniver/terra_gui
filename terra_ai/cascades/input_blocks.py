@@ -36,9 +36,23 @@ class ImageInput(BaseInput):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.array_class = 'image'
+
+    def set_source(self, source):
+        self.sources = source
+
+    def prepare_sources(self):
+        # params = {}
+        # from terra_ai.data.datasets.creations.layers.input.types.Video import ParametersData
+        # for key in ParametersData.__fields__.keys():
+        #     params[key] = self.__dict__.get(key, None)
+        # print(params)
+        # array = CreateArray().execute_array(array_class=self.array_class,
+        #                                     sources=self.sources, **params)
+        return self.sources
 
     def execute(self):
-        pass
+        return self.sources[0]
 
 
 class TextInput(BaseInput):

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import tensorflow
 
-from tensorflow.keras.utils import load_img
+from tensorflow.keras.utils import load_img, save_img
 from typing import Any
 from pydub import AudioSegment
 
@@ -29,9 +29,40 @@ class ImageOutput(BaseOutput):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.result_type = ".webp"
 
     def execute(self):
-        pass
+        source = self.cascade_input.prepare_sources()
+        self.cascade_input.set_source(source)
+        image_, classes = list(self.inputs.values())[0].execute()
+        print("IMAGE: ", image_)
+
+        while len(image_) != 3:
+            print(image_.shape)
+            image_ = image_[0]
+
+        print(classes[np.argmax(image_)])
+
+        # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        # cv2.imwrite(path, img)
+
+        # save_img(f"{self.output_file}{self.result_type}", image_)
+        # return f"{self.output_file}{self.result_type}"
+        # classes_names = params['classes_names'] if 'classes_names' in params.keys() else None
+        #
+        # def fun(acc):
+        # acc = image_ * 100
+        # # acc = np.array(image_)
+        # # print(acc.shape)
+        # if len(acc) == 1:
+        #     acc = acc[0]
+        # else:
+        #     acc = np.mean(acc, axis=0)
+        # print(acc)
+        # acc = acc.round().astype(np.int)
+        # print(acc, classes)
+        # out = list(zip(classes, acc))
+        # print(sorted(out, key=lambda x: x[-1], reverse=True))
 
 
 class TextOutput(BaseOutput):
