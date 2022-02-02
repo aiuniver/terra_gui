@@ -382,6 +382,18 @@ $borderBlock: 2px;
     box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
     border-radius: 23px 4px 24px 4px;
   }
+
+  &--handler {
+    & .block__point,
+    & .block__line-left,
+    & .block__line-right,
+    & .block__wrapper {
+      background-color: $color-yello;
+    }
+    box-shadow: 0px 0px 4px transparentize($color-yello, 0.75);
+    border-radius: 23px 4px 24px 4px;
+  }
+
   &--output {
     & .block__point,
     & .block__line-left,

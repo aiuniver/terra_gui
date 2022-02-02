@@ -15,13 +15,16 @@
       </div>
     </div>
     <div class="d-create-toolbar__workspace mt-10">
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="handleAction('add-input')">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'input' })">
         <d-svg name="sloy-start-add" />
       </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover">
-        <d-svg name="sloy-middle-add" @click="handleAction('add-middle')" />
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'middle' })">
+        <d-svg name="sloy-middle-add" />
       </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="handleAction('add-end')">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'handler' })">
+        <d-svg name="sloy-handler-add" />
+      </div>
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'output' })">
         <d-svg name="sloy-end-add" />
       </div>
     </div>
@@ -29,18 +32,19 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex';
 export default {
   name: 'WorkspaceActions',
   methods: {
-    handleAction(action) {
-      this.$emit('action', action);
-    },
+    ...mapActions({
+      add: 'create/add',
+    }),
   },
 };
 </script>
 
 <style lang="scss" scoped>
-@import "@/assets/scss/variables/default.scss";
+@import '@/assets/scss/variables/default.scss';
 .d-create-toolbar {
   position: absolute;
   top: 40%;

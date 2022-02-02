@@ -3,9 +3,10 @@ import { Block } from '../const/blocks';
 export default {
   namespaced: true,
   state: () => ({
-    blocks: [new Block({ id: 1 }), new Block({ id: 2, type: 'middle', position: [20, 20] }), new Block({ id: 3, type: 'middle', position: [40, 40] }), new Block({ id: 4, type: 'output', position: [60, 60] })],
+    blocks: [new Block({ id: 1 }), new Block({ id: 2, type: 'middle', position: [20, 20] }), new Block({ id: 3, type: 'handler', position: [40, 40] }), new Block({ id: 4, type: 'output', position: [60, 60] })],
     links: [],
-    key: {}
+    key: {},
+    creation: {}
   }),
   mutations: {
     SET_BLOCKS (state, value) {
@@ -16,6 +17,9 @@ export default {
     },
     SET_KEY_EVENT (state, value) {
       state.key = value;
+    },
+    SET_CREATION (state, value) {
+      state.creation = value;
     },
   },
   actions: {
@@ -148,6 +152,7 @@ export default {
     },
   },
   getters: {
+    getDefault: ({ creation }) => (key) => creation[key] || [],
     getBlocks: ({ blocks }) => blocks,
     getKeyEvent: ({ key }) => key,
     getLinks: ({ links }) => links,
@@ -155,6 +160,7 @@ export default {
       const index = blocks.findIndex(item => item.id == id);
       return blocks[index] || {};
     },
-    getSelected: ({ blocks }) => blocks.filter(i => i.selected).length
+    getSelectedLength: ({ blocks }) => blocks.filter(i => i.selected).length,
+    getSelected: ({ blocks }) => blocks.find(i => i.selected)
   },
 };
