@@ -13,7 +13,7 @@ from ...extra import (
     LayerAudioModeChoice,
     LayerAudioResampleChoice,
     LayerAudioFillModeChoice,
-    LayerImageFrameModeChoice,
+    LayerImageFrameModeChoice, LayerTransformerMethodChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -55,6 +55,7 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
 
     put: Optional[PositiveInt]
     deploy: Optional[bool] = False
