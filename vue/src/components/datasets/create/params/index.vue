@@ -31,7 +31,7 @@ export default {
     Helpers,
   },
   data: () => ({
-    value: 1,
+    value: 3,
     debounce: null,
     list: [
       { id: 1, title: 'Download', component: 'download' },
