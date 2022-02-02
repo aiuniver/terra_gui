@@ -22,7 +22,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerTransformerMethodChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -73,6 +73,7 @@ class ParametersTextData(ParametersBaseData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
@@ -339,6 +340,14 @@ class ParametersCGANData(ParametersBaseData):
 class ParametersTextToImageGANData(ParametersBaseData):
     """
     Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersTransformerData(ParametersBaseData):
+    """
+    Обработчик типа задачи "Transformer".
     """
 
     pass

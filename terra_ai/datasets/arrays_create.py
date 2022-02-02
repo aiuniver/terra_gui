@@ -655,11 +655,17 @@ class CreateArray(object):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
-            text_list.append(paths_list[elem])
+            if options['transformer'] == 'dec_inp':
+                text_list.append('[start] ' + paths_list[elem] + ' [end]')
+            elif options['transformer'] == 'dec_out':
+                text_list.append(paths_list[elem] + ' [end]')
+            else:
+                text_list.append(paths_list[elem])
 
         instructions = {'instructions': text_list,
                         'parameters': {'prepare_method': options['prepare_method'],
                                        'put': options['put'],
+                                       'transformer': options['transformer'],
                                        'cols_names': options['cols_names'],
                                        'text_mode': options['text_mode'],
                                        'length': options['length'],
