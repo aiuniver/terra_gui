@@ -454,7 +454,10 @@ class CGANCallback:
                         'tags_color': None,
                         'statistic_values': {}
                     }
-                    label = list(example_idx.keys())[idx]
+                    if len(list(example_idx.keys())) < idx + 1:
+                        label = np.random.choice(list(example_idx.keys()))
+                    else:
+                        label = list(example_idx.keys())[idx]
                     # logger.debug(f"label: {label}")
                     return_data[f"{idx + 1}"]['initial_data'][f"Класс"] = {
                         "type": "str",
@@ -950,3 +953,238 @@ class ImageToImageGANCallback:
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> dict:
         return {}
+
+
+class ImageSRGANCallback:
+    name = 'ImageSRGANCallback'
+
+    def __init__(self):
+        self.input_keys = {}
+        pass
+
+    @staticmethod
+    def get_x_array(options):
+        return None, None
+
+    @staticmethod
+    def postprocess_deploy(array, options, save_path: str = "", dataset_path: str = "") -> dict:
+        # TODO: актуализировать когда появятся темплейты для деплоя
+        logger.debug(f"{ImageSRGANCallback.name}, {ImageSRGANCallback.postprocess_deploy.__name__}")
+        method_name = 'postprocess_deploy'
+        try:
+            return_data = {}
+            array = np.array(array)
+            for i, output_id in enumerate(options.data.outputs.keys()):
+                true_array = get_y_true(options, output_id)
+                if len(options.data.outputs.keys()) > 1:
+                    postprocess_array = array[i]
+                else:
+                    postprocess_array = array
+                example_idx = GANCallback().prepare_example_idx_to_show(
+                    array=postprocess_array[:len(array)],
+                    seed_array=None,
+                    count=int(len(array) * DEPLOY_PRESET_PERCENT / 100)
+                )
+                return_data[output_id] = {'preset': [], 'label': []}
+                source_col = []
+                for inp in options.data.inputs.keys():
+                    source_col.extend(list(options.data.columns.get(inp).keys()))
+                preprocess = options.preprocessing.preprocessing.get(output_id)
+                for idx in example_idx:
+                    row_list = []
+                    for inp_col in source_col:
+                        row_list.append(f"{options.dataframe.get('val')[inp_col][idx]}")
+                    return_data[output_id]['preset'].append(row_list)
+                    channel_inverse_col = []
+                    for ch, col in enumerate(list(options.data.columns.get(output_id).keys())):
+                        channel_inverse_col = []
+                        if type(preprocess.get(col)).__name__ in ['StandardScaler', 'MinMaxScaler']:
+                            _options = {int(output_id): {col: array[idx, ch:ch + 1].reshape(-1, 1)}}
+                            inverse_col = options.preprocessing.inverse_data(_options).get(output_id).get(col)
+                            inverse_col = inverse_col.squeeze().astype('float').tolist()
+                        else:
+                            inverse_col = array[idx, ch:ch + 1].astype('float').tolist()
+                        channel_inverse_col.append(round_loss_metric(inverse_col))
+                    return_data[output_id]['label'].append(channel_inverse_col)  # [0]
+            return return_data
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            # logger.error(exc)
+            raise exc
+
+    @staticmethod
+    def statistic_data_request(interactive_config, options, y_true, inverse_y_true,
+                               y_pred, inverse_y_pred, raw_y_pred=None) -> dict:
+        return {}
+
+    # @staticmethod
+    def prepare_example_idx_to_show(self, array: dict, seed_array: dict, count: int,
+                                    choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed,
+                                    input_keys: Optional[dict] = None) -> dict:
+        self.input_keys = input_keys
+        # logger.debug(f"input_keys: {self.input_keys}")
+        if choice_type == ExampleChoiceTypeChoice.seed:
+            seed_array.update(self.input_keys)
+            return seed_array
+        else:
+            array.update(self.input_keys)
+            return array
+
+    @staticmethod
+    def postprocess_gan(predict_array: np.ndarray, image_id: int, save_path, return_mode='deploy'):
+        method_name = 'postprocess_gan'
+        try:
+            if return_mode == 'deploy':
+                img_save_path = os.path.join(save_path, "deploy_presets", f"gan_postprocessing_{image_id}.webp")
+                return_path = os.path.join("deploy_presets", f"gan_postprocessing_{image_id}.webp")
+                matplotlib.image.imsave(img_save_path, predict_array)
+                return return_path
+
+            if return_mode == 'callback':
+                data = {"type": "image", "data": []}
+                print('predict_array', predict_array[0][0][0], predict_array.max(), predict_array.min())
+                array = predict_array / predict_array.max() if predict_array.max() > 1 else predict_array
+                y_pred_save_path = os.path.join(save_path, f"predict_gan_image_{image_id}.webp")
+                # print(array[0][0][0], array.max(), array.min())
+                matplotlib.image.imsave(y_pred_save_path, array.squeeze())
+                data["data"].append(
+                    {
+                        "title": "Изображение",
+                        "value": y_pred_save_path,
+                        "color_mark": None,
+                        "size": "large"
+                    }
+                )
+                return data
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
+
+    @staticmethod
+    def postprocess_initial_source(
+            options: PrepareDataset, label, image_id: int, preset_path: str, lr_image_path: str, hr_image_path: str):
+        method_name = 'postprocess_initial_source'
+        # logger.debug(f"{ImageToImageGANCallback.name}, {ImageToImageGANCallback.postprocess_initial_source.__name__}")
+        try:
+            # gen_input_column = list(options.data.columns.get(int(gen_key)).keys())[0]
+            # disc_input_column = list(options.data.columns.get(int(disc_key)).keys())[0]
+            # for out in options.data.columns.keys():
+
+            data = {'initial': {"type": "image", "data": []}, 'result': {"type": "image", "data": []}}
+            # logger.debug(f"label: {label} - {options.dataframe.get('train')['2_Класс'][idx]}")
+            # initial_file_path = get_link_from_dataframe(
+            #     dataframe=options.dataframe.get('train'),
+            #     column=gen_input_column,
+            #     index=label
+            # )
+            img = Image.open(lr_image_path)
+            # img = img.resize(
+            #     options.data.inputs.get(int(gen_key)).shape[0:2][::-1],
+            #     Image.ANTIALIAS
+            # )
+            img = img.convert('RGB')
+            source = os.path.join(preset_path, f"initial_image_{image_id}.webp")
+            img.save(source, 'webp')
+            data['initial']["data"].append(
+                {
+                    "title": "Изображение",
+                    "value": source,
+                    "color_mark": None,
+                    "size": "large"
+                }
+            )
+            # result_file_path = get_link_from_dataframe(
+            #     dataframe=options.dataframe.get('train'),
+            #     column=disc_input_column,
+            #     index=label
+            # )
+            img = Image.open(hr_image_path)
+            # img = img.resize(
+            #     options.data.inputs.get(int(disc_key)).shape[0:2][::-1],
+            #     Image.ANTIALIAS
+            # )
+            img = img.convert('RGB')
+            result_source = os.path.join(preset_path, f"result_image_{image_id}.webp")
+            img.save(result_source, 'webp')
+            data['result']["data"].append(
+                {
+                    "title": "Изображение",
+                    "value": result_source,
+                    "color_mark": None,
+                    "size": "large"
+                }
+            )
+            return data
+
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
+
+    @staticmethod
+    def intermediate_result_request(options, interactive_config, example_idx, dataset_path,
+                                    preset_path, x_val, inverse_x_val, y_pred, inverse_y_pred,
+                                    y_true, inverse_y_true, class_colors, raw_y_pred=None):
+        method_name = 'intermediate_result_request'
+        try:
+            return_data = {}
+            if interactive_config.intermediate_result.show_results:
+                full_lr_image_path = os.path.join(options.data.path, "LR")
+                full_lr_image_list = []
+                with os.scandir(full_lr_image_path) as files:
+                    for f in files:
+                        full_lr_image_list.append(os.path.join(full_lr_image_path, f.name))
+                full_lr_image_list = sorted(full_lr_image_list)
+                # logger.debug(f"full_lr_image_list: {full_lr_image_list[:5]}")
+
+                full_hr_image_path = os.path.join(options.data.path, "HR")
+                full_hr_image_list = []
+                with os.scandir(full_hr_image_path) as files:
+                    for f in files:
+                        full_hr_image_list.append(os.path.join(full_hr_image_path, f.name))
+                full_hr_image_list = sorted(full_hr_image_list)
+                # logger.debug(f"full_hr_image_list: {full_hr_image_list[:5]}")
+                # logger.debug(f"example_idx: {example_idx}")
+
+                for i in range(interactive_config.intermediate_result.num_examples):
+                    # print(example_idx['indexes'][i])
+                    return_data[f"{i + 1}"] = {
+                        'initial_data': {},
+                        'true_value': {},
+                        'predict_value': {},
+                        'tags_color': None,
+                        'statistic_values': {}
+                    }
+                    true_data = ImageSRGANCallback().postprocess_initial_source(
+                        options=options,
+                        label=example_idx['indexes'][i],
+                        image_id=i,
+                        preset_path=preset_path,
+                        lr_image_path=full_lr_image_list[example_idx['indexes'][i]],
+                        hr_image_path=full_hr_image_list[example_idx['indexes'][i]],
+                    )
+                    # logger.debug(f"true_value, {true_data.get('result')}")
+                    # logger.debug(f"initial_data, {true_data.get('initial')}")
+
+                    return_data[f"{i + 1}"]['true_value'][f"Истина"] = true_data.get('result')
+                    return_data[f"{i + 1}"]['initial_data'][f"Исходные данные"] = true_data.get('initial')
+                    pred_data = ImageSRGANCallback().postprocess_gan(
+                        predict_array=example_idx['predict'][example_idx['indexes'][i]],
+                        image_id=i,
+                        save_path=preset_path,
+                        return_mode='callback'
+                    )
+                    return_data[f"{i + 1}"]['predict_value'][f"Генератор"] = pred_data
+                    # logger.debug(f"pred_data, {pred_data}")
+                return return_data
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANCallback().name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
+
+    @staticmethod
+    def balance_data_request(options, dataset_balance, interactive_config) -> dict:
+        return {}
+

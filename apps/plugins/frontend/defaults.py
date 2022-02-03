@@ -235,6 +235,7 @@ StatesTrainingBaseParamsDisabled = {
     "ImageCGAN": {**StatesTrainingGANParamsDisabled},
     "TextToImageGAN": {**StatesTrainingGANParamsDisabled},
     "ImageToImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageSRGAN": {**StatesTrainingGANParamsDisabled},
 }
 
 
@@ -795,6 +796,10 @@ class ArchitectureTextToImageGANForm(ArchitectureBasicForm):
 
 
 class ArchitectureImageToImageGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageSRGANForm(ArchitectureBasicForm):
     pass
 
 

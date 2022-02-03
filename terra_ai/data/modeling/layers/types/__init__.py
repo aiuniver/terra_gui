@@ -137,6 +137,7 @@ from . import (
     VAEBlock,
     CustomBlock,
     SpaceToDepth,
+    DepthToSpace,
     # DarkNetConvolutional,
     # DarkNetUpsample,
     # DarkNetResBlock,
@@ -149,5 +150,6 @@ from . import (
     UNETBlock3D,
     PretrainedYOLO,
     ConditionalMergeLayer,
-    ResnetBlock2D
+    ResnetBlock2D,
+    RGBNormalization
 )
