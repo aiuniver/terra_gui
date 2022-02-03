@@ -66,7 +66,7 @@ class GUINN:
     def _set_training_params(self, dataset: DatasetData, params: TrainingDetailsData) -> None:
         # logger.debug(f"{GUINN.name}, {GUINN._set_training_params.__name__}")
         method_name = '_set_training_params'
-        logger.info("Установка параметров обучения...", extra={"type": "info"})
+        # logger.info("Установка параметров обучения...", extra={"type": "info"})
         try:
             self.params = params
             self.dataset = self._prepare_dataset(
@@ -158,7 +158,7 @@ class GUINN:
         # logger.debug(f"{GUINN.name}, {GUINN._prepare_dataset.__name__}")
         method_name = '_prepare_dataset'
         try:
-            logger.info("Загрузка датасета...", extra={"type": "info"})
+            # logger.info("Загрузка датасета...", extra={"type": "info"})
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
@@ -175,7 +175,7 @@ class GUINN:
         # logger.debug(f"{GUINN.name}, {GUINN._set_model.__name__}")
         method_name = 'set model'
         try:
-            logger.info("Загрузка модели...", extra={"type": "info"})
+            # logger.info("Загрузка модели...", extra={"type": "info"})
             base_model = None
             if train_details.state.status == "training":
                 validator = ModelValidator(model, dataset.data)
