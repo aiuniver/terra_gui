@@ -62,7 +62,7 @@ const router = [
             access: true,
             text: ''
         },
-        component: () => import('@/views/Modeling'),
+        component: () => import('@/views/new/design/Modeling'),
     },
     {
         path: '/new/cascades',
@@ -85,7 +85,7 @@ const router = [
             access: false,
             text: `Для перехода на страницу обучения необходимо загрузить датасет.`,
         },
-        component: () => import('@/views/Training'),
+        component: () => import('@/views/new/completion/Training'),
     },
     {
         path: '/new/deploy',
