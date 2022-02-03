@@ -6,7 +6,7 @@
           <ImgCard :imgUrl="card.source" />
         </div>
         <div>
-          <TextCard :style="{ width: '224px', height: '20px' }">
+          <TextCard v-if="card.actual" :style="{ width: '224px', height: '20px' }">
             {{ card.actual }}
           </TextCard>
         </div>
