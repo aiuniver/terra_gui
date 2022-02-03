@@ -61,7 +61,7 @@ export default {
       getKeyEvent: 'getKeyEvent',
       blocks: 'getBlocks',
       links: 'getLinks',
-      selectLength: 'getSelected',
+      selectLength: 'getSelectedLength',
     }),
     keyEvent: {
       set(value) {

@@ -48,6 +48,7 @@ class ArchitectureChoice(str, Enum):
     ImageSegmentation = "ImageSegmentation"
     TextClassification = "TextClassification"
     TextSegmentation = "TextSegmentation"
+    TextTransformer = "TextTransformer"
     DataframeClassification = "DataframeClassification"
     DataframeRegression = "DataframeRegression"
     Timeseries = "Timeseries"

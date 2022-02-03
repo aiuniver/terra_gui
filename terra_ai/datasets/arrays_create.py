@@ -113,13 +113,17 @@ class CreateArray(object):
     @staticmethod
     def instructions_text(text_list: list, **options) -> dict:
 
-        def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
+        def read_text(file_path, op_tags=None, cl_tags=None) -> str:
 
             cur_text = autodetect_encoding(file_path)
 
-            if open_symbol:
+            if op_tags:
+                op_symbol = op_tags[0][0]
+                cl_symbol = cl_tags[0][-1]
                 cur_text = re.sub(op_symbol, f" {op_symbol}", cur_text)
                 cur_text = re.sub(cl_symbol, f"{cl_symbol} ", cur_text)
+                for elem in op_tags + cl_tags:
+                    cur_text = cur_text.replace(elem, '')
 
             cur_text = ' '.join(text_to_word_sequence(
                 cur_text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '})
@@ -137,17 +141,14 @@ class CreateArray(object):
         txt_dict: dict = {}
         text: dict = {}
         open_tags, close_tags = options.get('open_tags'), options.get('close_tags')
-        open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-            open_symbol = open_tags[0][0]
-            close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
             options['max_words']
 
         for idx, text_row in enumerate(text_list):
             if os.path.isfile(str(text_row)):
-                text_file = read_text(file_path=text_row, op_symbol=open_symbol, cl_symbol=close_symbol)
+                text_file = read_text(file_path=text_row, op_tags=open_tags, cl_tags=close_tags)
                 if text_file:
                     txt_dict[text_row] = text_file
             else:
@@ -158,13 +159,13 @@ class CreateArray(object):
                 else:
                     txt_dict[idx] = text_row
 
-        if open_symbol:
-            for key in txt_dict.keys():
-                words = []
-                for word in txt_dict[key].split(' '):
-                    if word not in open_tags + close_tags:
-                        words.append(word)
-                txt_dict[key] = ' '.join(words)
+        if open_tags:
+            for key, value in txt_dict.items():
+                doc = value
+                for tag in open_tags + close_tags:
+                    doc = doc.replace(tag, '')
+                doc = [word for word in doc.split(' ') if word]
+                txt_dict[key] = ' '.join(doc)
 
         if options['pymorphy']:
             pymorphy = pymorphy2.MorphAnalyzer()
@@ -204,8 +205,7 @@ class CreateArray(object):
                             iter_count += 1
                     else:
                         stop_flag = True
-                    text[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = ' '.join(
-                        value[cur_step: cur_step + adjusted_length])
+                    text[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = ' '.join(value[cur_step: cur_step + adjusted_length])
                     cur_step += options['step'] + (adjusted_length - length)
 
         instructions = {'instructions': text,
@@ -305,36 +305,40 @@ class CreateArray(object):
 
         """
 
-        def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+        def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
 
             text = autodetect_encoding(file_path)
 
-            if open_symbol:
-                text = re.sub(open_symbol, f" {open_symbol}", text)
-                text = re.sub(close_symbol, f"{close_symbol} ", text)
+            text = re.sub(op_symbol, f" {op_symbol}", text)
+            text = re.sub(cl_symbol, f"{cl_symbol} ", text)
 
-            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+            text = ' '.join(text_to_word_sequence(text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '}))
 
             return text
 
-        def get_samples(doc_text: str, op_tags, cl_tags):
+        def get_samples(doc_text: list, filters: str, op_tags: list, cl_tags: list):
 
-            indexes = []
-            idx = []
-            for word in doc_text.split(' '):
+            segmentation = []
+            sample = []
+            for elem in doc_text:
+                response = text_to_word_sequence(elem, **{'lower': True, 'filters': filters, 'split': ' '})
                 try:
-                    if word in op_tags:
-                        idx.append(op_tags[op_tags.index(word)])
-                    elif word in cl_tags:
-                        idx.remove(op_tags[cl_tags.index(word)])
+                    if not response:
+                        segmentation.append(None)
+                        continue
+                    if response[0] in op_tags:
+                        sample.append(op_tags[op_tags.index(response[0])])
+                    elif response[0] in cl_tags:
+                        sample.remove(op_tags[cl_tags.index(response[0])])
                     else:
-                        indexes.append(idx.copy())
+                        segmentation.append(sample.copy())
                 except ValueError:
                     pass
 
-            return indexes
+            return segmentation
 
         text_list: dict = {}
+        text_segm: dict = {}
         text_segm_data: dict = {}
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
@@ -344,25 +348,48 @@ class CreateArray(object):
             options['max_words']
 
         for path in paths_list:
-            text_file = read_text(file_path=path, lower=True, del_symbols=options['filters'], split=' ',
-                                  open_symbol=open_symbol, close_symbol=close_symbol)
+            text_file = read_text(file_path=path, op_symbol=open_symbol, cl_symbol=close_symbol)
             if text_file:
-                text_list[path] = get_samples(text_file, open_tags, close_tags)
+                text_segm[path] = get_samples(doc_text=text_file.split(' '), filters=options['filters'],
+                                              op_tags=open_tags, cl_tags=close_tags)
+                for tag in open_tags + close_tags:
+                    text_file = text_file.replace(tag, '')
+                text_file = [word for word in text_file.split(' ') if word]
+                text_list[path] = text_file
 
         for key, value in sorted(text_list.items()):
-            if options['text_mode'] == LayerTextModeChoice.completely:
-                text_segm_data[';'.join([key, f'[0-{options["max_words"]}]'])] = \
-                    value[:options['max_words']]
-            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-                max_length = len(value)
+            if options['text_mode'] == 'completely':
+                iter_count = 0
+                adjust_flag = False
+                adjusted_length = length
+                while not adjust_flag:
+                    adjust_length = length - len(
+                        text_to_word_sequence(' '.join(value[0: adjusted_length]), options['filters'], lower=False))
+                    adjusted_length += adjust_length
+                    if adjust_length == 0 or iter_count == 10:
+                        adjust_flag = True
+                    iter_count += 1
+                text_segm_data[';'.join([str(key), f'[0-{adjusted_length}]'])] = text_segm[key][0: adjusted_length]
+            elif options['text_mode'] == 'length_and_step':
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text_segm_data[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = value[
-                                                                                           cur_step:cur_step + length]
-                    cur_step += options['step']
-                    if cur_step + length > max_length:
+                    adjusted_length = length
+                    if cur_step + length < len(value):
+                        iter_count = 0
+                        adjust_flag = False
+                        while not adjust_flag:
+                            adjust_length = length - len(
+                                text_to_word_sequence(' '.join(value[cur_step: cur_step + adjusted_length]),
+                                                      options['filters'], lower=False))
+                            adjusted_length += adjust_length
+                            if adjust_length == 0 or iter_count == 10:
+                                adjust_flag = True
+                            iter_count += 1
+                    else:
                         stop_flag = True
+                    text_segm_data[';'.join([str(key), f'[{cur_step}-{cur_step + adjusted_length}]'])] = text_segm[key][cur_step: cur_step + adjusted_length]
+                    cur_step += options['step'] + (adjusted_length - length)
 
         instructions = {'instructions': text_segm_data,
                         'parameters': {**options,
@@ -655,11 +682,17 @@ class CreateArray(object):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
-            text_list.append(paths_list[elem])
+            if options['transformer'] == 'dec_inp':
+                text_list.append('[start] ' + paths_list[elem] + ' [end]')
+            elif options['transformer'] == 'dec_out':
+                text_list.append(paths_list[elem] + ' [end]')
+            else:
+                text_list.append(paths_list[elem])
 
         instructions = {'instructions': text_list,
                         'parameters': {'prepare_method': options['prepare_method'],
                                        'put': options['put'],
+                                       'transformer': options['transformer'],
                                        'cols_names': options['cols_names'],
                                        'text_mode': options['text_mode'],
                                        'length': options['length'],
