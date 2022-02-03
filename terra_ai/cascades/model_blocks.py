@@ -36,12 +36,20 @@ class BaseModel(BaseBlock):
     def set_path(self, model_path: str):
         self.path = os.path.join(model_path, self.path, 'model')
 
-    def set_architecture(self):
+    def __set_architecture(self):
         with open(os.path.join(self.path, 'config.train')) as cfg:
             config = json.load(cfg)
         architecture = config.get('architecture', {}).get('type', '')[:-2].lower()
         version = config.get('architecture', {}).get('type', '')[-2:].lower()
         return architecture, version
+
+    def __set_model(self):
+        self.model = self.__load_model()
+        self.config = self.__get_dataset_config()
+        self.model_architecture, self.yolo_version = self.__set_architecture()
+
+        if self.model_architecture == 'yolo':
+            self.model = self.__make_yolo(self.model, self.config, self.yolo_version)
 
     @staticmethod
     def __get_json_data(path_model_json, path_custom_obj_json):
@@ -145,18 +153,10 @@ class BaseModel(BaseBlock):
     def execute(self):
         source = list(self.inputs.values())[0].execute()
         if not self.model:
-            self.model = self.__load_model()
-            self.config = self.__get_dataset_config()
-            self.model_architecture, self.yolo_version = self.set_architecture()
-
-            if self.model_architecture == 'yolo':
-                self.model = self.__make_yolo(self.model, self.config, self.yolo_version)
+            self.__set_model()
 
         array = CreateArray().execute(array_class='image', dataset_path=self.path,
-                                         sources=source)
-
-        array = array.get("1")[np.newaxis, :]
-
+                                         sources=source).get("1")[np.newaxis, :]
         result = self.model.predict(x=array)
 
         if self.model_architecture == 'yolo':
@@ -165,49 +165,6 @@ class BaseModel(BaseBlock):
         for block, params in self.config.get('outputs', {}).items():
             if params.get('task', '').lower() == 'classification':
                 classes = params.get('classes_names')
-
-        # postprocessing = []
-        # if object_detection:
-        #     type_module = getattr(general_fucntions, "object_detection")
-        #     postprocessing = getattr(type_module, 'main')()
-        #     output_types.append(type2str(signature(postprocessing).return_annotation))
-        #
-        # else:
-        #     for out in config['outputs'].keys():
-        #         if config['outputs'][out]['task'] not in ['Timeseries', 'TimeseriesTrend']:
-        #             for key, cur_param in config['columns'][out].items():
-        #                 with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
-        #                     spec_config = json.load(cfg)
-        #
-        #                 cur_param.update(spec_config)
-        #                 try:
-        #                     task = decamelize(cur_param['task'])
-        #                     type_module = getattr(general_fucntions, task)
-        #                     postprocessing.append(getattr(type_module, 'main')(**cur_param,
-        #                                                                        dataset_path=dataset_data_path,
-        #                                                                        key=key))
-        #                     output_types.append(task)
-        #                 except:
-        #                     postprocessing.append(None)
-        #         else:
-        #             param = {}
-        #             for key, cur_param in config['columns'][out].items():
-        #                 param[key] = cur_param
-        #                 with open(os.path.join(dataset_data_path, "instructions", "parameters", key + '.json')) as cfg:
-        #                     param[key].update(json.load(cfg))
-        #             param = {'columns': param, 'dataset_path': dataset_data_path,
-        #                      'shape': config['outputs'][out]['shape']}
-        #             task = decamelize(config['outputs'][out]['task'])
-        #             type_module = getattr(general_fucntions, task)
-        #             postprocessing.append(getattr(type_module, 'main')(**param))
-        #             output_types.append(task)
-        #
-        #     if any(postprocessing):
-        #         postprocessing = make_processing(postprocessing)
-        #     else:
-        #         postprocessing = None
-        #
-        # model = BuildModelCascade(preprocess, model, postprocessing, output=output_types, input=input_types)
 
         return result, classes
 
@@ -224,3 +181,41 @@ class BaseModel(BaseBlock):
 
 class Model(CascadeBlock):
     Model = BaseModel
+
+
+class ModelOutput(CascadeBlock):
+    ImageClassification = "ImageClassification"
+    ImageSegmentation = "ImageSegmentation"
+    TextClassification = "TextClassification"
+    TextSegmentation = "TextSegmentation"
+    TextTransformer = "TextTransformer"
+    DataframeClassification = "DataframeClassification"
+    DataframeRegression = "DataframeRegression"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
+    AudioClassification = "AudioClassification"
+    VideoClassification = "VideoClassification"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
+    Tracker = "Tracker"
+    Speech2Text = "Speech2Text"
+    Text2Speech = "Text2Speech"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
+    TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
+
+
+class ImageClassificationOut(BaseBlock):
+
+    def execute(self, model_predict: np.ndarray, options: dict):
+        classes = []
+
+        for block, params in options.get('outputs', {}).items():
+            if params.get('task', '').lower() == 'classification':
+                classes = params.get('classes_names')
+
+        while len(model_predict) != 3:
+            model_predict = model_predict[0]
+
+        print(classes[np.argmax(model_predict)])

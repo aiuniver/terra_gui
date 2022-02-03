@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 
 class BaseBlock(ABC):
 
@@ -7,7 +9,7 @@ class BaseBlock(ABC):
         self.inputs: dict = {}
 
     @abstractmethod
-    def execute(self):
+    def execute(self, *args):
         pass
 
 
@@ -17,7 +19,7 @@ class CascadeBlock:
         return self.__getattribute__(type_)(**kwargs)
 
 
-class ModelBlock(BaseBlock, CascadeBlock):
+class ModelOut(BaseBlock, CascadeBlock):
 
-    def execute(self):
+    def execute(self, model_predict: np.ndarray, options: dict):
         pass

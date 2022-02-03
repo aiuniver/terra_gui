@@ -25,6 +25,14 @@ class BaseOutput(BaseBlock):
         pass
 
 
+class EmptyOutput(BaseOutput):
+
+    def execute(self):
+        source = self.cascade_input.prepare_sources()
+        self.cascade_input.set_source(source)
+        return list(self.inputs.values())[0].execute()
+
+
 class ImageOutput(BaseOutput):
 
     def __init__(self, **kwargs):
@@ -34,14 +42,6 @@ class ImageOutput(BaseOutput):
     def execute(self):
         source = self.cascade_input.prepare_sources()
         self.cascade_input.set_source(source)
-        image_, classes = list(self.inputs.values())[0].execute()
-        print("IMAGE: ", image_)
-
-        while len(image_) != 3:
-            print(image_.shape)
-            image_ = image_[0]
-
-        print(classes[np.argmax(image_)])
 
         # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         # cv2.imwrite(path, img)
@@ -144,6 +144,7 @@ class VideoFrameOutput(BaseOutput):
 
 class Output(CascadeBlock):
 
+    Empty = EmptyOutput
     Image = ImageOutput
     Text = TextOutput
     Audio = AudioOutput
