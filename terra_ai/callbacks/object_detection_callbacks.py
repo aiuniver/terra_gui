@@ -790,7 +790,10 @@ class BaseObjectDetectionCallback:
         try:
             return_data = {}
             if yolo_interactive_config.intermediate_result.show_results:
-                for idx in range(yolo_interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get('val')) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get('val'))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},

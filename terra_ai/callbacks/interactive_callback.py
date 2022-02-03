@@ -380,6 +380,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=self.raw_y_pred, options=self.options,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -420,6 +421,33 @@ class InteractiveCallback:
                         y_pred=self.y_pred,
                         inverse_y_pred=self.inverse_y_pred,
                         inverse_y_true=self.inverse_y_true,
+                    )
+
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                if self.training_details.interactive.intermediate_result.show_results:
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
+                        array=self.y_pred.get('train'),
+                        seed_array=self.y_pred.get('seed'),
+                        count=count,
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
+                        input_keys=self.y_pred.get('inputs')
+                    )
+                if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                        options=self.options,
+                        interactive_config=self.training_details.interactive,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.training_details.intermediate_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
+                        y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
+                        class_colors=self.class_colors,
                     )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))

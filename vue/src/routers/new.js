@@ -1,4 +1,4 @@
-const newRouter = [
+const router = [
     {
         path: '/new',
         name: 'Home',
@@ -133,5 +133,5 @@ const newRouter = [
     },
 
 ]
-
+const newRouter = (process.env.NODE_ENV === 'development' ) ? router  : []
 export { newRouter }

@@ -5,6 +5,11 @@
         <div class="card__original">
           <ImgCard :imgUrl="card.source" />
         </div>
+        <div>
+          <TextCard v-if="card.actual" :style="{ width: '224px', height: '20px' }">
+            {{ card.actual }}
+          </TextCard>
+        </div>
       </div>
       <div v-if="type == 'image_classification'">
         <div class="card__original">
@@ -261,6 +266,14 @@ export default {
 .btn-reload {
   width: 32px;
   height: 32px;
+
+  color: #fff;
+  background-color: #2b5278;
+  box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
+
+  border: 1px solid #65b9f4;
+  border-radius: 4px;
+  cursor: pointer;
   i {
     position: absolute;
     margin-left: 7px;

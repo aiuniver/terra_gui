@@ -14,6 +14,6 @@ from . import (
     Speech2Text,
     Discriminator,
     Generator,
-    GAN,
-    CGAN
+    ImageGAN,
+    ImageCGAN
 )

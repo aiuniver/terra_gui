@@ -61,11 +61,11 @@ class LayerText2SpeechData(LayerBaseData, types.Text2Speech.ParametersData):
     pass
 
 
-class LayerGANData(LayerBaseData, types.GAN.ParametersData):
+class LayerImageGANData(LayerBaseData, types.ImageGAN.ParametersData):
     pass
 
 
-class LayerCGANData(LayerBaseData, types.CGAN.ParametersData):
+class LayerImageCGANData(LayerBaseData, types.ImageCGAN.ParametersData):
     pass
 
 

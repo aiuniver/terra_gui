@@ -46,7 +46,7 @@ export default {
     }),
     isNew() {
       const path = this?.$route?.fullPath || '';
-      return Boolean(path.includes('new'));
+      return Boolean(path.includes('new') && process.env.NODE_ENV === 'development');
     },
   },
   methods: {
