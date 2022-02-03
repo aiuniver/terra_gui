@@ -36,6 +36,7 @@ export default {
       commit("cascades/SET_CASCADES", formsCascades, { root: true });
       commit("cascades/SET_MODEL", cascade, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
+      commit("create/SET_CREATION", creation, { root: true });
       dispatch("trainings/parseStruct", { ...training, form }, { root: true });
       dispatch("deploy/parseStruct", { form: deploy }, { root: true });
       if (training?.deploy) {

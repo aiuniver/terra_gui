@@ -655,12 +655,14 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
+                print(len(value.instructions))
         try:
             dataframe = pd.DataFrame(build_dataframe)
-            # print(dataframe)
+            print(dataframe)
         except Exception:
             message = 'Ошибка создания датасета. Несоответствие количества входных/выходных данных'
             progress.pool(self.progress_name,
@@ -1292,7 +1294,6 @@ class CreateDataset(object):
         #     architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
-        print(architecture)
         out_list = []
         for key, val in self.outputs.items():
             out_list.append(val['task'])
