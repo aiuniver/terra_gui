@@ -42,7 +42,7 @@ class DataList(DataBaseList):
 
         label = []
         for item in self.preset:
-            label.append(json.dumps(item.actual, ensure_ascii=False))
+            label.append(item.actual)
         with open(label_file, "w") as label_file_ref:
             label_file_ref.write("\n".join(label))
 
