@@ -90,7 +90,7 @@ class CreateDataset(object):
         if not creation_data.outputs[0].type in [LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech,
                                                  LayerOutputTypeChoice.Tracker]:
             self.create_dataset_arrays(put_data=self.instructions.inputs)
-            if not creation_data.outputs[0].type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+            if not creation_data.outputs[0].type in [LayerOutputTypeChoice.ImageGAN, LayerOutputTypeChoice.ImageCGAN]:
                 self.create_dataset_arrays(put_data=self.instructions.outputs)
 
         self.write_preprocesses_to_files()
@@ -156,7 +156,7 @@ class CreateDataset(object):
             for worker_name, worker_params in creation_data.columns_processing.items():
                 if creation_data.columns_processing[worker_name].type == 'Image':
                     shape = (worker_params.parameters.height, worker_params.parameters.width, 3)
-                elif creation_data.columns_processing[worker_name].type == 'GAN' and not noise_flag:
+                elif creation_data.columns_processing[worker_name].type == 'ImageGAN' and not noise_flag:
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
                         **{"type": "Noise", "parameters": {'shape': (100,)}})
@@ -208,7 +208,7 @@ class CreateDataset(object):
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
-            elif out.type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+            elif out.type in [LayerOutputTypeChoice.ImageGAN, LayerOutputTypeChoice.ImageCGAN]:
                 out_list = []
                 img_shape = ()
                 sources_paths = []
@@ -225,7 +225,7 @@ class CreateDataset(object):
                         parameters={'sources_paths': sources_paths,
                                     'shape': (100,)}))
                 idx += 1
-                if out.type == LayerOutputTypeChoice.CGAN:
+                if out.type == LayerOutputTypeChoice.ImageCGAN:
                     creation_data.inputs.append(
                         CreationInputData(
                             id=idx,
@@ -272,8 +272,8 @@ class CreateDataset(object):
                                 creation_data.columns_processing[worker_name].parameters.depth
                             creation_data.columns_processing[w_name].parameters.step = \
                                 creation_data.columns_processing[worker_name].parameters.step
-                elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.GAN,
-                                                                            LayerOutputTypeChoice.CGAN]:
+                elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.ImageGAN.name,
+                                                                            LayerOutputTypeChoice.ImageCGAN.name]:
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[worker_name] = ColumnsProcessingData(
                         **{"type": "Generator", "parameters": {'shape': shape}})
@@ -654,14 +654,14 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
+                # print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
-                print(len(value.instructions))
+                # print(len(value.instructions))
         try:
             dataframe = pd.DataFrame(build_dataframe)
-            print(dataframe)
+            # print(dataframe)
         except Exception:
             message = 'Ошибка создания датасета. Несоответствие количества входных/выходных данных'
             progress.pool(self.progress_name,
@@ -670,8 +670,6 @@ class CreateDataset(object):
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        # print(self.dataframe['train'])
-        # print(self.dataframe['val'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 

@@ -321,17 +321,17 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersGANData(ParametersBaseData):
+class ParametersImageGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "GAN".
+    Обработчик типа задачи "ImageGAN".
     """
 
     pass
 
 
-class ParametersCGANData(ParametersBaseData):
+class ParametersImageCGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "CGAN".
+    Обработчик типа задачи "ImageCGAN".
     """
 
     pass

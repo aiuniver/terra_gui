@@ -125,11 +125,11 @@ class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
     pass
 
 
-class ParametersGANData(ColumnProcessingData):
+class ParametersImageGANData(ColumnProcessingData):
     pass
 
 
-class ParametersCGANData(ColumnProcessingData):
+class ParametersImageCGANData(ColumnProcessingData):
     pass
 
 
