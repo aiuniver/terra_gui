@@ -127,10 +127,7 @@ export default {
       try {
         const res = await this.$store.dispatch('projects/infoProject', {});
         if (res) {
-          const {
-            data: { projects },
-          } = res;
-          this.list = projects;
+          this.list = res;
         }
         this.$nextTick(() => {
           if (this.$refs.list.clientHeight > 200) {
