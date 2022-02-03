@@ -1037,15 +1037,22 @@ class CreateArray(object):
         if not isinstance(text, list):
             text = literal_eval(text)
         array = []
-        if len(text) < options['length']:
-            text += [list() for _ in range(options['length'] - len(text))]
-        for elem in text:
-            tags = [0 for _ in range(options['num_classes'])]
-            if elem:
-                for cls_name in elem:
-                    tags[options['classes_names'].index(cls_name)] = 1
-            array.append(tags)
+        if not text:
+            array = [[0 for _ in range(options['num_classes'])] for _ in range(options['length'])]
+        else:
+            for elem in text:
+                tags = [0 for _ in range(options['num_classes'])]
+                if elem:
+                    for cls_name in elem:
+                        tags[options['classes_names'].index(cls_name)] = 1
+                array.append(tags)
         array = np.array(array, dtype='uint8')
+        if len(array) < options['length']:
+            add_amount = options['length'] - len(array)
+            add_array = np.array([[0 for _ in range(options['num_classes'])] for _ in range(add_amount)])
+            array = np.concatenate((array, add_array), axis=0)
+        elif len(array) > options['length']:
+            array = array[:options['length']]
 
         instructions = {'instructions': array,
                         'parameters': options}
