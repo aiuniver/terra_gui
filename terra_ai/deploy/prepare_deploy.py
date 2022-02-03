@@ -101,12 +101,12 @@ class DeployCreator:
                                 # for i in range(32):
                                 #     predict[i*batch_size:(i+1)*batch_size] = \
                                 #         model.predict(dataset.dataset.get('train').batch(batch_size), batch_size=1).numpy()
-                                predict = model.predict(dataset.dataset.get('train').batch(128), batch_size=1)
+                                predict = model.predict(dataset.dataset.get('train'), batch_size=1)
                             else:
                                 predict = model.predict(dataset.dataset.get('val').batch(1), batch_size=1)
                     else:
                         if dataset.data.architecture in GAN_ARCHITECTURE:
-                            predict = model.predict(dataset.X.get('train'),
+                            predict = model.predict(dataset.dataset.get('train'),
                                                     batch_size=training_details.get("base").get("batch"))
                         else:
                             predict = model.predict(dataset.X.get('val'),

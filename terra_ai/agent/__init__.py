@@ -237,12 +237,12 @@ class Exchange:
         return ModelDetailsData(**model)
 
     def _call_model_validate(
-        self, model: ModelDetailsData, architecture: ArchitectureChoice
+        self, model: ModelDetailsData, dataset_data: DatasetData
     ) -> tuple:
         """
         Валидация модели
         """
-        return ModelValidator(model, architecture).get_validated()
+        return ModelValidator(model, dataset_data).get_validated()
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """

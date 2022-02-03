@@ -128,7 +128,7 @@ class ValidateAPIView(BaseAPIView):
         errors = self.terra_exchange(
             "model_validate",
             model=request.project.model,
-            architecture=request.project.dataset.architecture
+            dataset_data=request.project.dataset
             if request.project.dataset
             else None,
         )
