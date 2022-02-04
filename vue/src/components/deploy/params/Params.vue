@@ -211,13 +211,12 @@ export default {
       const res = await this.$store.dispatch('servers/ready');
       if (res.data) this.list = res?.data || [];
       const { value, label } = this.list?.[0];
-      if (label) {
+      if (!this.serverLabel) {
         this.serverLabel = label;
         this.server = value;
       }
     },
     selected({ value }) {
-      console.log(value)
       this.server = value;
     },
     async sendDeployData() {
