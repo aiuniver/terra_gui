@@ -9,6 +9,7 @@ Vue.use(vuescroll, settings);
 import '@/assets/style/normalize.css'
 import '@/assets/style/coolicons.css'
 import '@/assets/scss/index.scss'
+import '@/assets/css/icons.css'
 
 
 import pkg from '../package.json'
@@ -24,7 +25,19 @@ import './components/global'
 import directives from '@/utils/directives'
 directives.forEach(directive=>Vue.directive(directive.name, directive))
 
+import AtComponents from '@/at-ui/src'
+import '@/at-ui/scss/index.scss'
+
+Vue.use(AtComponents)
+
+import AudioVisual from "vue-audio-visual";
+Vue.use(AudioVisual)
+
 Vue.config.productionTip = false;
+
+export const bus = new Vue();
+
+import '@/assets/css/coolicons.css'
 
 new Vue({
   router,

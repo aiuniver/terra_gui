@@ -51,7 +51,7 @@ const router = new Router({
         {
           path: 'marker',
           name: 'Marker',
-          component: () => import('@/views/datasets/View'),
+          component: () => import('@/views/datasets/Marking'),
           meta: {
             title: 'Разметка',
             access: true,
@@ -72,7 +72,7 @@ const router = new Router({
     },
     {
       path: '/design/',
-      component: () => import('@/views/datasets/index'),
+      component: () => import('@/views/design/index'),
       meta: {
         title: 'Проектирование',
         access: true,
@@ -82,7 +82,7 @@ const router = new Router({
         {
           path: 'model',
           name: 'Model',
-          component: () => import('@/views/datasets/Choice'),
+          component: () => import('@/views/design/Modeling'),
           meta: {
             title: 'Проектирование',
             access: true,
@@ -92,7 +92,7 @@ const router = new Router({
         {
           path: 'cascade',
           name: 'Cascade',
-          component: () => import('@/views/datasets/Create'),
+          component: () => import('@/views/design/Cascades'),
           meta: {
             title: 'Каскады',
             access: true,
@@ -113,7 +113,7 @@ const router = new Router({
         {
           path: 'training',
           name: 'Training',
-          component: () => import('@/views/datasets/Choice'),
+          component: () => import('@/views/completion/Training.vue'),
           meta: {
             title: 'Обучение',
             access: true,
@@ -123,7 +123,7 @@ const router = new Router({
         {
           path: 'deploy',
           name: 'Deploy',
-          component: () => import('@/views/datasets/Create'),
+          component: () => import('@/views/completion/Deploy.vue'),
           meta: {
             title: 'Деплой',
             access: true,

@@ -8,7 +8,7 @@
   "htmlWhitespaceSensitivity": "ignore",
   "bracketSpacing": true,
   "endOfLine": "lf",
-  "printWidth": 120,
+  "printWidth": 150,
   "arrowParens": "avoid",
   "stackElements": ["destruct"]
 }

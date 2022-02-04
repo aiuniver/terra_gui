@@ -184,6 +184,14 @@ class LayerParametersText2SpeechSerializer(serializers.Serializer):
     pass
 
 
+class LayerParametersImageGANSerializer(serializers.Serializer):
+    pass
+
+
+class LayerParametersImageCGANSerializer(serializers.Serializer):
+    pass
+
+
 class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     width: serializers.IntegerField(min_value=1)
     height: serializers.IntegerField(min_value=1)
@@ -246,6 +254,11 @@ class CreateLayerOutputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(
         choices=frontend_choices.LayerOutputTypeChoice.items_tuple()
     )
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("data", {}).get("type") == "TrackerImages":
+            kwargs["data"]["type"] = "Tracker"
+        super().__init__(*args, **kwargs)
 
 
 class CreateTagSerializer(serializers.Serializer):
@@ -315,7 +328,6 @@ class CreateSerializer(serializers.Serializer):
                 f"LayerParameters{_type}Serializer",
                 None,
             )
-            print(f"LayerParameters{_type}Serializer")
             if _serializer_class:
                 _serializer_parameters = _serializer_class(
                     data=value.get("parameters", {})

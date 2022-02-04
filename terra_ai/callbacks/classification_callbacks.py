@@ -8,7 +8,7 @@ from tensorflow.keras.preprocessing import image
 
 from terra_ai.callbacks.utils import sort_dict, fill_graph_front_structure, fill_graph_plot_data, get_y_true, \
     class_counter, get_confusion_matrix, fill_heatmap_front_structure, get_classification_report, \
-    fill_table_front_structure, round_list, set_preset_count
+    fill_table_front_structure, round_list, set_preset_count, get_link_from_dataframe
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerEncodingChoice
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
@@ -370,9 +370,12 @@ class ImageClassificationCallback(BaseClassificationCallback):
                     for column_name in options.dataframe.get(data_type).columns:
                         if column_name.split('_')[0] == f"{inp}":
                             column_idx.append(options.dataframe.get(data_type).columns.tolist().index(column_name))
-                initial_file_path = os.path.join(
-                    dataset_path, options.dataframe.get(data_type).iat[example_id, column_idx[0]]
+                initial_file_path = get_link_from_dataframe(
+                    dataframe=options.dataframe.get(data_type),
+                    column=options.dataframe.get(data_type).columns[column_idx[0]],
+                    index=example_id
                 )
+                initial_file_path = os.path.join(dataset_path, initial_file_path)
                 if not save_id:
                     return str(os.path.abspath(initial_file_path))
             else:
@@ -482,7 +485,10 @@ class ImageClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get(data_type))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -631,7 +637,10 @@ class TextClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get(data_type))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -785,7 +794,10 @@ class DataframeClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get(data_type))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -942,7 +954,10 @@ class AudioClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get(data_type))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -1104,7 +1119,10 @@ class VideoClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                    else len(options.dataframe.get(data_type))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},
@@ -1294,7 +1312,11 @@ class TimeseriesTrendCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(y_pred.get(data_type).get(f'{list(options.data.outputs.keys())[0]}')) > \
+                       interactive_config.intermediate_result.num_examples \
+                    else len(y_pred.get(data_type).get(f'{list(options.data.outputs.keys())[0]}'))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},

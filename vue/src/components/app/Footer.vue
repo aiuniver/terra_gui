@@ -2,7 +2,7 @@
   <div class="footer">
     <div class="footer__message">
       <div class="footer__message--icon" @click="dialogErrors = true">
-        <span ></span>
+        <span></span>
       </div>
       <div :class="['footer__message--text', showMsg.color]" @click="dialogError = true">
         <transition name="error-slide" mode="out-in">
@@ -31,20 +31,25 @@
       <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
     <LoggingModal v-model="dialogErrors" :errors="errors" :title="'Логи'" @error="clickError" />
+    <ErrorModal v-model="dialogLog" v-bind="logError" />
     <ErrorModal v-model="dialogError" v-bind="error" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import ErrorModal from '../global/modals/ErrorModal';
+import LoggingModal from '../global/modals/LoggingModal';
 export default {
   components: {
-    ErrorModal: () => import('../global/modals/ErrorModal'),
-    LoggingModal: () => import('../global/modals/LoggingModal'),
+    ErrorModal,
+    LoggingModal,
   },
   data: () => ({
     dialogError: false,
     dialogErrors: false,
+    dialogLog: false,
+    logError: {},
     text: '',
     key: 0,
     msgList: [],
@@ -87,8 +92,9 @@ export default {
         this.dialogError = true;
       }
     },
-    clickError() {
-      this.dialogError = true;
+    clickError(error) {
+      this.logError = error;
+      this.dialogLog = true;
     },
   },
   watch: {

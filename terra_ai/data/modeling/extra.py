@@ -125,10 +125,11 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
-    DarkNetConvolutional = "DarkNetConvolutional"
-    DarkNetUpsample = "DarkNetUpsample"
-    DarkNetResBlock = "DarkNetResBlock"
-    DarkNetBatchNormalization = "DarkNetBatchNormalization"
+    DepthToSpace = "depth_to_space"
+    # DarkNetConvolutional = "DarkNetConvolutional"
+    # DarkNetUpsample = "DarkNetUpsample"
+    # DarkNetResBlock = "DarkNetResBlock"
+    # DarkNetBatchNormalization = "DarkNetBatchNormalization"
     CONVBlock = "CONVBlock"
     PSPBlock1D = "PSPBlock1D"
     PSPBlock2D = "PSPBlock2D"
@@ -137,6 +138,9 @@ class LayerTypeChoice(str, Enum):
     UNETBlock2D = "UNETBlock2D"
     UNETBlock3D = "UNETBlock3D"
     PretrainedYOLO = "PretrainedYOLO"
+    ConditionalMergeLayer = "ConditionalMergeLayer"
+    ResnetBlock2D = "ResnetBlock2D"
+    RGBNormalization = "RGBNormalization"
 
     @staticmethod
     def values() -> list:

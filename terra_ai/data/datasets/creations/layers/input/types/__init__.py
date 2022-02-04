@@ -4,4 +4,7 @@ from . import (
     Audio,
     Video,
     Dataframe,
+    Noise,
 )
+
+from ...output.types import Classification

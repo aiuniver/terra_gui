@@ -20,7 +20,7 @@
 
 <script>
 export default {
-  name: 'CopyModal',
+  name: 'copy-modal',
   props: {
     title: {
       type: String,

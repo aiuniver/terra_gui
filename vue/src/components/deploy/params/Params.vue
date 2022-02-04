@@ -1,5 +1,5 @@
 <template>
-  <div class="params" :key="'key_update-' + updateKey">
+  <div class="params deploy" :key="'key_update-' + updateKey">
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
@@ -35,9 +35,17 @@
               <div class="t-input__label">
                 {{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}
               </div>
-              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" autocomplete="off" />
             </div>
-            <Autocomplete2 :list="list" :name="'deploy[server]'" label="Сервер" @focus="focus" @change="selected" />
+            <Autocomplete2
+              autocomplete="off"
+              :value="serverLabel"
+              :list="list"
+              :name="'deploy[server]'"
+              label="Сервер"
+              @focus="focus"
+              @change="selected"
+            />
 
             <Checkbox
               :label="'Перезаписать с таким же названием папки'"
@@ -144,6 +152,7 @@ export default {
     collapse: DEPLOY_COLLAPS,
     deploy: '',
     server: '',
+    serverLabel: '',
     replace: false,
     use_sec: false,
     sec: '',
@@ -194,14 +203,18 @@ export default {
 
       document.body.removeChild(textArea);
     },
-    onStart() {
+    async onStart() {
       this.$emit('downloadSettings', this.parameters);
-      this.focus();
+      await this.focus();
     },
     async focus() {
       const res = await this.$store.dispatch('servers/ready');
       if (res.data) this.list = res?.data || [];
-      console.log(res);
+      const { value, label } = this.list?.[0];
+      if (!this.serverLabel) {
+        this.serverLabel = label;
+        this.server = value;
+      }
     },
     selected({ value }) {
       this.server = value;

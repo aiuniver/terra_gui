@@ -12,7 +12,7 @@ from ...extra import (
     LayerAudioModeChoice,
     LayerAudioResampleChoice,
     LayerAudioFillModeChoice,
-    LayerImageFrameModeChoice,
+    LayerImageFrameModeChoice, LayerTransformerMethodChoice,
 )
 from ....mixins import BaseMixinData
 from ....types import confilepath
@@ -52,6 +52,7 @@ class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
 
     put: Optional[PositiveInt]
     deploy: Optional[bool] = False
@@ -119,3 +120,29 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
 
 class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
     pass
+
+
+class ParametersImageGANData(ColumnProcessingData):
+    pass
+
+
+class ParametersImageCGANData(ColumnProcessingData):
+    pass
+
+
+class ParametersNoiseData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False
+
+
+class ParametersDiscriminatorData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False
+
+
+class ParametersGeneratorData(SourcesPathsData, ColumnProcessingData):
+    shape: tuple
+    put: Optional[PositiveInt]
+    deploy: Optional[bool] = False

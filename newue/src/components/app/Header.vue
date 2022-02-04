@@ -102,7 +102,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .header {
   width: 100%;
   height: 52px;
@@ -110,6 +110,7 @@ export default {
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--color-border);
+  background-color: #17212B;
   &__right {
     height: 100%;
     margin-left: auto;
@@ -150,6 +151,7 @@ export default {
   &__item {
     padding: 15px 30px;
     color: var(--color-gray-blue);
+    cursor: pointer;
     &--active,
     &:hover {
       color: var(--color-light-blue);

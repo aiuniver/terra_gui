@@ -5,7 +5,7 @@ header {
     height:52px;
     margin:1px 0 0 0;
     padding:0 10px;
-    position:fixed;
+    /* position:fixed; */
     left:0;
     top:0;
     z-index:800;
@@ -196,7 +196,7 @@ header > .user > .item > .menu > .group > ul > li > span {
 
 
 /* MENU */
-
+/* 
 nav.menu {
     width:100%;
     position:fixed;
@@ -220,17 +220,16 @@ nav.menu > ul > .item > a {
     transition:color .3s ease-in-out;
     white-space:nowrap;
     user-select:none;
-}
+} */
 
 
 /* MAIN */
 
-main {
+/* main {
     height:100%;
     padding:94px 0 61px 0;
-}
-main > .container {
-    /*Контейнер во всю ширину и высоту*/
+} */
+/* main > .container {
     height:100%;
     width: 100%;
     top: 92px;
@@ -278,17 +277,15 @@ main > .container.locked:before {
     left:0;
     top:0;
     z-index:999;
-}
-main > .container > * {
-    /* height:100%; */
-}
+} */
+/* 
 main > .container > * > .wrapper {
     height:100%;
     position:relative;
-}
+} */
 
 /* board */
-main > .container > .board {
+/* main > .container > .board {
     -webkit-box-ordinal-group:1;
     -moz-box-ordinal-group:1;
     -webkit-order:0;
@@ -302,7 +299,7 @@ main > .container > .board {
     -webkit-align-self:auto;
     -ms-flex-item-align:auto;
     align-self:auto;
-}
+} */
 
 /* properties */
 main > .container > .properties > .wrapper {

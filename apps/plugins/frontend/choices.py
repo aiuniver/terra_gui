@@ -23,8 +23,11 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
     Tracker = "Трекер (каскад)"
+    TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
 
     @staticmethod
     def items_tuple() -> list:
@@ -208,6 +211,7 @@ class LayerVideoModeChoice(str, Enum):
 
 
 class LayerPrepareMethodChoice(str, Enum):
+    no_preparation = "Не применять"
     embedding = "Embedding"
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
@@ -297,7 +301,8 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
     Regression = "Регрессия"
     Segmentation = "Сегментация"
     Timeseries = "Временные ряды"
-    GAN = "Генеративно-состязательные сети"
+    ImageGAN = "ImageGAN"
+    Transformer = "Трансформер"
 
     @staticmethod
     def items_tuple() -> list:

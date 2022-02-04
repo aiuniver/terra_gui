@@ -7,6 +7,7 @@
       <Blocks ref="container" />
       <Params />
       <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
+      <DatasetsModal v-model="dialogDatasets" />
     </div>
   </main>
 </template>
@@ -17,7 +18,8 @@ import Blocks from '@/components/cascades/block/Blocks';
 import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
-import CopyModal from '../components/global/modals/CopyModal';
+import CopyModal from '@/components/global/modals/CopyModal';
+import DatasetsModal from '@/components/cascades/modals/DatasetsModal.vue';
 
 export default {
   name: 'cascades',
@@ -28,10 +30,12 @@ export default {
     LoadModel,
     SaveModel,
     CopyModal,
+    DatasetsModal
   },
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
+    dialogDatasets: false,
     imageModel: null,
     kerasModal: false,
   }),
@@ -42,7 +46,7 @@ export default {
   },
   methods: {
     async isTraining() {
-      this.dialogLoadModel = await this.$store.dispatch('dialogs/trining', { ctx: this, page: 'модели' });
+      this.dialogLoadModel = await this.$store.dispatch('dialogs/training', { ctx: this, page: 'модели' });
     },
     addBlock(type) {
       const position = this.$refs.container.getCenter();
@@ -60,7 +64,9 @@ export default {
       await this.$store.dispatch('cascades/save', {});
     },
     async start() {
-      await this.$store.dispatch('cascades/start', {});
+      this.dialogDatasets = true
+      await this.$store.dispatch('cascades/setDatasets')
+      // await this.$store.dispatch('cascades/start', {});
     },
     async validation() {
       await this.$store.dispatch('cascades/validate', {});
@@ -75,8 +81,7 @@ export default {
       if (btn === 'load') {
         this.isTraining();
       }
-      if (['InputData', 'Model', 'Function', 'Custom', 'OutputData'].includes(btn)) {
-        console.log(btn);
+      if (['InputData', 'Model', 'Function', 'Custom', 'OutputData', 'Service'].includes(btn)) {
         this.addBlock(btn);
       }
       if (btn === 'start') {

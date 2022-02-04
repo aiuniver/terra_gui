@@ -46,13 +46,13 @@ export default {
       this.$store.dispatch('servers/setup', { id })
     },
     getIcon(state) {
-      if (state === 'ready') return ''
+      if (state === 'ready') return 'ci-refresh'
       // if (state === 'idle') return 'ci-play_arrow'
       if (state === 'waiting') return ''
       return 'ci-play_arrow'
     },
     getAction(state) {
-      if (state === 'ready') return ''
+      if (state === 'ready') return 'Обновить'
       // if (state === 'idle') return 'Установить'
       if (state === 'waiting') return ''
       return 'Установить'
@@ -101,6 +101,7 @@ export default {
     }
   }
   .clickable {
+    display: flex;
     color: #65b9f4;
     > * {cursor: pointer;}
     i {

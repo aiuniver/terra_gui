@@ -1,3 +1,5 @@
+import os
+
 from pathlib import Path
 from typing import Optional
 from rest_framework.exceptions import ValidationError
@@ -19,9 +21,9 @@ def validate_project_path(value) -> Optional[Path]:
         return value
     value = Path(value)
     if (
-        not str(value).startswith(f"{terra_ai_settings.PROJECT_PATH.base}/")
-        and not str(value).startswith(f"{terra_ai_settings.CASCADE_PATH}/")
-        and not str(value).startswith(f"{terra_ai_settings.DEPLOY_PATH}/")
+        not str(value).startswith(f"{terra_ai_settings.PROJECT_PATH.base}{os.sep}")
+        and not str(value).startswith(f"{terra_ai_settings.CASCADE_PATH}{os.sep}")
+        and not str(value).startswith(f"{terra_ai_settings.DEPLOY_PATH}{os.sep}")
     ):
         raise ValidationError(f"Файл {value} запрещен для вывода")
     return value

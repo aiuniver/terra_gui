@@ -1,5 +1,5 @@
 <template>
-  <main class="page-not-found">
+  <div class="page-not-found">
     <div class="cont">
       <i class="t-icon icon-logo"></i>
       <h1 class="title">Страница <span>{{ url }}</span> не найдена</h1>
@@ -7,7 +7,7 @@
         <router-link to="/">На главную</router-link>
         </span>
     </div>
-  </main>
+  </div>
 </template>
 
 <script>

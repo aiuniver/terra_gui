@@ -1,15 +1,10 @@
 from enum import Enum
 
-from ...mixins import BaseMixinData
 from ..extra import ArchitectureChoice
 from . import types
 
 
-class ArchitectureBaseData(BaseMixinData):
-    pass
-
-
-class ArchitectureBasicData(ArchitectureBaseData, types.Basic.ParametersData):
+class ArchitectureBasicData(types.Basic.ParametersData):
     pass
 
 
@@ -53,15 +48,35 @@ class ArchitectureVideoClassificationData(ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV3Data(ArchitectureBasicData, types.YoloV3.ParametersData):
+class ArchitectureYoloV3Data(types.YoloV3.ParametersData, ArchitectureBasicData):
     pass
 
 
-class ArchitectureYoloV4Data(ArchitectureBasicData, types.YoloV4.ParametersData):
+class ArchitectureYoloV4Data(types.YoloV4.ParametersData, ArchitectureBasicData):
     pass
 
 
 class ArchitectureTrackerData(ArchitectureBasicData):
+    pass
+
+
+class ArchitectureImageGANData(types.GAN.ParametersData):
+    pass
+
+
+class ArchitectureImageCGANData(types.GAN.ParametersData):
+    pass
+
+
+class ArchitectureTextToImageGANData(types.GAN.ParametersData):
+    pass
+
+
+class ArchitectureImageToImageGANData(types.GAN.ParametersData):
+    pass
+
+
+class ArchitectureImageSRGANData(types.GAN.ParametersData):
     pass
 
 

@@ -1,32 +1,36 @@
 <template>
   <main class="page-marking">
-    <div class="cont">
+    <div class="page-marking__main">
       <MarkingPage />
+    </div>
+    <div class="page-marking__params">
       <Params />
     </div>
   </main>
 </template>
 
 <script>
+import MarkingPage from '@/components/marking/main/';
+import Params from '@/components/marking/params/';
 export default {
-  name: "Marking",
+  name: 'Marking',
   components: {
-    MarkingPage: () => import('@/components/marking/MarkingPage.vue'),
-    Params: () => import('@/components/marking/params/Params.vue'),
+    MarkingPage,
+    Params,
   },
-  data: () => ({
-  }),
-  computed: {
-  }
+  data: () => ({}),
+  computed: {},
 };
 </script>
 
-<style lang="scss" scoped>
-.cont{
-  background-color: #0e1621;
-  padding: 0;
+<style lang="scss">
+.page-marking {
   display: flex;
-  height: 100%;
+  &__main {
+    flex: 1 1 auto;
+  }
+  &__params {
+    flex: 0 0 400px;
+  }
 }
-
 </style>

@@ -23,6 +23,11 @@ class DeployTypeChoice(str, Enum):
     GoogleTTS = "GoogleTTS"
     Wav2Vec = "Wav2Vec"
     TinkoffAPI = "TinkoffAPI"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
+    TextToImageGAN = "TextToImageGAN"
+    ImageToImageGAN = "ImageToImageGAN"
+    ImageSRGAN = "ImageSRGAN"
 
     @property
     def demo(self) -> str:
@@ -47,6 +52,11 @@ class DeployTypeDemoChoice(str, Enum):
     GoogleTTS = "text_to_audio"
     Wav2Vec = "audio_to_text"
     TinkoffAPI = "audio_to_text"
+    ImageGAN = "image_gan"
+    ImageCGAN = "image_cgan"
+    TextToImageGAN = "text_to_image_gan"
+    ImageToImageGAN = "image_to_image_gan"
+    ImageSRGAN = "image_srgan"
 
 
 class DeployTypePageChoice(str, Enum):

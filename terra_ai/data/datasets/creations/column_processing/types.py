@@ -23,7 +23,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerTransformerMethodChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -33,7 +33,6 @@ class ParametersBaseData(BaseMixinData):
 
 
 class ParametersImageData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик изображений.
     Inputs:
@@ -54,7 +53,6 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersTextData(ParametersBaseData):
-
     """
     Обработчик текстовых данных.
     Inputs:
@@ -78,6 +76,7 @@ class ParametersTextData(ParametersBaseData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
@@ -101,7 +100,6 @@ class ParametersTextData(ParametersBaseData):
 
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик аудиофайлов.
     Inputs:
@@ -140,7 +138,6 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик видеофайлов.
     Inputs:
@@ -176,7 +173,6 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик числовых значений.
     Inputs:
@@ -199,7 +195,6 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "классификация".
     Inputs:
@@ -218,7 +213,7 @@ class ParametersClassificationData(ParametersBaseData):
 
     @validator("type_processing")
     def _validate_type_processing(
-        cls, value: LayerTypeProcessingClassificationChoice
+            cls, value: LayerTypeProcessingClassificationChoice
     ) -> LayerTypeProcessingClassificationChoice:
         if value == LayerTypeProcessingClassificationChoice.ranges:
             cls.__fields__["ranges"].required = True
@@ -226,7 +221,6 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик типа задачи "регрессия".
     Inputs:
@@ -237,7 +231,6 @@ class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersSegmentationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "сегментация".
     Inputs:
@@ -260,7 +253,6 @@ class ParametersSegmentationData(ParametersBaseData):
 
 
 class ParametersTextSegmentationData(ParametersBaseData):
-
     """
     Обработчик типа задачи "сегментация текстов".
     Inputs:
@@ -293,7 +285,6 @@ class ParametersTextSegmentationData(ParametersBaseData):
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
-
     """
     Обработчик видеофайлов.
     Inputs:
@@ -333,19 +324,33 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersGANData(ParametersBaseData):
-
+class ParametersImageGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "GAN".
+    Обработчик типа задачи "ImageGAN".
     """
 
     pass
 
 
-class ParametersCGANData(ParametersBaseData):
+class ParametersImageCGANData(ParametersBaseData):
+    """
+    Обработчик типа задачи "ImageCGAN".
+    """
 
+    pass
+
+
+class ParametersTextToImageGANData(ParametersBaseData):
     """
     Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersTransformerData(ParametersBaseData):
+    """
+    Обработчик типа задачи "Transformer".
     """
 
     pass

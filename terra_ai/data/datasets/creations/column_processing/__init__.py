@@ -41,11 +41,15 @@ class ColumnProcessingTimeseriesData(types.ParametersTimeseriesData):
     pass
 
 
-class ColumnProcessingGANData(types.ParametersGANData):
+class ColumnProcessingImageGANData(types.ParametersImageGANData):
     pass
 
 
-class ColumnProcessingCGANData(types.ParametersCGANData):
+class ColumnProcessingImageCGANData(types.ParametersImageCGANData):
+    pass
+
+
+class ColumnProcessingTextToImageGANData(types.ParametersTextToImageGANData):
     pass
 
 
@@ -58,6 +62,10 @@ class ColumnProcessingGeneratorData(types.ParametersGeneratorData):
 
 
 class ColumnProcessingDiscriminatorData(types.ParametersDiscriminatorData):
+    pass
+
+
+class ColumnProcessingTransformerData(types.ParametersTransformerData):
     pass
 
 

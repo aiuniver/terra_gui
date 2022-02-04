@@ -4,17 +4,20 @@ import string
 # import time
 from typing import Optional
 import numpy as np
+import tensorflow
 
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
+from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback, TextToImageGANCallback, ImageToImageGANCallback, \
+    ImageSRGANCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
 from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
-from terra_ai.callbacks.utils import loss_metric_config, fill_graph_plot_data, fill_graph_front_structure,\
-    get_classes_colors, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE,\
-    class_metric_list, reformat_fit_array
+from terra_ai.callbacks.utils import loss_metric_config, fill_graph_plot_data, fill_graph_front_structure, \
+    get_classes_colors, BASIC_ARCHITECTURE, CLASSIFICATION_ARCHITECTURE, YOLO_ARCHITECTURE, \
+    class_metric_list, reformat_fit_array, GAN_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice, LayerInputTypeChoice
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
@@ -74,17 +77,19 @@ class InteractiveCallback:
         self.deploy_presets_data = None
         self.random_key = ''
         self.get_balance = True
+        self.noise = 100
         pass
 
     def set_attributes(self, dataset: PrepareDataset, params: TrainingDetailsData):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.set_attributes.__name__}")
         method_name = "set attributes"
         try:
             self.options = dataset
             self._callback_router(dataset)
             self.class_graphics = self._class_metric_list()
-            logger.info(f"dataset architecture: {dataset.data.architecture}")
-            logger.info(f"dataset config: \n{dataset.data}")
-            logger.info(f"training parameters: \n{params.native()}\n")
+            logger.info(f"\ndataset architecture: {dataset.data.architecture}")
+            logger.info(f"\ndataset config: \n{dataset.data}")
+            logger.info(f"\ntraining parameters: \n{params.native()}\n")
             self.training_details = params
             self.last_training_details = copy.deepcopy(params)
             self.dataset_path = dataset.data.path
@@ -97,6 +102,7 @@ class InteractiveCallback:
             ).with_traceback(error.__traceback__)
 
     def clear_history(self):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.clear_history.__name__}")
         self.log_history = {}
         self.current_logs = {}
         self.progress_table = {}
@@ -112,9 +118,10 @@ class InteractiveCallback:
                      on_epoch_end_flag=False, train_idx: list = None) -> dict:
         if self.log_history:
             if arrays:
+                logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.update_state.__name__}")
                 data_type = self.training_details.interactive.intermediate_result.data_type.name
                 if self.options.data.architecture in BASIC_ARCHITECTURE:
-                    logger.info(f"{InteractiveCallback.name}: обработка массивов...", extra={"front_level": "info"})
+                    logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
                     self.y_true = reformat_fit_array(
                         array={"train": arrays.get("train_true"), "val": arrays.get("val_true")}, train_idx=train_idx)
                     self.inverse_y_true = self.callback.get_inverse_array(self.y_true, self.options)
@@ -122,8 +129,7 @@ class InteractiveCallback:
                         array={"train": arrays.get("train_pred"), "val": arrays.get("val_pred")}, train_idx=train_idx)
                     self.inverse_y_pred = self.callback.get_inverse_array(self.y_pred, self.options)
                     if self.get_balance:
-                        logger.info(f"{InteractiveCallback.name}: расчет баланса датасета...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет баланса датасета...")
                         self.dataset_balance = self.callback.dataset_balance(
                             options=self.options, y_true=self.y_true,
                             preset_path=self.training_details.intermediate_path,
@@ -195,15 +201,36 @@ class InteractiveCallback:
                         seed_idx=self.seed_idx['val'],
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
                     )
+
+                if self.options.data.architecture in GAN_ARCHITECTURE:
+                    logger.debug(f"{InteractiveCallback.name}: обработка массивов...")
+                    self.y_pred = arrays
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    logger.debug(f"{InteractiveCallback.name}: получение индексов для промежуточных результатов...")
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
+                        array=self.y_pred.get('train'),
+                        seed_array=self.y_pred.get('seed'),
+                        count=count,
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
+                        input_keys=self.y_pred.get('inputs')
+                    )
+                    if self.get_balance and self.options.data.architecture == ArchitectureChoice.ImageCGAN:
+                        logger.debug(f"{InteractiveCallback.name}: расчет баланса датасета...")
+                        self.dataset_balance = self.callback.dataset_balance(
+                            options=self.options, y_true=self.y_true,
+                            preset_path=self.training_details.intermediate_path,
+                            class_colors=self.class_colors
+                        )
+                        self.get_balance = False
+
                 if on_epoch_end_flag:
+                    # print('fit_logs', fit_logs)
                     self.current_epoch = fit_logs.get('epochs')[-1]
-                    logger.info(f"{InteractiveCallback.name}: обновление логов и таблицы прогресса обучения...",
-                                extra={"front_level": "info"})
+                    logger.debug(f"{InteractiveCallback.name}: обновление логов и таблицы прогресса обучения...")
                     self.log_history = fit_logs
                     self._update_progress_table(current_epoch_time)
                     if self.training_details.interactive.intermediate_result.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет промежуточных результатов...")
                         self.intermediate_result = self.callback.intermediate_result_request(
                             options=self.options,
                             interactive_config=self.training_details.interactive,
@@ -221,8 +248,7 @@ class InteractiveCallback:
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет статистических данных...")
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -234,8 +260,7 @@ class InteractiveCallback:
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel \
                             and self.training_details.interactive.statistic_data.autoupdate:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет статистических данных...")
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -245,8 +270,7 @@ class InteractiveCallback:
                             inverse_y_true=self.inverse_y_true
                         )
                 else:
-                    logger.info(f"{InteractiveCallback.name}: расчет промежуточных результатов...",
-                                extra={"front_level": "info"})
+                    logger.debug(f"{InteractiveCallback.name}: расчет промежуточных результатов...")
                     self.intermediate_result = self.callback.intermediate_result_request(
                         options=self.options,
                         interactive_config=self.training_details.interactive,
@@ -263,8 +287,7 @@ class InteractiveCallback:
                     )
                     if self.options.data.architecture in BASIC_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.output_id:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет статистических данных...")
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -275,8 +298,7 @@ class InteractiveCallback:
                         )
                     if self.options.data.architecture in YOLO_ARCHITECTURE and \
                             self.training_details.interactive.statistic_data.box_channel:
-                        logger.info(f"{InteractiveCallback.name}: расчет статистических данных...",
-                                    extra={"front_level": "info"})
+                        logger.debug(f"{InteractiveCallback.name}: расчет статистических данных...")
                         self.statistic_result = self.callback.statistic_data_request(
                             interactive_config=self.training_details.interactive,
                             options=self.options,
@@ -311,6 +333,7 @@ class InteractiveCallback:
     def get_train_results(self):
         """Return dict with data for current interactive request"""
         if self.log_history and self.log_history.get("epochs", {}):
+            # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback.get_train_results.__name__}")
             data_type = self.training_details.interactive.intermediate_result.data_type.name
             if self.options.data.architecture in BASIC_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
@@ -357,6 +380,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=self.raw_y_pred, options=self.options,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -399,6 +423,33 @@ class InteractiveCallback:
                         inverse_y_true=self.inverse_y_true,
                     )
 
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                if self.training_details.interactive.intermediate_result.show_results:
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
+                        array=self.y_pred.get('train'),
+                        seed_array=self.y_pred.get('seed'),
+                        count=count,
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
+                        input_keys=self.y_pred.get('inputs')
+                    )
+                if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                        options=self.options,
+                        interactive_config=self.training_details.interactive,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.training_details.intermediate_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
+                        y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
+                        class_colors=self.class_colors,
+                    )
+
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
             result = {
                 'update': self.random_key,
@@ -422,6 +473,7 @@ class InteractiveCallback:
             self.training_details.result = {"train_data": result}
 
     def _callback_router(self, dataset: PrepareDataset):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._callback_router.__name__}")
         method_name = '_callback_router'
         try:
             if dataset.data.architecture == ArchitectureChoice.Basic:
@@ -486,6 +538,16 @@ class InteractiveCallback:
                 self.callback = YoloV3Callback()
             elif dataset.data.architecture == ArchitectureChoice.YoloV4:
                 self.callback = YoloV4Callback()
+            elif dataset.data.architecture == ArchitectureChoice.ImageGAN:
+                self.callback = GANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.ImageCGAN:
+                self.callback = CGANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.TextToImageGAN:
+                self.callback = TextToImageGANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
+                self.callback = ImageToImageGANCallback()
+            elif dataset.data.architecture == ArchitectureChoice.ImageSRGAN:
+                self.callback = ImageSRGANCallback()
             else:
                 pass
         except Exception as error:
@@ -495,6 +557,7 @@ class InteractiveCallback:
             raise exc
 
     def _class_metric_list(self):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._class_metric_list.__name__}")
         method_name = '_class_metric_list'
         try:
             return class_metric_list(self.options)
@@ -505,9 +568,12 @@ class InteractiveCallback:
             raise exc
 
     def _prepare_seed(self):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._prepare_seed.__name__}")
         method_name = '_prepare_seed'
         try:
             example_idx = {}
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                return example_idx
             for data_type in ['train', 'val']:
                 if self.options.data.architecture in YOLO_ARCHITECTURE:
                     example_idx[data_type] = np.arange(len(self.options.dataframe.get(data_type)))
@@ -551,6 +617,7 @@ class InteractiveCallback:
             raise exc
 
     def _update_progress_table(self, epoch_time: float):
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._update_progress_table.__name__}")
         method_name = '_update_progress_table'
         try:
             if self.options.data.architecture in BASIC_ARCHITECTURE:
@@ -588,6 +655,22 @@ class InteractiveCallback:
                 for metric in self.log_history['output']["metrics"].keys():
                     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["metrics"][f"{metric}"] = \
                         f"{self.log_history.get('output').get('metrics').get(metric).get('val')[-1]}"
+
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                self.progress_table[self.current_epoch] = {
+                    "time": epoch_time,
+                    # "learning_rate": self.current_logs.get("learning_rate"),
+                    "data": {f"Прогресс обучения": {'loss': {}, 'metrics': {}}}
+                }
+                for loss in self.log_history['output']["loss"].keys():
+                    self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'{loss}'] = \
+                        f"{self.log_history.get('output').get('loss').get(loss).get('train')[-1]}"
+                    # self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["loss"][f'val_{loss}'] = \
+                    #     f"{self.log_history.get('output').get('loss').get(loss).get('val')[-1]}"
+                # for metric in self.log_history['output']["metrics"].keys():
+                #     self.progress_table[self.current_epoch]["data"]["Прогресс обучения"]["metrics"][f"{metric}"] = \
+                #         f"{self.log_history.get('output').get('metrics').get(metric).get('val')[-1]}"
+
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 InteractiveCallback.name, method_name, str(error)).with_traceback(error.__traceback__)
@@ -595,6 +678,7 @@ class InteractiveCallback:
             raise exc
 
     def _get_loss_graph_data_request(self) -> list:
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_loss_graph_data_request.__name__}")
         method_name = '_get_loss_graph_data_request'
         try:
             data_return = []
@@ -712,6 +796,8 @@ class InteractiveCallback:
                             if x is not None:
                                 no_none_train.append(x)
                         best_train_value = min(no_none_train) if no_none_train else None
+                        print('self.log_history.get("epochs"), train_list, best_train_value',
+                              self.log_history.get("epochs"), train_list, best_train_value)
                         best_train = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
                                if best_train_value is not None else None],
@@ -776,6 +862,190 @@ class InteractiveCallback:
                                 ],
                             )
                         )
+
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
+                    return data_return
+                model = 1
+                for loss_graph_config in self.training_details.interactive.loss_graphs:
+                    # if model % 2 == 0:
+                    progress_state = "normal"
+
+                    # График ошибки предобучения генератора в ImageSRGAN
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        gen_list = self.log_history.get(f"output").get('loss').get('pretrain_loss').get('train')
+                        no_none_gen = []
+                        for x in gen_list:
+                            if x is not None:
+                                no_none_gen.append(x)
+                        best_gen_value = min(no_none_gen) if no_none_gen else None
+                        best_gen = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[gen_list.index(best_gen_value)]
+                               if best_gen_value is not None else None],
+                            y=[best_gen_value],
+                            label="Лучший результат предобучения генератора"
+                        )
+                        gen_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"), y=gen_list, label="Генератор"
+                        )
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=model,
+                                _type='graphic',
+                                graph_name=f"График ошибки MSE предобучения генератора",
+                                short_name=f"{loss_graph_config.output_idx} - График ошибки предобучения",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[gen_plot],
+                                best=[best_gen],
+                                progress_state=progress_state
+                            )
+                        )
+                        model += 1
+
+                    # График общей ошибки генератора и дискриминатора
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        gen_list = self.log_history.get(f"output").get('loss').get('perception_loss').get('train')
+                    else:
+                        gen_list = self.log_history.get(f"output").get('loss').get('gen_loss').get('train')
+                    no_none_gen = []
+                    for x in gen_list:
+                        if x is not None:
+                            no_none_gen.append(x)
+                    best_gen_value = min(no_none_gen) if no_none_gen else None
+                    best_gen = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[gen_list.index(best_gen_value)]
+                           if best_gen_value is not None else None],
+                        y=[best_gen_value],
+                        label="Лучший результат генератора"
+                    )
+                    gen_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=gen_list, label="Генератор"
+                    )
+                    disc_list = self.log_history.get(f"output").get('loss').get('disc_loss').get("train")
+                    no_none_disc = []
+                    for x in disc_list:
+                        if x is not None:
+                            no_none_disc.append(x)
+                    best_disc_value = min(no_none_disc) if no_none_disc else None
+                    best_disc = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[disc_list.index(best_disc_value)]
+                           if best_disc_value is not None else None],
+                        y=[best_disc_value],
+                        label="Лучший результат дискриминатора"
+                    )
+                    disc_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=disc_list, label="Дискриминатор"
+                    )
+                    data_return.append(
+                        fill_graph_front_structure(
+                            _id=model,
+                            _type='graphic',
+                            graph_name=f"График ошибки генератора и дискриминатора",
+                            short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
+                            x_label="Эпоха",
+                            y_label="Значение",
+                            plot_data=[gen_plot, disc_plot],
+                            best=[best_gen, best_disc],
+                            progress_state=progress_state
+                        )
+                    )
+                    model += 1
+                    # График частных ошибок дискриминатора
+                    # else:
+                    # progress_state = "normal"
+                    real_list = self.log_history.get(f"output").get('loss').get('disc_real_loss').get('train')
+                    no_none_real = []
+                    for x in real_list:
+                        if x is not None:
+                            no_none_real.append(x)
+                    best_real_value = min(no_none_real) if no_none_real else None
+                    best_real = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[real_list.index(best_real_value)]
+                           if best_real_value is not None else None],
+                        y=[best_real_value],
+                        label="Лучший результат на реальных данных"
+                    )
+                    real_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=real_list, label="Реальные данные"
+                    )
+                    fake_list = self.log_history.get(f"output").get('loss').get('disc_fake_loss').get("train")
+                    no_none_fake = []
+                    for x in fake_list:
+                        if x is not None:
+                            no_none_fake.append(x)
+                    best_fake_value = min(no_none_fake) if no_none_fake else None
+                    best_fake = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[fake_list.index(best_fake_value)]
+                           if best_fake_value is not None else None],
+                        y=[best_fake_value],
+                        label="Лучший результат на сгенерированных данных"
+                    )
+                    fake_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=fake_list, label="Сгенерированные данные"
+                    )
+                    data_return.append(
+                        fill_graph_front_structure(
+                            _id=model,
+                            _type='graphic',
+                            graph_name=f"График ошибки дискриминатора на реальных и сгенерированных данных",
+                            short_name=f"{loss_graph_config.output_idx} - Тип данных",
+                            x_label="Эпоха",
+                            y_label="Значение",
+                            plot_data=[real_plot, fake_plot],
+                            best=[best_real, best_fake],
+                            progress_state=progress_state
+                        )
+                    )
+                    model += 1
+
+                    # График частных ошибок генератора
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        perc_list = self.log_history.get(f"output").get('loss').get('content_loss').get('train')
+                        no_none_perc = []
+                        for x in perc_list:
+                            if x is not None:
+                                no_none_perc.append(x)
+                        best_perc_value = min(no_none_perc) if no_none_perc else None
+                        best_perc = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[perc_list.index(best_perc_value)]
+                               if best_perc_value is not None else None],
+                            y=[best_perc_value],
+                            label="Лучший результат для ошибки контента"
+                        )
+                        perc_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"), y=perc_list, label="Ошибка контента"
+                        )
+                        fake_list = self.log_history.get(f"output").get('loss').get('gen_loss').get("train")
+                        no_none_fake = []
+                        for x in fake_list:
+                            if x is not None:
+                                no_none_fake.append(x)
+                        best_fake_value = min(no_none_fake) if no_none_fake else None
+                        best_fake = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[fake_list.index(best_fake_value)]
+                               if best_fake_value is not None else None],
+                            y=[best_fake_value],
+                            label="Лучший результат для ошибки генератора"
+                        )
+                        fake_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"), y=fake_list, label="Ошибка генератора"
+                        )
+                        data_return.append(
+                            fill_graph_front_structure(
+                                _id=model,
+                                _type='graphic',
+                                graph_name=f"График ошибки генератора на ошибки контента",
+                                short_name=f"Тип данных",
+                                x_label="Эпоха",
+                                y_label="Значение",
+                                plot_data=[perc_plot, fake_plot],
+                                best=[best_perc, best_fake],
+                                progress_state=progress_state
+                            )
+                        )
+                        model += 1
+
             return data_return
         except Exception as error:
             if self.first_error:
@@ -788,6 +1058,7 @@ class InteractiveCallback:
                 pass
 
     def _get_metric_graph_data_request(self) -> list:
+        # logger.debug(f"{InteractiveCallback.name}, {InteractiveCallback._get_metric_graph_data_request.__name__}")
         method_name = '_get_metric_graph_data_request'
         try:
             data_return = []
@@ -800,11 +1071,11 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         elif sum(self.log_history.get(f"{metric_graph_config.output_idx}").get(
                                 "progress_state").get("metrics").get(metric_graph_config.show_metric.name).get(
-                                'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'underfitting'
                         else:
                             progress_state = 'normal'
@@ -888,7 +1159,7 @@ class InteractiveCallback:
                             "mode")
                         if sum(self.log_history.get("output").get("progress_state").get(
                                 "metrics").get(metric_graph_config.show_metric.name).get(
-                                'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                             progress_state = 'overfitting'
                         else:
                             progress_state = 'normal'

@@ -1,37 +1,39 @@
+import logging
+
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.keras.layers import InputSpec
 from tensorflow.python.layers.base import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow import cast
 from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
-
-from terra_ai.custom_objects.pretrained_yolo import YOLOv4, YOLOv3
-from terra_ai.data.modeling.layers.extra import YOLOModeChoice
+from tensorflow.keras.layers import InputSpec
 
 terra_custom_layers = {
-    "InstanceNormalization": "custom_objects/customLayers",
-    "VAEBlock": "custom_objects/customLayers",
-    "YOLOResBlock": "custom_objects/customLayers",
-    "YOLOv3ResBlock": "custom_objects/customLayers",
-    "YOLOConvBlock": "custom_objects/customLayers",
-    "Mish": "custom_objects/customLayers",
-    "DarkNetBatchNormalization": "custom_objects/customLayers",
-    "DarkNetConvolutional": "custom_objects/customLayers",
-    "DarkNetResBlock": "custom_objects/customLayers",
-    "DarkNetUpsample": "custom_objects/customLayers",
-    "CONVBlock": "custom_objects/customLayers",
-    "PSPBlock2D": "custom_objects/customLayers",
-    "UNETBlock2D": "custom_objects/customLayers",
-    "UNETBlock1D": "custom_objects/customLayers",
-    "UNETBlock3D": "custom_objects/customLayers",
-    "PSPBlock1D": "custom_objects/customLayers",
-    "PretrainedYOLO": "custom_objects/customLayers",
+    "InstanceNormalization": "customLayers",
+    "VAEBlock": "customLayers",
+    "YOLOResBlock": "customLayers",
+    "YOLOv3ResBlock": "customLayers",
+    "YOLOConvBlock": "customLayers",
+    "Mish": "customLayers",
+    # "DarkNetBatchNormalization": "customLayers",
+    # "DarkNetConvolutional": "customLayers",
+    # "DarkNetResBlock": "customLayers",
+    # "DarkNetUpsample": "customLayers",
+    "CONVBlock": "customLayers",
+    "PSPBlock2D": "customLayers",
+    "UNETBlock2D": "customLayers",
+    "UNETBlock1D": "customLayers",
+    "UNETBlock3D": "customLayers",
+    "PSPBlock1D": "customLayers",
+    "PretrainedYOLO": "customLayers",
     # "DarknetBatchNormalization": "custom_objects/pretrained_yolo"
-    "OnlyYolo": "custom_objects/customLayers",
+    "OnlyYolo": "customLayers",
+    "ConditionalMergeLayer": "customLayers",
+    "ResnetBlock2D": "customLayers",
+    "RgbNormalization": "customLayers",
 }
 
 
@@ -101,25 +103,21 @@ class InstanceNormalization(Layer):
         if (self.axis is not None) and (ndim == 2):
             raise ValueError('Cannot specify axis for rank 1 tensor')
 
-        self.input_spec = InputSpec(ndim=ndim)
-
         if self.axis is None:
             shape = (1,)
         else:
             shape = (input_shape[self.axis],)
 
         if self.scale:
-            self.gamma = self.add_weight(shape=shape,
-                                         name='gamma',
-                                         initializer=self.gamma_initializer,
-                                         regularizer=self.gamma_regularizer,
-                                         constraint=self.gamma_constraint)
+            self.gamma = self.add_weight(
+                shape=shape, name='gamma', initializer=self.gamma_initializer,
+                regularizer=self.gamma_regularizer, constraint=self.gamma_constraint
+            )
         if self.center:
-            self.beta = self.add_weight(shape=shape,
-                                        name='beta',
-                                        initializer=self.beta_initializer,
-                                        regularizer=self.beta_regularizer,
-                                        constraint=self.beta_constraint)
+            self.beta = self.add_weight(
+                shape=shape, name='beta', initializer=self.beta_initializer,
+                regularizer=self.beta_regularizer, constraint=self.beta_constraint
+            )
         self.built = True
 
     def call(self, inputs, training=True, **kwargs):
@@ -166,6 +164,9 @@ class InstanceNormalization(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
 
 
 
@@ -763,87 +764,101 @@ class DarkNetUpsample(Layer):
 class CONVBlock(Layer):
     """Conv block layer """
 
-    def __init__(self, n_conv_layers=2, filters=16, activation='relu', kernel_size=(3, 3), strides=(1, 1),
-                 dilation=(1, 1), padding='same', batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1,
-                 leaky_relu_layer=True, leaky_relu_alpha=0.3, layers_seq_config: str = 'conv_conv_bn_lrelu_drop',
-                 **kwargs):
+    def __init__(
+            self, n_conv_layers=2, filters=16, kernel_size=(3, 3), strides=(1, 1), kernel_initializer='RandomNormal',
+            dilation=(1, 1), padding='same', activation='relu', transpose=False, use_bias=True,
+            use_activation_layer=False, leaky_relu_layer=True, leaky_relu_alpha=0.3,
+            normalization='batch', dropout_layer=True, dropout_rate=0.1, kernel_regularizer=None,
+            layers_seq_config: str = 'conv_bn_lrelu_drop_conv_bn_lrelu_drop', bn_momentum=0.99,
+            **kwargs
+    ):
 
         super(CONVBlock, self).__init__(**kwargs)
         self.n_conv_layers = n_conv_layers
         self.filters = filters
-        self.activation = activation
+        self.activation = None if leaky_relu_layer else activation
         self.kernel_size = kernel_size
         self.strides = strides
         self.dilation = dilation
         self.padding = padding
-        self.batch_norm_layer = batch_norm_layer
+        self.normalization = normalization
         self.dropout_layer = dropout_layer
         self.dropout_rate = dropout_rate
         self.leaky_relu_layer = leaky_relu_layer
         self.layers_seq_config = layers_seq_config
         self.leaky_relu_alpha = leaky_relu_alpha
+        self.use_activation_layer = use_activation_layer
+        self.kernel_initializer = kernel_initializer
+        self.transpose = transpose
+        self.use_bias = use_bias
+        self.kernel_regularizer = kernel_regularizer
+        self.bn_momentum = bn_momentum
 
+        conv_activation = None if self.use_activation_layer else self.activation
         for i in range(self.n_conv_layers):
-            setattr(self, f"conv_{i}",
-                    layers.Conv2D(filters=self.filters, kernel_size=self.kernel_size, strides=self.strides,
-                                  padding=self.padding, activation=self.activation, data_format='channels_last',
-                                  dilation_rate=self.dilation, groups=1, use_bias=True,
-                                  kernel_initializer='glorot_uniform',
-                                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                  activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-            setattr(self, f'activ_{i}',
-                    layers.Activation(self.activation))
+            strides = self.strides if i + 1 == self.n_conv_layers else (1, 1)
+            if self.transpose:
+                setattr(
+                    self, f"conv_{i}",
+                    layers.Conv2DTranspose(
+                        filters=self.filters, kernel_size=self.kernel_size, strides=strides,
+                        padding=self.padding, activation=conv_activation, dilation_rate=self.dilation,
+                        use_bias=self.use_bias, kernel_initializer=self.kernel_initializer,
+                        kernel_regularizer=self.kernel_regularizer
+                    )
+                )
+            else:
+                setattr(
+                    self, f"conv_{i}",
+                    layers.Conv2D(
+                        filters=self.filters, kernel_size=self.kernel_size, strides=strides,
+                        padding=self.padding, activation=conv_activation, dilation_rate=self.dilation,
+                        use_bias=self.use_bias, kernel_initializer=self.kernel_initializer,
+                        kernel_regularizer=self.kernel_regularizer
+                    )
+                )
+            if self.normalization == "batch":
+                setattr(self, f"norm_{i}", layers.BatchNormalization(axis=-1, momentum=self.bn_momentum))
+            if self.normalization == "instance":
+                setattr(self, f"norm_{i}", InstanceNormalization(axis=-1))
+            if self.use_activation_layer and self.activation:
+                setattr(self, f'activ_{i}', layers.Activation(self.activation))
             if self.leaky_relu_layer:
-                setattr(self, f'leaky_relu{i}',
-                        layers.LeakyReLU(alpha=self.leaky_relu_alpha))
-            if self.batch_norm_layer:
-                setattr(self, f'bn_{i}',
-                        layers.BatchNormalization())
+                setattr(self, f'leaky_relu_{i}', layers.LeakyReLU(alpha=self.leaky_relu_alpha))
             if self.dropout_layer:
-                setattr(self, f'drop_{i}',
-                        layers.Dropout(rate=self.dropout_rate))
+                setattr(self, f'drop_{i}', layers.Dropout(rate=self.dropout_rate))
 
     def call(self, input_, training=True, **kwargs):
 
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
-
+        x = input_
         if self.layers_seq_config == 'conv_conv_bn_LRelu_drop':
-            for i in range(0, self.n_conv_layers):
-                if i == 0:
-                    x = getattr(self, f'conv_{i}')(input_)
-                    x = getattr(self, f'activ_{i}')(x)
-                else:
-                    x = getattr(self, f'conv_{i}')(x)
-                    x = getattr(self, f'activ_{i}')(x)
-
-                if self.batch_norm_layer:
-                    x = getattr(self, f'bn_{i}')(x)
-
-                if self.leaky_relu_layer:
-                    x = getattr(self, f'leaky_relu{i}')(x)
-
-                if self.dropout_layer:
-                    x = getattr(self, f'drop_{i}')(x)
-
+            for i in range(self.n_conv_layers):
+                x = getattr(self, f'conv_{i}')(x)
+            if self.normalization:
+                x = getattr(self, f'norm_0')(x)
+            if self.use_activation_layer:
+                x = getattr(self, f'activ_0')(x)
+            if self.leaky_relu_layer:
+                x = getattr(self, f'leaky_relu_0')(x)
+            if self.dropout_layer:
+                x = getattr(self, f'drop_0')(x)
         else:
-            for i in range(0, self.n_conv_layers):
-                if i == 0:
-                    x = getattr(self, f'conv_{i}')(input_)
+            for i in range(self.n_conv_layers):
+                x = getattr(self, f'conv_{i}')(x)
+                # print(f"{getattr(self, f'conv_{i}').name}: {x.shape}, {getattr(self, f'conv_{i}').strides}")
+                if self.normalization:
+                    x = getattr(self, f'norm_{i}')(x)
+                    # print(f"norm_{i}: {x.shape}")
+                if self.use_activation_layer:
                     x = getattr(self, f'activ_{i}')(x)
-                else:
-                    x = getattr(self, f'conv_{i}')(x)
-                    x = getattr(self, f'activ_{i}')(x)
-
-                if self.batch_norm_layer:
-                    x = getattr(self, f'bn_{i}')(x)
-
+                    # print(f"activ_{i}: {x.shape}")
                 if self.leaky_relu_layer:
-                    x = getattr(self, f'leaky_relu{i}')(x)
-
+                    x = getattr(self, f'leaky_relu_{i}')(x)
+                    # print(f"leaky_relu_{i}: {x.shape}")
                 if self.dropout_layer:
                     x = getattr(self, f'drop_{i}')(x)
-
         return x
 
     def get_config(self):
@@ -855,12 +870,17 @@ class CONVBlock(Layer):
             'strides': self.strides,
             'dilation': self.dilation,
             'padding': self.padding,
-            'batch_norm_layer': self.batch_norm_layer,
+            'normalization': self.normalization,
             'dropout_layer': self.dropout_layer,
             'dropout_rate': self.dropout_rate,
             'leaky_relu_layer': self.leaky_relu_layer,
             'leaky_relu_alpha': self.leaky_relu_alpha,
-            'layers_seq_config': self.layers_seq_config
+            'layers_seq_config': self.layers_seq_config,
+            'use_activation_layer': self.use_activation_layer,
+            'kernel_initializer': self.kernel_initializer,
+            'transpose': self.transpose,
+            'use_bias': self.use_bias,
+            'kernel_regularizer': self.kernel_regularizer
         }
         base_config = super(CONVBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
@@ -868,6 +888,33 @@ class CONVBlock(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        if self.transpose:
+            if self.padding == 'same':
+                shape_1 = input_shape[1] * self.strides[0]
+                shape_2 = input_shape[2] * self.strides[1]
+            else:
+                add_1 = self.kernel_size[0] - self.strides[0] if self.kernel_size[0] > self.strides[0] else 0
+                shape_1 = input_shape[1] * self.strides[0] + add_1
+                add_2 = self.kernel_size[1] - self.strides[1] if self.kernel_size[1] > self.strides[1] else 0
+                shape_2 = input_shape[2] * self.strides[1] + add_2
+            output_shape = (None, shape_1, shape_2, self.filters)
+        else:
+            if self.padding == 'same':
+                shape_1 = input_shape[1] // self.strides[0] + 1 if input_shape[1] % self.strides[0] > 0 \
+                    else input_shape[1] // self.strides[0]
+                shape_2 = input_shape[2] // self.strides[1] + 1 if input_shape[2] % self.strides[1] > 0 \
+                    else input_shape[2] // self.strides[1]
+            else:
+                shape_1 = (input_shape[1] - self.kernel_size[0]) // self.strides[0] + 1 \
+                    if (input_shape[1] - self.kernel_size[0]) % self.strides[0] > 0 \
+                    else (input_shape[1] - self.kernel_size[0]) // self.strides[0]
+                shape_2 = (input_shape[2] - self.kernel_size[1]) // self.strides[1] + 1 \
+                    if (input_shape[2] - self.kernel_size[1]) % self.strides[1] > 0 \
+                    else (input_shape[2] - self.kernel_size[1]) // self.strides[1]
+            output_shape = (None, shape_1, shape_2, self.filters)
+        return output_shape
 
 
 class PSPBlock2D(Layer):
@@ -983,8 +1030,14 @@ class UNETBlock2D(Layer):
     n_conv_layers - number of conv layers in one downsampling/upsampling segment
     """
 
-    def __init__(self, filters_base=16, n_pooling_branches=2, filters_coef=1, n_conv_layers=2, activation='relu',
-                 kernel_size=(3, 3), batch_norm_layer=True, dropout_layer=True, dropout_rate=0.1, **kwargs):
+    def __init__(
+            self, filters_base=16, n_pooling_branches=2, filters_coef=1,
+            n_conv_layers=2, kernel_size=(3, 3), kernel_initializer='RandomNormal',
+            activation='relu', use_bias=True, maxpooling=True, upsampling=True,
+            use_activation_layer=False, leaky_relu_layer=True, leaky_relu_alpha=0.3,
+            normalization='batch', dropout_layer=True, dropout_rate=0.1,
+            kernel_regularizer=None, **kwargs
+    ):
 
         super(UNETBlock2D, self).__init__(**kwargs)
         self.filters = filters_base
@@ -993,127 +1046,103 @@ class UNETBlock2D(Layer):
         self.n_conv_layers = n_conv_layers
         self.activation = activation
         self.kernel_size = kernel_size
-        self.batch_norm_layer = batch_norm_layer
+        self.kernel_initializer = kernel_initializer
+        self.use_bias = use_bias
+        self.use_activation_layer = use_activation_layer
+        self.leaky_relu_layer = leaky_relu_layer
+        self.leaky_relu_alpha = leaky_relu_alpha
+        self.normalization = normalization
         self.dropout_layer = dropout_layer
         self.dropout_rate = dropout_rate
+        self.maxpooling = maxpooling
+        self.upsampling = upsampling
+        self.kernel_regularizer = kernel_regularizer
 
-        setattr(self, f"start_conv",
-                layers.Conv2D(filters=self.filters * self.filters_coef, kernel_size=self.kernel_size,
-                              activation=self.activation, data_format='channels_last',
-                              groups=1, use_bias=True,
-                              kernel_initializer='glorot_uniform', padding='same',
-                              bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                              activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-
-        for i in range(0, self.n_pooling_branches):
-            if i == 0:
-                for j in range(1, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}_{j}",
-                            layers.Conv2D(filters=self.filters * (i + 1) * self.filters_coef,
-                                          kernel_size=self.kernel_size,
-                                          activation=self.activation, data_format='channels_last',
-                                          groups=1, use_bias=True,
-                                          kernel_initializer='glorot_uniform', padding='same',
-                                          bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                          activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-            else:
-                for j in range(0, self.n_conv_layers):
-                    setattr(self, f"conv_d{i}_{j}",
-                            layers.Conv2D(filters=self.filters * (i + 1) * self.filters_coef,
-                                          kernel_size=self.kernel_size,
-                                          activation=self.activation, data_format='channels_last',
-                                          groups=1, use_bias=True,
-                                          kernel_initializer='glorot_uniform', padding='same',
-                                          bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                          activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-
-            if self.batch_norm_layer:
-                setattr(self, f"batchnorm_d{i}", layers.BatchNormalization())
-            if self.dropout_layer:
-                setattr(self, f'dropout_{i}', layers.Dropout(rate=self.dropout_rate))
-
-            setattr(self, f"maxpool_{i}",
-                    layers.MaxPool2D(pool_size=2, padding='same'))
-
-        for i in range(self.n_pooling_branches, self.n_pooling_branches * 2):
-            setattr(self, f"upsample_{i}",
-                    layers.UpSampling2D(size=2))
-            for j in range(0, self.n_conv_layers):
-                setattr(self, f"conv_u{i}_{j}",
-                        layers.Conv2D(filters=self.filters * (2 * self.n_pooling_branches - i) * self.filters_coef,
-                                      kernel_size=self.kernel_size,
-                                      activation=self.activation, data_format='channels_last',
-                                      groups=1, use_bias=True,
-                                      kernel_initializer='glorot_uniform', padding='same',
-                                      bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                      activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
-            if self.batch_norm_layer:
-                setattr(self, f"batchnorm_u{i}", layers.BatchNormalization())
-            setattr(self, f"concatenate_{i}", layers.Concatenate())
-
-        for i in range(self.n_conv_layers):
-            setattr(self, f"conv_bottom{i}",
-                    layers.Conv2D(filters=2 * self.filters * self.n_pooling_branches * self.filters_coef,
-                                  kernel_size=self.kernel_size,
-                                  activation=self.activation, data_format='channels_last',
-                                  groups=1, use_bias=True,
-                                  kernel_initializer='glorot_uniform', padding='same',
-                                  bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None,
-                                  activity_regularizer=None, kernel_constraint=None, bias_constraint=None))
+        down_strides = (1, 1) if self.maxpooling else (2, 2)
+        up_strides = (1, 1) if self.upsampling else (2, 2)
+        transpose = False if self.upsampling else True
+        setattr(
+            self, f"start_block",
+            CONVBlock(
+                n_conv_layers=self.n_conv_layers, filters=self.filters * self.filters_coef,
+                kernel_size=self.kernel_size, strides=(1, 1), kernel_initializer=self.kernel_initializer,
+                activation=self.activation, transpose=False, use_bias=self.use_bias,
+                use_activation_layer=self.use_activation_layer, leaky_relu_layer=self.leaky_relu_layer,
+                leaky_relu_alpha=self.leaky_relu_alpha, normalization=self.normalization,
+                dropout_layer=self.dropout_layer, dropout_rate=self.dropout_rate,
+                layers_seq_config='conv_bn_lrelu_drop_conv_bn_lrelu_drop',
+                kernel_regularizer=self.kernel_regularizer
+            )
+        )
+        for i in range(self.n_pooling_branches):
+            down_filters = 1024 if self.filters * (2 ** (i + 1)) * self.filters_coef > 1024 else \
+                self.filters * (2 ** (i + 1)) * self.filters_coef
+            setattr(
+                self, f"downblock_{i + 1}",
+                CONVBlock(
+                    n_conv_layers=self.n_conv_layers, filters=down_filters, kernel_size=self.kernel_size,
+                    strides=down_strides, kernel_initializer=self.kernel_initializer,
+                    activation=self.activation, transpose=False, use_bias=self.use_bias,
+                    use_activation_layer=self.use_activation_layer, leaky_relu_layer=self.leaky_relu_layer,
+                    leaky_relu_alpha=self.leaky_relu_alpha, normalization=self.normalization,
+                    dropout_layer=self.dropout_layer, dropout_rate=self.dropout_rate,
+                    layers_seq_config='conv_bn_lrelu_drop_conv_bn_lrelu_drop',
+                    kernel_regularizer=self.kernel_regularizer
+                )
+            )
+            if self.maxpooling:
+                setattr(self, f"maxpool_{i + 1}", layers.MaxPool2D(pool_size=2, padding='same'))
+        for i in range(self.n_pooling_branches):
+            up_filters = 1024 if self.filters * (2 ** (self.n_pooling_branches - 1 - i)) * self.filters_coef > 1024 \
+                else self.filters * (2 ** (self.n_pooling_branches - 1 - i)) * self.filters_coef
+            setattr(
+                self, f"upblock_{i + 1}",
+                CONVBlock(
+                    n_conv_layers=self.n_conv_layers, filters=up_filters, kernel_size=self.kernel_size,
+                    strides=up_strides, kernel_initializer=self.kernel_initializer,
+                    activation=self.activation, transpose=transpose, use_bias=self.use_bias,
+                    use_activation_layer=self.use_activation_layer, leaky_relu_layer=self.leaky_relu_layer,
+                    leaky_relu_alpha=self.leaky_relu_alpha, normalization=self.normalization,
+                    dropout_layer=self.dropout_layer, dropout_rate=self.dropout_rate,
+                    layers_seq_config='conv_bn_lrelu_drop_conv_bn_lrelu_drop',
+                    kernel_regularizer=self.kernel_regularizer
+                )
+            )
+            if self.upsampling:
+                setattr(self, f"upsample_{i + 1}", layers.UpSampling2D(size=2))
 
     def call(self, input_, training=True, **kwargs):
-
         if not isinstance(input_, (np.int32, np.float64, np.float32, np.float16)):
             input_ = cast(input_, 'float16')
 
-        concList = [[] for i in range(self.n_pooling_branches)]
-        for i in range(0, self.n_pooling_branches):
+        setattr(self, f'start', getattr(self, f'start_block')(input_))
+        for i in range(self.n_pooling_branches):
             if i == 0:
-                setattr(self, f'x_{i}', getattr(self, f'start_conv')(input_))
-                for j in range(1, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
-
+                setattr(self, f'down_{i + 1}', getattr(self, f'downblock_{i + 1}')(getattr(self, f'start')))
             else:
-                for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_d{i}_{j}')(getattr(self, f'x_{i}')))
+                uplink = getattr(self, f'mp_{i}') if self.maxpooling else getattr(self, f'down_{i}')
+                setattr(self, f'down_{i + 1}', getattr(self, f'downblock_{i + 1}')(uplink))
+            if self.maxpooling:
+                setattr(self, f'mp_{i + 1}', getattr(self, f'maxpool_{i + 1}')(getattr(self, f'down_{i + 1}')))
 
-            if self.batch_norm_layer:
-                setattr(self, f'x_{i}', getattr(self, f'batchnorm_d{i}')(getattr(self, f'x_{i}')))
-
-            if self.dropout_layer:
-                setattr(self, f'x_{i}', getattr(self, f'dropout_{i}')(getattr(self, f'x_{i}')))
-
-            concList[i].append(getattr(self, f'x_{i}'))
-
-            setattr(self, f'x_{i + 1}', getattr(self, f'maxpool_{i}')(getattr(self, f'x_{i}')))
-
-        for i in range(0, self.n_conv_layers):
-            setattr(self, f'x_{self.n_pooling_branches}',
-                    getattr(self, f'conv_bottom{i}')(getattr(self, f'x_{self.n_pooling_branches}')))
-
-        for i in range(self.n_pooling_branches, self.n_pooling_branches * 2):
-
-            setattr(self, f'x_{i}', getattr(self, f"upsample_{i}")(getattr(self, f'x_{i}')))
-            # setattr(self, f'x_{i}',
-            #         layers.CenterCrop(int(np.ceil(input_.shape[1] / 2 ** (2 * self.n_pooling_branches - i - 1))),
-            #                           int(np.ceil(input_.shape[2] / 2 ** (2 * self.n_pooling_branches - i - 1))))(
-            #             getattr(self, f'x_{i}')))
-            concList[2 * self.n_pooling_branches - i - 1].append(getattr(self, f'x_{i}'))
-            setattr(self, f'x_{i}', getattr(self, f"concatenate_{i}")(concList[2 * self.n_pooling_branches - i - 1]))
-
-            if self.batch_norm_layer:
-                for j in range(0, self.n_conv_layers):
-                    setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
-                setattr(self, f'x_{i + 1}', getattr(self, f'batchnorm_u{i}')(getattr(self, f'x_{i}')))
+        for i in range(self.n_pooling_branches):
+            if i == 0:
+                uplink = getattr(self, f'mp_{self.n_pooling_branches}') if self.maxpooling \
+                    else getattr(self, f'down_{self.n_pooling_branches}')
+                setattr(self, f'up_{i + 1}', getattr(self, f'upblock_{i + 1}')(uplink))
             else:
-                for j in range(0, self.n_conv_layers):
-                    if j != self.n_conv_layers - 1:
-                        setattr(self, f'x_{i}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
-                    else:
-                        setattr(self, f'x_{i + 1}', getattr(self, f'conv_u{i}_{j}')(getattr(self, f'x_{i}')))
+                setattr(self, f'up_{i + 1}', getattr(self, f'upblock_{i + 1}')(getattr(self, f'concat_{i}')))
+            if self.upsampling:
+                setattr(self, f'us_{i + 1}', getattr(self, f'upsample_{i + 1}')(getattr(self, f'up_{i + 1}')))
+            concatlink_1 = getattr(self, f'us_{i + 1}') if self.upsampling else getattr(self, f'up_{i + 1}')
+            if i != self.n_pooling_branches - 1:
+                concatlink_2 = getattr(self, f'mp_{self.n_pooling_branches - 1 - i}') if self.maxpooling \
+                    else getattr(self, f'down_{self.n_pooling_branches - 1 - i}')
+            else:
+                concatlink_2 = getattr(self, f'start')
+            setattr(self, f'concat_{i + 1}', layers.Concatenate()([concatlink_1, concatlink_2]))
 
-        x = getattr(self, f'x_{i + 1}')
-        return x
+        return getattr(self, f'concat_{self.n_pooling_branches}')
 
     def get_config(self):
         config = {
@@ -1123,9 +1152,17 @@ class UNETBlock2D(Layer):
             'n_conv_layers': self.n_conv_layers,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
-            'batch_norm_layer': self.batch_norm_layer,
             'dropout_layer': self.dropout_layer,
-            'dropout_rate': self.dropout_rate
+            'dropout_rate': self.dropout_rate,
+            'kernel_initializer': self.kernel_initializer,
+            'use_bias': self.use_bias,
+            'use_activation_layer': self.use_activation_layer,
+            'leaky_relu_layer': self.leaky_relu_layer,
+            'leaky_relu_alpha': self.leaky_relu_alpha,
+            'normalization': self.normalization,
+            'maxpooling': self.maxpooling,
+            'upsampling': self.upsampling,
+            'kernel_regularizer': self.kernel_regularizer
         }
         base_config = super(UNETBlock2D, self).get_config()
         return dict(tuple(base_config.items()) + tuple(config.items()))
@@ -1133,6 +1170,10 @@ class UNETBlock2D(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        output_shape = (None, input_shape[1], input_shape[2], self.filters * 2)
+        return output_shape
 
 
 class UNETBlock1D(Layer):
@@ -2014,6 +2055,287 @@ class PretrainedYOLO(Layer):
                 (None, 13, 13, 3 * (5 + self.num_classes))]
 
 
+class ConditionalMergeLayer(layers.Layer):
+    def __init__(self, mode='Concatenate', **kwargs):
+        super(ConditionalMergeLayer, self).__init__(**kwargs)
+        self.mode = mode  # Concatenate Multiply
+        pass
+
+    def concatenate(self, input):
+        if len(input[0].shape) == len(input[1].shape):
+            return layers.Concatenate(axis=-1)([input[0], input[1]])
+        elif len(input[0].shape) > len(input[1].shape):
+            num = 1
+            for i in input[0].shape[1:-1]:
+                num *= i
+            target_shape = list(input[0].shape[1:-1])
+            target_shape.append(input[1].shape[-1])
+            x = layers.RepeatVector(num)(input[1])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[0], x])
+        else:
+            num = 1
+            for i in input[1].shape[1:-1]:
+                num *= i
+            target_shape = list(input[1].shape[1:-1])
+            target_shape.append(input[0].shape[-1])
+            x = layers.RepeatVector(num)(input[0])
+            x = layers.Reshape(target_shape=target_shape)(x)
+            return layers.Concatenate(axis=-1)([input[1], x])
+
+    # def multiply(self, input):
+    #     if len(input[0].shape[1:]) == len(input[1].shape[1:]):
+    #         if input[0].shape[-1] >= input[1].shape[-1]:
+    #             cond_input = input[1]
+    #             second_input = layers.Flatten()(input[0])
+    #         else:
+    #             cond_input = input[0]
+    #             second_input = layers.Flatten()(input[1])
+    #     else:
+    #         if len(input[0].shape[1:]) > len(input[1].shape[1:]):
+    #             cond_input = input[1]
+    #             second_input = layers.Flatten()(input[0])
+    #         else:
+    #             cond_input = input[0]
+    #             second_input = layers.Flatten()(input[1])
+    #     # if tf.reduce_sum(input[0]) == 1 * input[0].shape[0]:
+    #     #     cond_input = input[0]
+    #     #     second_input = layers.Flatten()(input[1])
+    #     # else:
+    #     #     cond_input = input[1]
+    #     #     second_input = layers.Flatten()(input[0])
+    #     labels = tf.expand_dims(tf.argmax(cond_input, axis=-1), axis=-1)
+    #     labels = tf.cast(labels, dtype='float32')
+    #     print('cond_input.shape, second_input.shape', cond_input.shape, second_input.shape, labels.shape)
+    #     # input_dim = cond_input.shape[-1], output_dim = second_input.shape[-1]
+    #     x = layers.Embedding(input_dim=cond_input.shape[-1], output_dim=second_input.shape[-1])(labels)
+    #     print(x.shape)
+    #     label_embedding = layers.Flatten()(x)
+    #     print('label_embedding', label_embedding.shape)
+    #     Multiply = layers.Multiply()([second_input, label_embedding])
+    #     print('Multiply', Multiply.shape)
+    #     return Multiply
+    #     # elif len(input[0].shape) > len(input[1].shape):
+    #     #     num = 1
+    #     #     for i in input[0].shape[1:-1]:
+    #     #         num *= i
+    #     #     target_shape = list(input[0].shape[1:-1])
+    #     #     target_shape.append(input[1].shape[-1])
+    #     #     x = layers.RepeatVector(num)(input[1])
+    #     #     x = layers.Reshape(target_shape=target_shape)(x)
+    #     #     return layers.Concatenate(axis=-1)([input[0], x])
+    #     # else:
+    #     #     num = 1
+    #     #     for i in input[1].shape[1:-1]:
+    #     #         num *= i
+    #     #     target_shape = list(input[1].shape[1:-1])
+    #     #     target_shape.append(input[0].shape[-1])
+    #     #     x = layers.RepeatVector(num)(input[0])
+    #     #     x = layers.Reshape(target_shape=target_shape)(x)
+    #     #     return layers.Concatenate(axis=-1)([input[1], x])
+
+    def call(self, input, training=True, **kwargs):
+        if self.mode == 'Concatenate':
+            return self.concatenate(input)
+        # if self.mode == 'Multiply':
+        #     print(input)
+        #     return self.multiply(input)
+
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+        }
+        base_config = super(ConditionalMergeLayer, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    # def compute_output_shape(self, input_shape):
+    #     if self.mode == 'Concatenate':
+    #         if len(input_shape[0][1:]) == len(input_shape[1][1:]):
+    #             return None, input_shape[0][-1] + input_shape[1][-1]
+    #         elif len(input_shape[0][1:]) > len(input_shape[1][1:]):
+    #             shape = [None]
+    #             shape.extend(input_shape[0][1:-1])
+    #             shape.append(input_shape[0][-1] + input_shape[1][-1])
+    #             return tuple(shape)
+    #         else:
+    #             shape = [None]
+    #             shape.extend(input_shape[1][1:-1])
+    #             shape.append(input_shape[1][-1] + input_shape[0][-1])
+    #             return tuple(shape)
+    #     if self.mode == 'Multiply':
+    #         if len(input_shape[0][1:]) == len(input_shape[1][1:]):
+    #             if input_shape[0][-1] >= input_shape[1][-1]:
+    #                 max_inp = input_shape[0][-1]
+    #             else:
+    #                 max_inp = input_shape[1][-1]
+    #             return None, max_inp
+    #         else:
+    #             print(input_shape)
+    #             if len(input_shape[0][1:]) > len(input_shape[1][1:]):
+    #                 return None, np.prod(input_shape[0][1:]).astype('int')
+    #             else:
+    #                 return None, np.prod(input_shape[1][1:]).astype('int')
+
+
+class ResnetBlock2D(Layer):
+    """
+    UNET Block2D layer
+    n_pooling_branches - defines amt of downsampling/upsampling operations
+    filters_coef - defines the multiplication factor for amt of filters in pooling branches
+    n_conv_layers - number of conv layers in one downsampling/upsampling segment
+    """
+
+    def __init__(self, filters=16, kernel_size=(3, 3), kernel_initializer='RandomNormal', n_conv_layers=2,
+                 activation='relu', use_bias=True, use_activation_layer=True, leaky_relu_alpha=0.3,
+                 normalization='instance', merge_layer="concatenate", num_resblocks=1,
+                 kernel_regularizer=None, bn_momentum=0.99, prelu_shared_axes=None, **kwargs):
+
+        super(ResnetBlock2D, self).__init__(**kwargs)
+        self.filters = filters
+        self.kernel_size = kernel_size
+        self.kernel_initializer = kernel_initializer
+        self.n_conv_layers = n_conv_layers
+        self.activation = activation
+        self.normalization = normalization
+        self.merge_layer = merge_layer
+        self.num_resblocks = num_resblocks
+        self.use_bias = use_bias
+        self.use_activation_layer = use_activation_layer
+        self.leaky_relu_alpha = leaky_relu_alpha
+        self.kernel_regularizer = kernel_regularizer
+        self.bn_momentum = bn_momentum
+        self.prelu_shared_axes = prelu_shared_axes
+
+        for i in range(self.num_resblocks):
+            for c in range(self.n_conv_layers):
+                setattr(self, f"conv_{c + 1}_block_{i + 1}",
+                        layers.Conv2D(
+                            filters=self.filters, kernel_size=self.kernel_size,
+                            activation=None if self.use_activation_layer else self.activation,
+                            data_format='channels_last', groups=1, use_bias=self.use_bias,
+                            kernel_initializer=self.kernel_initializer, padding='same',
+                            bias_initializer='zeros', kernel_regularizer=self.kernel_regularizer,
+                            bias_regularizer=None, activity_regularizer=None, kernel_constraint=None,
+                            bias_constraint=None))
+                if self.normalization:
+                    if self.normalization == "batch":
+                        setattr(self, f"norm_{c + 1}_block_{i + 1}",
+                                layers.BatchNormalization(momentum=self.bn_momentum))
+                    if self.normalization == "instance":
+                        setattr(self, f"norm_{c + 1}_block_{i + 1}", InstanceNormalization())
+                if self.use_activation_layer and c + 1 < self.n_conv_layers:
+                    if self.activation == "leaky_relu":
+                        setattr(self, f"activation_{c + 1}_block_{i + 1}",
+                                layers.LeakyReLU(alpha=self.leaky_relu_alpha))
+                    if self.activation == "relu":
+                        setattr(self, f"activation_{c + 1}_block_{i + 1}", layers.ReLU())
+                    if self.activation == "prelu":
+                        setattr(self, f"activation_{c + 1}_block_{i + 1}",
+                                layers.PReLU(shared_axes=self.prelu_shared_axes))
+            if self.merge_layer == "concatenate":
+                setattr(self, f"concat_block_{i + 1}", layers.Concatenate(axis=-1))
+            if self.merge_layer == "add":
+                setattr(self, f"concat_block_{i + 1}", layers.Add())
+            if self.merge_layer == "multiply":
+                setattr(self, f"concat_block_{i + 1}", layers.Multiply())
+
+    def call(self, input_, training=True, **kwargs):
+        y = input_
+        for i in range(self.num_resblocks):
+            for c in range(self.n_conv_layers):
+                x = getattr(self, f"conv_{c + 1}_block_{i + 1}")(y)
+                if self.normalization:
+                    x = getattr(self, f"norm_{c + 1}_block_{i + 1}")(x)
+                if self.use_activation_layer and c + 1 < self.n_conv_layers:
+                    x = getattr(self, f"activation_{c + 1}_block_{i + 1}")(x)
+            # if i == 0:
+            y = getattr(self, f"concat_block_{i + 1}")([y, x])
+            # else:
+            #     y = getattr(self, f"concat_block_{i + 1}")([y, x])
+        return y
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'kernel_size': self.kernel_size,
+            'kernel_initializer': self.kernel_initializer,
+            'n_conv_layers': self.n_conv_layers,
+            'activation': self.activation,
+            'normalization': self.normalization,
+            'merge_layer': self.merge_layer,
+            'num_resblocks': self.num_resblocks,
+            'use_bias': self.use_bias,
+            'use_activation_layer': self.use_activation_layer,
+            'kernel_regularizer': self.kernel_regularizer
+        }
+        base_config = super(ResnetBlock2D, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        if self.merge_layer == "concatenate":
+            output_shape = (None, input_shape[1], input_shape[2],
+                            self.filters * self.num_resblocks + input_shape[-1])
+            return output_shape
+        else:
+            return input_shape
+
+
+class RGBNormalization(Layer):
+
+    def __init__(self, use_div2k_mean=False, denormalize=False, half_range_normalization=True, **kwargs):
+
+        super(RGBNormalization, self).__init__(**kwargs)
+        self.use_div2k_mean = use_div2k_mean
+        self.denormalize = denormalize
+        self.half_range_normalization = half_range_normalization
+
+    def call(self, input_, training=False, **kwargs):
+        DIV2K_RGB_MEAN = tf.convert_to_tensor([0.4488, 0.4371, 0.4040]) * 255
+        # DIV2K_RGB_MEAN = tf.zeros_like(input_)
+        # for batch in range(input_.shape[0]):
+        #     DIV2K_RGB_MEAN[batch] = tf.convert_to_tensor([0.4488, 0.4371, 0.4040]) * 255
+
+        if self.denormalize:
+            if self.half_range_normalization and self.use_div2k_mean:
+                output = input_ * 127.5 + DIV2K_RGB_MEAN
+            elif self.half_range_normalization:
+                output = (input_ + 1) * 127.5
+            else:
+                output = input_ * 255.
+        else:
+            if self.half_range_normalization and self.use_div2k_mean:
+                output = (input_ - DIV2K_RGB_MEAN) / 127.5
+            elif self.half_range_normalization:
+                output = input_ / 127.5 - 1
+            else:
+                output = input_ / 255.
+        return output
+
+    def get_config(self):
+        config = {
+            'use_div2k_mean': self.filters,
+            'denormalize': self.kernel_size,
+            'half_range_normalization': self.kernel_initializer,
+        }
+        base_config = super(RGBNormalization, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+
 if __name__ == "__main__":
     # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
     # x = YOLOResBlock(32, 2)(input)
@@ -2045,10 +2367,30 @@ if __name__ == "__main__":
     #     aa, to_file='C:\PycharmProjects\\terra_gui\\test_example\\model.png', show_shapes=True, show_dtype=False,
     #     show_layer_names=True, rankdir='TB', expand_nested=False, dpi=96,
     #     layer_range=None, show_layer_activations=False)
-    x = PretrainedYOLO(num_classes=5)
-    print(x.compute_output_shape(input_shape=(None, 416, 416, 3)))
+    # x = InstanceNormalization()
+    # print(x.compute_output_shape(input_shape=(None, 100)))
 
-    input = tensorflow.keras.layers.Input(shape=(416, 416, 3))
-    x = PretrainedYOLO(num_classes=5)(input)
-    print(x)
+    # params = {
+    #     'filters_base': 16, 'n_pooling_branches': 5, 'activation': None, 'normalization': 'instance',
+    #     'dropout_layer': False, 'leaky_relu_layer': True, 'use_activation_layer': False,
+    #     'maxpooling': False, 'upsampling': False, 'filters_coef': 1, 'n_conv_layers': 4,
+    #     'use_bias': False, 'kernel_size': [3, 3], 'kernel_initializer': 'random_normal',
+    #     'dropout_rate': 0.1, 'leaky_relu_alpha': 0.3, 'name': 'UNETBlock2D_3'
+    # }
+    params = {'n_conv_layers': 1, 'filters': 16, 'strides': (2, 6), 'normalization': 'instance', 'transpose': True,
+              'padding': 'valid', 'kernel_size': [10, 5]}
+    # params = {
+    #     'filters': 256, 'num_resblocks': 9, 'n_conv_layers': 2, 'use_activation_layer': True,
+    #     'activation': 'relu', 'kernel_size': (3, 3), 'kernel_initializer': 'glorot_uniform',
+    #     'normalization': 'instance', "merge_layer": 'concatenate', "use_bias": True
+    # }
+    # # for i in range(5):
+    input_shape = (None, 64, 64, 3)
+    layer = CONVBlock(**params)
+    input1 = tensorflow.keras.Input(shape=input_shape[1:])
+    # input2 = tensorflow.keras.Input(shape=(32, 32, 3))
+    # print(input)
+    x = layer(input1)
+    print(x.shape)
+    print(layer.compute_output_shape(input_shape=input_shape))
     pass

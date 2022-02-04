@@ -169,6 +169,53 @@ StatesTrainingBasicParamsDisabled = {
     ],
 }
 
+StatesTrainingGANParamsDisabled = {
+    StateStatusChoice.no_train: [
+        "architecture_parameters_outputs_%s_classes_quantity",
+    ],
+    StateStatusChoice.training: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.trained: [
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.stopped: [
+        "epochs",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+    StateStatusChoice.addtrain: [
+        "batch",
+        "epochs",
+        "optimizer",
+        "optimizer_main_learning_rate",
+        "optimizer_extra_beta_1",
+        "optimizer_extra_beta_2",
+        "optimizer_extra_epsilon",
+        "optimizer_extra_amsgrad",
+        "architecture_parameters_outputs_%s_loss",
+        "architecture_parameters_outputs_%s_metrics",
+        "architecture_parameters_outputs_%s_classes_quantity",
+        "architecture_parameters_checkpoint_epoch_interval",
+    ],
+}
+
 
 StatesTrainingBasicParamsDisabled = {
     StateStatusChoice.no_train: ["architecture_parameters_outputs_%s_classes_quantity"],
@@ -246,6 +293,11 @@ StatesTrainingBaseParamsDisabled = {
     "VideoClassification": {**StatesTrainingBasicParamsDisabled},
     "YoloV3": {**StatesTrainingYoloParamsDisabled},
     "YoloV4": {**StatesTrainingYoloParamsDisabled},
+    "ImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageCGAN": {**StatesTrainingGANParamsDisabled},
+    "TextToImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageToImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageSRGAN": {**StatesTrainingGANParamsDisabled},
 }
 
 
@@ -658,6 +710,20 @@ class ArchitectureOutputsCheckpointGroupFrom(ArchitectureMixinForm):
 
         self.disable_by_state(fields[0], **kwargs)
 
+    def _set_architecture_parameters_checkpoint_epoch_interval(self, value, **kwargs):
+        fields = list(
+            filter(
+                lambda item: item.name
+                == "architecture_parameters_checkpoint_epoch_interval",
+                self.checkpoint.fields,
+            )
+        )
+        if not fields:
+            return
+        fields[0].value = value
+
+        self.disable_by_state(fields[0], **kwargs)
+
 
 class ArchitectureBaseForm(
     ArchitectureOutputsCheckpointGroupFrom, ArchitectureBaseGroupForm
@@ -776,6 +842,26 @@ class ArchitectureYoloV4Form(ArchitectureYoloBaseForm):
 
 
 class ArchitectureTrackerForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageCGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureTextToImageGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageToImageGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageSRGANForm(ArchitectureBasicForm):
     pass
 
 

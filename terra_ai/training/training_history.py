@@ -11,10 +11,10 @@ from tensorflow.python.keras.utils.np_utils import to_categorical
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
 from terra_ai.callbacks.utils import BASIC_ARCHITECTURE, CLASS_ARCHITECTURE, YOLO_ARCHITECTURE, \
-    CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list
+    CLASSIFICATION_ARCHITECTURE, loss_metric_config, round_loss_metric, class_metric_list, GAN_ARCHITECTURE
 from terra_ai.data.datasets.extra import LayerEncodingChoice
 from terra_ai.data.presets.training import Metric
-from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.exceptions.training import NoHistoryLogsException
@@ -62,7 +62,6 @@ class History:
         self.epochs = training_details.base.epochs
         self.sum_epoch = self.epochs
         self.log_history = self._load_logs(dataset=dataset, training_details=training_details)
-        logger.debug(f"self.log_history: {self.log_history}")
         self.class_outputs = class_metric_list(dataset)
         if self.architecture_type in CLASSIFICATION_ARCHITECTURE:
             self.y_true, _ = BaseClassificationCallback().get_y_true(dataset)
@@ -153,12 +152,71 @@ class History:
                             for metric in output_layer.metrics:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
-            if options.data.architecture in YOLO_ARCHITECTURE:
+            elif options.data.architecture in YOLO_ARCHITECTURE:
                 log_history['output'] = copy.deepcopy(OUTPUT_LOG_CONFIG)
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
                     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
                     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
+
+            elif options.data.architecture in GAN_ARCHITECTURE:
+                if options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                    log_history['output'] = {
+                        "loss": {
+                            'pretrain_loss': {"train": [], "val": []},
+                            'perception_loss': {"train": [], "val": []},
+                            'content_loss': {"train": [], "val": []},
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'pretrain_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'perception_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'content_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
+                        }
+                    }
+                else:
+                    log_history['output'] = {
+                        "loss": {
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
+                        }
+                    }
+                # out = list(options.data.outputs.keys())[0]
+                # for class_name in options.data.outputs.get(out).classes_names:
+                #     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
+                #     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
             return log_history
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -442,7 +500,7 @@ class History:
                                 self.log_history[out]['class_metrics'][cls][metric_name]["val"].append(
                                     round_loss_metric(self.current_logs[out]['class_metrics'][metric_name][cls]["val"]))
 
-            if self.dataset.data.architecture in YOLO_ARCHITECTURE:
+            elif self.dataset.data.architecture in YOLO_ARCHITECTURE:
                 out = list(self.dataset.data.outputs.keys())[0]
                 classes_names = self.dataset.data.outputs.get(out).classes_names
                 for key in self.log_history['output']["loss"].keys():
@@ -497,7 +555,8 @@ class History:
                     )
                     metric_overfitting = self._evaluate_overfitting(
                         metric_name=metric_name,
-                        mean_log=self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history'],
+                        mean_log=self.log_history['output']['progress_state']['metrics'][
+                            metric_name]['mean_log_history'],
                         metric_type='metric'
                     )
                     # logger.debug(f"mean_log: {self.log_history['output']['progress_state']['metrics'][metric_name]['mean_log_history']}\n"
@@ -510,6 +569,18 @@ class History:
                         metric_overfitting)
                     self.log_history['output']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
+
+            elif self.dataset.data.architecture in GAN_ARCHITECTURE:
+                for key in self.log_history['output']["loss"].keys():
+                    # print(f'self.current_logs: {key, self.log_history["output"]["loss"], self.current_logs.get("loss").get(key)}')
+                    # if key in self.current_logs.get("loss").keys():
+                    self.log_history['output']["loss"][key]['train'].append(
+                            round_loss_metric(self.current_logs.get('loss').get(key).get('train')))
+                for loss_name in self.log_history['output']["loss"].keys():
+                    self.log_history['output']['progress_state']['loss'][loss_name]['underfitting'].append(False)
+                    self.log_history['output']['progress_state']['loss'][loss_name]['overfitting'].append(False)
+                    self.log_history['output']['progress_state']['loss'][loss_name]['normal_state'].append(True)
+
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 History.name, method_name, str(error)).with_traceback(error.__traceback__)
@@ -538,7 +609,6 @@ class History:
         method_name = '_evaluate_overfitting'
         try:
             mode = loss_metric_config.get(metric_type).get(metric_name).get("mode")
-            # logger.debug(f"overfitting mode: {mode}")
             overfitting = False
             while None in mean_log:
                 mean_log.pop(mean_log.index(None))
@@ -549,6 +619,11 @@ class History:
                     overfitting = True
                 if mode == 'max' and max(mean_log) != 0:
                     overfitting = True
+            elif mean_log[-1] is None or min(mean_log) is None or max(mean_log) is None:
+                if mode == 'min' and not min(mean_log):
+                    overfitting = False
+                if mode == 'max' and not max(mean_log) != 0:
+                    overfitting = False
             elif mode == 'min':
                 if mean_log[-1] > min(mean_log) and \
                         (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 2:

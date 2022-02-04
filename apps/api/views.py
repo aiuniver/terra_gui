@@ -1,4 +1,5 @@
 import json
+import dotenv
 
 from django.conf import settings
 from rest_framework.exceptions import APIException
@@ -29,8 +30,13 @@ class LoginAPIView(BaseAPIView):
         response = remote.request("/login/", serializer.validated_data)
         settings.USER_SESSION = response.get("session")
         if settings.USER_KEEP_SESSION:
-            with open(settings.ENV_FILE, "a") as env_file_ref:
-                env_file_ref.write(f"USER_SESSION={settings.USER_SESSION}\n")
+            env = dotenv.dotenv_values(settings.ENV_FILE)
+            env.update({"USER_SESSION": settings.USER_SESSION})
+            with open(settings.ENV_FILE, "w") as env_file_ref:
+                data = "\n".join(
+                    list(map(lambda item: f"{item[0]}={item[1]}", env.items()))
+                )
+                env_file_ref.write(f"{data}\n")
         return BaseResponseSuccess({"url": "/datasets"})
 
 
@@ -40,12 +46,6 @@ class ConfigAPIView(BaseAPIView):
             {
                 "defaults": json.loads(defaults_data.json()),
                 "project": json.loads(request.project.frontend()),
-                "user": {
-                    "login": settings.USER_LOGIN,
-                    "first_name": settings.USER_NAME,
-                    "last_name": settings.USER_LASTNAME,
-                    "email": settings.USER_EMAIL,
-                    "token": settings.USER_TOKEN,
-                },
+                "user": settings.USER,
             }
         )

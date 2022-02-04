@@ -14,6 +14,8 @@ class Task(str, Enum):
     Dataframe = "Dataframe"
     TextSegmentation = "TextSegmentation"
     TimeseriesTrend = "TimeseriesTrend"
+    Generator = "Generator"
+    Discriminator = "Discriminator"
 
 
 class Loss(str, Enum):
@@ -385,6 +387,26 @@ TasksGroups = [
             # Metric.KLDivergence,
             # Metric.LogCoshError,
             # Metric.SquaredHinge,
+        ],
+    },
+    {
+        "task": Task.Generator,
+        "losses": [
+            Loss.BinaryCrossentropy,
+            Loss.MeanAbsoluteError
+        ],
+        "metrics": [
+            Metric.BinaryCrossentropy
+        ],
+    },
+    {
+        "task": Task.Discriminator,
+        "losses": [
+            Loss.BinaryCrossentropy,
+            Loss.MeanAbsoluteError
+        ],
+        "metrics": [
+            Metric.BinaryCrossentropy
         ],
     },
 ]

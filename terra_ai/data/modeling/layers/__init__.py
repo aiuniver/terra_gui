@@ -20,7 +20,6 @@ from terra_ai.data.modeling.layers.extra import (
     YOLOModeChoice,
 )
 
-
 WEIGHT_FILES = {
     YOLOModeChoice.YOLOv3: "yolov3.weights",
     YOLOModeChoice.YOLOv4: "yolov4.weights",
@@ -609,40 +608,49 @@ class LayerSpaceToDepthData(LayerMixinData):
     )
 
 
-class LayerDarkNetConvolutionalData(LayerMixinData):
-    main: types.DarkNetConvolutional.ParametersMainData = (
-        types.DarkNetConvolutional.ParametersMainData()
+class LayerDepthToSpaceData(LayerMixinData):
+    main: types.DepthToSpace.ParametersMainData = (
+        types.DepthToSpace.ParametersMainData()
     )
-    extra: types.DarkNetConvolutional.ParametersExtraData = (
-        types.DarkNetConvolutional.ParametersExtraData()
-    )
-
-
-class LayerDarkNetUpsampleData(LayerMixinData):
-    main: types.DarkNetUpsample.ParametersMainData = (
-        types.DarkNetUpsample.ParametersMainData()
-    )
-    extra: types.DarkNetUpsample.ParametersExtraData = (
-        types.DarkNetUpsample.ParametersExtraData()
+    extra: types.DepthToSpace.ParametersExtraData = (
+        types.DepthToSpace.ParametersExtraData()
     )
 
 
-class LayerDarkNetResBlockData(LayerMixinData):
-    main: types.DarkNetResBlock.ParametersMainData = (
-        types.DarkNetResBlock.ParametersMainData()
-    )
-    extra: types.DarkNetResBlock.ParametersExtraData = (
-        types.DarkNetResBlock.ParametersExtraData()
-    )
-
-
-class LayerDarkNetBatchNormalizationData(LayerMixinData):
-    main: types.DarkNetBatchNormalization.ParametersMainData = (
-        types.DarkNetBatchNormalization.ParametersMainData()
-    )
-    extra: types.DarkNetBatchNormalization.ParametersExtraData = (
-        types.DarkNetBatchNormalization.ParametersExtraData()
-    )
+# class LayerDarkNetConvolutionalData(LayerMixinData):
+#     main: types.DarkNetConvolutional.ParametersMainData = (
+#         types.DarkNetConvolutional.ParametersMainData()
+#     )
+#     extra: types.DarkNetConvolutional.ParametersExtraData = (
+#         types.DarkNetConvolutional.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetUpsampleData(LayerMixinData):
+#     main: types.DarkNetUpsample.ParametersMainData = (
+#         types.DarkNetUpsample.ParametersMainData()
+#     )
+#     extra: types.DarkNetUpsample.ParametersExtraData = (
+#         types.DarkNetUpsample.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetResBlockData(LayerMixinData):
+#     main: types.DarkNetResBlock.ParametersMainData = (
+#         types.DarkNetResBlock.ParametersMainData()
+#     )
+#     extra: types.DarkNetResBlock.ParametersExtraData = (
+#         types.DarkNetResBlock.ParametersExtraData()
+#     )
+#
+#
+# class LayerDarkNetBatchNormalizationData(LayerMixinData):
+#     main: types.DarkNetBatchNormalization.ParametersMainData = (
+#         types.DarkNetBatchNormalization.ParametersMainData()
+#     )
+#     extra: types.DarkNetBatchNormalization.ParametersExtraData = (
+#         types.DarkNetBatchNormalization.ParametersExtraData()
+#     )
 
 
 class LayerCONVBlockData(LayerMixinData):
@@ -684,6 +692,23 @@ class LayerUNETBlock3DData(LayerMixinData):
     extra: types.UNETBlock3D.ParametersExtraData = (
         types.UNETBlock3D.ParametersExtraData()
     )
+
+
+class LayerConditionalMergeLayerData(LayerMixinData):
+    main: types.ConditionalMergeLayer.ParametersMainData = types.ConditionalMergeLayer.ParametersMainData()
+    extra: types.ConditionalMergeLayer.ParametersExtraData = (
+        types.ConditionalMergeLayer.ParametersExtraData()
+    )
+
+
+class LayerResnetBlock2DData(LayerMixinData):
+    main: types.ResnetBlock2D.ParametersMainData = types.ResnetBlock2D.ParametersMainData()
+    extra: types.ResnetBlock2D.ParametersExtraData = (types.ResnetBlock2D.ParametersExtraData())
+
+
+class LayerRGBNormalizationData(LayerMixinData):
+    main: types.RGBNormalization.ParametersMainData = types.RGBNormalization.ParametersMainData()
+    extra: types.RGBNormalization.ParametersExtraData = (types.RGBNormalization.ParametersExtraData())
 
 
 class LayerPretrainedYOLOData(LayerMixinData):
