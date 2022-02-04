@@ -485,9 +485,16 @@ class ImageClassificationCallback(BaseClassificationCallback):
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                count = interactive_config.intermediate_result.num_examples \
-                    if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
-                    else len(options.dataframe.get(data_type))
+                if options.data.group == DatasetGroupChoice.keras:
+                    key = list(options.X.get(data_type).keys())[0]
+                    print(len(options.X.get(data_type).get(key)))
+                    count = interactive_config.intermediate_result.num_examples \
+                        if len(options.X.get(data_type).get(key)) > interactive_config.intermediate_result.num_examples \
+                        else len(options.X.get(data_type).get(key))
+                else:
+                    count = interactive_config.intermediate_result.num_examples \
+                        if len(options.dataframe.get(data_type)) > interactive_config.intermediate_result.num_examples \
+                        else len(options.dataframe.get(data_type))
                 for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
