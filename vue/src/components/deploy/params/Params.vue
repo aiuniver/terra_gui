@@ -35,9 +35,10 @@
               <div class="t-input__label">
                 {{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}
               </div>
-              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" autocomplete="off" />
             </div>
             <Autocomplete2
+              autocomplete="off"
               :value="serverLabel"
               :list="list"
               :name="'deploy[server]'"
@@ -216,6 +217,7 @@ export default {
       }
     },
     selected({ value }) {
+      console.log(value)
       this.server = value;
     },
     async sendDeployData() {
