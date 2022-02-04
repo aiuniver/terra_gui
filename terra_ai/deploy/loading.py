@@ -14,7 +14,6 @@ from terra_ai.data.deploy.stages import (
     StageResponseData,
 )
 from terra_ai.exceptions.deploy import RequestAPIException
-from terra_ai.logging import logger
 
 
 DEPLOY_PREPARE_TITLE = "Подготовка данных"
@@ -31,7 +30,6 @@ def __run_rsync(progress_name: str, data: StageUploadData, destination: str):
         rsa_path_ref.write(f'{data.server.get("private_ssh_key")}\n')
         rsa_path.chmod(0o600)
     cmd = f'rsync -P -avz -e "ssh -i {rsa_path} -o StrictHostKeyChecking=no" {data.file.path} {data.server.get("user")}@{data.server.get("ip_address")}:{destination}'
-    logger.info(cmd)
     proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     while True:
         output = proc.stdout.readline().decode("utf-8")
