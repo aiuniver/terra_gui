@@ -114,6 +114,7 @@ StatesTrainingBasicParamsDisabled = {
         "batch",
         "epochs",
         "optimizer",
+        "autobalance",
         "optimizer_main_learning_rate",
         "optimizer_extra_beta_1",
         "optimizer_extra_beta_2",
@@ -153,6 +154,7 @@ StatesTrainingBasicParamsDisabled = {
         "batch",
         "epochs",
         "optimizer",
+        "autobalance",
         "optimizer_main_learning_rate",
         "optimizer_extra_beta_1",
         "optimizer_extra_beta_2",
@@ -213,68 +215,6 @@ StatesTrainingGANParamsDisabled = {
         "architecture_parameters_outputs_%s_metrics",
         "architecture_parameters_outputs_%s_classes_quantity",
         "architecture_parameters_checkpoint_epoch_interval",
-    ],
-}
-
-
-StatesTrainingBasicParamsDisabled = {
-    StateStatusChoice.no_train: ["architecture_parameters_outputs_%s_classes_quantity"],
-    StateStatusChoice.training: [
-        "batch",
-        "epochs",
-        "optimizer",
-        "optimizer_main_learning_rate",
-        "optimizer_extra_beta_1",
-        "optimizer_extra_beta_2",
-        "optimizer_extra_epsilon",
-        "optimizer_extra_amsgrad",
-        "architecture_parameters_outputs_%s_loss",
-        "architecture_parameters_outputs_%s_metrics",
-        "architecture_parameters_outputs_%s_classes_quantity",
-        "architecture_parameters_checkpoint_layer",
-        "architecture_parameters_checkpoint_metric_name",
-        "architecture_parameters_checkpoint_type",
-        "architecture_parameters_checkpoint_indicator",
-        "architecture_parameters_checkpoint_mode",
-    ],
-    StateStatusChoice.trained: [
-        "architecture_parameters_outputs_%s_loss",
-        "architecture_parameters_outputs_%s_metrics",
-        "architecture_parameters_outputs_%s_classes_quantity",
-        "architecture_parameters_checkpoint_layer",
-        "architecture_parameters_checkpoint_metric_name",
-        "architecture_parameters_checkpoint_type",
-        "architecture_parameters_checkpoint_indicator",
-        "architecture_parameters_checkpoint_mode",
-    ],
-    StateStatusChoice.stopped: [
-        "epochs",
-        "architecture_parameters_outputs_%s_loss",
-        "architecture_parameters_outputs_%s_metrics",
-        "architecture_parameters_outputs_%s_classes_quantity",
-        "architecture_parameters_checkpoint_layer",
-        "architecture_parameters_checkpoint_metric_name",
-        "architecture_parameters_checkpoint_type",
-        "architecture_parameters_checkpoint_indicator",
-        "architecture_parameters_checkpoint_mode",
-    ],
-    StateStatusChoice.addtrain: [
-        "batch",
-        "epochs",
-        "optimizer",
-        "optimizer_main_learning_rate",
-        "optimizer_extra_beta_1",
-        "optimizer_extra_beta_2",
-        "optimizer_extra_epsilon",
-        "optimizer_extra_amsgrad",
-        "architecture_parameters_outputs_%s_loss",
-        "architecture_parameters_outputs_%s_metrics",
-        "architecture_parameters_outputs_%s_classes_quantity",
-        "architecture_parameters_checkpoint_layer",
-        "architecture_parameters_checkpoint_metric_name",
-        "architecture_parameters_checkpoint_type",
-        "architecture_parameters_checkpoint_indicator",
-        "architecture_parameters_checkpoint_mode",
     ],
 }
 
@@ -376,6 +316,14 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
 
     def _set_epochs(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "epochs", self.fit.fields))
+        if not fields:
+            return
+        fields[0].value = value
+
+        self.disable_by_state(fields[0], **kwargs)
+
+    def _set_autobalance(self, value: int, **kwargs):
+        fields = list(filter(lambda item: item.name == "autobalance", self.fit.fields))
         if not fields:
             return
         fields[0].value = value
