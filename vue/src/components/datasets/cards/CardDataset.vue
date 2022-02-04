@@ -180,6 +180,9 @@ export default {
     position:absolute;
     left:0;
     bottom:-34px;
+    background-color: #0e1621;
+    border: 1px solid #6c788350;
+    color: #A7BED3;
 }
 .card-extra > .wrapper {
     height:30px;
@@ -190,6 +193,7 @@ export default {
     border:1px solid transparent;
     border-top:0;
     border-radius:0 0 4px 4px;
+    
 }
 .card-extra.is-custom > .wrapper {
     margin-right:35px;
