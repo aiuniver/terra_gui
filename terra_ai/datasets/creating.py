@@ -234,6 +234,14 @@ class CreateDataset(object):
                             parameters={'sources_paths': sources_paths,
                                         'type_processing': 'categorical'}))
                     idx += 1
+                    creation_data.inputs.append(
+                        CreationInputData(
+                            id=idx,
+                            name='Классы',
+                            type=LayerInputTypeChoice.Classification,
+                            parameters={'sources_paths': sources_paths,
+                                        'type_processing': 'categorical'}))
+                    idx += 1
                 out_list.append(
                     CreationOutputData(
                         id=idx,
