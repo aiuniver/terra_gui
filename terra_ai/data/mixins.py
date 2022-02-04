@@ -19,12 +19,22 @@ class BaseMixinData(BaseModel):
     Базовая модель, которая должна применяться ко всем структурам.
     """
 
+    __repr_str_exclude__: List[str] = []
+
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
             if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:
                 data.update({__name: __type(data.get(__name, __type()))})
         super().__init__(**data)
+
+    def __repr_str__(self, join_str: str) -> str:
+        args = dict(self.__repr_args__())
+        for field in self.__repr_str_exclude__:
+            args.pop(field, None)
+        return join_str.join(
+            repr(v) if a is None else f"{a}={v!r}" for a, v in args.items()
+        )
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
