@@ -1,4 +1,4 @@
-const newRouter = [
+const router = [
     {
         path: '/new',
         name: 'Home',
@@ -62,7 +62,7 @@ const newRouter = [
             access: true,
             text: ''
         },
-        component: () => import('@/views/Modeling'),
+        component: () => import('@/views/new/design/Modeling'),
     },
     {
         path: '/new/cascades',
@@ -85,7 +85,7 @@ const newRouter = [
             access: false,
             text: `Для перехода на страницу обучения необходимо загрузить датасет.`,
         },
-        component: () => import('@/views/Training'),
+        component: () => import('@/views/new/completion/Training'),
     },
     {
         path: '/new/deploy',
@@ -133,5 +133,5 @@ const newRouter = [
     },
 
 ]
-
+const newRouter = (process.env.NODE_ENV === 'development' ) ? router  : []
 export { newRouter }

@@ -99,6 +99,9 @@ export default {
     -ms-user-select: none;
     user-select: none;
     transition: border-color 0.3s ease-in-out;
+    color: #a7bed3;
+
+    background-color: #242f3d;
   }
   .active span {
     border-color: #65b9f4;

@@ -1016,6 +1016,7 @@ class ConditionalGANTerraModel(GANTerraModel):
                         disc_labels=image_data.get(self.input_keys.get('disc_labels')),
                         input_keys=self.input_keys
                     )
+                    print(f"Batch {cur_step}")
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()

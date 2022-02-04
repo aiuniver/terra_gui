@@ -23,7 +23,7 @@
     <div v-if="showContent" class="d-content">
       <scrollbar>
         <template v-for="({ label, value }, i) of list">
-          <div class="d-content__item" :key="label + i" @click="change({ label, value })">
+          <div v-if="value !== '__null__'" :class="['d-content__item', { 'd-content__item--small': small }]" :key="label + i" @click="change({ label, value })">
             {{ label }}
           </div>
         </template>
@@ -55,6 +55,7 @@ export default {
       default: '',
     },
     parse: [String, Number],
+    value: [String, Number]
   },
   data: () => ({
     input: '',
@@ -81,8 +82,9 @@ export default {
     },
   },
   created() {
-    this.input = this.list[0]?.label;
-  },
+    const target = this.list.find(item => item.value === this.value)
+    this.input = target.label
+  }
 };
 </script>
 
@@ -113,14 +115,18 @@ export default {
   border-radius: 4px;
   overflow: hidden;
   z-index: 2;
-  height: 200px;
+  height: 100px;
+  max-height: min-content;
   &__item {
     padding: 10px;
     cursor: pointer;
-
     &:hover {
       background-color: #1e2734;
       color: #65b9f4;
+    }
+    &--small {
+      padding: 3px 10px;
+      font-size: 14px;
     }
   }
 }

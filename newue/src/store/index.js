@@ -14,6 +14,7 @@ import cascades from './modules/cascades';
 import trainings from './modules/trainings';
 import modeling from './modules/modeling';
 import servers from './modules/servers';
+import dialogs from './modules/dialogs';
 
 Vue.use(Vuex);
 
@@ -30,7 +31,8 @@ export default new Vuex.Store({
     cascades,
     trainings,
     modeling,
-    servers
+    servers,
+    dialogs
   },
   state: {},
   mutations: {},

@@ -1,6 +1,6 @@
 <template>
   <div :class="['dropdown', { 'dropdown--active': show }]">
-    <label :for="name">{{ label }}</label>
+    <label v-if="label" :for="name">{{ label }}</label>
     <input
       class="dropdown__input"
       v-model="search"
@@ -11,6 +11,7 @@
       :autocomplete="'off'"
       @focus="focus"
       @blur="select(false)"
+      @input="changed=true"
     />
     <div class="dropdown__content" v-show="show">
       <div v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
@@ -41,6 +42,7 @@ export default {
       selected: {},
       show: false,
       search: '',
+      changed: false
     };
   },
   created() {
@@ -52,7 +54,7 @@ export default {
       return this.list
         ? this.list.filter(item => {
             const search = this.search;
-            return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+            return search && this.changed ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
           })
         : [];
     },
@@ -69,6 +71,7 @@ export default {
       } else {
         this.search = this.selected.label || this.value;
         this.show = false;
+        this.changed = false;
       }
     },
     focus({ target }) {
