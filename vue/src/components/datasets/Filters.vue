@@ -90,7 +90,7 @@ export default {
     padding: 0 15px;
     font-size: 0.75rem;
     border: 1px solid;
-    border-color: #6c7883;
+    // border-color: #6c7883;
     border-radius: 4px;
     white-space: nowrap;
     cursor: pointer;
@@ -104,7 +104,7 @@ export default {
     background-color: #242f3d;
   }
   .active span {
-    border-color: #65b9f4;
+    border-color: #65b9f4 !important;
   }
 }
 </style>

@@ -101,6 +101,7 @@ export default {
     }
   }
   .clickable {
+    display: flex;
     color: #65b9f4;
     > * {cursor: pointer;}
     i {
