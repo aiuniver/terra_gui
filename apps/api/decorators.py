@@ -7,6 +7,7 @@ def progress_error(progress_name: str):
     def decorator(method):
         def wrapper(*args, **kwargs):
             progress = progress_pool(progress_name)
+            print("DECORATOR:", progress)
             if not progress.success:
                 progress.error.data = progress.data
                 raise progress.error
