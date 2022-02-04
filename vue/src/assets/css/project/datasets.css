@@ -22,7 +22,7 @@
     /* position:absolute; */
     left:0;
     top:0;
-    border-bottom:1px solid;
+    border-bottom:1px solid black;
     overflow:hidden;
 }
 .filters > .inner > ul {
