@@ -1048,6 +1048,8 @@ class ConditionalGANTerraModel(GANTerraModel):
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:
                         break
+                    # if cur_step > 50:
+                    #     break
 
                 self.save_weights()
                 # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:

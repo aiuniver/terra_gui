@@ -422,9 +422,19 @@ class CGANCallback:
     @staticmethod
     def get_label_idx(options: PrepareDataset):
         labels = []
-        for col in options.dataframe.get('train').columns:
-            if "Класс" in col:
-                labels = list(options.dataframe['train'][col])
+        class_col = ''
+        for col in options.data.columns.keys():
+            col_name = list(options.data.columns[col].keys())[0]
+            logger.debug(f"{col_name}: {options.data.columns[col][col_name]}")
+            if options.data.columns[col][col_name].get('task') == 'Classification':
+                class_col = col_name
+                break
+        # for col in options.dataframe.get('train').columns:
+        # for col in options.data.columns.keys():
+        #     col_id = list(col.keys())[0]
+        #     logger.debug(f"col: {col}")
+        #     if "Класс" in col:
+        labels = list(options.dataframe['train'][class_col])
         label_idx = {}
         for i, lbl in enumerate(labels):
             if f"{lbl}" not in label_idx.keys():
@@ -443,7 +453,7 @@ class CGANCallback:
         try:
             return_data = {}
             label_idx = CGANCallback().get_label_idx(options)
-            # logger.debug(f"label_idx: {label_idx.keys()}")
+            logger.debug(f"label_idx: {label_idx.keys()}")
             if interactive_config.intermediate_result.show_results:
                 # data_type = interactive_config.intermediate_result.data_type.name
                 for idx in range(interactive_config.intermediate_result.num_examples):
@@ -458,7 +468,7 @@ class CGANCallback:
                         label = np.random.choice(list(example_idx.keys()))
                     else:
                         label = list(example_idx.keys())[idx]
-                    # logger.debug(f"label: {label}")
+                    logger.debug(f"label: {label}")
                     return_data[f"{idx + 1}"]['initial_data'][f"Класс"] = {
                         "type": "str",
                         "data": [

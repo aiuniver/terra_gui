@@ -158,7 +158,7 @@ class GUINN:
         # logger.debug(f"{GUINN.name}, {GUINN._prepare_dataset.__name__}")
         method_name = '_prepare_dataset'
         try:
-            # logger.info("Загрузка датасета...", extra={"type": "info"})
+            logger.info("Загрузка датасета...", extra={"type": "info"})
             prepared_dataset = PrepareDataset(data=dataset, datasets_path=dataset.path)
             prepared_dataset.prepare_dataset()
             if state != "addtrain":
