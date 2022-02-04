@@ -170,6 +170,7 @@ class CreateDataset(object):
                                'sources_paths': output_copy.parameters.sources_paths}})
                     )
                     noise_flag = True
+                    creation_data.use_generator = True
                     break
 
         for out in creation_data.outputs:
@@ -209,6 +210,7 @@ class CreateDataset(object):
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
             elif out.type in [LayerOutputTypeChoice.ImageGAN, LayerOutputTypeChoice.ImageCGAN]:
+                creation_data.use_generator = True
                 out_list = []
                 img_shape = ()
                 sources_paths = []
@@ -282,6 +284,7 @@ class CreateDataset(object):
                                 creation_data.columns_processing[worker_name].parameters.step
                 elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.ImageGAN.name,
                                                                             LayerOutputTypeChoice.ImageCGAN.name]:
+                    creation_data.use_generator = True
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[worker_name] = ColumnsProcessingData(
                         **{"type": "Generator", "parameters": {'shape': shape}})
