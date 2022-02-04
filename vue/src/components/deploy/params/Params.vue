@@ -1,5 +1,5 @@
 <template>
-  <div class="params" :key="'key_update-' + updateKey">
+  <div class="params deploy" :key="'key_update-' + updateKey">
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
