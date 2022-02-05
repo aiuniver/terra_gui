@@ -73,7 +73,7 @@ const router = [
             access: true,
             text: `Для перехода на страницу каскадов необходимо загрузить датасет.`,
         },
-        component: () => import('@/views/Cascades'),
+        component: () => import('@/views/new/design/Cascades'),
     },
 
     {

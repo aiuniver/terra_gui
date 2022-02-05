@@ -102,7 +102,7 @@ export default {
     &:checked + span {
       background: #65B9F4;
       &::before {
-        transform: translateX(12px);
+        transform: translateX(15px);
       }
     }
   }
@@ -130,7 +130,7 @@ export default {
         height: 16px;
         width: 16px;
         position: absolute;
-        left: 4px;
+        left: 2px;
         top: 2px;
         border-radius: 50%;
         transition: 0.2s;

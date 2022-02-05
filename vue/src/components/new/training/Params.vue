@@ -17,7 +17,7 @@
             >
               <div v-if="key !== 'outputs'" class="params__fields">
                 <template v-for="(data, i) of fields">
-                  <t-auto-field-trainings
+                  <TAutoFieldTrainings
                     v-bind="data"
                     :class="`params__fields--${key}`"
                     :key="key + i"
@@ -35,7 +35,7 @@
                     </div>
                     <div class="block-layers__body">
                       <template v-for="(data, i) of field.fields">
-                        <t-auto-field-trainings
+                        <TAutoFieldTrainings
                           v-bind="data"
                           :key="'checkpoint_' + i + data.parse"
                           :state="state"
@@ -77,12 +77,14 @@ import ser from '@/assets/js/myserialize';
 import { mapGetters } from 'vuex';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 import SaveTrainings from '@/components/app/modal/SaveTrainings';
+import TAutoFieldTrainings from './TAutoFieldTrainings.vue';
 
 export default {
   name: 'params-traning',
   components: {
     LoadSpiner,
     SaveTrainings,
+    TAutoFieldTrainings
   },
   data: () => ({
     collapse: ['main', 'fit', 'outputs', 'checkpoint', 'yolo'],
@@ -92,8 +94,8 @@ export default {
     stopLearning: false,
     dialogSave: false,
     trainSettings: {},
-    key: 0,
-    doNotSave: ['architecture[parameters][checkpoint][metric_name]']
+    key: '1212',
+    doNotSave: ['architecture[parameters][checkpoint][metric_name]'],
   }),
   computed: {
     ...mapGetters({
@@ -136,6 +138,7 @@ export default {
       }
     },
     async start() {
+      console.log(this.trainSettings)
       const res = await this.$store.dispatch('trainings/start', this.trainSettings);
       if (res) {
         const { data } = res;
@@ -184,13 +187,17 @@ export default {
       }
     },
     parse({ parse, value, changeable, mounted }) {
+      // parse({ parse, value, name, changeable, mounted }) {
+      // console.log({ parse, value, name, changeable, mounted });
       ser(this.trainSettings, parse, value);
       this.trainSettings = { ...this.trainSettings };
       if (!mounted && changeable) {
         this.$store.dispatch('trainings/update', this.trainSettings);
         this.state = { [`architecture[parameters][checkpoint][metric_name]`]: null };
       } else {
-        this.state = { [`${parse}`]: value };
+        if (value) {
+          this.state = { [`${parse}`]: value };
+        }
       }
     },
   },
@@ -207,7 +214,7 @@ export default {
   },
   watch: {
     params() {
-      this.key++;
+      this.key = 'dsdsdsd';
     },
   },
 };
@@ -241,7 +248,6 @@ export default {
   &__body {
     overflow: hidden;
     flex: 0 1 auto;
-    padding-bottom: 100px;
   }
   &__overlay {
     position: absolute;
@@ -250,7 +256,7 @@ export default {
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: rgba(14, 22, 33, 30%);
+    background-color: rgb(14 22 33 / 30%);
     z-index: 5;
   }
   &__footer {
@@ -270,6 +276,9 @@ export default {
   &__save {
     width: 100%;
     margin: 0 0 10px 0;
+  }
+  &__items {
+    padding-bottom: 20px;
   }
   &__fields {
     display: flex;

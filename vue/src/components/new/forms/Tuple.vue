@@ -126,4 +126,8 @@ export default {
     width: 150px;
   }
 }
+
+input:focus {
+  border-color: #65B9F4;
+}
 </style>
