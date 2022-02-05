@@ -262,10 +262,7 @@ class FitCallback:
                 self.stop_training = True
                 progress.pool(
                     self.progress_name,
-                    percent=self.last_epoch / (
-                        self.total_epochs if self._get_train_status() == StateStatusChoice.addtrain
-                        else self.retrain_epochs
-                    ) * 100,
+                    percent=(self.last_epoch / self.total_epochs) * 100,
                     message="Обучение остановлено пользователем, ожидайте остановку...",
                     finished=False,
                 )
