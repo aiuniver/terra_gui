@@ -790,8 +790,8 @@ class BaseObjectDetectionCallback:
         try:
             return_data = {}
             if yolo_interactive_config.intermediate_result.show_results:
-                count = interactive_config.intermediate_result.num_examples \
-                    if len(options.dataframe.get('val')) > interactive_config.intermediate_result.num_examples \
+                count = yolo_interactive_config.intermediate_result.num_examples \
+                    if len(options.dataframe.get('val')) > yolo_interactive_config.intermediate_result.num_examples \
                     else len(options.dataframe.get('val'))
                 for idx in range(count):
                     return_data[f"{idx + 1}"] = {
@@ -967,7 +967,7 @@ class BaseObjectDetectionCallback:
             raise exc
 
     @staticmethod
-    def get_balance_data_request(options, dataset_balance, interactive_config) -> list:
+    def get_balance_data_request(options, dataset_balance, yolo_interactive_config) -> list:
         method_name = 'get_balance_data_request'
         try:
             return_data = []
@@ -978,7 +978,7 @@ class BaseObjectDetectionCallback:
                     for data_type in ['train', 'val']:
                         names, count = sort_dict(
                             dict_to_sort=dataset_balance.get("output").get(class_type).get(data_type),
-                            mode=interactive_config.data_balance.sorted.name
+                            mode=yolo_interactive_config.data_balance.sorted.name
                         )
                         type_name = 'Тренировочная' if data_type == 'train' else 'Проверочная'
                         cls_name = 'баланс присутсвия' if class_type == 'class_count' else 'процент пространства'
@@ -1072,7 +1072,7 @@ class YoloV3Callback(BaseObjectDetectionCallback):
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
         return YoloV3Callback().get_balance_data_request(
-            options=options, dataset_balance=dataset_balance, interactive_config=interactive_config)
+            options=options, dataset_balance=dataset_balance, yolo_interactive_config=interactive_config)
 
 
 class YoloV4Callback(BaseObjectDetectionCallback):
@@ -1121,4 +1121,4 @@ class YoloV4Callback(BaseObjectDetectionCallback):
     @staticmethod
     def balance_data_request(options, dataset_balance, interactive_config) -> list:
         return YoloV4Callback().get_balance_data_request(
-            options=options, dataset_balance=dataset_balance, interactive_config=interactive_config)
+            options=options, dataset_balance=dataset_balance, yolo_interactive_config=interactive_config)

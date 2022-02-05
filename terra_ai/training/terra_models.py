@@ -510,10 +510,8 @@ class YoloTerraModel(BaseTerraModel):
                         val_current_idx = 0
                         for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
                                 params.base.batch):
-                            results = self.__validate_step(val_image_data,
-                                                           target1,
-                                                           target2,
-                                                           **yolo_parameters)
+                            results = self.__validate_step(
+                                val_image_data, val_target1, val_target2, **yolo_parameters)
                             val_true_array = list(val_target1.values())
                             length = val_true_array[0].shape[0]
                             for i in range(len(val_true_array)):
@@ -723,7 +721,6 @@ class GANTerraModel:
         custom_object = {}
         for k, v in custom_dict.items():
             try:
-                print(k, v)
                 custom_object[k] = getattr(importlib.import_module(f".{v}", package="terra_ai.custom_objects"), k)
             except:
                 continue
@@ -1016,7 +1013,6 @@ class ConditionalGANTerraModel(GANTerraModel):
                         disc_labels=image_data.get(self.input_keys.get('disc_labels')),
                         input_keys=self.input_keys
                     )
-                    # print(f"Batch {cur_step}")
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
