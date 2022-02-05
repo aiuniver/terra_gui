@@ -77,12 +77,7 @@ StatesTrainingYoloParamsDisabled = {
         "architecture_parameters_yolo_yolo_iou_loss_thresh",
         "architecture_parameters_yolo_train_warmup_epochs",
     ],
-    StateStatusChoice.trained: [
-        "architecture_parameters_yolo_train_lr_init",
-        "architecture_parameters_yolo_train_lr_end",
-        "architecture_parameters_yolo_yolo_iou_loss_thresh",
-        "architecture_parameters_yolo_train_warmup_epochs",
-    ],
+    StateStatusChoice.trained: [],
     StateStatusChoice.stopped: [
         "epochs",
         "architecture_parameters_yolo_train_lr_init",
