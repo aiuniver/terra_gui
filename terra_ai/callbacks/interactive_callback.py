@@ -796,8 +796,8 @@ class InteractiveCallback:
                             if x is not None:
                                 no_none_train.append(x)
                         best_train_value = min(no_none_train) if no_none_train else None
-                        print('self.log_history.get("epochs"), train_list, best_train_value',
-                              self.log_history.get("epochs"), train_list, best_train_value)
+                        # print('self.log_history.get("epochs"), train_list, best_train_value',
+                        #       self.log_history.get("epochs"), train_list, best_train_value)
                         best_train = fill_graph_plot_data(
                             x=[self.log_history.get("epochs")[train_list.index(best_train_value)]
                                if best_train_value is not None else None],
