@@ -510,10 +510,8 @@ class YoloTerraModel(BaseTerraModel):
                         val_current_idx = 0
                         for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
                                 params.base.batch):
-                            results = self.__validate_step(val_image_data,
-                                                           target1,
-                                                           target2,
-                                                           **yolo_parameters)
+                            results = self.__validate_step(
+                                val_image_data, val_target1, val_target2, **yolo_parameters)
                             val_true_array = list(val_target1.values())
                             length = val_true_array[0].shape[0]
                             for i in range(len(val_true_array)):
