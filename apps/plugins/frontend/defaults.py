@@ -77,12 +77,7 @@ StatesTrainingYoloParamsDisabled = {
         "architecture_parameters_yolo_yolo_iou_loss_thresh",
         "architecture_parameters_yolo_train_warmup_epochs",
     ],
-    StateStatusChoice.trained: [
-        "architecture_parameters_yolo_train_lr_init",
-        "architecture_parameters_yolo_train_lr_end",
-        "architecture_parameters_yolo_yolo_iou_loss_thresh",
-        "architecture_parameters_yolo_train_warmup_epochs",
-    ],
+    StateStatusChoice.trained: [],
     StateStatusChoice.stopped: [
         "epochs",
         "architecture_parameters_yolo_train_lr_init",
@@ -114,6 +109,7 @@ StatesTrainingBasicParamsDisabled = {
         "batch",
         "epochs",
         "optimizer",
+        "autobalance",
         "optimizer_main_learning_rate",
         "optimizer_extra_beta_1",
         "optimizer_extra_beta_2",
@@ -153,6 +149,7 @@ StatesTrainingBasicParamsDisabled = {
         "batch",
         "epochs",
         "optimizer",
+        "autobalance",
         "optimizer_main_learning_rate",
         "optimizer_extra_beta_1",
         "optimizer_extra_beta_2",
@@ -235,6 +232,7 @@ StatesTrainingBaseParamsDisabled = {
     "ImageCGAN": {**StatesTrainingGANParamsDisabled},
     "TextToImageGAN": {**StatesTrainingGANParamsDisabled},
     "ImageToImageGAN": {**StatesTrainingGANParamsDisabled},
+    "ImageSRGAN": {**StatesTrainingGANParamsDisabled},
 }
 
 
@@ -313,6 +311,14 @@ class ArchitectureBaseGroupForm(ArchitectureMixinForm):
 
     def _set_epochs(self, value: int, **kwargs):
         fields = list(filter(lambda item: item.name == "epochs", self.fit.fields))
+        if not fields:
+            return
+        fields[0].value = value
+
+        self.disable_by_state(fields[0], **kwargs)
+
+    def _set_autobalance(self, value: int, **kwargs):
+        fields = list(filter(lambda item: item.name == "autobalance", self.fit.fields))
         if not fields:
             return
         fields[0].value = value
@@ -795,6 +801,10 @@ class ArchitectureTextToImageGANForm(ArchitectureBasicForm):
 
 
 class ArchitectureImageToImageGANForm(ArchitectureBasicForm):
+    pass
+
+
+class ArchitectureImageSRGANForm(ArchitectureBasicForm):
     pass
 
 

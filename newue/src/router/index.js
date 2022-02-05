@@ -72,7 +72,7 @@ const router = new Router({
     },
     {
       path: '/design/',
-      component: () => import('@/views/datasets/index'),
+      component: () => import('@/views/design/index'),
       meta: {
         title: 'Проектирование',
         access: true,
@@ -82,7 +82,7 @@ const router = new Router({
         {
           path: 'model',
           name: 'Model',
-          component: () => import('@/views/datasets/Choice'),
+          component: () => import('@/views/design/Modeling'),
           meta: {
             title: 'Проектирование',
             access: true,
@@ -92,7 +92,7 @@ const router = new Router({
         {
           path: 'cascade',
           name: 'Cascade',
-          component: () => import('@/views/datasets/Create'),
+          component: () => import('@/views/design/Cascades'),
           meta: {
             title: 'Каскады',
             access: true,

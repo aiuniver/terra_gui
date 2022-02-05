@@ -193,6 +193,8 @@ class ArchitectureData(BaseMixinData):
     type: ArchitectureChoice
     parameters: Any
 
+    __repr_str_exclude__ = ["model"]
+
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"model"}})
         return super().dict(**kwargs)
@@ -239,6 +241,8 @@ class TrainData(BaseMixinData):
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
 
+    __repr_str_exclude__ = ["model"]
+
     @validator("architecture", pre=True, allow_reuse=True)
     def _validate_architecture(cls, value, values):
         if not value:
@@ -262,6 +266,8 @@ class TrainingDetailsData(BaseMixinData):
     progress: Optional[dict] = {}
 
     _path: Path = PrivateAttr()
+
+    __repr_str_exclude__ = ["model"]
 
     def __init__(self, **data):
         self._path = Path(data.get("path"))

@@ -52,5 +52,6 @@ class ParametersExtraData(BaseMixinData):
     kernel_regularizer: Optional[RegularizerChoice]
     dropout_rate: ConstrainedFloatValueGe0Le1 = 0.1
     layers_seq_config: CONVBlockConfigChoice = CONVBlockConfigChoice.conv_bn_lrelu_drop_conv_bn_lrelu_drop
-    leaky_relu_alpha: PositiveFloat = 0.3
+    leaky_relu_alpha: ConstrainedFloatValueGe0Le1 = 0.3
+    bn_momentum: ConstrainedFloatValueGe0Le1 = 0.99
     pass

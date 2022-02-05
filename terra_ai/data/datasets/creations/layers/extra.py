@@ -2,7 +2,6 @@ from typing import Optional, List, Union, Dict
 from pydantic import validator
 from pydantic.types import DirectoryPath, PositiveInt, PositiveFloat
 
-from .image_augmentation import AugmentationData
 from ...extra import (
     LayerNetChoice,
     LayerScalerImageChoice,
@@ -40,8 +39,6 @@ class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingDa
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
     put: Optional[PositiveInt]
-    augmentation: Optional[AugmentationData]
-    deploy: Optional[bool] = False
     object_detection: Optional[bool] = False
 
 
@@ -125,11 +122,11 @@ class ParametersDataframeData(SourcesPathsData, ColumnProcessingData):
     pass
 
 
-class ParametersGANData(ColumnProcessingData):
+class ParametersImageGANData(ColumnProcessingData):
     pass
 
 
-class ParametersCGANData(ColumnProcessingData):
+class ParametersImageCGANData(ColumnProcessingData):
     pass
 
 

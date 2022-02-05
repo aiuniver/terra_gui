@@ -1,0 +1,528 @@
+/* board */
+.canvas-container {
+	width:100%;
+	height:100%;
+}
+.canvas-container > .clear {
+	width:auto;
+	height:18px;
+	padding:0 20px;
+	position:absolute;
+	top:10px;
+	right:10px;
+	font-size:.75rem;
+	z-index: 9;
+}
+.canvas-container > .clear.hidden {
+	display:none;
+}
+.canvas-container > .canvas {
+	width:100%;
+	height:100%;
+	position:relative;
+	overflow:hidden;
+	user-select:none;
+}
+.canvas-container > .canvas > .hint {
+	line-height:1.25;
+    padding:10px 15px;
+	position:absolute;
+	z-index:10;
+	background:#2B5278;
+	color:#fff;
+	font-size:.75rem;
+    border-radius:4px;
+	box-shadow:0 2px 5px rgba(0,0,0,.25);
+	opacity:.9;
+	white-space:nowrap;
+}
+.canvas-container > .canvas > svg {
+	width:100%;
+	height:100%;
+}
+.canvas-container > .zoom {
+	position:absolute;
+	right:10px;
+	bottom:10px;
+	list-style:none;
+	border:2px solid;
+}
+.canvas-container > .zoom.hidden {
+	display:none;
+}
+.canvas-container > .zoom > :not(:last-child) {
+	border-bottom:2px solid;
+}
+.canvas-container > .zoom > li > span {
+	display:block;
+	padding:2px;
+	line-height:0;
+	cursor:pointer;
+	user-select:none;
+}
+.canvas-container > .zoom > li > span:after {
+	display:block;
+	content:'';
+	width:14px;
+	height:14px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
+}
+
+/* properties */
+.properties > .wrapper > .params-navbar {
+	width:100%;
+	position:absolute;
+	left:0;
+	top:0;
+}
+.properties > .wrapper > .params-navbar > ul {
+	list-style:none;
+}
+.properties > .wrapper > .params-navbar > ul > li > span {
+	display:block;
+	line-height:20px;
+	padding:0 20px;
+	font-size:.75rem;
+	white-space:nowrap;
+    cursor:pointer;
+	transition:color .3s ease-in-out;
+	user-select:none;
+}
+.properties > .wrapper > .params {
+	height:100%;
+	padding:20px 0 0 0;
+}
+.properties > .wrapper > .params > .params-container {
+	height:100%;
+}
+.properties > .wrapper > .params .params-item.hidden {
+	display:none;
+}
+
+
+/* LOAD-MODEL */
+#modal-window-load-model > .models-data {
+	height:100%;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:stretch;
+    -ms-flex-line-pack:stretch;
+    align-content:stretch;
+    -webkit-box-align:start;
+    -moz-box-align:start;
+    -webkit-align-items:flex-start;
+    -ms-flex-align:start;
+    align-items:flex-start;
+}
+#modal-window-load-model > .models-data > .models-list {
+	height:100%;
+	padding:20px 0;
+	border-right:1px solid;
+    -webkit-box-ordinal-group:1;
+    -moz-box-ordinal-group:1;
+    -webkit-order:0;
+    -ms-flex-order:0;
+    order:0;
+    -webkit-box-flex:1;
+    -moz-box-flex:1;
+    -webkit-flex:1 1 auto;
+    -ms-flex:1 1 auto;
+    flex:1 1 auto;
+    -webkit-align-self:auto;
+    -ms-flex-item-align:auto;
+    align-self:auto;
+}
+#modal-window-load-model > .models-data > .models-list > div {
+	height:100%;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list {
+	list-style:none;
+	padding:0 20px 0 0;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li {
+	position:relative;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span {
+	display:block;
+	line-height:1;
+	padding:10px 20px 10px 48px;
+	position:relative;
+	color:#fff;
+	font-size:.875rem;
+	text-overflow:ellipsis;
+	border-radius:4px;
+	cursor:pointer;
+	user-select:none;
+	overflow:hidden;
+	transition:background-color .3s ease-in-out, color .3s ease-in-out;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li[data-is_terra=false] > span {
+	padding-right:34px;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:before {
+	display:block;
+	content:'';
+	width:18px;
+	height:18px;
+	margin:-10px 0 0 0;
+	position:absolute;
+	left:20px;
+	top:50%;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
+	transition:background-image .3s ease-in-out;
+}
+#modal-window-load-model > .models-data > .model-arch {
+	height:100%;
+	padding:20px;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper {
+	width:200px;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper.hidden > * {
+	display:none;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > :not(:last-child) {
+	margin-bottom:20px;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > :not(:last-child) {
+	margin-bottom:10px;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
+	line-height:1.25;
+	margin-bottom:10px;
+	font-size:.625rem;
+	white-space:nowrap;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param > span {
+	color:#fff;
+	font-size:.75rem;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .model-arch-img {
+	width:200px;
+	height:200px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .model-arch-img > img {
+	max-width:100%;
+	max-height:100%;
+}
+#modal-window-keras-code {
+	padding:20px 20px 60px 20px;
+}
+#modal-window-keras-code > .wrapper {
+	height:100%;
+	background:#0E1621;
+	border-radius:4px;
+    box-shadow:inset 0 2px 10px 0 rgba(0,0,0,.25);
+}
+#modal-window-keras-code > .wrapper .content {
+	height:100%;
+	padding:15px 20px;
+}
+#modal-window-keras-code > .wrapper .content > pre {
+	line-height:1.5;
+    color:#A7BED3;
+    font-size:.75rem;
+}
+#modal-window-keras-code > .action {
+	width:100%;
+	height:50px;
+	padding:0 20px;
+	position:absolute;
+	left:0;
+	bottom:0;
+}
+#modal-window-keras-code > .action > * {
+	vertical-align:top;
+	user-select:none;
+}
+#modal-window-keras-code > .action > span {
+	display:inline-block;
+	width:40px;
+	height:40px;
+	padding:8px;
+	cursor:pointer;
+}
+#modal-window-keras-code > .action > span:after {
+	display:block;
+	content:'';
+	width:24px;
+	height:24px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
+}
+#modal-window-keras-code > .action > div {
+	display:inline-block;
+	line-height:40px;
+	margin:0 0 0 10px;
+	color:#0f0;
+	font-size:.75rem;
+}
+#modal-window-save-model form,
+#modal-window-clear-model form {
+	padding:20px;
+}
+#modal-window-save-model form .field-inline.field-reverse > .checkout-switch {
+	margin-left:0;
+}
+#modal-window-save-model form > .inner,
+#modal-window-clear-model form > .inner {
+	margin-bottom:0;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:flex-end;
+    -ms-flex-line-pack:end;
+    align-content:flex-end;
+    -webkit-box-align:end;
+    -moz-box-align:end;
+    -webkit-align-items:flex-end;
+    -ms-flex-align:end;
+    align-items:flex-end;
+}
+#modal-window-save-model form > .inner > *,
+#modal-window-clear-model form > .inner > * {
+	margin-bottom:0 !important;
+}
+#modal-window-clear-model form > .inner > .field-form > label {
+	margin:0;
+}
+#modal-window-save-model form > .inner > .field-form:first-child {
+    -webkit-box-ordinal-group:1;
+    -moz-box-ordinal-group:1;
+    -webkit-order:0;
+    -ms-flex-order:0;
+    order:0;
+    -webkit-box-flex:1;
+    -moz-box-flex:1;
+    -webkit-flex:1 1 auto;
+    -ms-flex:1 1 auto;
+    flex:1 1 auto;
+    -webkit-align-self:auto;
+    -ms-flex-item-align:auto;
+    align-self:auto;
+}
+#modal-window-save-model form > .inner > .field-form {
+	margin-bottom:0 !important;
+}
+#modal-window-save-model form > .inner > .field-inline {
+	padding-left:20px;
+	margin-bottom:14px !important;
+}
+#modal-window-save-model form > .inner > .field-inline.field-reverse > label {
+	padding-right:0;
+}
+#modal-window-save-model form > .actions-form {
+	margin-top:20px;
+}
+#modal-window-clear-model form > .actions-form {
+	margin:20px -2px 0 -2px;
+}
+#modal-window-clear-model form > .actions-form > * {
+	display:inline-block;
+	width:50%;
+	margin:0;
+	padding:0 2px;
+	vertical-align:top;
+}
+
+#canvas-nodes > .node > .tools {
+	display:none;
+}
+.canvas-container.onlink .node > .tools {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .tools,
+#canvas-nodes > .node.active > .tools {
+	display:block;
+}
+#canvas-nodes > .node > .params {
+	display:none;
+}
+.canvas-container.onlink .node > .params {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .params,
+#canvas-nodes > .node.active > .params {
+	display:block;
+}
+#canvas-nodes > .node > .errors {
+	display:none;
+}
+.canvas-container.onlink .node > .errors {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .errors,
+#canvas-nodes > .node.active > .errors {
+	display:block;
+}
+#canvas-nodes > .node > .tools > .bg {
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
+	rx:4;
+	ry:4;
+}
+#canvas-nodes > .node > .tools > .btn {
+	fill:transparent;
+	cursor:pointer;
+}
+#canvas-nodes > .node > .params > rect {
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
+	rx:4;
+	ry:4;
+}
+#canvas-nodes > .node > .errors > .error-bg {
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
+	rx:4;
+	ry:4;
+	stroke-width:2;
+	stroke:#f00;
+}
+#canvas-nodes > .node.error > rect.node-bg {
+	stroke:#f00 !important;
+}
+#canvas-nodes > .node > rect.pointer {
+	opacity:0;
+	cursor:pointer;
+}
+#canvas-nodes > .node:hover > rect.node-bg ,
+#canvas-nodes > .node.active > rect.node-bg  {
+	fill:#17212B;
+}
+#canvas-nodes > .node > text {
+	font-family:"Open Sans", sans-serif;
+}
+#canvas-nodes > .node.error > text {
+	fill:#f00 !important;
+}
+#canvas-nodes > .node:hover > text > tspan.name,
+#canvas-nodes > .node.active > text > tspan.name,
+#canvas-nodes > .node.hover > text > tspan.name {
+	fill:#fff;
+}
+#canvas-nodes > .node:hover > text > tspan.params,
+#canvas-nodes > .node.active > text > tspan.params,
+#canvas-nodes > .node.hover > text > tspan.params {
+	fill:#65B9F4;
+}
+#canvas-lines > line {
+	cursor:pointer;
+}
+#canvas-lines > line.active {
+	stroke:#EB5757;
+}
+
+.canvas-container > .canvas-save{
+	top: 35px;
+}
+
+#canvas-clear > span{
+	padding: 8px;
+}
+
+#canvas-clear > span > img{
+	border: 2px solid #A7BED3;
+	border-radius: 4px;
+}
+
+/*canvas-nodes > .node-type-input > rect {*/
+#canvas-nodes > .node > .node-menu{
+	fill: #E0E0E0;
+	stroke: #E0E0E0;
+	height: 15px;
+}
+
+#canvas-nodes > .node:hover > .node-menu,
+#canvas-nodes > .node.active > .node-menu,
+#canvas-nodes > .node.hover > .node-menu {
+	fill:#EDEDED;
+	stroke: #EDEDED;
+}
+
+
+.node > .delete-node-circle{
+	r:6;
+	fill: #EB5757;
+}
+
+.node > .delete-node-circle:hover{
+	r:6;
+	fill: #FF3D3D;
+}
+
+.node > .delete-links-circle{
+	r:6;
+	fill: #2F80ED;
+}
+
+.node > .delete-links-circle:hover{
+	r:6;
+	fill: #5BA1FF;
+}
+
+.node > .add-link-circle{
+	r:6;
+	fill: #27AE60;
+}
+
+.node > .add-link-circle:hover{
+	r:6;
+	fill: #17D969;
+}
+
+
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=text],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=number],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=email],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=tel],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=password] {
+	max-width:100px;
+	width:100px;
+}
+.project-modeling-properties .params-item > .form-inline-label > .field-inline.field-reverse > .checkout-switch {
+	margin-left:0;
+}

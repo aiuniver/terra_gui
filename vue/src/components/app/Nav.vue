@@ -75,6 +75,7 @@ export default {
   // left: 0;
   // top: 54px;
   z-index: 700;
+  background-color: #0e1621;
   &__menu {
     list-style: none;
     display: -webkit-box;

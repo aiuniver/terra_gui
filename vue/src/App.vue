@@ -46,7 +46,7 @@ export default {
     }),
     isNew() {
       const path = this?.$route?.fullPath || '';
-      return Boolean(path.includes('new'));
+      return Boolean(path.includes('new') && process.env.NODE_ENV === 'development');
     },
   },
   methods: {
@@ -128,11 +128,21 @@ export default {
     header {
       flex: 0 0 52px;
     }
-    main {
-      height: calc(100% - 112px);
-      flex: 1 1 auto;
-    }
   }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0e1621;
+  border-radius: 3px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #0e1621 #242f3d;
 }
 </style>
 

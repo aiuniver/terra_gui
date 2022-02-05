@@ -9,7 +9,8 @@ import tensorflow
 from terra_ai import progress
 from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
     AudioClassificationCallback, VideoClassificationCallback, DataframeClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback, TextToImageGANCallback, ImageToImageGANCallback
+from terra_ai.callbacks.gan_callback import GANCallback, CGANCallback, TextToImageGANCallback, ImageToImageGANCallback, \
+    ImageSRGANCallback
 from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
 from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
 from terra_ai.callbacks.segmentation_callbacks import ImageSegmentationCallback, TextSegmentationCallback
@@ -379,6 +380,7 @@ class InteractiveCallback:
 
             if self.options.data.architecture in YOLO_ARCHITECTURE:
                 if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
                     self.y_pred = self.callback.get_y_pred(
                         y_pred=self.raw_y_pred, options=self.options,
                         sensitivity=self.training_details.interactive.intermediate_result.sensitivity,
@@ -419,6 +421,33 @@ class InteractiveCallback:
                         y_pred=self.y_pred,
                         inverse_y_pred=self.inverse_y_pred,
                         inverse_y_true=self.inverse_y_true,
+                    )
+
+            if self.options.data.architecture in GAN_ARCHITECTURE:
+                if self.training_details.interactive.intermediate_result.show_results:
+                    count = self.training_details.interactive.intermediate_result.num_examples
+                    self.example_idx = self.callback.prepare_example_idx_to_show(
+                        array=self.y_pred.get('train'),
+                        seed_array=self.y_pred.get('seed'),
+                        count=count,
+                        choice_type=self.training_details.interactive.intermediate_result.example_choice_type,
+                        input_keys=self.y_pred.get('inputs')
+                    )
+                if self.training_details.interactive.intermediate_result.show_results:
+                    self.urgent_predict = True
+                    self.intermediate_result = self.callback.intermediate_result_request(
+                        options=self.options,
+                        interactive_config=self.training_details.interactive,
+                        example_idx=self.example_idx,
+                        dataset_path=self.dataset_path,
+                        preset_path=self.training_details.intermediate_path,
+                        x_val=self.x_val,
+                        inverse_x_val=self.inverse_x_val,
+                        y_pred=self.y_pred,
+                        inverse_y_pred=self.inverse_y_pred,
+                        y_true=self.y_true,
+                        inverse_y_true=self.inverse_y_true,
+                        class_colors=self.class_colors,
                     )
 
             self.random_key = ''.join(random.sample(string.ascii_letters + string.digits, 16))
@@ -517,7 +546,8 @@ class InteractiveCallback:
                 self.callback = TextToImageGANCallback()
             elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
                 self.callback = ImageToImageGANCallback()
-                # logger.debug("self.callback = ImageToImageGANCallback()")
+            elif dataset.data.architecture == ArchitectureChoice.ImageSRGAN:
+                self.callback = ImageSRGANCallback()
             else:
                 pass
         except Exception as error:
@@ -836,11 +866,14 @@ class InteractiveCallback:
             if self.options.data.architecture in GAN_ARCHITECTURE:
                 if not self.training_details.interactive.loss_graphs or not self.log_history.get("epochs"):
                     return data_return
-                model = 0
+                model = 1
                 for loss_graph_config in self.training_details.interactive.loss_graphs:
-                    if model % 2 == 0:
-                        progress_state = "normal"
-                        gen_list = self.log_history.get(f"output").get('loss').get('gen_loss').get('train')
+                    # if model % 2 == 0:
+                    progress_state = "normal"
+
+                    # График ошибки предобучения генератора в ImageSRGAN
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        gen_list = self.log_history.get(f"output").get('loss').get('pretrain_loss').get('train')
                         no_none_gen = []
                         for x in gen_list:
                             if x is not None:
@@ -850,58 +883,140 @@ class InteractiveCallback:
                             x=[self.log_history.get("epochs")[gen_list.index(best_gen_value)]
                                if best_gen_value is not None else None],
                             y=[best_gen_value],
-                            label="Лучший результат генератора"
+                            label="Лучший результат предобучения генератора"
                         )
                         gen_plot = fill_graph_plot_data(
                             x=self.log_history.get("epochs"), y=gen_list, label="Генератор"
                         )
-                        disc_list = self.log_history.get(f"output").get('loss').get('disc_loss').get("train")
-                        no_none_disc = []
-                        for x in disc_list:
-                            if x is not None:
-                                no_none_disc.append(x)
-                        best_disc_value = min(no_none_disc) if no_none_disc else None
-                        best_disc = fill_graph_plot_data(
-                            x=[self.log_history.get("epochs")[disc_list.index(best_disc_value)]
-                               if best_disc_value is not None else None],
-                            y=[best_disc_value],
-                            label="Лучший результат дискриминатора"
-                        )
-                        disc_plot = fill_graph_plot_data(
-                            x=self.log_history.get("epochs"), y=disc_list, label="Дискриминатор"
-                        )
                         data_return.append(
                             fill_graph_front_structure(
-                                _id=loss_graph_config.id,
+                                _id=model,
                                 _type='graphic',
-                                graph_name=f"Выход «{loss_graph_config.output_idx}» - График ошибки генератора и дискриминатора",
-                                short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
+                                graph_name=f"График ошибки MSE предобучения генератора",
+                                short_name=f"{loss_graph_config.output_idx} - График ошибки предобучения",
                                 x_label="Эпоха",
                                 y_label="Значение",
-                                plot_data=[gen_plot, disc_plot],
-                                best=[best_gen, best_disc],
+                                plot_data=[gen_plot],
+                                best=[best_gen],
                                 progress_state=progress_state
                             )
                         )
                         model += 1
+
+                    # График общей ошибки генератора и дискриминатора
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        gen_list = self.log_history.get(f"output").get('loss').get('perception_loss').get('train')
                     else:
-                        progress_state = "normal"
-                        real_list = self.log_history.get(f"output").get('loss').get('disc_real_loss').get('train')
-                        no_none_real = []
-                        for x in real_list:
+                        gen_list = self.log_history.get(f"output").get('loss').get('gen_loss').get('train')
+                    no_none_gen = []
+                    for x in gen_list:
+                        if x is not None:
+                            no_none_gen.append(x)
+                    best_gen_value = min(no_none_gen) if no_none_gen else None
+                    best_gen = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[gen_list.index(best_gen_value)]
+                           if best_gen_value is not None else None],
+                        y=[best_gen_value],
+                        label="Лучший результат генератора"
+                    )
+                    gen_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=gen_list, label="Генератор"
+                    )
+                    disc_list = self.log_history.get(f"output").get('loss').get('disc_loss').get("train")
+                    no_none_disc = []
+                    for x in disc_list:
+                        if x is not None:
+                            no_none_disc.append(x)
+                    best_disc_value = min(no_none_disc) if no_none_disc else None
+                    best_disc = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[disc_list.index(best_disc_value)]
+                           if best_disc_value is not None else None],
+                        y=[best_disc_value],
+                        label="Лучший результат дискриминатора"
+                    )
+                    disc_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=disc_list, label="Дискриминатор"
+                    )
+                    data_return.append(
+                        fill_graph_front_structure(
+                            _id=model,
+                            _type='graphic',
+                            graph_name=f"График ошибки генератора и дискриминатора",
+                            short_name=f"{loss_graph_config.output_idx} - График ошибки обучения",
+                            x_label="Эпоха",
+                            y_label="Значение",
+                            plot_data=[gen_plot, disc_plot],
+                            best=[best_gen, best_disc],
+                            progress_state=progress_state
+                        )
+                    )
+                    model += 1
+                    # График частных ошибок дискриминатора
+                    # else:
+                    # progress_state = "normal"
+                    real_list = self.log_history.get(f"output").get('loss').get('disc_real_loss').get('train')
+                    no_none_real = []
+                    for x in real_list:
+                        if x is not None:
+                            no_none_real.append(x)
+                    best_real_value = min(no_none_real) if no_none_real else None
+                    best_real = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[real_list.index(best_real_value)]
+                           if best_real_value is not None else None],
+                        y=[best_real_value],
+                        label="Лучший результат на реальных данных"
+                    )
+                    real_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=real_list, label="Реальные данные"
+                    )
+                    fake_list = self.log_history.get(f"output").get('loss').get('disc_fake_loss').get("train")
+                    no_none_fake = []
+                    for x in fake_list:
+                        if x is not None:
+                            no_none_fake.append(x)
+                    best_fake_value = min(no_none_fake) if no_none_fake else None
+                    best_fake = fill_graph_plot_data(
+                        x=[self.log_history.get("epochs")[fake_list.index(best_fake_value)]
+                           if best_fake_value is not None else None],
+                        y=[best_fake_value],
+                        label="Лучший результат на сгенерированных данных"
+                    )
+                    fake_plot = fill_graph_plot_data(
+                        x=self.log_history.get("epochs"), y=fake_list, label="Сгенерированные данные"
+                    )
+                    data_return.append(
+                        fill_graph_front_structure(
+                            _id=model,
+                            _type='graphic',
+                            graph_name=f"График ошибки дискриминатора на реальных и сгенерированных данных",
+                            short_name=f"{loss_graph_config.output_idx} - Тип данных",
+                            x_label="Эпоха",
+                            y_label="Значение",
+                            plot_data=[real_plot, fake_plot],
+                            best=[best_real, best_fake],
+                            progress_state=progress_state
+                        )
+                    )
+                    model += 1
+
+                    # График частных ошибок генератора
+                    if self.options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                        perc_list = self.log_history.get(f"output").get('loss').get('content_loss').get('train')
+                        no_none_perc = []
+                        for x in perc_list:
                             if x is not None:
-                                no_none_real.append(x)
-                        best_real_value = min(no_none_real) if no_none_real else None
-                        best_real = fill_graph_plot_data(
-                            x=[self.log_history.get("epochs")[real_list.index(best_real_value)]
-                               if best_real_value is not None else None],
-                            y=[best_real_value],
-                            label="Лучший результат на реальных данных"
+                                no_none_perc.append(x)
+                        best_perc_value = min(no_none_perc) if no_none_perc else None
+                        best_perc = fill_graph_plot_data(
+                            x=[self.log_history.get("epochs")[perc_list.index(best_perc_value)]
+                               if best_perc_value is not None else None],
+                            y=[best_perc_value],
+                            label="Лучший результат для ошибки контента"
                         )
-                        real_plot = fill_graph_plot_data(
-                            x=self.log_history.get("epochs"), y=real_list, label="Реальные данные"
+                        perc_plot = fill_graph_plot_data(
+                            x=self.log_history.get("epochs"), y=perc_list, label="Ошибка контента"
                         )
-                        fake_list = self.log_history.get(f"output").get('loss').get('disc_fake_loss').get("train")
+                        fake_list = self.log_history.get(f"output").get('loss').get('gen_loss').get("train")
                         no_none_fake = []
                         for x in fake_list:
                             if x is not None:
@@ -911,22 +1026,21 @@ class InteractiveCallback:
                             x=[self.log_history.get("epochs")[fake_list.index(best_fake_value)]
                                if best_fake_value is not None else None],
                             y=[best_fake_value],
-                            label="Лучший результат на сгенерированных данных"
+                            label="Лучший результат для ошибки генератора"
                         )
                         fake_plot = fill_graph_plot_data(
-                            x=self.log_history.get("epochs"), y=fake_list, label="Сгенерированные данные"
+                            x=self.log_history.get("epochs"), y=fake_list, label="Ошибка генератора"
                         )
                         data_return.append(
                             fill_graph_front_structure(
-                                _id=loss_graph_config.id,
+                                _id=model,
                                 _type='graphic',
-                                graph_name=f"Выход «{loss_graph_config.output_idx}» - "
-                                           f"График ошибки дискриминатора на реальных и сгенерированных данных",
-                                short_name=f"{loss_graph_config.output_idx} - Тип данных",
+                                graph_name=f"График ошибки генератора на ошибки контента",
+                                short_name=f"Тип данных",
                                 x_label="Эпоха",
                                 y_label="Значение",
-                                plot_data=[real_plot, fake_plot],
-                                best=[best_real, best_fake],
+                                plot_data=[perc_plot, fake_plot],
+                                best=[best_perc, best_fake],
                                 progress_state=progress_state
                             )
                         )

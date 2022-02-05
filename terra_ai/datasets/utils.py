@@ -135,6 +135,110 @@ class Voc:
     """
 
     @staticmethod
+    def generate(data):
+        def xml_indent(elem, level=0):
+            i = "\n" + level * "\t"
+            if len(elem):
+                if not elem.text or not elem.text.strip():
+                    elem.text = i + "\t"
+                if not elem.tail or not elem.tail.strip():
+                    elem.tail = i
+                for elem in elem:
+                    xml_indent(elem, level + 1)
+                if not elem.tail or not elem.tail.strip():
+                    elem.tail = i
+            else:
+                if level and (not elem.tail or not elem.tail.strip()):
+                    elem.tail = i
+
+        xml_list = {}
+
+        for key in data:
+            element = data[key]
+
+            xml_annotation = Element("annotation")
+
+            xml_size = Element("size")
+            xml_width = Element("width")
+            xml_width.text = element["size"]["width"]
+            xml_size.append(xml_width)
+
+            xml_height = Element("height")
+            xml_height.text = element["size"]["height"]
+            xml_size.append(xml_height)
+
+            xml_depth = Element("depth")
+            xml_depth.text = element["size"]["depth"]
+            xml_size.append(xml_depth)
+
+            xml_annotation.append(xml_size)
+
+            xml_segmented = Element("segmented")
+            xml_segmented.text = "0"
+
+            xml_annotation.append(xml_segmented)
+
+            if int(element["objects"]["num_obj"]) < 1:
+                return False, "number of Object less than 1"
+
+            for i in range(0, int(element["objects"]["num_obj"])):
+                xml_object = Element("object")
+                obj_name = Element("name")
+                obj_name.text = element["objects"][str(i)]["name"]
+                xml_object.append(obj_name)
+
+                obj_pose = Element("pose")
+                obj_pose.text = "Unspecified"
+                xml_object.append(obj_pose)
+
+                obj_truncated = Element("truncated")
+                obj_truncated.text = "0"
+                xml_object.append(obj_truncated)
+
+                obj_difficult = Element("difficult")
+                obj_difficult.text = "0"
+                xml_object.append(obj_difficult)
+
+                xml_bndbox = Element("bndbox")
+
+                obj_xmin = Element("xmin")
+                obj_xmin.text = element["objects"][str(
+                    i)]["bndbox"]["xmin"]
+                xml_bndbox.append(obj_xmin)
+
+                obj_ymin = Element("ymin")
+                obj_ymin.text = element["objects"][str(
+                    i)]["bndbox"]["ymin"]
+                xml_bndbox.append(obj_ymin)
+
+                obj_xmax = Element("xmax")
+                obj_xmax.text = element["objects"][str(
+                    i)]["bndbox"]["xmax"]
+                xml_bndbox.append(obj_xmax)
+
+                obj_ymax = Element("ymax")
+                obj_ymax.text = element["objects"][str(
+                    i)]["bndbox"]["ymax"]
+                xml_bndbox.append(obj_ymax)
+                xml_object.append(xml_bndbox)
+
+                xml_annotation.append(xml_object)
+
+            xml_indent(xml_annotation)
+
+            xml_list[key.split(".")[0]] = xml_annotation
+        return xml_list
+
+    @staticmethod
+    def save(xml_list, path):
+        path = os.path.abspath(path)
+
+        for key in xml_list:
+            xml = xml_list[key]
+            filepath = os.path.join(path, "".join([key, ".xml"]))
+            ElementTree(xml).write(filepath)
+
+    @staticmethod
     def parse(paths_list, tmp_lst):
         data = {}
         for filename in paths_list:
@@ -593,7 +697,6 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #
 #     return real_boxes
 
-
 def get_od_names(creation_data):
     names_list = []
     for out in creation_data.outputs:
@@ -652,7 +755,6 @@ def get_od_names(creation_data):
 
     return names_list
 
-
 def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
     dir_names = []
     file_names = []
@@ -681,7 +783,6 @@ def get_annotation_type_autosearch(path: Path) -> LayerODDatasetTypeChoice:
             annotation_type = 'Не определено'
 
     return annotation_type
-
 
 def resize_frame(image_array, target_shape, frame_mode):
     original_shape = (image_array.shape[0], image_array.shape[1])
@@ -825,4 +926,3 @@ def make_tracker_dataset(source_path, dst_path, bboxes, frame_mode):
 
     tracker_table.to_csv(os.path.join(tmp_directory, 'tracker.csv'), index=False)
     zip_dataset(tmp_directory, os.path.join(dst_path, 'tracker'))
-

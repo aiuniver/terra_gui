@@ -3,6 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
+from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
@@ -47,6 +48,8 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    augmentation: Optional[AugmentationData]
 
 
 class ParametersTextData(ParametersBaseData):
@@ -321,17 +324,17 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersGANData(ParametersBaseData):
+class ParametersImageGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "GAN".
+    Обработчик типа задачи "ImageGAN".
     """
 
     pass
 
 
-class ParametersCGANData(ParametersBaseData):
+class ParametersImageCGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "CGAN".
+    Обработчик типа задачи "ImageCGAN".
     """
 
     pass

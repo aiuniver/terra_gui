@@ -8,7 +8,9 @@ import numpy as np
 from pathlib import Path
 
 import tensorflow as tf
+from PIL import Image
 from tensorflow import keras
+from tensorflow.keras.applications.vgg19 import preprocess_input, VGG19
 from tensorflow.python.keras.models import Model
 
 from terra_ai.callbacks import interactive
@@ -508,10 +510,8 @@ class YoloTerraModel(BaseTerraModel):
                         val_current_idx = 0
                         for val_image_data, val_target1, val_target2 in dataset.dataset.get('val').batch(
                                 params.base.batch):
-                            results = self.__validate_step(val_image_data,
-                                                           target1,
-                                                           target2,
-                                                           **yolo_parameters)
+                            results = self.__validate_step(
+                                val_image_data, val_target1, val_target2, **yolo_parameters)
                             val_true_array = list(val_target1.values())
                             length = val_true_array[0].shape[0]
                             for i in range(len(val_true_array)):
@@ -721,7 +721,6 @@ class GANTerraModel:
         custom_object = {}
         for k, v in custom_dict.items():
             try:
-                print(k, v)
                 custom_object[k] = getattr(importlib.import_module(f".{v}", package="terra_ai.custom_objects"), k)
             except:
                 continue
@@ -745,7 +744,10 @@ class GANTerraModel:
     def __prepare_seed(noise):
         shape = [50]
         shape.extend(list(noise))
-        return tf.random.normal(shape=shape)
+        if None in shape:
+            return None
+        else:
+            return tf.random.normal(shape=shape)
 
     @staticmethod
     def discriminator_loss(loss_func, real_output, fake_output):
@@ -871,7 +873,7 @@ class GANTerraModel:
             raise exc
 
     def predict(self, data_array, batch_size: Optional[int]):
-        noise_shape = [100]
+        noise_shape = [128]
         noise_shape.extend(list(self.generator.inputs[0].shape[1:]))
         noise = tf.random.normal(noise_shape)
         return self.generator(noise)
@@ -1042,6 +1044,8 @@ class ConditionalGANTerraModel(GANTerraModel):
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:
                         break
+                    # if cur_step > 50:
+                    #     break
 
                 self.save_weights()
                 # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
@@ -1086,12 +1090,13 @@ class ConditionalGANTerraModel(GANTerraModel):
                 # pred = np.zeros(shape)
                 # for i in range(32):
                 #     pred[i*batch_size:(i+1)*batch_size] = self.predict(data_array=dataset.dataset.get('train').batch(batch_size)).numpy()
+                # pred = self.predict(data_array=dataset.dataset.get('train'), batch_size=1)
                 # logger.debug(f"pred: {pred.shape}")
                 # postprocc = CGANCallback.postprocess_deploy(
                 #     array=pred, options=dataset, save_path=Path("D:\AI")
                 # )
                 # logger.debug(f"postprocc: {postprocc, len(postprocc['output'])}")
-                    # break
+                # break
 
             self.callback.on_train_end()
         except Exception as error:
@@ -1100,16 +1105,22 @@ class ConditionalGANTerraModel(GANTerraModel):
             raise exc
 
     def predict(self, data_array, batch_size: Optional[int]):
-        # input_keys = self.get_input_keys(
-        #     generator=self.generator, discriminator=self.discriminator, options=options)
-        gen_labels = None
-        for image_data, _ in data_array:
+        bs = 16
+        shape = [32 * bs]
+        image_size = list(self.generator.outputs[0].shape[1:])
+        shape.extend(image_size)
+        predict = np.zeros(shape)
+        cur_step = 0
+        for image_data, _ in data_array.batch(bs).take(32):
             gen_labels = image_data.get(self.input_keys.get('gen_labels'))
-        noise_shape = [gen_labels.shape[0]]
-        noise_shape.extend(self.noise)
-        noise = tf.random.normal(noise_shape)
-        gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
-        return self.generator(gen_input)
+            length = gen_labels.shape[0]
+            noise_shape = [gen_labels.shape[0]]
+            noise_shape.extend(self.noise)
+            noise = tf.random.normal(noise_shape)
+            gen_input = {self.input_keys['noise']: noise, self.input_keys['gen_labels']: gen_labels}
+            predict[cur_step:cur_step + length] = self.generator.predict(gen_input)
+            cur_step += length
+        return predict
 
 
 class TextToImageGANTerraModel(ConditionalGANTerraModel):
@@ -1517,6 +1528,310 @@ class ImageToImageGANTerraModel(GANTerraModel):
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
                 ImageToImageGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
+
+    def predict(self, data_array, batch_size: Optional[int]):
+        gen_array = data_array.get(self.input_keys.get('gen_images'))
+        gen_input = {self.input_keys['gen_images']: gen_array}
+        return self.generator(gen_input)
+
+
+class ImageSRGANTerraModel(GANTerraModel):
+    name = "ImageSRGANTerraModel"
+
+    def __init__(self, model: dict, model_name: str, model_path: Path, options: PrepareDataset):
+        super().__init__(model=model, model_name=model_name, model_path=model_path, options=options)
+        self.input_keys = self.__get_input_keys(options)
+        self.full_lr_image_path = os.path.join(options.data.path, "LR")
+        self.full_lr_image_list = []
+        with os.scandir(self.full_lr_image_path) as files:
+            for f in files:
+                self.full_lr_image_list.append(os.path.join(self.full_lr_image_path, f.name))
+        self.full_lr_image_list = sorted(self.full_lr_image_list)
+        logger.debug(f"self.full_lr_image_list: {self.full_lr_image_list[:5]}")
+        self.seed: dict = self.__prepare_srgan_seed(name_list=self.full_lr_image_list)
+        logger.debug(f"self.seed: {self.seed['indexes']}")
+        self.mean_squared_error = tf.keras.losses.MeanSquaredError()
+        self.vgg = self._vgg()
+        pass
+
+    @staticmethod
+    def _vgg():
+        vgg = VGG19(input_shape=(None, None, 3), include_top=False)
+        return Model(vgg.input, vgg.layers[20].output)
+
+    @staticmethod
+    def __prepare_srgan_seed(name_list: list):
+        return {"indexes": np.random.choice(len(name_list), 10).tolist()}
+
+    def __get_input_keys(self, options: PrepareDataset) -> dict:
+        method_name = '__get_input_keys'
+        try:
+            keys = {}
+            gen_inputs = [inp.name for inp in self.generator.inputs]
+            disc_inputs = [inp.name for inp in self.discriminator.inputs]
+            for gen_inp in gen_inputs:
+                col_name = list(options.data.columns.get(int(gen_inp)).keys())[0]
+                if options.data.columns.get(int(gen_inp)).get(col_name).get('task') == 'Noise':
+                    keys['noise'] = f"{gen_inp}"
+                if options.data.columns.get(int(gen_inp)).get(col_name).get('task') == 'Image':
+                    keys['gen_images'] = f"{gen_inp}"
+            for disc_inp in disc_inputs:
+                col_name = list(options.data.columns.get(int(disc_inp)).keys())[0]
+                if options.data.columns.get(int(disc_inp)).get(col_name).get('task') == 'Image':
+                    keys['disc_images'] = f"{disc_inp}"
+            logger.debug(f"__get_input_keys - keys - {keys}")
+            return keys
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
+            raise exc
+
+    @staticmethod
+    def _pretrain_generator_loss(loss_func, image_true, image_pred):
+        return loss_func(image_true, image_pred)
+
+    @staticmethod
+    def _generator_loss(loss_func, disc_output):
+        return loss_func(tf.ones_like(disc_output), disc_output)
+
+    @tf.function
+    def _content_loss(self, true_image, gen_image):
+        gen_image = preprocess_input(gen_image)
+        true_image = preprocess_input(true_image)
+        sr_features = self.vgg(gen_image) / 12.75
+        hr_features = self.vgg(true_image) / 12.75
+        return self.mean_squared_error(hr_features, sr_features)
+
+    @tf.function
+    def __pretrain_step(self, lr_array, hr_array):
+        lr_array = tf.cast(lr_array, dtype='float32')
+        hr_array = tf.cast(hr_array, dtype='float32')
+        with tf.GradientTape() as gen_tape:
+            gen_array = self.generator(lr_array, training=True)
+            gen_loss = self._pretrain_generator_loss(
+                loss_func=self.mean_squared_error,
+                image_true=hr_array,
+                image_pred=gen_array,
+            )
+        gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
+        self.generator_optimizer.apply_gradients(
+            zip(gradients_of_generator, self.generator.trainable_variables))
+        return gen_loss
+
+    @tf.function
+    def __train_step(self, gen_array, disc_array, input_keys: dict, **options):
+
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            gen_array = tf.cast(gen_array, dtype='float32')
+            disc_array = tf.cast(disc_array, dtype='float32')
+            true_disc_input = {input_keys['disc_images']: disc_array}
+            gen_input = {input_keys['gen_images']: gen_array}
+
+            generated_images = self.generator(gen_input, training=True)
+            fake_disc_input = {input_keys['disc_images']: generated_images}
+            real_output = self.discriminator(true_disc_input, training=True)
+            fake_output = self.discriminator(fake_disc_input, training=True)
+            pretrain_loss = self._pretrain_generator_loss(self.mean_squared_error, disc_array, generated_images)
+
+            content_loss = self._content_loss(disc_array, generated_images)
+            gen_loss = self._generator_loss(self.generator_loss_func, fake_output)
+            perception_loss = content_loss + 0.001 * gen_loss
+            disc_loss, disc_real_loss, disc_fake_loss = GANTerraModel.discriminator_loss(
+                loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
+
+        gradients_of_generator = gen_tape.gradient(perception_loss, self.generator.trainable_variables)
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
+        self.generator_optimizer.apply_gradients(
+            zip(gradients_of_generator, self.generator.trainable_variables))
+        self.discriminator_optimizer.apply_gradients(
+            zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+        return perception_loss, content_loss, gen_loss, disc_loss, disc_real_loss, disc_fake_loss, pretrain_loss
+
+    def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
+        method_name = 'fit'
+        try:
+            self.train_length = len(dataset.dataframe.get('train'))
+            y_seed_array = {}
+            self.generator_optimizer = self.set_optimizer(params=params)
+            self.discriminator_optimizer = self.set_optimizer(params=params)
+            current_logs = {
+                'loss': {
+                    'pretrain_loss': {'train': None},
+                    'perception_loss': {'train': None},
+                    'content_loss': {'train': None},
+                    'gen_loss': {'train': None},
+                    'disc_loss': {'train': None},
+                    'disc_real_loss': {'train': None},
+                    'disc_fake_loss': {'train': None}
+                },
+                "metrics": {}
+            }
+            if params.state.status != "addtrain":
+                pretrain_epochs = 25
+                # self.callback.total_epochs += pretrain_epochs
+                self.callback.on_train_begin()
+                for epoch in range(pretrain_epochs):
+                    self.callback.on_epoch_begin()
+                    current_logs["epochs"] = epoch + 1
+                    # current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
+                    cur_step, gen_loss, cur_position = 0, 0, 0
+                    random_idx = np.random.choice(len(self.full_lr_image_list), 10).tolist()
+                    y_random_array = {}
+                    for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                        batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
+                        results = self.__pretrain_step(
+                            lr_array=image_data.get(self.input_keys.get('gen_images')),
+                            hr_array=image_data.get(self.input_keys.get('disc_images')),
+                        )
+                        # logger.debug(f"Batch {cur_step + 1}, pretrain_loss={results.numpy()}")
+                        gen_loss += results.numpy()
+                        cur_step += 1
+                        cur_position += batch_length
+
+                        if interactive.urgent_predict:
+                            for idx in self.seed['indexes']:
+                                print(idx)
+                                img = Image.open(self.full_lr_image_list[idx])
+                                img = tf.keras.preprocessing.image.img_to_array(img)
+                                if img.shape[-1] == 4:
+                                    img = img[..., :-1]
+                                y_seed_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                            for idx in random_idx:
+                                img = Image.open(self.full_lr_image_list[idx])
+                                img = tf.keras.preprocessing.image.img_to_array(img)
+                                if img.shape[-1] == 4:
+                                    img = img[..., :-1]
+                                y_random_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                            seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                            random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                            self.callback.on_train_batch_end(
+                                batch=cur_step,
+                                arrays={"train": random_predict, "seed": seed_predict, 'inputs': self.input_keys}
+                            )
+                        else:
+                            self.callback.on_train_batch_end(batch=cur_step)
+                        if self.callback.stop_training:
+                            break
+                    if self.callback.stop_training:
+                        break
+                    for idx in self.seed['indexes']:
+                        img = Image.open(self.full_lr_image_list[idx])
+                        img = tf.keras.preprocessing.image.img_to_array(img)
+                        if img.shape[-1] == 4:
+                            img = img[..., :-1]
+                        y_seed_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                        print('predict', self.generator(tf.expand_dims(img, axis=0)).numpy()[0][0][0])
+                    for idx in random_idx:
+                        img = Image.open(self.full_lr_image_list[idx])
+                        img = tf.keras.preprocessing.image.img_to_array(img)
+                        if img.shape[-1] == 4:
+                            img = img[..., :-1]
+                        y_random_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                    self.save_weights()
+
+                    current_logs['loss']['pretrain_loss']['train'] = gen_loss / cur_step
+                    seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                    random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                    self.callback.on_epoch_end(
+                        epoch=epoch + 1,
+                        arrays={"train": random_predict, "seed": seed_predict, 'inputs': self.input_keys},
+                        logs=current_logs
+                    )
+
+            loss_dict = self._prepare_loss_dict(params)
+            self.generator_loss_func = loss_dict.get('generator')
+            self.discriminator_loss_func = loss_dict.get('discriminator')
+            self.set_optimizer(params=params)
+            current_epoch = self.callback.last_epoch
+            end_epoch = self.callback.total_epochs
+            self.callback.on_train_begin()
+            for epoch in range(current_epoch, end_epoch):
+                self.callback.on_epoch_begin()
+                current_logs["epochs"] = epoch + 1
+                # current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
+                cur_step, perception_loss, content_loss, gen_loss, \
+                    disc_loss, disc_real_loss, disc_fake_loss, pretrain_loss = 0, 0, 0, 0, 0, 0, 0, 0
+                cur_position = 0
+                random_idx = np.random.choice(len(self.full_lr_image_list), 10).tolist()
+                y_random_array = {}
+                for image_data, _ in dataset.dataset.get('train').batch(params.base.batch):
+                    batch_length = image_data.get(self.input_keys.get('gen_images')).shape[0]
+                    results = self.__train_step(
+                        gen_array=image_data.get(self.input_keys.get('gen_images')),
+                        disc_array=image_data.get(self.input_keys.get('disc_images')),
+                        input_keys=self.input_keys
+                    )
+
+                    perception_loss += results[0].numpy()
+                    content_loss += results[1].numpy()
+                    gen_loss += results[2].numpy()
+                    disc_loss += results[3].numpy()
+                    disc_real_loss += results[4].numpy()
+                    disc_fake_loss += results[5].numpy()
+                    pretrain_loss += results[6].numpy()
+                    cur_step += 1
+                    cur_position += batch_length
+
+                    if interactive.urgent_predict:
+                        for idx in self.seed['indexes']:
+                            img = Image.open(self.full_lr_image_list[idx])
+                            img = tf.keras.preprocessing.image.img_to_array(img)
+                            if img.shape[-1] == 4:
+                                img = img[..., :-1]
+                            y_seed_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                        for idx in random_idx:
+                            img = Image.open(self.full_lr_image_list[idx])
+                            img = tf.keras.preprocessing.image.img_to_array(img)
+                            if img.shape[-1] == 4:
+                                img = img[..., :-1]
+                            y_random_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                        seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                        random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                        self.callback.on_train_batch_end(
+                            batch=cur_step,
+                            arrays={"train": random_predict, "seed": seed_predict, 'inputs': self.input_keys}
+                        )
+                    else:
+                        self.callback.on_train_batch_end(batch=cur_step)
+                    if self.callback.stop_training:
+                        break
+                self.save_weights()
+                if self.callback.stop_training:
+                    break
+                for idx in self.seed['indexes']:
+                    img = Image.open(self.full_lr_image_list[idx])
+                    img = tf.keras.preprocessing.image.img_to_array(img)
+                    if img.shape[-1] == 4:
+                        img = img[..., :-1]
+                    y_seed_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+                    print('predict', self.generator(tf.expand_dims(img, axis=0)).numpy()[0][0][0])
+                for idx in random_idx:
+                    img = Image.open(self.full_lr_image_list[idx])
+                    img = tf.keras.preprocessing.image.img_to_array(img)
+                    if img.shape[-1] == 4:
+                        img = img[..., :-1]
+                    y_random_array[idx] = self.generator(tf.expand_dims(img, axis=0)).numpy()
+
+                current_logs['loss']['pretrain_loss']['train'] = pretrain_loss / cur_step
+                current_logs['loss']['perception_loss']['train'] = perception_loss / cur_step
+                current_logs['loss']['content_loss']['train'] = content_loss / cur_step
+                current_logs['loss']['gen_loss']['train'] = gen_loss / cur_step
+                current_logs['loss']['disc_loss']['train'] = disc_loss / cur_step
+                current_logs['loss']['disc_real_loss']['train'] = disc_real_loss / cur_step
+                current_logs['loss']['disc_fake_loss']['train'] = disc_fake_loss / cur_step
+
+                seed_predict = {'predict': y_seed_array, 'indexes': self.seed['indexes']}
+                random_predict = {'predict': y_random_array, 'indexes': random_idx}
+                self.callback.on_epoch_end(
+                    epoch=epoch + 1,
+                    arrays={"train": random_predict, "seed": seed_predict, 'inputs': self.input_keys},
+                    logs=current_logs
+                )
+            self.callback.on_train_end()
+        except Exception as error:
+            exc = exception.ErrorInClassInMethodException(
+                ImageSRGANTerraModel.name, method_name, str(error)).with_traceback(error.__traceback__)
             raise exc
 
     def predict(self, data_array, batch_size: Optional[int]):

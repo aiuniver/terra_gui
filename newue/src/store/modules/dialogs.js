@@ -13,7 +13,7 @@ export default {
         return null
       }
     },
-    async trining ({ dispatch, rootGetters }, { ctx, page }) {
+    async training ({ dispatch, rootGetters }, { ctx, page }) {
       // const res = await dispatch('projects/get', {}, { root: true });
       const res = { project: rootGetters['projects/getProject'] }
       if (res) {

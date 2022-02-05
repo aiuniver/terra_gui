@@ -41,7 +41,6 @@ def make_text_classification(config, dataset_config, model):
 
 def make_segmentation(config, dataset_config, model):
     config['cascades']['model']['model'] = model
-    config['cascades']['2']['params']['num_class'] = dataset_config['outputs']['2']['num_classes']
     config['cascades']['2']['params']['classes_colors'] = [Color(i).as_rgb_tuple() for i in
                                                            dataset_config['outputs']['2']['classes_colors']]
 
