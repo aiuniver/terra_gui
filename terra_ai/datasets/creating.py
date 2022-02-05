@@ -1,7 +1,7 @@
 from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
-from terra_ai.datasets import arrays_classes
+from terra_ai.datasets import arrays_classes, creating_classes
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.datasets.arrays_create import CreateArray
@@ -139,6 +139,7 @@ class CreateVersion(object):
         self.y_cls = []
         self.tags = {}
 
+        # Подготовка путей и файлов
         self.temp_directory: Path = Path(tempfile.mkdtemp())
         self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
         self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
@@ -156,10 +157,23 @@ class CreateVersion(object):
         current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
         os.makedirs(current_version)
         self.version_paths_data = VersionPathsData(basepath=current_version)
-        version_data = self.preprocess_version_data(version_data, self.sources_temp_directory)
+        with open(self.parent_dataset_paths_data.basepath.joinpath('config.json'), 'r') as cfg:
+            parent_architecture = json.load(cfg)['architecture']
+
+        # Начало создания версии
+        architecture_class = getattr(getattr(creating_classes, decamelize(parent_architecture)),
+                                     parent_architecture + 'Class')()
+        version_data = architecture_class.preprocess_version_data(
+            version_data=version_data,
+            version_path_data=self.sources_temp_directory
+        )
         logger.debug(version_data)
         progress.pool(name=version_progress_name, message='Создание инструкций', percent=0)
-        self.instructions = self.create_instructions(version_data)  # self.tags
+        self.instructions, self.tags = architecture_class.create_instructions(
+            version_data=version_data,
+            sources_temp_directory=self.sources_temp_directory,
+            version_paths_data=self.version_paths_data
+        )  # self.tags
         progress.pool(name=version_progress_name, message='Создание объектов обработки', percent=0)
         self.create_preprocessing(self.instructions)
         self.fit_preprocessing(put_data=self.instructions.inputs)
@@ -175,8 +189,22 @@ class CreateVersion(object):
         #                                       preprocessing=self.preprocessing,
         #                                       dataframe=self.dataframe,
         #                                       version_paths_data=self.version_paths_data)
-        self.create_dataset_arrays(put_data=self.instructions.inputs)
-        self.create_dataset_arrays(put_data=self.instructions.outputs)
+
+        architecture_class.create_dataset_arrays(
+            put_data=self.instructions.inputs,
+            version_paths_data=self.version_paths_data,
+            dataframe=self.dataframe,
+            preprocessing=self.preprocessing
+        )
+        architecture_class.create_dataset_arrays(
+            put_data=self.instructions.outputs,
+            version_paths_data=self.version_paths_data,
+            dataframe=self.dataframe,
+            preprocessing=self.preprocessing
+        )
+
+        # self.create_dataset_arrays(put_data=self.instructions.inputs)
+        # self.create_dataset_arrays(put_data=self.instructions.outputs)
 
         self.inputs = self.create_put_parameters(self.instructions.inputs, version_data, 'inputs')
         self.outputs = self.create_put_parameters(self.instructions.outputs, version_data, 'outputs')
