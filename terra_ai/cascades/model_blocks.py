@@ -24,14 +24,10 @@ class BaseModel(BaseBlock):
 
     def __init__(self, **kwargs):
         super().__init__()
-
         self.path: str = kwargs.get("path")
-        self.model_architecture = "base"
-        self.yolo_version = "v3"
         self.model = None
         self.config = None
         self.model_architecture = None
-        self.yolo_version = None
 
     def set_path(self, model_path: str):
         self.path = os.path.join(model_path, self.path, 'model')
@@ -109,6 +105,39 @@ class BaseModel(BaseBlock):
 
         return model
 
+    def __get_dataset_config(self):
+        dataset_path = os.path.join(self.path, "dataset.json")
+        dataset_data_path = self.path
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(self.path, "dataset", "config.json")
+            dataset_data_path = os.path.join(self.path, "dataset")
+        with open(dataset_path) as cfg:
+            config = json.load(cfg)
+        return config
+
+    def execute(self):
+        source = list(self.inputs.values())[0].execute()
+        if not self.model:
+            self.__set_model()
+
+        array = CreateArray().execute(array_class='image', dataset_path=self.path,
+                                         sources=source).get("1")[np.newaxis, :]
+        result = self.model.predict(x=array)
+
+        for block, params in self.config.get('outputs', {}).items():
+            if params.get('task', '').lower() == 'classification':
+                classes = params.get('classes_names')
+
+        return result, classes
+
+
+class YoloModel(BaseModel):
+
+    def __init__(self):
+        super().__init__()
+        self.model_architecture = "base"
+        self.yolo_version = "v3"
+
     @staticmethod
     def __make_yolo(model, config, version):
         od = None
@@ -140,34 +169,6 @@ class BaseModel(BaseBlock):
 
         return yolo
 
-    def __get_dataset_config(self):
-        dataset_path = os.path.join(self.path, "dataset.json")
-        dataset_data_path = self.path
-        if not os.path.exists(dataset_path):
-            dataset_path = os.path.join(self.path, "dataset", "config.json")
-            dataset_data_path = os.path.join(self.path, "dataset")
-        with open(dataset_path) as cfg:
-            config = json.load(cfg)
-        return config
-
-    def execute(self):
-        source = list(self.inputs.values())[0].execute()
-        if not self.model:
-            self.__set_model()
-
-        array = CreateArray().execute(array_class='image', dataset_path=self.path,
-                                         sources=source).get("1")[np.newaxis, :]
-        result = self.model.predict(x=array)
-
-        if self.model_architecture == 'yolo':
-            result = self.get_bboxes(result)
-
-        for block, params in self.config.get('outputs', {}).items():
-            if params.get('task', '').lower() == 'classification':
-                classes = params.get('classes_names')
-
-        return result, classes
-
     @staticmethod
     def get_bboxes(array):
         while len(array) == 1:
@@ -177,6 +178,30 @@ class BaseModel(BaseBlock):
 
         out_bbox = tf.concat([tf.reshape(x, (-1, tf.shape(x)[-1])) for x in bboxes], 0)
         return out_bbox
+
+    def __set_model(self):
+        self.model = self.__load_model()
+        self.config = self.__get_dataset_config()
+        self.model_architecture, self.yolo_version = self.__set_architecture()
+        self.model = self.__make_yolo(self.model, self.config, self.yolo_version)
+
+    def execute(self):
+        source = list(self.inputs.values())[0].execute()
+        if not self.model:
+            self.__set_model()
+
+        array = CreateArray().execute(array_class='image', dataset_path=self.path,
+                                         sources=source).get("1")[np.newaxis, :]
+        result = self.get_bboxes(self.model.predict(x=array))
+
+        for block, params in self.config.get('outputs', {}).items():
+            if params.get('task', '').lower() == 'classification':
+                classes = params.get('classes_names')
+
+        return result, classes
+
+
+
 
 
 class Model(CascadeBlock):
