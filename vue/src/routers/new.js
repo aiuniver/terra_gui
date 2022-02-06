@@ -96,7 +96,7 @@ const router = [
             access: true,
             text: `Для перехода на страницу деплоя необходимо загрузить датасет.`,
         },
-        component: () => import('@/views/Deploy'),
+        component: () => import('@/views/new/completion/Deploy'),
     },
     {
         path: '/new/servers',
@@ -107,7 +107,7 @@ const router = [
             access: true,
             text: '',
         },
-        component: () => import('@/views/Servers'),
+        component: () => import('@/views/new/completion/Servers'),
     },
     {
         path: '/new/profile',
@@ -118,7 +118,7 @@ const router = [
             access: true,
             text: ``,
         },
-        component: () => import('@/views/Profile'),
+        component: () => import('@/views/new/Profile'),
     },
     {
         path: '/new/projects',

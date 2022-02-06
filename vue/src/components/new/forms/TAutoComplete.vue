@@ -51,6 +51,7 @@ export default {
     all: Boolean,
     error: String,
     update: Boolean, //wtf
+    new: Boolean
   },
   data() {
     return {
@@ -65,6 +66,7 @@ export default {
     const list = this.list ?? [];
     this.selected = list.find(item => item.value === this.value) || {};
     this.input = this.value;
+    if (this.new) this.input = this.selected?.label || '';
     if (this.update) {
       this.send(this.value); //wtf
     }

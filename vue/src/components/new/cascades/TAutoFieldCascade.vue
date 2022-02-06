@@ -75,7 +75,7 @@
       @parse="change"
     />
     <t-field v-if="type === 'auto_complete'" :label="label">
-      <t-auto-complete-new-two :value="getValue" :list="list" :parse="parse" :name="name" all @parse="change" />
+      <TAutoComplete :value="getValue" :list="list" :parse="parse" :name="name" all @parse="change" :new="true" />
     </t-field>
     <template v-for="(data, i) of dataFields">
       <t-auto-field-cascade
@@ -95,6 +95,7 @@ import TSelect from '@/components/new/forms/TSelect';
 import Checkbox from '@/components/new/forms/Checkbox';
 import MegaMultiSelect from '@/components/new/forms/MegaMultiSelect';
 import TInput from '@/components/new/forms/TInput';
+import TAutoComplete from '@/components/new/forms/TAutoComplete';
 import TTupleCascade from '@/components/new/cascades/TupleCascade';
 
 export default {
@@ -104,7 +105,8 @@ export default {
     TSelect,
     Checkbox,
     TInput,
-    TTupleCascade
+    TTupleCascade,
+    TAutoComplete
   },
   props: {
     type: String,

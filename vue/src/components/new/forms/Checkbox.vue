@@ -75,7 +75,7 @@ export default {
   position: relative;
 
   &__label {
-    width: 150px;
+    // width: 150px;
     max-width: 330px;
     padding-bottom: 10px;
     text-align: left;

@@ -152,7 +152,7 @@ export default {
   }
   &__btn {
     position: absolute;
-    width: 24px;
+    width: 36px;
     border-left: 1px solid #65B9F4;
     height: 100%;
     right: 0;
@@ -222,6 +222,9 @@ export default {
   }
   &--small {
     height: 30px;
+    .t-select__btn {
+      width: 24px;
+    }
   }
   &--small &__input {
     height: 30px;

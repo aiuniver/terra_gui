@@ -47,9 +47,9 @@
       </div>
       <div class="predictions__param"></div>
       <div class="predictions__param">
-        <t-button style="width: 150px" @click.native="show" :disabled="!!isError">
+        <d-button style="width: 150px" @click.native="show" :disabled="!!isError">
           {{ 'Обновить' }}
-        </t-button>
+        </d-button>
         <br />
         <t-field inline label="Автообновление" :key="'autoupdate' + autoupdate">
           <TCheckbox v-model="autoupdate" small @change="show" />
