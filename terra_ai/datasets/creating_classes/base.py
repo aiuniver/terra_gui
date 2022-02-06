@@ -11,7 +11,7 @@ from pathlib import Path
 from terra_ai import progress
 from terra_ai.data.datasets.creation import CreationVersionData
 from terra_ai.data.datasets.dataset import VersionPathsData, DatasetOutputsData, DatasetInputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice
 from terra_ai.datasets import arrays_classes
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.creating import version_progress_name
@@ -177,55 +177,47 @@ class BaseClass(object):
     def create_preprocessing(self, asd):
         print('Тут создаем препроцессинг и обучаем')
 
-    def create_input_parameters(self, put_instructions, version_data: CreationVersionData, put: str):
+    def create_input_parameters(self, input_instr, version_data, preprocessing, version_paths_data):
 
-        creating_puts_data = {}
-        for key in put_instructions.keys():
+        inputs = {}
+        columns = {}
+        for key in input_instr.keys():
             put_array = []
-            self.columns[key] = {}
-            for col_name, data in put_instructions[key].items():
+            columns[key] = {}
+            for col_name, data in input_instr[key].items():
                 data_to_pass = data.instructions[0]
+                if data.parameters["put_type"] in PATH_TYPE_LIST:
+                    data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
                 options_to_pass = data.parameters.copy()
-                if self.preprocessing.preprocessing.get(key) and \
-                        self.preprocessing.preprocessing.get(key).get(col_name):
-                    prep = self.preprocessing.preprocessing.get(key).get(col_name)
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    prep = preprocessing.preprocessing.get(key).get(col_name)
                     options_to_pass.update([('preprocess', prep)])
-                if self.tags[key][col_name] in PATH_TYPE_LIST:
-                    data_to_pass = str(self.version_paths_data.sources.joinpath(data_to_pass))
-                create = getattr(getattr(arrays_classes, data.parameters["put_type"]),
-                                 f'{camelize(data.parameters["put_type"])}Array')().create(
-                    source=data_to_pass, **options_to_pass)
-                array = getattr(getattr(arrays_classes, data.parameters["put_type"]),
-                                f'{camelize(data.parameters["put_type"])}Array')().preprocess(
-                    create['instructions'], **create['parameters'])
-                # array = array[0] if isinstance(array, tuple) else array
-                # if not array.shape:
-                #     array = np.expand_dims(array, 0)
+
+                array = self.multithreading_array([data_to_pass], [options_to_pass])[0]
                 put_array.append(array)
-                if create['parameters'].get('classes_names'):
-                    classes_names = create['parameters'].get('classes_names')
+                if options_to_pass.get('classes_names'):
+                    classes_names = options_to_pass.get('classes_names')
                 else:
                     classes_names = sorted(
-                        [os.path.basename(x) for x in version_data.__dict__[put].get(key).parameters.keys()])
+                        [os.path.basename(x) for x in version_data.inputs.get(key).parameters.keys()])
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': version_data.__dict__[put].get(key).name,
+                                  'name': version_data.inputs.get(key).name,
                                   'task': camelize(data.parameters.get('put_type')),
                                   'classes_names': classes_names,
                                   'classes_colors': data.parameters.get('classes_colors'),
                                   'num_classes': len(classes_names) if classes_names else 0,
                                   'encoding': 'none' if not data.parameters.get('encoding') else data.parameters.get(
                                       'encoding')}
-                current_column = DatasetInputsData(**col_parameters) if put == 'inputs' else DatasetOutputsData(
-                    **col_parameters)
-                self.columns[key].update([(col_name, current_column.native())])
+                current_column = DatasetInputsData(**col_parameters)
+                columns[key].update([(col_name, current_column.native())])
 
             put_array = np.concatenate(put_array, axis=0)
             classes_colors_list, classes_names_list, encoding_list, task_list = [], [], [], []
-            for value in self.columns[key].values():
+            for value in columns[key].values():
                 if value.get('classes_colors'):
                     for c_color in value.get('classes_colors'):
                         classes_colors_list.append(c_color)
@@ -237,23 +229,88 @@ class BaseClass(object):
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': version_data.__dict__[put].get(key).name,
+                              'name': version_data.inputs.get(key).name,
+                              'task': task_list[0] if len(set(task_list)) == 1 else 'Dataframe',
+                              'classes_names': classes_names_list if classes_names_list else None,
+                              'classes_colors': classes_colors_list if classes_colors_list else None,
+                              'num_classes': len(classes_names_list) if classes_names_list else None,
+                              'encoding': 'none' if len(encoding_list) > 1 or not encoding_list else encoding_list[0]}
+
+            inputs[key] = DatasetInputsData(**put_parameters).native()
+
+        return inputs, columns
+
+    def create_output_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
+
+        outputs = {}
+        columns = {}
+        for key in output_instr.keys():
+            put_array = []
+            columns[key] = {}
+            for col_name, data in output_instr[key].items():
+                data_to_pass = data.instructions[0]
+                if data.parameters["put_type"] in PATH_TYPE_LIST:
+                    data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
+                options_to_pass = data.parameters.copy()
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    prep = preprocessing.preprocessing.get(key).get(col_name)
+                    options_to_pass.update([('preprocess', prep)])
+
+                array = self.multithreading_array([data_to_pass], [options_to_pass])[0]
+                if not array.shape:
+                    array = np.expand_dims(array, 0)
+                put_array.append(array)
+
+                if options_to_pass.get('classes_names'):
+                    classes_names = options_to_pass.get('classes_names')
+                else:
+                    classes_names = sorted(
+                        [os.path.basename(x) for x in version_data.outputs.get(key).parameters.keys()])
+
+                # Прописываем параметры для колонки
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.shape,
+                                  'name': version_data.outputs.get(key).name,
+                                  'task': camelize(data.parameters.get('put_type')),
+                                  'classes_names': classes_names,
+                                  'classes_colors': data.parameters.get('classes_colors'),
+                                  'num_classes': len(classes_names) if classes_names else 0,
+                                  'encoding': 'none' if not data.parameters.get('encoding') else data.parameters.get(
+                                      'encoding')}
+                current_column = DatasetOutputsData(**col_parameters)
+                columns[key].update([(col_name, current_column.native())])
+
+            put_array = np.concatenate(put_array, axis=0)
+            classes_colors_list, classes_names_list, encoding_list, task_list = [], [], [], []
+            for value in columns[key].values():
+                if value.get('classes_colors'):
+                    for c_color in value.get('classes_colors'):
+                        classes_colors_list.append(c_color)
+                if value.get('classes_names'):
+                    for c_name in value.get('classes_names'):
+                        classes_names_list.append(c_name)
+                encoding_list.append(value.get('encoding') if value.get('encoding') else 'none')
+                task_list.append(value.get('task'))
+            put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': version_data.outputs.get(key).name,
                               'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
                               'classes_colors': classes_colors_list if classes_colors_list else None,
                               'num_classes': len(classes_names_list) if classes_names_list else None,
                               'encoding': 'none' if len(encoding_list) > 1 or not encoding_list else encoding_list[0]}
 
-            creating_puts_data[key] = DatasetInputsData(**put_parameters).native() if put == 'inputs' \
-                else DatasetOutputsData(**put_parameters).native()
+            outputs[key] = DatasetOutputsData(**put_parameters).native()
 
-        return creating_puts_data
+        return outputs, columns
 
-    def create_output_parameters(self, asd):
-        print('Тут создаем параметры для аутпута')
+    def create_service_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
 
-    def create_service_parameters(self, asd):
-        print('Тут создаем сервисные параметры')
+        service = {}
+
+        return service
 
     def create_dataset_arrays(self, put_data, version_paths_data, dataframe, preprocessing):
 
