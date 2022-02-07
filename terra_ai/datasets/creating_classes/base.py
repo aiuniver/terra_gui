@@ -11,7 +11,7 @@ from pathlib import Path
 from terra_ai import progress
 from terra_ai.data.datasets.creation import CreationVersionData
 from terra_ai.data.datasets.dataset import VersionPathsData, DatasetOutputsData, DatasetInputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice
 from terra_ai.datasets import arrays_classes
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.creating import version_progress_name
@@ -174,8 +174,15 @@ class BaseClass(object):
 
         return instructions, tags
 
-    def create_preprocessing(self, asd):
-        print('Тут создаем препроцессинг и обучаем')
+    @staticmethod
+    def create_preprocessing(instructions, preprocessing):
+
+        return preprocessing
+
+    @staticmethod
+    def fit_preprocessing(put_data, preprocessing, sources_temp_directory):
+
+        return preprocessing
 
     def create_input_parameters(self, input_instr, version_data, preprocessing, version_paths_data):
 

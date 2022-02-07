@@ -1,23 +1,18 @@
-from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
-from terra_ai.utils import decamelize, camelize, autodetect_encoding
+from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
-from terra_ai.datasets import arrays_classes, creating_classes
-from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
+from terra_ai.datasets import creating_classes
+from terra_ai.datasets.data import DatasetInstructionsData
+from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
-from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationVersionData
-from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData, \
-    VersionPathsData, VersionData
+from terra_ai.data.datasets.creation import CreationData, CreationVersionData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionPathsData, VersionData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
-    LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice, LayerEncodingChoice, LayerTaskTypeChoice
+    LayerPrepareMethodChoice, LayerScalerImageChoice, LayerTaskTypeChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
-from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai import progress
 
-import h5py
 import psutil
 import cv2
 import os
@@ -28,11 +23,8 @@ import json
 import tempfile
 import shutil
 import zipfile
-import concurrent.futures
 from distutils.dir_util import copy_tree
 from math import ceil
-from PIL import Image
-from itertools import repeat
 from pathlib import Path
 from datetime import datetime
 from pytz import timezone
@@ -98,7 +90,7 @@ class CreateDataset(object):
         #     tags_list.append(tag.native())
         architecture = creation_data.task_type
         if architecture == LayerTaskTypeChoice.ObjectDetection:
-            architecture = ArchitectureChoice.YoloV4 ###################################################################
+            architecture = ArchitectureChoice.YoloV4  #################################################################
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
                 'group': DatasetGroupChoice.trds,
@@ -111,18 +103,6 @@ class CreateDataset(object):
             json.dump(dataset_data.native(), fp)
 
         return dataset_data
-
-
-class Cascade(object):
-    pass
-
-
-class GAN(object):
-    pass
-
-
-class Timeseries(object):
-    pass
 
 
 class CreateVersion(object):
@@ -162,21 +142,35 @@ class CreateVersion(object):
         # Начало создания версии
         architecture_class = getattr(getattr(creating_classes, decamelize(parent_architecture)),
                                      parent_architecture + 'Class')()
+
         version_data = architecture_class.preprocess_version_data(
             version_data=version_data,
             version_path_data=self.sources_temp_directory
         )
         logger.debug(version_data)
+
         progress.pool(name=version_progress_name, message='Создание инструкций', percent=0)
         self.instructions, self.tags = architecture_class.create_instructions(
             version_data=version_data,
             sources_temp_directory=self.sources_temp_directory,
             version_paths_data=self.version_paths_data
         )
+
         progress.pool(name=version_progress_name, message='Создание объектов обработки', percent=0)
-        self.create_preprocessing(self.instructions)
-        self.fit_preprocessing(put_data=self.instructions.inputs)
-        self.fit_preprocessing(put_data=self.instructions.outputs)
+        self.preprocessing = architecture_class.create_preprocessing(
+            instructions=self.instructions,
+            preprocessing=self.preprocessing
+        )
+        self.preprocessing = architecture_class.fit_preprocessing(
+            put_data=self.instructions.inputs,
+            preprocessing=self.preprocessing,
+            sources_temp_directory=self.sources_temp_directory
+        )
+        self.preprocessing = architecture_class.fit_preprocessing(
+            put_data=self.instructions.outputs,
+            preprocessing=self.preprocessing,
+            sources_temp_directory=self.sources_temp_directory
+        )
         self.create_table(version_data)
 
         progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
@@ -232,7 +226,7 @@ class CreateVersion(object):
 
     @staticmethod
     def zip_dataset(src, dst):
-        zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
+        zf = zipfile.ZipFile("%s.zip" % dst, "w", zipfile.ZIP_DEFLATED)
         abs_src = os.path.abspath(src)
         for dirname, subdirs, files in os.walk(src):
             for filename in files:
@@ -240,48 +234,6 @@ class CreateVersion(object):
                 arcname = absname[len(abs_src) + 1:]
                 zf.write(absname, arcname)
         zf.close()
-
-    # @staticmethod
-    # def preprocess_version_data(version_data, version_path_data):
-    #
-    #     for worker_name, worker_params in version_data.processing.items():
-    #         if version_data.processing[worker_name].type == LayerOutputTypeChoice.Segmentation:
-    #             for w_name in version_data.processing:
-    #                 if version_data.processing[w_name].type == LayerInputTypeChoice.Image:
-    #                     version_data.processing[worker_name].parameters.height =\
-    #                         version_data.processing[w_name].parameters.height
-    #                     version_data.processing[worker_name].parameters.width = \
-    #                         version_data.processing[w_name].parameters.width
-    #         elif version_data.processing[worker_name].type == LayerOutputTypeChoice.TextSegmentation:
-    #             for w_name in version_data.processing:
-    #                 if version_data.processing[w_name].type == LayerOutputTypeChoice.Text:
-    #                     version_data.processing[worker_name].parameters.text_mode = \
-    #                         version_data.processing[w_name].parameters.text_mode
-    #                     version_data.processing[worker_name].parameters.length = \
-    #                         version_data.processing[w_name].parameters.length
-    #                     version_data.processing[worker_name].parameters.step = \
-    #                         version_data.processing[w_name].parameters.step
-    #                     version_data.processing[worker_name].parameters.max_words = \
-    #                         version_data.processing[w_name].parameters.max_words
-    #                     filters = version_data.processing[w_name].parameters.filters
-    #                     for x in version_data.processing[worker_name].parameters.open_tags + version_data.processing[worker_name].parameters.close_tags:
-    #                         filters = filters.replace(x, '')
-    #                     version_data.processing[w_name].parameters.filters = filters
-    #                     version_data.processing[worker_name].parameters.filters = filters
-    #                     version_data.processing[w_name].parameters.open_tags = \
-    #                         version_data.processing[worker_name].parameters.open_tags
-    #                     version_data.processing[w_name].parameters.close_tags = \
-    #                         version_data.processing[worker_name].parameters.close_tags
-    #         elif version_data.processing[worker_name].type == LayerOutputTypeChoice.ObjectDetection:
-    #             for w_name, w_params in version_data.processing.items():
-    #                 if version_data.processing[w_name].type == LayerInputTypeChoice.Image:
-    #                     version_data.processing[worker_name].parameters.frame_mode = \
-    #                         version_data.processing[w_name].parameters.image_mode
-    #             names_list = get_od_names(version_data, version_path_data)
-    #             version_data.processing[worker_name].parameters.classes_names = names_list
-    #             version_data.processing[worker_name].parameters.num_classes = len(names_list)
-    #
-    #     return version_data
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -440,7 +392,7 @@ class CreateVersion(object):
                             #                                           percent=ceil(i / len(data.instructions) * 100))
 
                             arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                self.sources_temp_directory.joinpath(data.instructions[i]),
+                                str(self.sources_temp_directory.joinpath(data.instructions[i])),
                                 **data.parameters
                             )
 
