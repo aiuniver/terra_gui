@@ -72,6 +72,9 @@ class ModelingMessages(dict, Enum):
     NotInitializedLayer = {
         "ru": "Невозможно инициалицировать слой `%s`",
         "eng": "Can't initialize layer `%s`"}
+    OnlyOutputLayer = {
+        "ru": "Слой может быть только выходным",
+        "eng": "Layer must be used only as output layer"}
 
 
 class ModelingException(TerraBaseException):
@@ -257,3 +260,11 @@ class NotInitializedLayerException(ModelingException):
 
     def __init__(self, __layer_name, **kwargs):
         super().__init__(str(__layer_name), **kwargs)
+
+
+class OnlyOutputLayerException(ModelingException):
+    class Meta:
+        message = ModelingMessages.OnlyOutputLayer
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

@@ -1,8 +1,17 @@
 """
-## Тип слоя `DarkNetBatchNormalization`
+## Тип слоя `PretrainedModel`
 """
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
-from ....mixins import BaseMixinData
+
+from pydantic.types import PositiveInt
+
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.modeling.layers.extra import (
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+    YOLOModeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{
@@ -14,14 +23,16 @@ LayerConfig = LayerConfigData(
             "value": 2,
             "validation": LayerValidationMethodChoice.minimal,
         },
-        "module": ModuleChoice.terra_custom_layers,
+        "module": ModuleChoice.terra_pretrained_custom_layers,
         "module_type": ModuleTypeChoice.terra_layer,
     }
 )
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    model_path: str = ""
+    load_weights: bool = False
+    froze_model: bool = False
 
 
 class ParametersExtraData(BaseMixinData):

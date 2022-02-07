@@ -429,10 +429,12 @@ class ModelValidator:
         if self.output_shape:
             outputs = []
             for layer in self.model_plan:
+                # print('\nlayer', layer)
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     if self.output_shape[layer[0]] and \
-                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
+                            self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:] and \
+                            layer[1] != LayerTypeChoice.VAEDiscriminatorBlock:
                         self.valid = False
                         self.val_dictionary[layer[0]] = str(exceptions.UnexpectedOutputShapeException(
                             self.output_shape[layer[0]][0],
@@ -615,6 +617,7 @@ class LayerValidation:
         self.module = importlib.import_module(config.module.value)
         self.module_type = config.module_type.value
         # logger.debug(f"layer_type = {self.layer_type}")
+        # logger.debug(f"kwargs = {kwargs}")
 
     def get_validated(self):
         """Validate given layer parameters and return output shape and possible error comment"""
@@ -1172,6 +1175,10 @@ class LayerValidation:
                     3, '', len(self.kwargs.get('down_links'))))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+        if self.layer_type == LayerTypeChoice.VAEDiscriminatorBlock and self.kwargs.get('down_links'):
+            exc = str(exceptions.OnlyOutputLayerException())
+            logger.warning(f"Слой {self.layer_type}: {exc}")
+            return exc
 
 
 class CustomLayer(tensorflow.keras.layers.Layer):
