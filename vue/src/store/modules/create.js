@@ -6,7 +6,7 @@ export default {
     blocks: [new Block({ id: 1 }), new Block({ id: 2, type: 'middle', position: [20, 20] }), new Block({ id: 3, type: 'handler', position: [40, 40] }), new Block({ id: 4, type: 'output', position: [60, 60] })],
     links: [],
     key: {},
-    creation: {}
+    creation: {},
   }),
   mutations: {
     SET_BLOCKS (state, value) {
@@ -161,6 +161,6 @@ export default {
       return blocks[index] || {};
     },
     getSelectedLength: ({ blocks }) => blocks.filter(i => i.selected).length,
-    getSelected: ({ blocks }) => blocks.find(i => i.selected)
+    getSelected: ({ blocks }) => blocks.find(i => i.selected),
   },
 };

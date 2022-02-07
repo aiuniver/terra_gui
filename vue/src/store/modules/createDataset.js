@@ -5,8 +5,26 @@ export default {
     selectSource: {},
     file_manager: [],
     source_path: '',
+    pagination: 1,
+    project: {
+      active: 0,
+      name: '',
+      version: '',
+      shuffle: false,
+      use_generator: false,
+      url: '',
+      google: '',
+      train: 70,
+      tags: [],
+    }
   }),
   mutations: {
+    SET_PROJECT (state, value) {
+      state.project = value;
+    },
+    SET_PAGINATION (state, value) {
+      state.pagination = value;
+    },
     SET_FILES_SOURCE (state, value) {
       state.filesSource = value;
     },
@@ -21,6 +39,12 @@ export default {
     },
   },
   actions: {
+    setProject ({ commit }, value) {
+      commit('SET_PROJECT', value)
+    },
+    setPagination ({ commit }, value) {
+      commit('SET_PAGINATION', value)
+    },
     async sourceLoadProgress ({ dispatch, commit }) {
       const res = await dispatch('axios', { url: '/datasets/source/load/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
@@ -48,6 +72,8 @@ export default {
     getFilesSource: ({ filesSource }) => filesSource,
     getSelectSource: ({ selectSource }) => selectSource,
     getFileManager: ({ file_manager }) => file_manager,
+    getProject: ({ project }) => project,
+    getPagination: ({ pagination }) => pagination,
 
   },
 };

@@ -1,48 +1,26 @@
 <template>
   <div class="panel-settings">
     {{ type }}
-    <template v-if="type === 'input'">
-      <template v-for="(file, i) of mixinFiles">
-        <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
-        <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
-      </template>
-    </template>
-    <template v-if="type === 'handler'">
-      <template v-for="(data, index) of formsHandler">
-        <t-auto-field-handler v-bind="data" :parameters="{}" :key="index" :idKey="'key_' + index" root @change="change" />
-      </template>
-    </template>
-    <template v-if="type === 'middle'">
-      <template v-for="(data, index) of input">
-        <t-auto-field
-          v-bind="data"
-          :parameters="parameters"
-          :key="'inputData.color' + index"
-          :idKey="'key_' + index"
-          :id="index + 3"
-          :update="mixinUpdateDate"
-          :isAudio="isAudio"
-          root
-          @multiselect="mixinUpdate"
-          @change="mixinChange"
-        />
-      </template>
-    </template>
-    <template v-if="type === 'output'">
-      <template v-for="(data, index) of formsHandler">
-        <t-auto-field-handler v-bind="data" :parameters="{}" :key="index" :idKey="'key_' + index" root @change="change" />
-      </template>
-    </template>
+    <SettingInput v-if="type === 'input'" :selected="getSelected" />
+    <SettingHandler v-if="type === 'handler'" :selected="getSelected" />
+    <SettingMiddle v-if="type === 'middle'" :selected="getSelected" />
+    <SettingMiddle v-if="type === 'middle'" :selected="getSelected" />
+    <SettingOutput v-if="type === 'output'" :selected="getSelected" />
+    <SettingEmpty v-if="!type" />
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
-import CardFile from '@/components/datasets/paramsFull/components/card/CardFile.vue';
-import CardTable from '@/components/datasets/paramsFull/components/card/CardTable';
+import SettingEmpty from './SettingEmpty';
+import SettingInput from './SettingInput';
+import SettingHandler from './SettingHandler';
+import SettingMiddle from './SettingMiddle';
+import SettingOutput from './SettingOutput';
+
 export default {
   name: 'DatasetSettings',
-  components: { CardFile, CardTable },
+  components: { SettingEmpty, SettingInput, SettingMiddle, SettingHandler, SettingOutput },
   data: () => ({
     show: true,
     ops: {
@@ -51,53 +29,13 @@ export default {
         scrollingY: false,
       },
     },
-    colors: [
-      '#1ea61d',
-      '#a51da6',
-      '#0d6dea',
-      '#fecd05',
-      '#d72239',
-      '#054f1d',
-      '#630e76',
-      '#031e70',
-      '#b78b01',
-      '#660634',
-      '#86e372',
-      '#e473d0',
-      '#6bb5f9',
-      '#ffe669',
-      '#f38079',
-    ],
-    table: {},
   }),
   computed: {
     ...mapGetters({
       getSelected: 'create/getSelected',
-      getFileManager: 'createDataset/getFileManager',
-      getDefault: 'create/getDefault',
     }),
-    mixinFiles() {
-      return this.getFileManager.map(e => {
-        return {
-          id: e.id,
-          cover: e.cover,
-          label: e.label,
-          type: e.type,
-          table: e.table,
-          value: e.path,
-        };
-      });
-    },
-    formsHandler() {
-      return this.$store.getters['datasets/getFormsHandler'];
-    },
     type() {
       return this?.getSelected?.type || '';
-    },
-
-    //___ input
-    input() {
-      return this.getDefault('input');
     },
   },
   created() {
@@ -170,3 +108,8 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.panel-settings {
+}
+</style>
