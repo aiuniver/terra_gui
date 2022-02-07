@@ -280,6 +280,8 @@ class ParametersTextSegmentationData(ParametersBaseData):
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
+    prepare_method: Optional[LayerPrepareMethodChoice]
+    max_words_count: Optional[PositiveInt]
 
     # def __init__(self\, **data):
     #     data.update({"cols_names": None})

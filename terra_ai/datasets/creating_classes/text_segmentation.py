@@ -1,8 +1,5 @@
-from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerPrepareMethodChoice
-from terra_ai.datasets.creating import version_progress_name
 from terra_ai.datasets.creating_classes.base import BaseClass
-from terra_ai.utils import camelize
 
 
 class TextSegmentationClass(BaseClass):
@@ -28,7 +25,7 @@ class TextSegmentationClass(BaseClass):
     @staticmethod
     def create_preprocessing(instructions, preprocessing):
 
-        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+        for put in list(instructions.inputs.values()):
             for col_name, data in put.items():
                 if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
                                                          LayerPrepareMethodChoice.bag_of_words]:

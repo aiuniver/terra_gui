@@ -1,9 +1,6 @@
 from terra_ai.utils import decamelize, camelize
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets import creating_classes
-from terra_ai.datasets.data import DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST
-from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationVersionData
@@ -13,8 +10,6 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoic
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
 from terra_ai import progress
 
-import psutil
-import cv2
 import os
 import random
 import numpy as np
@@ -24,7 +19,6 @@ import tempfile
 import shutil
 import zipfile
 from distutils.dir_util import copy_tree
-from math import ceil
 from pathlib import Path
 from datetime import datetime
 from pytz import timezone
@@ -33,6 +27,17 @@ from terra_ai.logging import logger
 
 dataset_progress_name = 'create_dataset'
 version_progress_name = 'create_version'
+
+
+def zip_dataset(src, dst):
+    zf = zipfile.ZipFile("%s.zip" % dst, "w", zipfile.ZIP_DEFLATED)
+    abs_src = os.path.abspath(src)
+    for dir_name, sub_dirs, files in os.walk(src):
+        for filename in files:
+            abs_name = os.path.abspath(os.path.join(dir_name, filename))
+            arc_name = abs_name[len(abs_src) + 1:]
+            zf.write(abs_name, arc_name)
+    zf.close()
 
 
 class CreateDataset(object):
@@ -50,7 +55,7 @@ class CreateDataset(object):
             basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
         progress.pool(name=dataset_progress_name, message='Копирование файлов', percent=10)
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
-        self.zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
+        zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
         shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
         shutil.rmtree(self.dataset_paths_data.sources)
         dataset_data = self.write_dataset_configure(creation_data)
@@ -72,31 +77,17 @@ class CreateDataset(object):
         # if creation_data.version:  # Больше сделано для дебаггинга
         #     self.version = CreateVersion(version_data=creation_data.version)
 
-    @staticmethod
-    def zip_dataset(src, dst):
-        zf = zipfile.ZipFile("%s.zip" % (dst), "w", zipfile.ZIP_DEFLATED)
-        abs_src = os.path.abspath(src)
-        for dirname, subdirs, files in os.walk(src):
-            for filename in files:
-                absname = os.path.abspath(os.path.join(dirname, filename))
-                arcname = absname[len(abs_src) + 1:]
-                zf.write(absname, arcname)
-        zf.close()
-
     def write_dataset_configure(self, creation_data):
 
         # tags_list = [{'alias': x, 'name': x.capitalize()} for x in decamelize(creation_data.task_type).split('_')]
         # for tag in creation_data.tags:
         #     tags_list.append(tag.native())
-        architecture = creation_data.task_type
-        if architecture == LayerTaskTypeChoice.ObjectDetection:
-            architecture = ArchitectureChoice.YoloV4  #################################################################
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
                 'group': DatasetGroupChoice.trds,
                 # 'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
-                'architecture': architecture,
+                'architecture': creation_data.task_type,
                 }
         dataset_data = DatasetData(**data)
         with open(os.path.join(self.dataset_paths_data.basepath, DATASET_CONFIG), 'w') as fp:
@@ -173,8 +164,6 @@ class CreateVersion(object):
         )
         self.create_table(version_data)
 
-        progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
-
         self.inputs, inp_col = architecture_class.create_input_parameters(
             input_instr=self.instructions.inputs,
             version_data=version_data,
@@ -193,8 +182,11 @@ class CreateVersion(object):
             preprocessing=self.preprocessing,
             version_paths_data=self.version_paths_data
         )
+
         self.columns.update(inp_col)
         self.columns.update(out_col)
+
+        progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
 
         architecture_class.create_dataset_arrays(
             put_data=self.instructions.inputs,
@@ -211,7 +203,7 @@ class CreateVersion(object):
 
         progress.pool(name=version_progress_name, message='Сохранение', percent=100)
         self.write_instructions_to_files()
-        self.zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
+        zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, VERSION_EXT]))
         if version_dir.is_dir():
             shutil.rmtree(version_dir)
@@ -223,17 +215,6 @@ class CreateVersion(object):
         progress.pool(name=version_progress_name, message='Формирование версии датасета завершено', data=version_data,
                       percent=100, finished=True)
         logger.info(f'Создана версия {version_data.name}', extra={'type': "info"})
-
-    @staticmethod
-    def zip_dataset(src, dst):
-        zf = zipfile.ZipFile("%s.zip" % dst, "w", zipfile.ZIP_DEFLATED)
-        abs_src = os.path.abspath(src)
-        for dirname, subdirs, files in os.walk(src):
-            for filename in files:
-                absname = os.path.abspath(os.path.join(dirname, filename))
-                arcname = absname[len(abs_src) + 1:]
-                zf.write(absname, arcname)
-        zf.close()
 
     @staticmethod
     def postprocess_timeseries(full_array):
@@ -351,65 +332,65 @@ class CreateVersion(object):
     #
     #     return put_parameters
 
-    def create_preprocessing(self, instructions: DatasetInstructionsData):
+    # def create_preprocessing(self, instructions: DatasetInstructionsData):
+    #
+    #     for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+    #         for col_name, data in put.items():
+    #             if 'timeseries' in data.parameters.values():
+    #                 length = data.parameters['length']
+    #                 depth = data.parameters['depth']
+    #                 step = data.parameters['step']
+    #                 for pt in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+    #                     for col_nm, dt in pt.items():
+    #                         if 'raw' in dt.parameters.values():
+    #                             dt.parameters['length'] = length
+    #                             dt.parameters['depth'] = depth
+    #                             dt.parameters['step'] = step
+    #             if 'scaler' in data.parameters.keys():
+    #                 self.preprocessing.create_scaler(**data.parameters)
+    #             elif 'prepare_method' in data.parameters.keys():
+    #                 if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+    #                                                          LayerPrepareMethodChoice.bag_of_words]:
+    #                     self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+    #                 elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+    #                     self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+    #             else:
+    #                 self.preprocessing.preprocessing.update(
+    #                     {data.parameters['put']: {data.parameters['cols_names']: None}}
+    #                 )
 
-        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            for col_name, data in put.items():
-                if 'timeseries' in data.parameters.values():
-                    length = data.parameters['length']
-                    depth = data.parameters['depth']
-                    step = data.parameters['step']
-                    for pt in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-                        for col_nm, dt in pt.items():
-                            if 'raw' in dt.parameters.values():
-                                dt.parameters['length'] = length
-                                dt.parameters['depth'] = depth
-                                dt.parameters['step'] = step
-                if 'scaler' in data.parameters.keys():
-                    self.preprocessing.create_scaler(**data.parameters)
-                elif 'prepare_method' in data.parameters.keys():
-                    if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                             LayerPrepareMethodChoice.bag_of_words]:
-                        self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                    elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                        self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
-                else:
-                    self.preprocessing.preprocessing.update(
-                        {data.parameters['put']: {data.parameters['cols_names']: None}}
-                    )
-
-    def fit_preprocessing(self, put_data):
-
-        for key in put_data.keys():
-            for col_name, data in put_data[key].items():
-                if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
-                                                                                     None]:
-                    progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
-                    #                     try:
-                    if self.tags[key][col_name] in PATH_TYPE_LIST:
-                        for i in range(len(data.instructions)):
-                            #                             progress.pool(version_progress_name,
-                            #                                           percent=ceil(i / len(data.instructions) * 100))
-
-                            arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
-                                str(self.sources_temp_directory.joinpath(data.instructions[i])),
-                                **data.parameters
-                            )
-
-                            if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
-                                                               decamelize(LayerOutputTypeChoice.Image)]:
-                                arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
-                                                                                        data.parameters['height']))}
-                            if data.parameters['scaler'] == 'terra_image_scaler':
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
-                            else:
-                                self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
-                    else:
-                        self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
-
-                        # except Exception:
-                        #     progress.pool(version_progress_name, error='Ошибка обучения скейлера')
-                        #     raise
+    # def fit_preprocessing(self, put_data):
+    #
+    #     for key in put_data.keys():
+    #         for col_name, data in put_data[key].items():
+    #             if 'scaler' in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler,
+    #                                                                                  None]:
+    #                 progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+    #                 #                     try:
+    #                 if self.tags[key][col_name] in PATH_TYPE_LIST:
+    #                     for i in range(len(data.instructions)):
+    #                         #                             progress.pool(version_progress_name,
+    #                         #                                           percent=ceil(i / len(data.instructions) * 100))
+    #
+    #                         arr = getattr(CreateArray(), f'create_{self.tags[key][col_name]}')(
+    #                             str(self.sources_temp_directory.joinpath(data.instructions[i])),
+    #                             **data.parameters
+    #                         )
+    #
+    #                         if data.parameters['put_type'] in [decamelize(LayerInputTypeChoice.Image),
+    #                                                            decamelize(LayerOutputTypeChoice.Image)]:
+    #                             arr = {'instructions': cv2.resize(arr['instructions'], (data.parameters['width'],
+    #                                                                                     data.parameters['height']))}
+    #                         if data.parameters['scaler'] == 'terra_image_scaler':
+    #                             self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'])
+    #                         else:
+    #                             self.preprocessing.preprocessing[key][col_name].fit(arr['instructions'].reshape(-1, 1))
+    #                 else:
+    #                     self.preprocessing.preprocessing[key][col_name].fit(np.array(data.instructions).reshape(-1, 1))
+    #
+    #                     # except Exception:
+    #                     #     progress.pool(version_progress_name, error='Ошибка обучения скейлера')
+    #                     #     raise
 
     def create_table(self, version_data: CreationVersionData):
 

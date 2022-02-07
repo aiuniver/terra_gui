@@ -33,6 +33,7 @@ class LayerPrepareMethodChoice(str, Enum):
 class LayerTaskTypeChoice(str, Enum):
     ImageClassification = 'ImageClassification'  # 1 вход, 1 выход
     ImageSegmentation = 'ImageSegmentation'  # 1 вход, 1 выход
+    # ImageObjectDetection = 'ImageObjectDetection'  # 1 вход, 1(3+3) выход(ов)
     TextClassification = 'TextClassification'  # 1 вход, 1 выход
     TextSegmentation = 'TextSegmentation'  # 1 вход, 1 выход
     VideoClassification = 'VideoClassification'  # 1 вход, 1 выход
@@ -43,9 +44,8 @@ class LayerTaskTypeChoice(str, Enum):
     DataframeRegression = 'DataframeRegression'  # *вход(ов), * выход(ов)
     DataframeTimeseries = 'DataframeTimeseries'  # 1 вход, 1 выход
     DataframeTimeseriesTrend = 'DataframeTimeseriesTrend'  # 1 вход, 1 выход
-    ObjectDetection = 'ObjectDetection'  # 1 вход, 1(3+3) выход(ов)
-    #  YoloV3 = 'YoloV3'
-    #  YoloV4 = 'YoloV4'
+    YoloV3 = 'YoloV3'  # 1 вход, 1(3+3) выход(ов)
+    YoloV4 = 'YoloV4'  # 1 вход, 1(3+3) выход(ов)
 
 
 class LayerNetChoice(str, Enum):

@@ -165,7 +165,7 @@ class DatasetData(AliasMixinData):
     name: str
     date: Optional[datetime]
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
-    # tags: Optional[TagsList] = TagsList()
+    tags: Optional[TagsList] = TagsList()
 #     size: Optional[FileSizeData]
     group: Optional[DatasetGroupChoice]
 
@@ -287,11 +287,10 @@ class VersionData(AliasMixinData):
     date: Optional[datetime]
     size: Optional[FileSizeData]
     tags: Optional[TagsList] = TagsList()
-    use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    service: Optional[Dict[PositiveInt, DatasetOutputsData]] = {}
-    columns: Optional[Dict[PositiveInt, Dict[str, Any]]] = {}
+    service: Dict[PositiveInt, DatasetOutputsData] = {}
+    columns: Dict[PositiveInt, Dict[str, Any]] = {}
 
 
 # class DatasetData(AliasMixinData):

@@ -9,11 +9,10 @@ from math import ceil
 from pathlib import Path
 
 from terra_ai import progress
-from terra_ai.data.datasets.creation import CreationVersionData
 from terra_ai.data.datasets.dataset import VersionPathsData, DatasetOutputsData, DatasetInputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice, \
+    LayerScalerImageChoice
 from terra_ai.datasets import arrays_classes
-from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.creating import version_progress_name
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
 from terra_ai.datasets.preprocessing import CreatePreprocessing
@@ -22,45 +21,45 @@ from terra_ai.logging import logger
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 
 
-class BaseClass(object):
+def multithreading_instructions(one_path, params, dataset_folder, col_name, id):
 
-    @staticmethod
-    def multithreading_instructions(one_path, params, dataset_folder, col_name, id):
+    try:
+        instruction = getattr(getattr(arrays_classes, decamelize(params["type"])),
+                              f'{params["type"]}Array')().prepare(
+            sources=[one_path],
+            dataset_folder=dataset_folder,
+            **params['parameters'],
+            **{'cols_names': col_name, 'put': id}
+        )
 
+    except Exception:
+        progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {col_name}')
+        logger.debug(f'Создание инструкций провалилось на {one_path}')
+        raise
+
+    return instruction
+
+
+def multithreading_array(row, instructions):
+
+    full_array = []
+    for h in range(len(row)):
         try:
-            instruction = getattr(getattr(arrays_classes, decamelize(params["type"])),
-                                  f'{params["type"]}Array')().prepare(
-                sources=[one_path],
-                dataset_folder=dataset_folder,
-                **params['parameters'],
-                **{'cols_names': col_name, 'put': id}
-            )
-
+            create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                             f'{camelize(instructions[h]["put_type"])}Array')().create(
+                source=row[h], **instructions[h])
+            prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                            f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
+                create['instructions'], **create['parameters'])
+            full_array.append(prepr)
         except Exception:
-            progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {col_name}')
-            logger.debug(f'Создание инструкций провалилось на {one_path}')
+            progress.pool(version_progress_name, error='Ошибка создания массивов данных')
             raise
 
-        return instruction
+    return full_array
 
-    @staticmethod
-    def multithreading_array(row, instructions):
 
-        full_array = []
-        for h in range(len(row)):
-            try:
-                create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-                                 f'{camelize(instructions[h]["put_type"])}Array')().create(
-                    source=row[h], **instructions[h])
-                prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-                                f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
-                    create['instructions'], **create['parameters'])
-                full_array.append(prepr)
-            except Exception:
-                progress.pool(version_progress_name, error='Ошибка создания массивов данных')
-                raise
-
-        return full_array
+class BaseClass(object):
 
     @staticmethod
     def preprocess_version_data(**kwargs):
@@ -97,8 +96,8 @@ class BaseClass(object):
                         if decamelize(parameters['type']) in PATH_TYPE_LIST:
                             collected_data = [str(Path(sources_temp_directory).joinpath(Path(x)))
                                               for x in collected_data]
-                    data_to_pass[idx].update({name: collected_data})
-                    parameters_to_pass[idx].update({name: parameters})
+                    data_to_pass[idx].update({f'{idx}_{name}': collected_data})
+                    parameters_to_pass[idx].update({f'{idx}_{name}': parameters})
 
         return data_to_pass, parameters_to_pass
 
@@ -112,8 +111,9 @@ class BaseClass(object):
             tags[put_id] = {}
             for col_name, data in pass_data_parameters.items():
                 instructions = []
+                # classes_names = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(self.multithreading_instructions,
+                    results = executor.map(multithreading_instructions,
                                            data,
                                            repeat(parameters[put_id][col_name]),
                                            repeat(version_sources_path),
@@ -135,14 +135,13 @@ class BaseClass(object):
 
                 instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
                 instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
+                # instructions_data.parameters.update({'classes_names': list(set(classes_names))})
                 put_instructions[put_id].update({col_name: instructions_data})
                 tags[put_id].update({col_name: decamelize(parameters[put_id][col_name]['type'])})
 
         return put_instructions, tags
 
     def create_instructions(self, version_data, sources_temp_directory, version_paths_data):
-
-        tags = {}
 
         inp_data, inp_parameters = self.collect_data_to_pass(
             put_data=version_data.inputs,
@@ -169,6 +168,8 @@ class BaseClass(object):
         )
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
+
+        tags = {}
         tags.update(inp_tags)
         tags.update(out_tags)
 
@@ -200,7 +201,7 @@ class BaseClass(object):
                     prep = preprocessing.preprocessing.get(key).get(col_name)
                     options_to_pass.update([('preprocess', prep)])
 
-                array = self.multithreading_array([data_to_pass], [options_to_pass])[0]
+                array = multithreading_array([data_to_pass], [options_to_pass])[0]
                 put_array.append(array)
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
@@ -263,7 +264,7 @@ class BaseClass(object):
                     prep = preprocessing.preprocessing.get(key).get(col_name)
                     options_to_pass.update([('preprocess', prep)])
 
-                array = self.multithreading_array([data_to_pass], [options_to_pass])[0]
+                array = multithreading_array([data_to_pass], [options_to_pass])[0]
                 if not array.shape:
                     array = np.expand_dims(array, 0)
                 put_array.append(array)
@@ -354,10 +355,98 @@ class BaseClass(object):
                 hdf[split].create_group(f'id_{key}')
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(self.multithreading_array, data_to_pass, dict_to_pass)
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
                         progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
                         array = np.concatenate(result, axis=0)
                         hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
                         del result
             hdf.close()
+
+
+class ClassificationClass(object):
+
+    def __init__(self):
+
+        self.y_cls = []
+
+    def create_put_instructions(self, dictio, parameters, version_sources_path):
+
+        put_instructions = {}
+        tags = {}
+
+        for put_id, pass_data_parameters in dictio.items():
+            put_instructions[put_id] = {}
+            tags[put_id] = {}
+            for col_name, data in pass_data_parameters.items():
+                instructions = []
+                classes_names = []
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(multithreading_instructions,
+                                           data,
+                                           repeat(parameters[put_id][col_name]),
+                                           repeat(version_sources_path),
+                                           repeat(col_name),
+                                           repeat(put_id))
+                    progress.pool(version_progress_name, message=f'Формирование файлов')  # Добавить конкретику
+                    for i, result in enumerate(results):
+                        progress.pool(version_progress_name, percent=ceil(i / len(data) * 100))
+                        if decamelize(parameters[put_id][col_name]['type']) in PATH_TYPE_LIST:
+                            for j in range(len(result['instructions'])):
+                                result['instructions'][j] = result['instructions'][j].replace(
+                                    str(version_sources_path), '')[1:]
+                        instructions += result['instructions']
+                        result_params = result['parameters']
+                        if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
+                            classes_names += result['parameters'].get('classes_names')
+                        else:
+                            self.y_cls += [Path(data[i]).parent.name for _ in range(len(result['instructions']))]
+
+                instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
+                instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
+                if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
+                    instructions_data.instructions = self.y_cls
+                    if Path(classes_names[0]).is_file():
+                        for i in range(len(classes_names)):
+                            classes_names[i] = Path(classes_names[i]).parent.name
+                    instructions_data.parameters.update({'classes_names': list(set(classes_names))})
+                    instructions_data.parameters.update({'num_classes': len(list(set(classes_names)))})
+
+                column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
+                put_instructions[put_id].update({column_name: instructions_data})
+                tags[put_id].update({column_name: decamelize(parameters[put_id][col_name]['type'])})
+
+        return put_instructions, tags
+
+
+class PreprocessingScalerClass(object):
+
+    @staticmethod
+    def create_preprocessing(instructions, preprocessing):
+
+        for put in instructions.inputs.values():
+            for col_name, data in put.items():
+                preprocessing.create_scaler(**data.parameters)
+
+        return preprocessing
+
+    @staticmethod
+    def fit_preprocessing(put_data, preprocessing, sources_temp_directory):
+
+        for key in put_data.keys():
+            for col_name, data in put_data[key].items():
+                if 'scaler' in data.parameters and \
+                        data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
+                    progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+                    for i in range(len(data.instructions)):
+
+                        array = multithreading_array(
+                            [str(sources_temp_directory.joinpath(data.instructions[i]))],
+                            [data.parameters]
+                        )[0]
+                        if data.parameters['scaler'] == LayerScalerImageChoice.terra_image_scaler:
+                            preprocessing.preprocessing[key][col_name].fit(array)
+                        else:
+                            preprocessing.preprocessing[key][col_name].fit(array.reshape(-1, 1))
+
+        return preprocessing
