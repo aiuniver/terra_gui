@@ -137,6 +137,7 @@ from . import (
     VAEBlock,
     CustomBlock,
     SpaceToDepth,
+    DepthToSpace,
     # DarkNetConvolutional,
     # DarkNetUpsample,
     # DarkNetResBlock,
@@ -152,4 +153,5 @@ from . import (
     ResnetBlock2D,
     Transformer,
     PretrainedBERT,
+    RGBNormalization
 )

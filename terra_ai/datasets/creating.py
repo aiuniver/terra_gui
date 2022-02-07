@@ -10,7 +10,7 @@ from terra_ai.data.datasets.creation import CreationData, CreationInputsList, Cr
 from terra_ai.data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData, DatasetPathsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice, ColumnProcessingTypeChoice, \
-    LayerTypeProcessingClassificationChoice, LayerEncodingChoice
+    LayerTypeProcessingClassificationChoice, LayerEncodingChoice, LayerTransformerMethodChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG
 from terra_ai.data.datasets.creations.layers.output.types.ObjectDetection import LayerODDatasetTypeChoice
 from terra_ai import progress
@@ -90,7 +90,7 @@ class CreateDataset(object):
         if not creation_data.outputs[0].type in [LayerOutputTypeChoice.Speech2Text, LayerOutputTypeChoice.Text2Speech,
                                                  LayerOutputTypeChoice.Tracker]:
             self.create_dataset_arrays(put_data=self.instructions.inputs)
-            if not creation_data.outputs[0].type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+            if not creation_data.outputs[0].type in [LayerOutputTypeChoice.ImageGAN, LayerOutputTypeChoice.ImageCGAN]:
                 self.create_dataset_arrays(put_data=self.instructions.outputs)
 
         self.write_preprocesses_to_files()
@@ -156,7 +156,7 @@ class CreateDataset(object):
             for worker_name, worker_params in creation_data.columns_processing.items():
                 if creation_data.columns_processing[worker_name].type == 'Image':
                     shape = (worker_params.parameters.height, worker_params.parameters.width, 3)
-                elif creation_data.columns_processing[worker_name].type == 'GAN' and not noise_flag:
+                elif creation_data.columns_processing[worker_name].type == 'ImageGAN' and not noise_flag:
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[str(new_worker_id)] = ColumnsProcessingData(
                         **{"type": "Noise", "parameters": {'shape': (100,)}})
@@ -170,6 +170,7 @@ class CreateDataset(object):
                                'sources_paths': output_copy.parameters.sources_paths}})
                     )
                     noise_flag = True
+                    creation_data.use_generator = True
                     break
 
         for out in creation_data.outputs:
@@ -208,7 +209,8 @@ class CreateDataset(object):
                 names_list = get_od_names(creation_data)
                 out.parameters.classes_names = names_list
                 out.parameters.num_classes = len(names_list)
-            elif out.type in [LayerOutputTypeChoice.GAN, LayerOutputTypeChoice.CGAN]:
+            elif out.type in [LayerOutputTypeChoice.ImageGAN, LayerOutputTypeChoice.ImageCGAN]:
+                creation_data.use_generator = True
                 out_list = []
                 img_shape = ()
                 sources_paths = []
@@ -225,7 +227,15 @@ class CreateDataset(object):
                         parameters={'sources_paths': sources_paths,
                                     'shape': (100,)}))
                 idx += 1
-                if out.type == LayerOutputTypeChoice.CGAN:
+                if out.type == LayerOutputTypeChoice.ImageCGAN:
+                    creation_data.inputs.append(
+                        CreationInputData(
+                            id=idx,
+                            name='Классы',
+                            type=LayerInputTypeChoice.Classification,
+                            parameters={'sources_paths': sources_paths,
+                                        'type_processing': 'categorical'}))
+                    idx += 1
                     creation_data.inputs.append(
                         CreationInputData(
                             id=idx,
@@ -252,7 +262,8 @@ class CreateDataset(object):
                 creation_data.outputs = CreationOutputsList(out_list)
 
         if creation_data.columns_processing:
-            for worker_name, worker_params in creation_data.columns_processing.items():
+            worker_keys = list(creation_data.columns_processing.keys())
+            for worker_name in worker_keys:
                 if creation_data.columns_processing[worker_name].type == 'Segmentation':
                     for w_name, w_params in creation_data.columns_processing.items():
                         if creation_data.columns_processing[w_name].type == 'Image':
@@ -271,8 +282,9 @@ class CreateDataset(object):
                                 creation_data.columns_processing[worker_name].parameters.depth
                             creation_data.columns_processing[w_name].parameters.step = \
                                 creation_data.columns_processing[worker_name].parameters.step
-                elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.GAN,
-                                                                            LayerOutputTypeChoice.CGAN]:
+                elif creation_data.columns_processing[worker_name].type in [LayerOutputTypeChoice.ImageGAN.name,
+                                                                            LayerOutputTypeChoice.ImageCGAN.name]:
+                    creation_data.use_generator = True
                     new_worker_id = int(list(creation_data.columns_processing.keys())[-1]) + 1
                     creation_data.columns_processing[worker_name] = ColumnsProcessingData(
                         **{"type": "Generator", "parameters": {'shape': shape}})
@@ -290,6 +302,27 @@ class CreateDataset(object):
                                           'sources_paths': output_copy.parameters.sources_paths}})
                     )
                     break
+
+                elif creation_data.columns_processing[worker_name].type == 'Transformer':
+                    creation_data.columns_processing['0'].parameters.transformer = LayerTransformerMethodChoice.enc_inp
+                    creation_data.columns_processing['1'] = ColumnsProcessingData(
+                        **creation_data.columns_processing['0'].native().copy())
+                    creation_data.columns_processing['1'].parameters.transformer = LayerTransformerMethodChoice.dec_inp
+                    creation_data.columns_processing['2'] = ColumnsProcessingData(
+                        **creation_data.columns_processing['0'].native().copy())
+                    creation_data.columns_processing['2'].parameters.transformer = LayerTransformerMethodChoice.dec_out
+                    original = creation_data.inputs[0].native()
+                    creation_data.inputs.append(CreationInputData(
+                        id=original['id'] + 1,
+                        name='Декодер',
+                        type=original['type'],
+                        parameters={
+                            'sources_paths': original['parameters']['sources_paths'],
+                            'cols_names': {'1': [1]}}
+                    ))
+                    creation_data.outputs[0].id += 1
+                    for key in creation_data.outputs[0].parameters.cols_names.keys():
+                        creation_data.outputs[0].parameters.cols_names[key] = [2]
 
         return creation_data
 
@@ -528,6 +561,7 @@ class CreateDataset(object):
 
     def create_preprocessing(self, instructions: DatasetInstructionsData):
 
+        saved_prep = None
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
                 if 'timeseries' in data.parameters.values():
@@ -543,11 +577,19 @@ class CreateDataset(object):
                 if 'scaler' in data.parameters.keys():
                     self.preprocessing.create_scaler(**data.parameters)
                 elif 'prepare_method' in data.parameters.keys():
-                    if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                             LayerPrepareMethodChoice.bag_of_words]:
-                        self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                    elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                        self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                    if data.parameters['transformer'] == 'dec_out':
+                        self.preprocessing.preprocessing[data.parameters['put']] = {}
+                        self.preprocessing.preprocessing[data.parameters['put']].update({data.parameters['cols_names']:
+                                                                                             saved_prep})
+                    else:
+                        if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                                 LayerPrepareMethodChoice.bag_of_words]:
+                            self.preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+                        elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                            self.preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                        saved_prep = self.preprocessing.preprocessing.get(data.parameters['put']).get(
+                            data.parameters['cols_names'])
+
                 # if 'augmentation' in data.parameters.keys() and data.parameters['augmentation']:
                     # self.augmentation[data.parameters['cols_names']] = {'train': [], 'val': []}
                     # {'object': self.preprocessing.create_image_augmentation(data.parameters['augmentation']),
@@ -623,9 +665,11 @@ class CreateDataset(object):
         for inp in self.instructions.inputs.keys():
             for key, value in self.instructions.inputs[inp].items():
                 build_dataframe[key] = value.instructions
+                # print(len(value.instructions))
         for out in self.instructions.outputs.keys():
             for key, value in self.instructions.outputs[out].items():
                 build_dataframe[key] = value.instructions
+                # print(len(value.instructions))
         try:
             dataframe = pd.DataFrame(build_dataframe)
             # print(dataframe)
@@ -637,8 +681,6 @@ class CreateDataset(object):
             raise
         for key, value in split_sequence.items():
             self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
-        # print(self.dataframe['train'])
-        # print(self.dataframe['val'])
 
     def create_input_parameters(self, creation_data: CreationData) -> dict:
 
@@ -1248,12 +1290,13 @@ class CreateDataset(object):
         elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
                 and len(creation_data.inputs) > 2:
             architecture = ArchitectureChoice.ImageCGAN
+        elif inp_task_name == out_task_name == 'Text':
+            architecture = ArchitectureChoice.TextTransformer
         # elif creation_data.outputs[0].type in [LayerOutputTypeChoice.Discriminator, LayerOutputTypeChoice.Generator] \
         #         and len(creation_data.inputs) > 2:
         #     architecture = ArchitectureChoice.CGAN
         else:
             architecture = ArchitectureChoice.Basic
-
         out_list = []
         for key, val in self.outputs.items():
             out_list.append(val['task'])

@@ -16,7 +16,6 @@ class TimeseriesCallback:
     def __init__(self):
         pass
 
-
     @staticmethod
     def get_x_array(options):
         method_name = 'get_x_array'
@@ -277,7 +276,11 @@ class TimeseriesCallback:
             return_data = {}
             if interactive_config.intermediate_result.show_results:
                 data_type = interactive_config.intermediate_result.data_type.name
-                for idx in range(interactive_config.intermediate_result.num_examples):
+                count = interactive_config.intermediate_result.num_examples \
+                    if len(y_pred.get(data_type).get(f'{list(options.data.outputs.keys())[0]}')) > \
+                       interactive_config.intermediate_result.num_examples \
+                    else len(y_pred.get(data_type).get(f'{list(options.data.outputs.keys())[0]}'))
+                for idx in range(count):
                     return_data[f"{idx + 1}"] = {
                         'initial_data': {},
                         'true_value': {},

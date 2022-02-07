@@ -93,6 +93,7 @@
     // border-top: 1px solid $modal-section-border-color;
     text-align: right;
     display: flex;
+    justify-content: flex-end;
     gap: 10px;
 
     .at-btn + .at-btn {

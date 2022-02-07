@@ -25,6 +25,13 @@ class LayerPrepareMethodChoice(str, Enum):
     word_to_vec = "word_to_vec"
 
 
+class LayerTransformerMethodChoice(str, Enum):
+    none = 'none'
+    enc_inp = "enc_inp"
+    dec_inp = "dec_inp"
+    dec_out = "dec_out"
+
+
 class LayerTaskTypeChoice(str, Enum):
     timeseries = "timeseries"
     regression = "regression"
@@ -187,12 +194,13 @@ class ColumnProcessingTypeChoice(str, Enum):
     Regression = "Regression"
     Segmentation = "Segmentation"
     Timeseries = "Timeseries"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
+    Transformer = "Transformer"
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -231,8 +239,8 @@ class LayerOutputTypeChoice(str, Enum):
     Tracker = "Tracker"
     Speech2Text = "Speech2Text"
     Text2Speech = "Text2Speech"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     Discriminator = "Discriminator"
     Generator = "Generator"

@@ -4,17 +4,12 @@
       <span>Сохранить обучение</span>
     </div>
     <div class="inner form-inline-label">
-      <div class="field-form">
-        <label>Название</label>
-        <input v-model="name" type="text" :disabled="loading" />
-      </div>
-      <div class="field-form field-inline field-reverse">
-        <label @click="overwrite = !overwrite">Перезаписать</label>
-        <div class="checkout-switch">
-          <input v-model="overwrite" type="checkbox" :disabled="loading" />
-          <span class="switcher"></span>
-        </div>
-      </div>
+      <t-field label="Название">
+        <d-input-text v-model="name" type="text" :disabled="loading" />
+      </t-field>
+      <t-field label="Перезаписать">
+        <d-checkbox v-model="overwrite" type="checkbox" :disabled="loading" />
+      </t-field>
     </div>
     <template slot="footer">
       <t-button :disabled="name === ''" :loading="loading" @click="save({ name, overwrite })">Сохранить</t-button>

@@ -170,7 +170,7 @@ class History:
                             for metric in output_layer.metrics:
                                 log_history[out]["class_metrics"][class_name][metric.name] = {"train": [], "val": []}
 
-            elif options.data.architecture in YOLO_ARCHITECTURE:
+            if options.data.architecture in YOLO_ARCHITECTURE:
                 log_history['output'] = copy.deepcopy(OUTPUT_LOG_CONFIG)
                 out = list(options.data.outputs.keys())[0]
                 for class_name in options.data.outputs.get(out).classes_names:
@@ -178,27 +178,59 @@ class History:
                     log_history['output']["class_metrics"]['mAP50'][class_name] = {"train": [], "val": []}
 
             elif options.data.architecture in GAN_ARCHITECTURE:
-                log_history['output'] = {
-                    "loss": {
-                        'gen_loss': {"train": [], "val": []},
-                        'disc_loss': {"train": [], "val": []},
-                        'disc_real_loss': {"train": [], "val": []},
-                        'disc_fake_loss': {"train": [], "val": []}
-                    },
-                    "metrics": {},
-                    "progress_state": {
+                if options.data.architecture == ArchitectureChoice.ImageSRGAN:
+                    log_history['output'] = {
                         "loss": {
-                            'gen_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_real_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
-                            'disc_fake_loss': {
-                                "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            'pretrain_loss': {"train": [], "val": []},
+                            'perception_loss': {"train": [], "val": []},
+                            'content_loss': {"train": [], "val": []},
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'pretrain_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'perception_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'content_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
                         }
                     }
-                }
+                else:
+                    log_history['output'] = {
+                        "loss": {
+                            'gen_loss': {"train": [], "val": []},
+                            'disc_loss': {"train": [], "val": []},
+                            'disc_real_loss': {"train": [], "val": []},
+                            'disc_fake_loss': {"train": [], "val": []}
+                        },
+                        "metrics": {},
+                        "progress_state": {
+                            "loss": {
+                                'gen_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_real_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []},
+                                'disc_fake_loss': {
+                                    "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []}
+                            }
+                        }
+                    }
                 # out = list(options.data.outputs.keys())[0]
                 # for class_name in options.data.outputs.get(out).classes_names:
                 #     log_history['output']["class_loss"]['prob_loss'][class_name] = {"train": [], "val": []}
@@ -407,7 +439,6 @@ class History:
             if self.current_logs['epochs'] in self.log_history['epochs']:
                 logger.warning(f"Текущая эпоха {self.current_logs['epochs']} уже записана ранее в логи")
             self.log_history['epochs'].append(self.current_logs['epochs'])
-
             if self.dataset.data.architecture == ArchitectureChoice.TextTransformer:
                 for output_layer in self.training_detail.base.architecture.parameters.outputs:
                     out = f"{output_layer.id}"
@@ -621,6 +652,8 @@ class History:
 
             elif self.dataset.data.architecture in GAN_ARCHITECTURE:
                 for key in self.log_history['output']["loss"].keys():
+                    # print(f'self.current_logs: {key, self.log_history["output"]["loss"], self.current_logs.get("loss").get(key)}')
+                    # if key in self.current_logs.get("loss").keys():
                     self.log_history['output']["loss"][key]['train'].append(
                             round_loss_metric(self.current_logs.get('loss').get(key).get('train')))
                 for loss_name in self.log_history['output']["loss"].keys():

@@ -144,6 +144,7 @@ class InterpolationChoice(str, Enum):
 
 class ConditionalMergeModeChoice(str, Enum):
     concatenate = "Concatenate"
+    # multiply = "Multiply"
 
     @staticmethod
     def values() -> list:

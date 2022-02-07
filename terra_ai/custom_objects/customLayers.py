@@ -35,6 +35,7 @@ terra_custom_layers = {
     "OnlyYolo": "customLayers",
     "ConditionalMergeLayer": "customLayers",
     "ResnetBlock2D": "customLayers",
+    "RgbNormalization": "customLayers",
     "Transformer": "customLayers",
     "PretrainedBERT": "customLayers",
 }
@@ -170,6 +171,7 @@ class InstanceNormalization(Layer):
 
     def compute_output_shape(self, input_shape):
         return input_shape
+
 
 
 class VAEBlock(Layer):
@@ -771,7 +773,7 @@ class CONVBlock(Layer):
             dilation=(1, 1), padding='same', activation='relu', transpose=False, use_bias=True,
             use_activation_layer=False, leaky_relu_layer=True, leaky_relu_alpha=0.3,
             normalization='batch', dropout_layer=True, dropout_rate=0.1, kernel_regularizer=None,
-            layers_seq_config: str = 'conv_bn_lrelu_drop_conv_bn_lrelu_drop',
+            layers_seq_config: str = 'conv_bn_lrelu_drop_conv_bn_lrelu_drop', bn_momentum=0.99,
             **kwargs
     ):
 
@@ -794,6 +796,7 @@ class CONVBlock(Layer):
         self.transpose = transpose
         self.use_bias = use_bias
         self.kernel_regularizer = kernel_regularizer
+        self.bn_momentum = bn_momentum
 
         conv_activation = None if self.use_activation_layer else self.activation
         for i in range(self.n_conv_layers):
@@ -819,7 +822,7 @@ class CONVBlock(Layer):
                     )
                 )
             if self.normalization == "batch":
-                setattr(self, f"norm_{i}", layers.BatchNormalization(axis=-1))
+                setattr(self, f"norm_{i}", layers.BatchNormalization(axis=-1, momentum=self.bn_momentum))
             if self.normalization == "instance":
                 setattr(self, f"norm_{i}", InstanceNormalization(axis=-1))
             if self.use_activation_layer and self.activation:
@@ -2059,7 +2062,7 @@ class PretrainedYOLO(Layer):
 class ConditionalMergeLayer(layers.Layer):
     def __init__(self, mode='Concatenate', **kwargs):
         super(ConditionalMergeLayer, self).__init__(**kwargs)
-        self.mode = mode
+        self.mode = mode  # Concatenate Multiply
         pass
 
     def concatenate(self, input):
@@ -2084,9 +2087,63 @@ class ConditionalMergeLayer(layers.Layer):
             x = layers.Reshape(target_shape=target_shape)(x)
             return layers.Concatenate(axis=-1)([input[1], x])
 
+    # def multiply(self, input):
+    #     if len(input[0].shape[1:]) == len(input[1].shape[1:]):
+    #         if input[0].shape[-1] >= input[1].shape[-1]:
+    #             cond_input = input[1]
+    #             second_input = layers.Flatten()(input[0])
+    #         else:
+    #             cond_input = input[0]
+    #             second_input = layers.Flatten()(input[1])
+    #     else:
+    #         if len(input[0].shape[1:]) > len(input[1].shape[1:]):
+    #             cond_input = input[1]
+    #             second_input = layers.Flatten()(input[0])
+    #         else:
+    #             cond_input = input[0]
+    #             second_input = layers.Flatten()(input[1])
+    #     # if tf.reduce_sum(input[0]) == 1 * input[0].shape[0]:
+    #     #     cond_input = input[0]
+    #     #     second_input = layers.Flatten()(input[1])
+    #     # else:
+    #     #     cond_input = input[1]
+    #     #     second_input = layers.Flatten()(input[0])
+    #     labels = tf.expand_dims(tf.argmax(cond_input, axis=-1), axis=-1)
+    #     labels = tf.cast(labels, dtype='float32')
+    #     print('cond_input.shape, second_input.shape', cond_input.shape, second_input.shape, labels.shape)
+    #     # input_dim = cond_input.shape[-1], output_dim = second_input.shape[-1]
+    #     x = layers.Embedding(input_dim=cond_input.shape[-1], output_dim=second_input.shape[-1])(labels)
+    #     print(x.shape)
+    #     label_embedding = layers.Flatten()(x)
+    #     print('label_embedding', label_embedding.shape)
+    #     Multiply = layers.Multiply()([second_input, label_embedding])
+    #     print('Multiply', Multiply.shape)
+    #     return Multiply
+    #     # elif len(input[0].shape) > len(input[1].shape):
+    #     #     num = 1
+    #     #     for i in input[0].shape[1:-1]:
+    #     #         num *= i
+    #     #     target_shape = list(input[0].shape[1:-1])
+    #     #     target_shape.append(input[1].shape[-1])
+    #     #     x = layers.RepeatVector(num)(input[1])
+    #     #     x = layers.Reshape(target_shape=target_shape)(x)
+    #     #     return layers.Concatenate(axis=-1)([input[0], x])
+    #     # else:
+    #     #     num = 1
+    #     #     for i in input[1].shape[1:-1]:
+    #     #         num *= i
+    #     #     target_shape = list(input[1].shape[1:-1])
+    #     #     target_shape.append(input[0].shape[-1])
+    #     #     x = layers.RepeatVector(num)(input[0])
+    #     #     x = layers.Reshape(target_shape=target_shape)(x)
+    #     #     return layers.Concatenate(axis=-1)([input[1], x])
+
     def call(self, input, training=True, **kwargs):
         if self.mode == 'Concatenate':
             return self.concatenate(input)
+        # if self.mode == 'Multiply':
+        #     print(input)
+        #     return self.multiply(input)
 
     def get_config(self):
         config = {
@@ -2098,6 +2155,34 @@ class ConditionalMergeLayer(layers.Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+    # def compute_output_shape(self, input_shape):
+    #     if self.mode == 'Concatenate':
+    #         if len(input_shape[0][1:]) == len(input_shape[1][1:]):
+    #             return None, input_shape[0][-1] + input_shape[1][-1]
+    #         elif len(input_shape[0][1:]) > len(input_shape[1][1:]):
+    #             shape = [None]
+    #             shape.extend(input_shape[0][1:-1])
+    #             shape.append(input_shape[0][-1] + input_shape[1][-1])
+    #             return tuple(shape)
+    #         else:
+    #             shape = [None]
+    #             shape.extend(input_shape[1][1:-1])
+    #             shape.append(input_shape[1][-1] + input_shape[0][-1])
+    #             return tuple(shape)
+    #     if self.mode == 'Multiply':
+    #         if len(input_shape[0][1:]) == len(input_shape[1][1:]):
+    #             if input_shape[0][-1] >= input_shape[1][-1]:
+    #                 max_inp = input_shape[0][-1]
+    #             else:
+    #                 max_inp = input_shape[1][-1]
+    #             return None, max_inp
+    #         else:
+    #             print(input_shape)
+    #             if len(input_shape[0][1:]) > len(input_shape[1][1:]):
+    #                 return None, np.prod(input_shape[0][1:]).astype('int')
+    #             else:
+    #                 return None, np.prod(input_shape[1][1:]).astype('int')
 
 
 class ResnetBlock2D(Layer):
@@ -2111,7 +2196,7 @@ class ResnetBlock2D(Layer):
     def __init__(self, filters=16, kernel_size=(3, 3), kernel_initializer='RandomNormal', n_conv_layers=2,
                  activation='relu', use_bias=True, use_activation_layer=True, leaky_relu_alpha=0.3,
                  normalization='instance', merge_layer="concatenate", num_resblocks=1,
-                 kernel_regularizer=None, **kwargs):
+                 kernel_regularizer=None, bn_momentum=0.99, prelu_shared_axes=None, **kwargs):
 
         super(ResnetBlock2D, self).__init__(**kwargs)
         self.filters = filters
@@ -2126,6 +2211,8 @@ class ResnetBlock2D(Layer):
         self.use_activation_layer = use_activation_layer
         self.leaky_relu_alpha = leaky_relu_alpha
         self.kernel_regularizer = kernel_regularizer
+        self.bn_momentum = bn_momentum
+        self.prelu_shared_axes = prelu_shared_axes
 
         for i in range(self.num_resblocks):
             for c in range(self.n_conv_layers):
@@ -2140,7 +2227,8 @@ class ResnetBlock2D(Layer):
                             bias_constraint=None))
                 if self.normalization:
                     if self.normalization == "batch":
-                        setattr(self, f"norm_{c + 1}_block_{i + 1}", layers.BatchNormalization())
+                        setattr(self, f"norm_{c + 1}_block_{i + 1}",
+                                layers.BatchNormalization(momentum=self.bn_momentum))
                     if self.normalization == "instance":
                         setattr(self, f"norm_{c + 1}_block_{i + 1}", InstanceNormalization())
                 if self.use_activation_layer and c + 1 < self.n_conv_layers:
@@ -2150,13 +2238,14 @@ class ResnetBlock2D(Layer):
                     if self.activation == "relu":
                         setattr(self, f"activation_{c + 1}_block_{i + 1}", layers.ReLU())
                     if self.activation == "prelu":
-                        setattr(self, f"activation_{c + 1}_block_{i + 1}", layers.PReLU())
+                        setattr(self, f"activation_{c + 1}_block_{i + 1}",
+                                layers.PReLU(shared_axes=self.prelu_shared_axes))
             if self.merge_layer == "concatenate":
                 setattr(self, f"concat_block_{i + 1}", layers.Concatenate(axis=-1))
             if self.merge_layer == "add":
-                setattr(self, f"concat_block_{i}", layers.Add())
+                setattr(self, f"concat_block_{i + 1}", layers.Add())
             if self.merge_layer == "multiply":
-                setattr(self, f"concat_block_{i}", layers.Multiply())
+                setattr(self, f"concat_block_{i + 1}", layers.Multiply())
 
     def call(self, input_, training=True, **kwargs):
         y = input_
@@ -2201,6 +2290,54 @@ class ResnetBlock2D(Layer):
             return output_shape
         else:
             return input_shape
+
+
+class RGBNormalization(Layer):
+
+    def __init__(self, use_div2k_mean=False, denormalize=False, half_range_normalization=True, **kwargs):
+
+        super(RGBNormalization, self).__init__(**kwargs)
+        self.use_div2k_mean = use_div2k_mean
+        self.denormalize = denormalize
+        self.half_range_normalization = half_range_normalization
+
+    def call(self, input_, training=False, **kwargs):
+        DIV2K_RGB_MEAN = tf.convert_to_tensor([0.4488, 0.4371, 0.4040]) * 255
+        # DIV2K_RGB_MEAN = tf.zeros_like(input_)
+        # for batch in range(input_.shape[0]):
+        #     DIV2K_RGB_MEAN[batch] = tf.convert_to_tensor([0.4488, 0.4371, 0.4040]) * 255
+
+        if self.denormalize:
+            if self.half_range_normalization and self.use_div2k_mean:
+                output = input_ * 127.5 + DIV2K_RGB_MEAN
+            elif self.half_range_normalization:
+                output = (input_ + 1) * 127.5
+            else:
+                output = input_ * 255.
+        else:
+            if self.half_range_normalization and self.use_div2k_mean:
+                output = (input_ - DIV2K_RGB_MEAN) / 127.5
+            elif self.half_range_normalization:
+                output = input_ / 127.5 - 1
+            else:
+                output = input_ / 255.
+        return output
+
+    def get_config(self):
+        config = {
+            'use_div2k_mean': self.filters,
+            'denormalize': self.kernel_size,
+            'half_range_normalization': self.kernel_initializer,
+        }
+        base_config = super(RGBNormalization, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
 
 
 class TransformerEncoder(layers.Layer):

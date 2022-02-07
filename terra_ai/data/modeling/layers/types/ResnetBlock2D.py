@@ -47,5 +47,6 @@ class ParametersExtraData(BaseMixinData):
     normalization: Optional[NormalizationChoice] = NormalizationChoice.batch
     merge_layer: MergeLayerChoice = MergeLayerChoice.concatenate
     use_bias: bool = True
-
+    bn_momentum: ConstrainedFloatValueGe0Le1 = 0.99
+    prelu_shared_axes: Optional[Tuple[PositiveInt, ...]] = None
     pass

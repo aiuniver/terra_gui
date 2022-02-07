@@ -1,17 +1,28 @@
 <template>
-  <div class="app">
-    <!-- <SaveProject v-model="dialogSave" /> -->
+  <div :class="['app', { 'app--new': isNew }]">
     <Overlay v-if="$store.state.settings.overlay" />
-    <Header />
-    <Nav />
-    <router-view></router-view>
-    <Footer />
+    <header>
+      <template v-if="isNew">
+        <NewHeader />
+      </template>
+      <template v-else>
+        <Header />
+        <Nav />
+      </template>
+    </header>
+    <main>
+      <router-view></router-view>
+    </main>
+    <footer>
+      <Footer />
+    </footer>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import Header from '@/components/app/Header';
+import NewHeader from '@/components/app/NewHeader';
 import Nav from '@/components/app/Nav';
 import Footer from '@/components/app/Footer';
 import Overlay from './components/forms/Overlay';
@@ -20,6 +31,7 @@ export default {
   name: 'App',
   components: {
     Header,
+    NewHeader,
     Nav,
     Footer,
     Overlay,
@@ -32,6 +44,10 @@ export default {
     ...mapGetters({
       project: 'projects/getProject',
     }),
+    isNew() {
+      const path = this?.$route?.fullPath || '';
+      return Boolean(path.includes('new') && process.env.NODE_ENV === 'development');
+    },
   },
   methods: {
     myEventHandler() {
@@ -92,9 +108,41 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .app {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  header {
+    flex: 0 0 92px;
+    z-index: 999;
+  }
+  main {
+    height: calc(100% - 152px);
+    flex: 1 1 auto;
+  }
+  footer {
+    flex: 0 0 60px;
+  }
+  &--new {
+    header {
+      flex: 0 0 52px;
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #0e1621;
+  border-radius: 3px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #0e1621 #242f3d;
 }
 </style>
 

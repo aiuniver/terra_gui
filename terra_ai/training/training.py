@@ -24,7 +24,7 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
-    TextToImageGANTerraModel, ImageToImageGANTerraModel, TransformerTerraModel
+    TextToImageGANTerraModel, ImageToImageGANTerraModel, TransformerTerraModel, ImageSRGANTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive
@@ -140,6 +140,7 @@ class GUINN:
             inp_task_name = list(set(inp_tasks))[0] if len(set(inp_tasks)) == 1 else LayerInputTypeChoice.Dataframe
             out_task_name = list(set(out_tasks))[0] if len(set(out_tasks)) == 1 else LayerOutputTypeChoice.Dataframe
             logger.debug(f"inp_task_name + out_task_name {inp_task_name}, {out_task_name}")
+
             if inp_task_name + out_task_name in ArchitectureChoice.__dict__.keys():
                 deploy_type = ArchitectureChoice.__dict__[inp_task_name + out_task_name]
             elif out_task_name in ArchitectureChoice.__dict__.keys():
@@ -178,7 +179,7 @@ class GUINN:
             logger.info("Загрузка модели...", extra={"type": "info"})
             base_model = None
             if train_details.state.status == "training":
-                validator = ModelValidator(model, dataset.data.architecture)
+                validator = ModelValidator(model, dataset.data)
                 base_model = validator.get_keras_model()
 
             if dataset.data.architecture == ArchitectureChoice.ImageGAN:
@@ -194,6 +195,10 @@ class GUINN:
                     options=dataset)
             elif dataset.data.architecture == ArchitectureChoice.ImageToImageGAN:
                 train_model = ImageToImageGANTerraModel(
+                    model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
+                    options=dataset)
+            elif dataset.data.architecture == ArchitectureChoice.ImageSRGAN:
+                train_model = ImageSRGANTerraModel(
                     model=base_model, model_name=self.nn_name, model_path=train_details.model_path,
                     options=dataset)
             elif dataset.data.architecture in YOLO_ARCHITECTURE:

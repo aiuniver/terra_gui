@@ -3,6 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
+from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
@@ -22,7 +23,7 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerTransformerMethodChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -47,6 +48,8 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
+    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    augmentation: Optional[AugmentationData]
 
 
 class ParametersTextData(ParametersBaseData):
@@ -73,6 +76,7 @@ class ParametersTextData(ParametersBaseData):
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
@@ -320,17 +324,17 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
-class ParametersGANData(ParametersBaseData):
+class ParametersImageGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "GAN".
+    Обработчик типа задачи "ImageGAN".
     """
 
     pass
 
 
-class ParametersCGANData(ParametersBaseData):
+class ParametersImageCGANData(ParametersBaseData):
     """
-    Обработчик типа задачи "CGAN".
+    Обработчик типа задачи "ImageCGAN".
     """
 
     pass
@@ -339,6 +343,14 @@ class ParametersCGANData(ParametersBaseData):
 class ParametersTextToImageGANData(ParametersBaseData):
     """
     Обработчик типа задачи "CGAN".
+    """
+
+    pass
+
+
+class ParametersTransformerData(ParametersBaseData):
+    """
+    Обработчик типа задачи "Transformer".
     """
 
     pass

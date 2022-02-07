@@ -12,6 +12,7 @@ import tensorflow
 from tensorflow.python.keras.backend import clear_session
 
 from terra_ai.callbacks.utils import GAN_ARCHITECTURE
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData
@@ -27,9 +28,8 @@ from terra_ai.modeling.utils import get_layer_info, reformat_input_shape, reorde
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, architecture: Optional[ArchitectureChoice] = None):
+    def __init__(self, model: ModelDetailsData, dataset_data: Optional[DatasetData] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
-        logger.info(f"Используемая архитектура: {architecture}\n")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -52,10 +52,15 @@ class ModelValidator:
         self.model_idxs: list = []
         self.model_count: int = 1
         # architecture = ArchitectureChoice.GAN
-        self.architecture = architecture
+        if dataset_data:
+            self.architecture = dataset_data.architecture
+            logger.info(f"Используемая архитектура: {dataset_data.architecture}\n")
+        else:
+            self.architecture = None
+        self.dataset_data = dataset_data
         if self.architecture in GAN_ARCHITECTURE:
             self.model_count = 2
-        if not architecture:
+        else:
             self.model_count = None
         self.separated_plans: list = []
 
@@ -218,7 +223,21 @@ class ModelValidator:
         if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
-                mc = ModelCreator(model_plan, self.input_shape, self.block_plans, self.layers_config)
+                model_type = None
+                for output in self.dataset_data.outputs.keys():
+                    for layer in model_plan:
+                        if int(output) == layer[0] and self.dataset_data.outputs[output].task == "Generator":
+                            model_type = "Generator"
+                        if int(output) == layer[0] and self.dataset_data.outputs[output].task == "Discriminator":
+                            model_type = "Discriminator"
+                mc = ModelCreator(
+                    model_plan=model_plan,
+                    input_shapes=self.input_shape,
+                    block_plans=self.block_plans,
+                    layer_config=self.layers_config,
+                    architecture=self.architecture,
+                    model_type=model_type
+                )
                 model = mc.create_model()
                 if model.outputs[0].shape[-1] == 1:
                     models['discriminator'] = model
@@ -1107,8 +1126,9 @@ class LayerValidation:
                     self.inp_shape[0][1:]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # space_to_depth dimensions
-        if self.layer_type == LayerTypeChoice.SpaceToDepth:
+        if self.layer_type == LayerTypeChoice.SpaceToDepth or LayerTypeChoice.DepthToSpace:
             if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW \
                     or self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC \
                     and len(self.inp_shape[0]) != 4:
@@ -1122,7 +1142,8 @@ class LayerValidation:
                     5, "`data_format`=`NCHW_VECT_C`", len(self.inp_shape[0]), self.inp_shape[0]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
-            if self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
+            if self.layer_type == LayerTypeChoice.SpaceToDepth and \
+                    self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW_VECT_C and \
                     (self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0 or
                      self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0):
                 exc = str(exceptions.DimensionSizeMustBeEvenlyDivisibleException(
@@ -1199,7 +1220,7 @@ class CustomLayer(tensorflow.keras.layers.Layer):
 class ModelCreator:
     """Create model from plan object"""
 
-    def __init__(self, model_plan, input_shapes, block_plans, layer_config):
+    def __init__(self, model_plan, input_shapes, block_plans, layer_config, architecture=None, model_type=None):
         super().__init__()
         self.name = 'ModelCreator'
         self.model_plan = model_plan
@@ -1210,6 +1231,8 @@ class ModelCreator:
         self._get_idx_line()
         self._get_model_links()
         self.id_idx_dict = {}
+        self.architecture = architecture
+        self.model_type = model_type
         for _id in self.idx_line:
             for idx in range(len(self.model_plan)):
                 if _id == self.model_plan[idx][0]:
@@ -1267,6 +1290,10 @@ class ModelCreator:
             # logger.debug(f"terra_layer[2] {terra_layer[2]}")
 
             _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
+            if self.architecture == ArchitectureChoice.ImageSRGAN and self.model_type == "Generator":
+                _input_shape = (None, None, self.input_shape.get(int(terra_layer[2].get("name")))[0][-1])
+            else:
+                _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
                 shape=(_input_shape), name=terra_layer[2].get("name")) #shape=(), dtype=tensorflow.string
         else:

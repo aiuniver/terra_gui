@@ -1,5 +1,5 @@
 <template>
-  <div class="params" :key="'key_update-' + updateKey">
+  <div class="params deploy" :key="'key_update-' + updateKey">
     <scrollbar>
       <div class="params__body">
         <div class="params__items">
@@ -35,9 +35,10 @@
               <div class="t-input__label">
                 {{ `https://srv1.demo.neural-university.ru/${userData.login}/${projectData.name_alias}/${deploy}` }}
               </div>
-              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" />
+              <input v-model="deploy" class="t-input__input" type="text" id="deploy[deploy]" name="deploy[deploy]" autocomplete="off" />
             </div>
             <Autocomplete2
+              autocomplete="off"
               :value="serverLabel"
               :list="list"
               :name="'deploy[server]'"
@@ -210,7 +211,7 @@ export default {
       const res = await this.$store.dispatch('servers/ready');
       if (res.data) this.list = res?.data || [];
       const { value, label } = this.list?.[0];
-      if (label) {
+      if (!this.serverLabel) {
         this.serverLabel = label;
         this.server = value;
       }

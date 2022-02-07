@@ -9,6 +9,7 @@ Vue.use(vuescroll, settings);
 import '@/assets/style/normalize.css'
 import '@/assets/style/coolicons.css'
 import '@/assets/scss/index.scss'
+import '@/assets/css/icons.css'
 
 
 import pkg from '../package.json'

@@ -301,7 +301,8 @@ class ColumnProcessingOutputTypeChoice(str, Enum):
     Regression = "Регрессия"
     Segmentation = "Сегментация"
     Timeseries = "Временные ряды"
-    GAN = "GAN"
+    ImageGAN = "ImageGAN"
+    Transformer = "Трансформер"
 
     @staticmethod
     def items_tuple() -> list:

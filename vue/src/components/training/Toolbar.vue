@@ -49,6 +49,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "@/assets/scss/variables/default.scss";
 .toolbar {
   z-index: 10;
   width: 41px;

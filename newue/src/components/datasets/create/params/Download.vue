@@ -2,9 +2,9 @@
   <div class="tabs-download">
     <div class="tabs-download-list flex align-center">
       <div
-        :class="['tabs-download-list__item', { 'tabs-download-list__item--active': +active === +tab }]"
         v-for="{ text, tab } in items"
-        :key="JSON.stringify(text + tab)"
+        :class="['tabs-download-list__item', { 'tabs-download-list__item--active': isActive(tab) }]"
+        :key="`tab_${tab}`"
         @click="active = tab"
       >
         {{ text }}
@@ -12,7 +12,7 @@
     </div>
     <div class="tabs-download-content mt-10">
       <t-field icon="google" label="Выберите файл на Google диске" v-if="active === 0">
-        <d-auto-complete-two icon="google-drive" v-model="select" placeholder="Введите имя файла" :list="list" @click="onFocus"/>
+        <d-auto-complete-two icon="google-drive" v-model="select" placeholder="Введите имя файла" :list="list" @click="onFocus" />
       </t-field>
       <t-field icon="link" label="Загрузите по ссылке" v-if="active === 1">
         <d-input-text v-model="url" placeholder="URL" />
@@ -22,36 +22,19 @@
 </template>
 
 <script>
-
 export default {
   name: 'DatasetDownloadTabs',
   data: () => ({
     url: '',
     select: '',
-    list: [
-      {
-        label: 'Селект 1',
-        value: 1,
-      },
-      {
-        label: 'Селект 2',
-        value: 2,
-      },
-      {
-        label: 'Селект 3',
-        value: 3,
-      },
-      {
-        label: 'Селект 4',
-        value: 4,
-      },
-    ],
+    list: [],
     items: [
       { text: 'Google диск', tab: 0 },
       { text: 'URL', tab: 1 },
     ],
     active: 0,
   }),
+  computed: {},
   methods: {
     async onFocus() {
       const { data } = await this.$store.dispatch('axios', {
@@ -77,11 +60,15 @@ export default {
         return { ...item, active: item.mode === mode };
       });
     },
+    isActive(tab) {
+      return this.active === tab;
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+@import "@/assets/scss/variables/default.scss";
 .tabs-download {
   &-list {
     height: 50px;

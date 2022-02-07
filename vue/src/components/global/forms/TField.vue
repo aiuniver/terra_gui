@@ -1,7 +1,12 @@
 <template>
   <div :class="['t-field', { 't-field--inline': inline }]">
-    <div class="t-field__label" @click="click">
-      <slot name="label">{{ label }}</slot>
+    <div class="t-field__label flex align-center" @click="click">
+      <template v-if="icon">
+        <i class="ci-icon" :class="`ci-${icon}`"/>
+      </template>
+      <span>
+        <slot name="label">{{ label }}</slot>
+      </span>
     </div>
     <div class="t-field__input">
       <slot></slot>
@@ -17,6 +22,10 @@ export default {
     label: {
       type: String,
       default: 'Label',
+    },
+    icon: {
+      type: String,
+      default: '',
     },
     inline: Boolean,
   },
@@ -37,7 +46,7 @@ export default {
   display: flex;
   flex-direction: column;
   margin-bottom: 10px;
-        transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
   &__label {
     flex: 1 1 auto;
     color: #a7bed3;
@@ -47,13 +56,18 @@ export default {
     user-select: none;
     text-overflow: ellipsis;
     line-height: 1;
+    & .ci-icon {
+      font-size: 20px;
+      margin-right: 5px;
+    }
+
   }
   &--inline {
     flex-direction: row-reverse;
     justify-content: flex-end;
     align-items: center;
     .t-field__label {
-      padding: 0 0 0 10px;
+      padding: 0 10px 0 10px;
     }
   }
   &__hint {

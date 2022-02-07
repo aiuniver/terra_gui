@@ -7,7 +7,7 @@
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
-      <button v-if="isDir" class="block-file__body--btn" @click="moveAll" >Перенести всё</button>
+      <t-button v-if="isDir" class="block-file__body--btn" @click="moveAll" >Перенести всё</t-button>
       <scrollbar>
       <files-menu v-model="filesSource" />
       </scrollbar>

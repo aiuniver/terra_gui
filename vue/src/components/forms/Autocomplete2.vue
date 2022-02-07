@@ -4,11 +4,11 @@
     <input
       class="dropdown__input"
       v-model="search"
+      autocomplete="off"
       :id="name"
       :name="name"
       :disabled="disabled"
       :placeholder="placeholder"
-      :autocomplete="'off'"
       @focus="focus"
       @blur="select(false)"
       @input="changed=true"

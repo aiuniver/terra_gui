@@ -125,6 +125,7 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "space_to_depth"
+    DepthToSpace = "depth_to_space"
     # DarkNetConvolutional = "DarkNetConvolutional"
     # DarkNetUpsample = "DarkNetUpsample"
     # DarkNetResBlock = "DarkNetResBlock"
@@ -141,6 +142,8 @@ class LayerTypeChoice(str, Enum):
     ResnetBlock2D = "ResnetBlock2D"
     Transformer = "Transformer"
     PretrainedBERT = "PretrainedBERT"
+    RGBNormalization = "RGBNormalization"
+
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, LayerTypeChoice))

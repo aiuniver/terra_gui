@@ -48,6 +48,7 @@ class ArchitectureChoice(str, Enum):
     ImageSegmentation = "ImageSegmentation"
     TextClassification = "TextClassification"
     TextSegmentation = "TextSegmentation"
+    TextTransformer = "TextTransformer"
     DataframeClassification = "DataframeClassification"
     DataframeRegression = "DataframeRegression"
     Timeseries = "Timeseries"
@@ -63,7 +64,8 @@ class ArchitectureChoice(str, Enum):
     ImageCGAN = "ImageCGAN"
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
-    TextTransformer = "TextTransformer"
+    ImageSRGAN = "ImageSRGAN"
+
 
 class CheckpointIndicatorChoice(str, Enum):
     Val = "Val"

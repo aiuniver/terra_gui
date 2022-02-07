@@ -31,8 +31,8 @@
           </div>
           <div class="at-modal__footer" v-if="showFooter">
             <slot name="footer">
-              <at-button type="primary" v-show="showConfirmButton" @click.native="handleAction('confirm')">{{ localeOKText }}</at-button>
-              <at-button v-show="showCancelButton" @click.native="handleAction('cancel')">{{ localeCancelText }}</at-button>
+              <DButton style="width: 150px;" type="primary" v-show="showConfirmButton" @click.native="handleAction('confirm')">{{ localeOKText }}</DButton>
+              <DButton style="width: 150px;" v-show="showCancelButton" @click.native="handleAction('cancel')">{{ localeCancelText }}</DButton>
             </slot>
           </div>
           <i v-if="isIconType" class="icon at-modal__icon" :class="iconClass"></i>

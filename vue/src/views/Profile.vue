@@ -1,5 +1,5 @@
 <template>
-  <main class="page-profile">
+  <div class="page-profile">
     <p class="page-profile__title">Мой профиль</p>
     <div class="page-profile__block">
       <t-input-new v-model.trim="firstName" label="Имя" :error="errFirst" @input="errFirst = ''" />
@@ -59,7 +59,7 @@
       <!-- <button class="btn cancel" @click="cancel">Отменить</button> -->
     </div>
     <hr />
-  </main>
+  </div>
 </template>
 
 <script>

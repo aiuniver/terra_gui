@@ -2,7 +2,7 @@
   <div class="footer">
     <div class="footer__message">
       <div class="footer__message--icon" @click="dialogErrors = true">
-        <span ></span>
+        <span></span>
       </div>
       <div :class="['footer__message--text', showMsg.color]" @click="dialogError = true">
         <transition name="error-slide" mode="out-in">
@@ -38,10 +38,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import ErrorModal from '../global/modals/ErrorModal';
+import LoggingModal from '../global/modals/LoggingModal';
 export default {
   components: {
-    ErrorModal: () => import('../global/modals/ErrorModal'),
-    LoggingModal: () => import('../global/modals/LoggingModal'),
+    ErrorModal,
+    LoggingModal,
   },
   data: () => ({
     dialogError: false,
@@ -91,7 +93,7 @@ export default {
       }
     },
     clickError(error) {
-      this.logError = error
+      this.logError = error;
       this.dialogLog = true;
     },
   },

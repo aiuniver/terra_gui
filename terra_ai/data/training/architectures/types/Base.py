@@ -10,6 +10,8 @@ class ParametersData(BaseMixinData):
     model: Any
     outputs: OutputsList = OutputsList()
 
+    __repr_str_exclude__ = ["model"]
+
     def dict(self, **kwargs):
         kwargs.update({"exclude": {"model"}})
         return super().dict(**kwargs)
