@@ -368,11 +368,14 @@ class BaseClass(object):
             for key in put_data.keys():
                 data_to_pass = []
                 dict_to_pass = []
+                parameters_to_pass = {}
                 for i in range(0, len(dataframe[split])):
                     tmp_data = []
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
                         parameters_to_pass = data.parameters.copy()
+                        if parameters_to_pass['put_type'] == 'noise':
+                            continue
                         if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
                             parameters_to_pass.update([('preprocess',
                                                         preprocessing.preprocessing.get(key).get(col_name))])
@@ -383,6 +386,8 @@ class BaseClass(object):
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
+                if parameters_to_pass['put_type'] == 'noise':
+                    continue
 
                 progress.pool(
                     version_progress_name,
@@ -440,7 +445,6 @@ class ClassificationClass(object):
                         else:
                             if put_id == 1:
                                 self.y_cls += [Path(data[i]).parent.name for _ in range(len(result['instructions']))]
-                print("LEN SELF Y_CLS", len(self.y_cls))
                 instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
                 instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
                 column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
@@ -454,9 +458,7 @@ class ClassificationClass(object):
                 elif parameters[put_id][col_name]['type'] in [LayerOutputTypeChoice.Tracker,
                                                               LayerOutputTypeChoice.Speech2Text,
                                                               LayerOutputTypeChoice.Text2Speech]:
-                    print('BEFORE:', len(instructions_data.instructions))
                     instructions_data.instructions = ['no_data' for _ in range(len(self.y_cls))]
-                    print('AFTER:', len(instructions_data.instructions))
                 instructions_data.parameters.update({'cols_names': column_name})
                 print(instructions_data.parameters)
                 put_instructions[put_id].update({column_name: instructions_data})
@@ -481,7 +483,6 @@ class PreprocessingNumericClass(object):
 
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
-                print(key, col_name)
                 if 'scaler' in data.parameters and \
                         data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
                     progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')

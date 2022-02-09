@@ -2,6 +2,8 @@ from . import \
     base, \
     image_classification, \
     image_segmentation, \
+    image_gan, \
+    image_cgan, \
     text_classification, \
     text_segmentation, \
     audio_classification, \
