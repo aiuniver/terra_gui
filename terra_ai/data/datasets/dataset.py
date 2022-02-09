@@ -261,6 +261,10 @@ class DatasetData(AliasMixinData):
         return self.version.outputs if self.version else {}
 
     @property
+    def tags(self) -> Optional[TagsList]:
+        return self.version.tags if self.version else TagsList()
+
+    @property
     def path(self):
         return self._path
 
@@ -293,64 +297,6 @@ class DatasetData(AliasMixinData):
                         )
                     )
         return out
-
-    @property
-    def model(self) -> ModelDetailsData:
-        data = {**EmptyModelDetailsData}
-        layers = []
-        for _id, layer in self.inputs.items():
-            _data = {
-                "id": _id,
-                "name": layer.name,
-                "type": LayerTypeChoice.Input,
-                "group": LayerGroupChoice.input,
-                "shape": {"input": [layer.shape]},
-                "task": layer.task,
-            }
-            if layer.num_classes:
-                _data.update(
-                    {
-                        "num_classes": layer.num_classes,
-                    }
-                )
-            layers.append(_data)
-        for _id, layer in self.outputs.items():
-            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
-                layer.datatype, {}
-            )
-            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
-            units = layer.num_classes
-            params = {
-                "activation": activation,
-            }
-            if units:
-                params.update(
-                    {
-                        "units": units,
-                        "filters": units,
-                    }
-                )
-            _data = {
-                "id": _id,
-                "name": layer.name,
-                "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
-                "group": LayerGroupChoice.output,
-                "shape": {"output": [layer.shape]},
-                "task": layer.task,
-                "parameters": {
-                    "main": params,
-                    "extra": params,
-                },
-            }
-            if layer.num_classes:
-                _data.update(
-                    {
-                        "num_classes": layer.num_classes,
-                    }
-                )
-            layers.append(_data)
-        data.update({"layers": layers})
-        return ModelDetailsData(**data)
 
     def dict(self, **kwargs):
         data = super().dict(**kwargs)
