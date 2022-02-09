@@ -15,16 +15,16 @@
       </div>
     </div>
     <div class="d-create-toolbar__workspace mt-10">
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'input' })">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'input' })">
         <d-svg name="sloy-start-add" />
       </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'middle' })">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'middle' })">
         <d-svg name="sloy-middle-add" />
       </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'handler' })">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'handler' })">
         <d-svg name="sloy-handler-add" />
       </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="add({ type: 'output' })">
+      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'output' })">
         <d-svg name="sloy-end-add" />
       </div>
     </div>
@@ -32,13 +32,26 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 export default {
-  name: 'WorkspaceActions',
+  name: 'd-toolbar',
+  computed: {
+    ...mapGetters({
+      getPagination: 'createDataset/getPagination',
+    }),
+    isActive() {
+      return Boolean(this.getPagination === 3);
+    },
+  },
   methods: {
     ...mapActions({
       add: 'create/add',
     }),
+    onAdd(value) {
+      if (this.isActive) {
+        this.add(value);
+      }
+    },
   },
 };
 </script>
@@ -51,6 +64,7 @@ export default {
   left: 20px;
   transform: translateY(-50%);
   z-index: 100;
+
   &__item {
     margin-bottom: 10px;
     width: 50px;
@@ -71,6 +85,12 @@ export default {
     }
     border: 1px solid $color-light-blue;
     border-radius: 2px;
+  }
+  &--disabled {
+    opacity: 0.4;
+    .d-create-toolbar__item {
+      cursor: default;
+    }
   }
 }
 </style>

@@ -203,7 +203,7 @@ export default {
   }
 }
 
-input[type="number"]:focus {
+input:focus {
   border-color: #65B9F4;
 }
 </style>
