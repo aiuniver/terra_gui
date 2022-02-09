@@ -60,11 +60,11 @@ class ModelingMessages(dict, Enum):
     InputShapeEmpty = {"ru": "Получена пустая размерность входных данных",
                        "eng": "Received empty input shape"}
     # Input dimension
-    IncorrectQuantityInputDimensions = {"ru": "Ожидаемое количество входов: %s, однако принято: %s",
+    IncorrectQuantityInputDimensions = {"ru": "Ожидается размерность входных данных: %s, но получена размерность: %s",
                                         "eng": "Expected %s input dimensions but got %s"}
     InputShapesAreDifferent = {"ru": "Все размерности входных данных должны быть одинаковыми: %s",
                                "eng": "All input shapes must be the same but received: %s"}
-    InputShapesHaveDifferentSizes = {"ru": "Во входной размерности присутствуют неодинаковые размеры: %s",
+    InputShapesHaveDifferentSizes = {"ru": "В размерностях входных данных присутствуют неодинаковые размерности: %s",
                                      "eng": "Input shapes have different sizes: %s"}
     MismatchedInputShapes = {
         "ru": "Required inputs with matching shapes except for the concat axis `%s` but received: %s",
