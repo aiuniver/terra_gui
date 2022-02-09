@@ -5,7 +5,7 @@ export default {
     selectSource: {},
     file_manager: [],
     source_path: '',
-    pagination: 1,
+    pagination: 3,
     project: {
       active: 0,
       name: '',

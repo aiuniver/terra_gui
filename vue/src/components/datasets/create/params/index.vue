@@ -9,7 +9,7 @@
       </scrollbar>
     </div>
     <div class="params__footer">
-      <Pagination :value="value" :title="getComp.title" @next="onNext" @prev="onPrev" />
+      <Pagination :value="value" :list="list" @next="onNext" @prev="onPrev" />
     </div>
   </div>
 </template>
@@ -17,26 +17,27 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
-import Preview from './Preview';
-import Settings from './settings/';
-import Download from './Download';
-import Helpers from './Helpers';
+import StateTwo from './StateTwo';
+import StateThree from './settings/';
+import StateOne from './StateOne';
+import StateFour from './StateFour';
 import Pagination from './Pagination';
 export default {
   components: {
-    Preview,
-    Settings,
-    Download,
+    StateOne,
+    StateTwo,
+    StateThree,
     Pagination,
-    Helpers,
+    StateFour,
   },
   data: () => ({
     debounce: null,
     list: [
-      { id: 1, title: 'Download', component: 'download' },
-      { id: 2, title: 'Preview', component: 'Preview' },
-      { id: 3, title: 'Settings', component: 'settings' },
-      { id: 4, title: 'Helpers', component: 'helpers' },
+      { id: 1, title: 'Данные', component: 'state-one' },
+      { id: 2, title: 'Предпросмотр', component: 'state-two' },
+      { id: 3, title: 'Input', component: 'state-three' },
+      { id: 4, title: 'Output', component: 'state-three' },
+      { id: 5, title: 'Завершение', component: 'state-four' },
     ],
   }),
   computed: {

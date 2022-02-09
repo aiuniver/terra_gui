@@ -66,8 +66,7 @@ export default {
       getPagination: 'createDataset/getPagination',
     }),
     isActive() {
-        console.log(this.getPagination)
-      return Boolean(this.getPagination === 3);
+      return Boolean([3, 4].includes(this.getPagination));
     },
     keyEvent: {
       set(value) {

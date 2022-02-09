@@ -5,30 +5,25 @@
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
   >
-    <div class="block__line-left"></div>
-    <div class="block__line-right"></div>
-    <div :class="['block__wrapper', `block__wrapper--${type}`]">
+    <div class="block__line-left" :style="setColor"></div>
+    <div class="block__line-right" :style="setColor"></div>
+    <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
       <div class="block__header">
         <div class="block__title text--bold">{{ type }} {{ id }}</div>
         <div class="block__subtitle text--bold">22,28,1</div>
       </div>
-      <div class="block__inputs">
+      <div v-if="showTop"  class="block__inputs">
         <div
-          v-for="(slot, index) in inputs"
-          :key="'input' + index"
           class="input inputSlot"
-          :class="{
-            active: slot.active,
-            'input--linking-active': linkingCheck && !linking,
-          }"
-          @mouseup="slotMouseUp($event, index)"
-          @mousedown="slotBreak($event, index)"
+          :class="{ 'input--linking-active': linkingCheck && !linking }"
+          @mouseup="slotMouseUp($event, 0)"
+          @mousedown="slotBreak($event, 0)"
         ></div>
       </div>
     </div>
     <div class="block__part">
-      <div class="block__point block__point--top"></div>
-      <div class="block__point block__point--bottom" @mousedown="slotMouseDown($event, 0)"></div>
+      <div v-if="showTop" class="block__point block__point--top" :style="setColor"></div>
+      <div  v-if="showBottom" class="block__point block__point--bottom" :style="setColor" @mousedown="slotMouseDown($event, 0)"></div>
     </div>
   </div>
 </template>
@@ -45,6 +40,14 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    typeBlock: {
+      type: String,
+      default: '',
+    },
+    color: {
+      type: String,
+      default: '#6c7883',
+    },
     name: {
       type: String,
       default: '',
@@ -60,14 +63,6 @@ export default {
     type: {
       type: String,
       default: '',
-    },
-    inputs: {
-      type: Array,
-      default: () => [],
-    },
-    outputs: {
-      type: Array,
-      default: () => [],
     },
     options: {
       type: Object,
@@ -98,11 +93,21 @@ export default {
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
         zIndex: this.selected || this.hover ? 10 : 1,
+        boxShadow: `0px 0px 4px ${this.color}75`
       };
     },
     isError() {
       return Boolean(this.error);
     },
+    setColor() {
+      return { backgroundColor: this.color };
+    },
+    showTop() {
+      return ['output', 'middle'].includes(this.typeBlock)
+    },
+    showBottom() {
+      return ['input', 'middle'].includes(this.typeBlock)
+    }
   },
   mounted() {
     const doc = document.documentElement;
@@ -191,7 +196,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/assets/scss/variables/default.scss";
+@import '@/assets/scss/variables/default.scss';
 $ioFontSize: 14px;
 $circleSize: 10px;
 $circleNewColor: #00ff003b;
@@ -204,7 +209,8 @@ $borderBlock: 2px;
 .block {
   position: absolute;
   background-color: $bg-color;
-
+  border-radius: 23px 4px 24px 4px;
+  // box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
   &__wrapper {
     position: relative;
     width: 140px;
@@ -358,62 +364,62 @@ $borderBlock: 2px;
       calc(100% - 1px) 30%
     );
   }
-  &--input {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-orange;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
-    border-radius: 23px 4px 24px 4px;
-    & .block__point--top {
-      display: none;
-    }
-  }
+  // &--input {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-orange;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  //   & .block__point--top {
+  //     display: none;
+  //   }
+  // }
 
-  &--middle {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-green;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
-    border-radius: 23px 4px 24px 4px;
-  }
+  // &--middle {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-green;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  // }
 
-  &--handler {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-yello;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-yello, 0.75);
-    border-radius: 23px 4px 24px 4px;
-  }
+  // &--handler {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-yello;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-yello, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  // }
 
-  &--output {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-pirple;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-pirple, 0.75);
-    border-radius: 23px 4px 24px 4px;
-    & .block__point--bottom {
-      display: none;
-    }
-  }
+  // &--output {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-pirple;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-pirple, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  //   & .block__point--bottom {
+  //     display: none;
+  //   }
+  // }
   &--error {
     .block__line-left,
     .block__line-right {
-      background-color: #CA5035;
+      background-color: #ca5035;
     }
     .block__title {
-      color: #CA5035;
+      color: #ca5035;
     }
   }
 }
