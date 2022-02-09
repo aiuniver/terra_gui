@@ -14,10 +14,10 @@
 import Toolbar from '@/components/cascades/Toolbar';
 import Blocks from '@/components/cascades/block/Blocks';
 import Params from '@/components/new/cascades/Params';
-import LoadModel from '@/components/cascades/modals/LoadModel';
-import SaveModel from '@/components/cascades/modals/SaveModel';
+import LoadModel from '@/components/new/cascades/modals/LoadModel';
+import SaveModel from '@/components/new/cascades/modals/SaveModel';
 import CopyModal from '@/components/global/modals/CopyModal';
-import DatasetsModal from '@/components/cascades/modals/DatasetsModal.vue';
+import DatasetsModal from '@/components/new/cascades/modals/DatasetsModal.vue';
 
 export default {
   name: 'cascades',

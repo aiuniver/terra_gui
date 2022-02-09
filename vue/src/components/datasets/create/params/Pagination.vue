@@ -36,14 +36,14 @@ export default {
   data: () => ({}),
   computed: {
     ...mapGetters({
-      select: 'createDataset/getSelectSource',
+      project: 'createDataset/getProject',
     }),
     isDisabled() {
       return this.value === 1;
     },
     isStatus() {
-      console.log(this.select);
-      if (this.value === 1 && !this?.select?.value) return true;
+      // console.log(project)
+      if (this.value === 1 && (!(this?.project?.url || this?.project?.google) || !this?.project?.name || !this?.project?.version)) return true;
       return false;
     },
   },

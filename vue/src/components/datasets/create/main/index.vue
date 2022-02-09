@@ -1,5 +1,6 @@
 <template>
   <div class="blocks" :key="key" @contextmenu="contextmenu">
+    <div v-if="!isActive" class="blocks__overlay"></div>
     <net class="blocks__center" :x="centerX" :y="centerY" :scale="scale" />
     <Link class="blocks__lines" :lines="lines" />
     <Block
@@ -57,12 +58,17 @@ export default {
     inputSlotClassName: 'inputSlot',
   }),
   computed: {
-    ...mapGetters('create', {
-      getKeyEvent: 'getKeyEvent',
-      blocks: 'getBlocks',
-      links: 'getLinks',
-      selectLength: 'getSelectedLength',
+    ...mapGetters({
+      getKeyEvent: 'create/getKeyEvent',
+      blocks: 'create/getBlocks',
+      links: 'create/getLinks',
+      selectLength: 'create/getSelectedLength',
+      getPagination: 'createDataset/getPagination',
     }),
+    isActive() {
+        console.log(this.getPagination)
+      return Boolean(this.getPagination === 3);
+    },
     keyEvent: {
       set(value) {
         this.setKeyEvent(value);
@@ -449,6 +455,13 @@ export default {
   }
   &__center {
     position: absolute;
+  }
+  &__overlay {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    background-color: #0e1621b3;
+    z-index: 999;
   }
 }
 </style>

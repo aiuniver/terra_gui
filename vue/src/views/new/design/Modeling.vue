@@ -13,8 +13,8 @@
 import Toolbar from '@/components/modeling/Toolbar';
 import Blocks from '@/components/modeling/block/Blocks';
 import Params from '@/components/new/modeling/Params';
-import LoadModel from '@/components/modeling/modals/LoadModel';
-import SaveModel from '@/components/modeling/modals/SaveModel';
+import LoadModel from '@/components/new/modeling/modals/LoadModel';
+import SaveModel from '@/components/new/modeling/modals/SaveModel';
 import CopyModal from '@/components/global/modals/CopyModal';
 
 export default {

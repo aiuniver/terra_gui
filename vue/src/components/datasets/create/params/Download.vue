@@ -11,8 +11,9 @@
       </div>
     </div>
     <div class="tabs-download-content mt-10">
-      <t-field icon="google" label="Выберите файл на Google диске" v-if="active === 0">
+      <t-field icon="google" label="Выберите файл на Google диске" v-if="project.active === 0">
         <d-auto-complete
+          v-model="project.google"
           icon="google-drive"
           placeholder="Введите имя файла"
           :list="getFilesSource"
@@ -20,8 +21,28 @@
           @change="onSelect({ mode: 'GoogleDrive', value: $event.value })"
         />
       </t-field>
-      <t-field icon="link" label="Загрузите по ссылке" v-if="active === 1">
-        <d-input-text placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+      <t-field icon="link" label="Загрузите по ссылке" v-if="project.active === 1">
+        <d-input-text v-model="project.url" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+      </t-field>
+    </div>
+    <div>
+      <t-field label="Название датасета">
+        <d-input-text v-model="project.name" />
+      </t-field>
+      <t-field label="Версия">
+        <d-input-text v-model="project.version" />
+      </t-field>
+      <div class="mb-2">
+        <DTags v-model="project.tags" />
+      </div>
+      <div>
+        <DSlider v-model="project.train" />
+      </div>
+      <t-field label="Сохранить последовательность">
+        <d-checkbox v-model="project.shuffle"></d-checkbox>
+      </t-field>
+      <t-field label="Использовать генератор">
+        <d-checkbox v-model="project.use_generator"></d-checkbox>
       </t-field>
     </div>
   </div>
@@ -29,8 +50,14 @@
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import DSlider from '@/components/forms/DSlider';
+import DTags from '@/components/forms/DTags';
 export default {
   name: 'DatasetDownloadTabs',
+  components: {
+    DSlider,
+    DTags,
+  },
   data: () => ({
     items: [
       { text: 'Google диск', tab: 0 },
@@ -39,18 +66,28 @@ export default {
     active: 0,
   }),
   computed: {
-    ...mapGetters('createDataset', ['getFilesSource']),
+    ...mapGetters('createDataset', ['getFilesSource', 'getProject']),
+    project: {
+      set(value) {
+        this.setProject(value);
+      },
+      get() {
+        return this.getProject;
+      },
+    },
   },
   methods: {
     ...mapActions('createDataset', ['getDatasetSources', 'setSelectSource']),
     isActive(tab) {
-      return this.active === tab;
+      return this.project.active === tab;
     },
     onSelect(data) {
       this.setSelectSource(data);
     },
     onTabs(tab) {
-      this.active = tab;
+      this.project.active = tab;
+      this.project.google = '';
+      this.project.url = '';
       this.setSelectSource({});
     },
   },

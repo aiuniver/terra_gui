@@ -1,16 +1,15 @@
 <template>
   <div class="preview">
-    <div class="preview__files">
-      <files-menu v-model="filesSource" />
-    </div>
-    <div class="preview__title">Предпросмотр</div>
     <div class="preview__cards">
       <template v-for="(file, i) of mixinFiles">
         <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
-        <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i"  />
+        <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
       </template>
     </div>
-    <div class="preview__title">Параметры</div>
+    <div class="preview__title mb-2">Файлы</div>
+    <div class="preview__files">
+      <files-menu v-model="filesSource" />
+    </div>
   </div>
 </template>
 
@@ -46,7 +45,7 @@ export default {
         return {
           id: e.id,
           cover: e.cover,
-          label: e.label,
+          label: e.title,
           type: e.type,
           table: e.table,
           value: e.path,
