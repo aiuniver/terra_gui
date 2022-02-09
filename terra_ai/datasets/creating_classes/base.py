@@ -13,9 +13,8 @@ from terra_ai.data.datasets.dataset import VersionPathsData, DatasetOutputsData,
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice, \
     LayerScalerImageChoice
 from terra_ai.datasets import arrays_classes
-from terra_ai.datasets.creating import version_progress_name
+from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
-from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.logging import logger
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
@@ -33,7 +32,7 @@ def multithreading_instructions(one_path, params, dataset_folder, col_name, id):
         )
 
     except Exception:
-        progress.pool(version_progress_name, error=f'Ошибка создания инструкций для {col_name}')
+        progress.pool(VERSION_PROGRESS_NAME, error=f'Ошибка создания инструкций для {col_name}')
         logger.debug(f'Создание инструкций провалилось на {one_path}')
         raise
 
@@ -53,7 +52,7 @@ def multithreading_array(row, instructions):
                 create['instructions'], **create['parameters'])
             full_array.append(prepr)
         except Exception:
-            progress.pool(version_progress_name, error='Ошибка создания массивов данных')
+            progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
             raise
 
     return full_array
@@ -120,9 +119,9 @@ class BaseClass(object):
                                            repeat(version_sources_path),
                                            repeat(col_name),
                                            repeat(put_id))
-                    progress.pool(version_progress_name, message=f'Формирование файлов')  # Добавить конкретику
+                    progress.pool(VERSION_PROGRESS_NAME, message=f'Формирование файлов')  # Добавить конкретику
                     for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data) * 100))
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data) * 100))
                         if decamelize(parameters[put_id][col_name]['type']) in PATH_TYPE_LIST:
                             for j in range(len(result['instructions'])):
                                 result['instructions'][j] = result['instructions'][j].replace(
@@ -390,7 +389,7 @@ class BaseClass(object):
                     continue
 
                 progress.pool(
-                    version_progress_name,
+                    VERSION_PROGRESS_NAME,
                     message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
                     percent=0
                 )
@@ -400,7 +399,7 @@ class BaseClass(object):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
                         array = np.concatenate(result, axis=0)
                         hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
                         del result
@@ -431,9 +430,9 @@ class ClassificationClass(object):
                                            repeat(version_sources_path),
                                            repeat(col_name),
                                            repeat(put_id))
-                    progress.pool(version_progress_name, message=f'Формирование файлов')  # Добавить конкретику
+                    progress.pool(VERSION_PROGRESS_NAME, message=f'Формирование файлов')  # Добавить конкретику
                     for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data) * 100))
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data) * 100))
                         if decamelize(parameters[put_id][col_name]['type']) in PATH_TYPE_LIST:
                             for j in range(len(result['instructions'])):
                                 result['instructions'][j] = result['instructions'][j].replace(
@@ -485,7 +484,7 @@ class PreprocessingNumericClass(object):
             for col_name, data in put_data[key].items():
                 if 'scaler' in data.parameters and \
                         data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
-                    progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+                    progress.pool(VERSION_PROGRESS_NAME, message=f'Обучение {camelize(data.parameters["scaler"])}')
                     for i in range(len(data.instructions)):
                         if data.parameters['put_type'] in PATH_TYPE_LIST:
                             data_to_pass = str(sources_temp_directory.joinpath(data.instructions[i]))
@@ -532,6 +531,6 @@ class PreprocessingTextClass(object):
 
         # for key in put_data.keys():
         #     for col_name, data in put_data[key].items():
-        #         progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+        #         progress.pool(VERSION_PROGRESS_NAME, message=f'Обучение {camelize(data.parameters["scaler"])}')
         #         preprocessing.preprocessing[key][col_name].fit_on_texts(data.instructions)
         # pass
