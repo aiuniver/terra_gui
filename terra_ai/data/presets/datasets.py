@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from terra_ai.data.datasets.extra import (
@@ -227,6 +228,464 @@ KerasInstructions = {
     },
 }
 
+VersionsGroups = [
+    {
+        "alias": "keras",
+        "name": "Keras",
+        "datasets": [
+            {
+                "mnist": [{"alias": "default",
+                           "name": "Стандартная",
+                           "date": datetime.now().isoformat(),
+                           "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                           "use_generator": False,
+                           "inputs": {
+                               "1": {"name": "Изображения цифр",
+                                     "datatype": "1D",
+                                     "dtype": "uint8",
+                                     "shape": [28, 28],
+                                     "num_classes": 10,
+                                     "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                     "classes_colors": None,
+                                     "encoding": "none",
+                                     "task": "Image"}
+                           },
+                           "outputs": {
+                                "2": {"name": "Метки классов",
+                                      "datatype": "DIM",
+                                      "dtype": "uint8",
+                                      "shape": [10],
+                                      "num_classes": 10,
+                                      "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                      "classes_colors": None,
+                                      "encoding": "ohe",
+                                      "task": "Classification"}
+                           },
+                           "service": {},
+                           "columns": {
+                               "1": {
+                                   "1_image": {"name": "Изображения цифр",
+                                               "datatype": "1D",
+                                               "dtype": "float32",
+                                               "shape": [28, 28],
+                                               "num_classes": 10,
+                                               "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                               "classes_colors": None,
+                                               "encoding": "none",
+                                               "task": "Image"
+                                               }
+                               },
+                               "2": {
+                                   "2_classification": {"name": "Метки классов",
+                                                        "datatype": "DIM",
+                                                        "dtype": "uint8",
+                                                        "shape": [10],
+                                                        "num_classes": 10,
+                                                        "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                                        "classes_colors": None,
+                                                        "encoding": "ohe",
+                                                        "task": "Classification"
+                                                        }
+                               }
+                           }
+                           },
+                          {"alias": "add_dimension",
+                           "name": "Добавленная размерность",
+                           "date": datetime.now().isoformat(),
+                           "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                           "use_generator": False,
+                           "inputs": {
+                               "1": {"name": "Изображения цифр",
+                                     "datatype": "2D",
+                                     "dtype": "float32",
+                                     "shape": [28, 28, 1],
+                                     "num_classes": 10,
+                                     "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                     "classes_colors": None,
+                                     "encoding": "none",
+                                     "task": "Image"}
+                           },
+                           "outputs": {
+                               "2": {"name": "Метки классов",
+                                     "datatype": "DIM",
+                                     "dtype": "uint8",
+                                     "shape": [10],
+                                     "num_classes": 10,
+                                     "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                     "classes_colors": None,
+                                     "encoding": "ohe",
+                                     "task": "Classification"}
+                           },
+                           "service": {},
+                           "columns": {
+                               "1": {
+                                   "1_image": {"name": "Изображения цифр",
+                                               "datatype": "2D",
+                                               "dtype": "float32",
+                                               "shape": [28, 28, 1],
+                                               "num_classes": 10,
+                                               "classes_names": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+                                               "classes_colors": None,
+                                               "encoding": "none",
+                                               "task": "Image"
+                                               }
+                               },
+                               "2": {
+                                   "2_classification": {"name": "Метки классов",
+                                                        "datatype": "DIM",
+                                                        "dtype": "uint8",
+                                                        "shape": [10],
+                                                        "num_classes": 10,
+                                                        "classes_names": ["0", "1", "2", "3", "4",
+                                                                          "5", "6", "7", "8", "9"],
+                                                        "classes_colors": None,
+                                                        "encoding": "ohe",
+                                                        "task": "Classification"
+                                                        }
+                               }
+                           }
+                           }],
+                "fashion_mnist": [{"alias": "default",
+                                   "name": "Стандартная",
+                                   "date": datetime.now().isoformat(),
+                                   "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                                   "use_generator": False,
+                                   "inputs": {
+                                       "1": {"name": "Изображения одежды",
+                                             "datatype": "1D",
+                                             "dtype": "uint8",
+                                             "shape": [28, 28],
+                                             "num_classes": 10,
+                                             "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+                                                               "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"],
+                                             "classes_colors": None,
+                                             "encoding": "none",
+                                             "task": "Image"}
+                                   },
+                                   "outputs": {
+                                       "2": {"name": "Метки классов",
+                                             "datatype": "DIM",
+                                             "dtype": "uint8",
+                                             "shape": [10],
+                                             "num_classes": 10,
+                                             "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+                                                               "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"],
+                                             "classes_colors": None,
+                                             "encoding": "ohe",
+                                             "task": "Classification"}
+                                   },
+                                   "service": {},
+                                   "columns": {
+                                       "1": {
+                                           "1_image": {"name": "Изображения одежды",
+                                                       "datatype": "1D",
+                                                       "dtype": "float32",
+                                                       "shape": [28, 28],
+                                                       "num_classes": 10,
+                                                       "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress",
+                                                                         "Coat", "Sandal", "Shirt", "Sneaker", "Bag",
+                                                                         "Ankle boot"],
+                                                       "classes_colors": None,
+                                                       "encoding": "none",
+                                                       "task": "Image"
+                                                       }
+                                       },
+                                       "2": {
+                                           "2_classification": {"name": "Метки классов",
+                                                                "datatype": "DIM",
+                                                                "dtype": "uint8",
+                                                                "shape": [10],
+                                                                "num_classes": 10,
+                                                                "classes_names": ["T-shirt/top", "Trouser", "Pullover",
+                                                                                  "Dress", "Coat", "Sandal", "Shirt",
+                                                                                  "Sneaker", "Bag", "Ankle boot"],
+                                                                "classes_colors": None,
+                                                                "encoding": "ohe",
+                                                                "task": "Classification"
+                                                                }
+                                       }
+                                   }
+                                   },
+                                  {"alias": "add_dimension",
+                                   "name": "Добавленная размерность",
+                                   "date": datetime.now().isoformat(),
+                                   "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                                   "use_generator": False,
+                                   "inputs": {
+                                       "1": {"name": "Изображения цифр",
+                                             "datatype": "2D",
+                                             "dtype": "float32",
+                                             "shape": [28, 28, 1],
+                                             "num_classes": 10,
+                                             "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+                                                               "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"],
+                                             "classes_colors": None,
+                                             "encoding": "none",
+                                             "task": "Image"}
+                                   },
+                                   "outputs": {
+                                       "2": {"name": "Метки классов",
+                                             "datatype": "DIM",
+                                             "dtype": "uint8",
+                                             "shape": [10],
+                                             "num_classes": 10,
+                                             "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+                                                               "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"],
+                                             "classes_colors": None,
+                                             "encoding": "ohe",
+                                             "task": "Classification"}
+                                   },
+                                   "service": {},
+                                   "columns": {
+                                       "1": {
+                                           "1_image": {"name": "Изображения цифр",
+                                                       "datatype": "2D",
+                                                       "dtype": "float32",
+                                                       "shape": [28, 28, 1],
+                                                       "num_classes": 10,
+                                                       "classes_names": ["T-shirt/top", "Trouser", "Pullover", "Dress",
+                                                                         "Coat", "Sandal", "Shirt", "Sneaker", "Bag",
+                                                                         "Ankle boot"],
+                                                       "classes_colors": None,
+                                                       "encoding": "none",
+                                                       "task": "Image"
+                                                       }
+                                       },
+                                       "2": {
+                                           "2_classification": {"name": "Метки классов",
+                                                                "datatype": "DIM",
+                                                                "dtype": "uint8",
+                                                                "shape": [10],
+                                                                "num_classes": 10,
+                                                                "classes_names": ["T-shirt/top", "Trouser", "Pullover",
+                                                                                  "Dress", "Coat", "Sandal", "Shirt",
+                                                                                  "Sneaker", "Bag", "Ankle boot"],
+                                                                "classes_colors": None,
+                                                                "encoding": "ohe",
+                                                                "task": "Classification"
+                                                                }
+                                       }
+                                   }
+                                   }],
+                "cifar10": [{"alias": "default",
+                                   "name": "Стандартная",
+                                   "date": datetime.now().isoformat(),
+                                   "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                                   "use_generator": False,
+                                   "inputs": {
+                                       "1": {"name": "Изображения",
+                                             "datatype": "2D",
+                                             "dtype": "float32",
+                                             "shape": [32, 32, 3],
+                                             "num_classes": 10,
+                                             "classes_names": ["airplane", "automobile", "bird", "cat", "deer",
+                                                               "dog", "frog", "horse", "ship", "truck"],
+                                             "classes_colors": None,
+                                             "encoding": "none",
+                                             "task": "Image"}
+                                   },
+                                   "outputs": {
+                                       "2": {"name": "Метки классов",
+                                             "datatype": "DIM",
+                                             "dtype": "uint8",
+                                             "shape": [10],
+                                             "num_classes": 10,
+                                             "classes_names": ["airplane", "automobile", "bird", "cat", "deer",
+                                                               "dog", "frog", "horse", "ship", "truck"],
+                                             "classes_colors": None,
+                                             "encoding": "ohe",
+                                             "task": "Classification"}
+                                   },
+                                   "service": {},
+                                   "columns": {
+                                       "1": {
+                                           "1_image": {"name": "Изображения одежды",
+                                                       "datatype": "1D",
+                                                       "dtype": "float32",
+                                                       "shape": [32, 32, 3],
+                                                       "num_classes": 10,
+                                                       "classes_names": ["airplane", "automobile", "bird", "cat",
+                                                                         "deer", "dog", "frog", "horse", "ship",
+                                                                         "truck"],
+                                                       "classes_colors": None,
+                                                       "encoding": "none",
+                                                       "task": "Image"
+                                                       }
+                                       },
+                                       "2": {
+                                           "2_classification": {"name": "Метки классов",
+                                                                "datatype": "DIM",
+                                                                "dtype": "uint8",
+                                                                "shape": [10],
+                                                                "num_classes": 10,
+                                                                "classes_names": ["airplane", "automobile", "bird",
+                                                                                  "cat", "deer", "dog", "frog", "horse",
+                                                                                  "ship", "truck"],
+                                                                "classes_colors": None,
+                                                                "encoding": "ohe",
+                                                                "task": "Classification"
+                                                                }
+                                       }
+                                   }
+                             }],
+                "cifar100": [{"alias": "default",
+                              "name": "Стандартная",
+                              "date": datetime.now().isoformat(),
+                              "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                              "use_generator": False,
+                              "inputs": {
+                                  "1": {"name": "Изображения",
+                                        "datatype": "2D",
+                                        "dtype": "float32",
+                                        "shape": [32, 32, 3],
+                                        "num_classes": 100,
+                                        "classes_names": ["apple", "aquarium_fish", "baby", "bear", "beaver", "bed",
+                                                          "bee", "beetle", "bicycle", "bottle", "bowl", "boy", "bridge",
+                                                          "bus", "butterfly", "camel", "can", "castle", "caterpillar",
+                                                          "cattle", "chair", "chimpanzee", "clock", "cloud",
+                                                          "cockroach", "couch", "cra", "crocodile", "cup", "dinosaur",
+                                                          "dolphin", "elephant", "flatfish", "forest", "fox", "girl",
+                                                          "hamster", "house", "kangaroo", "keyboard", "lamp",
+                                                          "lawn_mower", "leopard", "lion", "lizard", "lobster", "man",
+                                                          "maple_tree", "motorcycle", "mountain", "mouse", "mushroom",
+                                                          "oak_tree", "orange", "orchid", "otter", "palm_tree", "pear",
+                                                          "pickup_truck", "pine_tree", "plain", "plate", "poppy",
+                                                          "porcupine", "possum", "rabbit", "raccoon", "ray", "road",
+                                                          "rocket", "rose", "sea", "seal", "shark", "shrew", "skunk",
+                                                          "skyscraper", "snail", "snake", "spider", "squirrel",
+                                                          "streetcar", "sunflower", "sweet_pepper", "table", "tank",
+                                                          "telephone", "television", "tiger", "tractor", "train",
+                                                          "trout", "tulip", "turtle", "wardrobe", "whale",
+                                                          "willow_tree", "wolf", "woman", "worm"],
+                                        "classes_colors": None,
+                                        "encoding": "none",
+                                        "task": "Image"}
+                              },
+                              "outputs": {
+                                  "2": {"name": "Метки классов",
+                                        "datatype": "DIM",
+                                        "dtype": "uint8",
+                                        "shape": [100],
+                                        "num_classes": 100,
+                                        "classes_names": ["apple", "aquarium_fish", "baby", "bear", "beaver", "bed",
+                                                          "bee", "beetle", "bicycle", "bottle", "bowl", "boy", "bridge",
+                                                          "bus", "butterfly", "camel", "can", "castle", "caterpillar",
+                                                          "cattle", "chair", "chimpanzee", "clock", "cloud",
+                                                          "cockroach", "couch", "cra", "crocodile", "cup", "dinosaur",
+                                                          "dolphin", "elephant", "flatfish", "forest", "fox", "girl",
+                                                          "hamster", "house", "kangaroo", "keyboard", "lamp",
+                                                          "lawn_mower", "leopard", "lion", "lizard", "lobster", "man",
+                                                          "maple_tree", "motorcycle", "mountain", "mouse", "mushroom",
+                                                          "oak_tree", "orange", "orchid", "otter", "palm_tree", "pear",
+                                                          "pickup_truck", "pine_tree", "plain", "plate", "poppy",
+                                                          "porcupine", "possum", "rabbit", "raccoon", "ray", "road",
+                                                          "rocket", "rose", "sea", "seal", "shark", "shrew", "skunk",
+                                                          "skyscraper", "snail", "snake", "spider", "squirrel",
+                                                          "streetcar", "sunflower", "sweet_pepper", "table", "tank",
+                                                          "telephone", "television", "tiger", "tractor", "train",
+                                                          "trout", "tulip", "turtle", "wardrobe", "whale",
+                                                          "willow_tree", "wolf", "woman", "worm"],
+                                        "classes_colors": None,
+                                        "encoding": "ohe",
+                                        "task": "Classification"}
+                              },
+                              "service": {},
+                              "columns": {
+                                  "1": {
+                                      "1_image": {"name": "Изображения одежды",
+                                                  "datatype": "1D",
+                                                  "dtype": "float32",
+                                                  "shape": [32, 32, 3],
+                                                  "num_classes": 100,
+                                                  "classes_names": ["apple", "aquarium_fish", "baby", "bear", "beaver",
+                                                                    "bed",
+                                                                    "bee", "beetle", "bicycle", "bottle", "bowl", "boy",
+                                                                    "bridge",
+                                                                    "bus", "butterfly", "camel", "can", "castle",
+                                                                    "caterpillar",
+                                                                    "cattle", "chair", "chimpanzee", "clock", "cloud",
+                                                                    "cockroach", "couch", "cra", "crocodile", "cup",
+                                                                    "dinosaur",
+                                                                    "dolphin", "elephant", "flatfish", "forest", "fox",
+                                                                    "girl",
+                                                                    "hamster", "house", "kangaroo", "keyboard", "lamp",
+                                                                    "lawn_mower", "leopard", "lion", "lizard",
+                                                                    "lobster", "man",
+                                                                    "maple_tree", "motorcycle", "mountain", "mouse",
+                                                                    "mushroom",
+                                                                    "oak_tree", "orange", "orchid", "otter",
+                                                                    "palm_tree", "pear",
+                                                                    "pickup_truck", "pine_tree", "plain", "plate",
+                                                                    "poppy",
+                                                                    "porcupine", "possum", "rabbit", "raccoon", "ray",
+                                                                    "road",
+                                                                    "rocket", "rose", "sea", "seal", "shark", "shrew",
+                                                                    "skunk",
+                                                                    "skyscraper", "snail", "snake", "spider",
+                                                                    "squirrel",
+                                                                    "streetcar", "sunflower", "sweet_pepper", "table",
+                                                                    "tank",
+                                                                    "telephone", "television", "tiger", "tractor",
+                                                                    "train",
+                                                                    "trout", "tulip", "turtle", "wardrobe", "whale",
+                                                                    "willow_tree", "wolf", "woman", "worm"],
+                                                  "classes_colors": None,
+                                                  "encoding": "none",
+                                                  "task": "Image"
+                                                  }
+                                  },
+                                  "2": {
+                                      "2_classification": {"name": "Метки классов",
+                                                           "datatype": "DIM",
+                                                           "dtype": "uint8",
+                                                           "shape": [100],
+                                                           "num_classes": 100,
+                                                           "classes_names": ["apple", "aquarium_fish", "baby", "bear",
+                                                                             "beaver", "bed",
+                                                                             "bee", "beetle", "bicycle", "bottle",
+                                                                             "bowl", "boy", "bridge",
+                                                                             "bus", "butterfly", "camel", "can",
+                                                                             "castle", "caterpillar",
+                                                                             "cattle", "chair", "chimpanzee", "clock",
+                                                                             "cloud",
+                                                                             "cockroach", "couch", "cra", "crocodile",
+                                                                             "cup", "dinosaur",
+                                                                             "dolphin", "elephant", "flatfish",
+                                                                             "forest", "fox", "girl",
+                                                                             "hamster", "house", "kangaroo", "keyboard",
+                                                                             "lamp",
+                                                                             "lawn_mower", "leopard", "lion", "lizard",
+                                                                             "lobster", "man",
+                                                                             "maple_tree", "motorcycle", "mountain",
+                                                                             "mouse", "mushroom",
+                                                                             "oak_tree", "orange", "orchid", "otter",
+                                                                             "palm_tree", "pear",
+                                                                             "pickup_truck", "pine_tree", "plain",
+                                                                             "plate", "poppy",
+                                                                             "porcupine", "possum", "rabbit", "raccoon",
+                                                                             "ray", "road",
+                                                                             "rocket", "rose", "sea", "seal", "shark",
+                                                                             "shrew", "skunk",
+                                                                             "skyscraper", "snail", "snake", "spider",
+                                                                             "squirrel",
+                                                                             "streetcar", "sunflower", "sweet_pepper",
+                                                                             "table", "tank",
+                                                                             "telephone", "television", "tiger",
+                                                                             "tractor", "train",
+                                                                             "trout", "tulip", "turtle", "wardrobe",
+                                                                             "whale",
+                                                                             "willow_tree", "wolf", "woman", "worm"],
+                                                           "classes_colors": None,
+                                                           "encoding": "ohe",
+                                                           "task": "Classification"
+                                                           }
+                                  }
+                              }
+                              }]
+            }
+        ]
+    }
+]
 
 DatasetsGroups = [
     {
@@ -3798,7 +4257,7 @@ DatasetsGroups = [
             {
                 "alias": "bus_video_tracker",
                 "name": "Видео для трекера",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
@@ -3833,7 +4292,7 @@ DatasetsGroups = [
             {
                 "alias": "video_progulka_po_piteru",
                 "name": "Видео_прогулка_по_Питеру",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
@@ -3952,7 +4411,7 @@ DatasetsGroups = [
             {
                 "alias": "chess_tracker",
                 "name": "Трекер шахматы",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {

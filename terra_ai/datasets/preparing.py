@@ -30,7 +30,7 @@ from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, Versio
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
-from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroup
+from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroups
 
 TERRA_PATH = Path('G:\\Мой диск\\TerraAI\\datasets')
 
@@ -193,7 +193,7 @@ class PrepareDataset(object):
                     while not len(build_table[put]) == max_len:
                         build_table[put].append('')
         elif self.dataset_data.group == 'keras':
-            for ver in VersionsGroup[0]['datasets'][0][alias]:
+            for ver in VersionsGroups[0]['datasets'][0][alias]:
                 build_table['alias'].append(ver.get('alias') if ver.get('alias') else '')
                 build_table['Название'].append(ver['name'])
                 for put in [['inputs', 'Входы'], ['outputs', 'Выходы']]:
