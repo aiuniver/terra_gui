@@ -6,7 +6,7 @@ from math import ceil
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
-from terra_ai.datasets.creating import version_progress_name
+from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import DataType
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.utils import decamelize, camelize
@@ -112,7 +112,7 @@ class YoloV4Class(PreprocessingNumericClass, BaseClass):
                     data_to_pass.append(tmp_data)
                     dict_to_pass.append(tmp_parameter_data)
 
-                progress.pool(version_progress_name,
+                progress.pool(VERSION_PROGRESS_NAME,
                               message=f'Формирование массивов {split.title()} выборки. ID: {key}.', percent=0)
                 if parameters_to_pass['put_type'] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                     for n in range(3):
@@ -128,7 +128,7 @@ class YoloV4Class(PreprocessingNumericClass, BaseClass):
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
                     for i, result in enumerate(results):
-                        progress.pool(version_progress_name, percent=ceil(i / len(data_to_pass) * 100))
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
                         if not parameters_to_pass['put_type'] == decamelize(LayerOutputTypeChoice.ObjectDetection):
                             # array = np.concatenate(result, axis=0)
                             hdf[f'{split}/id_{key}'].create_dataset(str(i), data=result[0])

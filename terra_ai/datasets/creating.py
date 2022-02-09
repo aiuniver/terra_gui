@@ -7,7 +7,8 @@ from terra_ai.data.datasets.creation import CreationData, CreationVersionData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionPathsData, VersionData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG, \
+    DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME
 from terra_ai import progress
 
 import os
@@ -23,10 +24,6 @@ from pathlib import Path
 from datetime import datetime
 from pytz import timezone
 from terra_ai.logging import logger
-
-
-dataset_progress_name = 'create_dataset'
-version_progress_name = 'create_version'
 
 
 def zip_dataset(src, dst):
@@ -45,7 +42,7 @@ class CreateDataset(object):
     @progress.threading
     def __init__(self, creation_data: CreationData):
 
-        progress.pool.reset(name=dataset_progress_name,
+        progress.pool.reset(name=DATASET_PROGRESS_NAME,
                             message='Начало',
                             finished=False)
         logger.info(f'Начало формирования датасета {creation_data.name}.')
@@ -53,24 +50,24 @@ class CreateDataset(object):
         os.makedirs(self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])), exist_ok=True)
         self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
             basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
-        progress.pool(name=dataset_progress_name, message='Копирование файлов', percent=10)
+        progress.pool(name=DATASET_PROGRESS_NAME, message='Копирование файлов', percent=10)
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
         zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
         shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
         shutil.rmtree(self.dataset_paths_data.sources)
         dataset_data = self.write_dataset_configure(creation_data)
         if creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])).is_dir():
-            progress.pool(name=dataset_progress_name,
+            progress.pool(name=DATASET_PROGRESS_NAME,
                           message=f"Удаление существующего датасета "
                                   f"{creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT]))}",
                           percent=70)
             shutil.rmtree(creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
-        progress.pool(name=dataset_progress_name, message=f"Копирование датасета в {creation_data.datasets_path}",
+        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Копирование датасета в {creation_data.datasets_path}",
                       percent=80)
         shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
-        progress.pool(name=dataset_progress_name, message=f"Удаление временной папки {self.temp_directory}", percent=95)
+        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Удаление временной папки {self.temp_directory}", percent=95)
         shutil.rmtree(self.temp_directory)
-        progress.pool(name=dataset_progress_name, message='Формирование датасета завершено', data=dataset_data,
+        progress.pool(name=DATASET_PROGRESS_NAME, message='Формирование датасета завершено', data=dataset_data,
                       percent=100, finished=True)
         logger.info(f'Создан датасет {creation_data.name}.')
 
@@ -101,7 +98,7 @@ class CreateVersion(object):
     @progress.threading
     def __init__(self, version_data: CreationVersionData):
 
-        progress.pool.reset(name=version_progress_name, message='Начало', finished=False)
+        progress.pool.reset(name=VERSION_PROGRESS_NAME, message='Начало', finished=False)
 
         self.dataframe: dict = {}
         self.columns: dict = {}
@@ -116,12 +113,12 @@ class CreateVersion(object):
         self.parent_dataset_paths_data = DatasetPathsData(
             basepath=version_data.datasets_path.joinpath('.'.join([version_data.parent_alias, DATASET_EXT]))
         )
-        progress.pool(name=version_progress_name, message='Копирование исходного архива', percent=0)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Копирование исходного архива', percent=0)
         shutil.copyfile(
             self.parent_dataset_paths_data.basepath.joinpath('sources.zip'),
             self.dataset_paths_data.basepath.joinpath('sources.zip')
         )
-        progress.pool(name=version_progress_name, message='Распаковка исходного архива', percent=0)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Распаковка исходного архива', percent=0)
         with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
             z_file.extractall(self.sources_temp_directory)
         current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
@@ -140,14 +137,14 @@ class CreateVersion(object):
         )
         logger.debug(version_data)
 
-        progress.pool(name=version_progress_name, message='Создание инструкций', percent=0)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Создание инструкций', percent=0)
         self.instructions, self.tags = architecture_class.create_instructions(
             version_data=version_data,
             sources_temp_directory=self.sources_temp_directory,
             version_paths_data=self.version_paths_data
         )
 
-        progress.pool(name=version_progress_name, message='Создание объектов обработки', percent=0)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Создание объектов обработки', percent=0)
 
         for prep_type in ['numeric', 'text']:
             self.preprocessing = getattr(architecture_class, f"create_{prep_type}_preprocessing")(
@@ -191,7 +188,7 @@ class CreateVersion(object):
         self.columns.update(inp_col)
         self.columns.update(out_col)
 
-        progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Создание массивов данных', percent=0)
 
         architecture_class.create_arrays(
             instructions=self.instructions,
@@ -200,7 +197,7 @@ class CreateVersion(object):
             preprocessing=self.preprocessing
         )
 
-        progress.pool(name=version_progress_name, message='Сохранение', percent=100)
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Сохранение', percent=100)
         self.write_instructions_to_files()
         zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, VERSION_EXT]))
@@ -211,7 +208,7 @@ class CreateVersion(object):
         self.write_version_configure(version_data)
         shutil.rmtree(self.sources_temp_directory)
         shutil.rmtree(self.temp_directory)
-        progress.pool(name=version_progress_name, message='Формирование версии датасета завершено', data=version_data,
+        progress.pool(name=VERSION_PROGRESS_NAME, message='Формирование версии датасета завершено', data=version_data,
                       percent=100, finished=True)
         logger.info(f'Создана версия {version_data.name}', extra={'type': "info"})
 
@@ -436,7 +433,7 @@ class CreateVersion(object):
         try:
             dataframe = pd.DataFrame(build_dataframe)
         except Exception:
-            progress.pool(version_progress_name,
+            progress.pool(VERSION_PROGRESS_NAME,
                           error='Ошибка создания датасета. Несоответствие количества входных/выходных данных')
             for key, value in build_dataframe.items():
                 logger.debug(key, len(value))
