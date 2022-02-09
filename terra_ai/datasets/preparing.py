@@ -4,12 +4,19 @@ import joblib
 import json
 import pandas as pd
 import tensorflow as tf
+import shutil
+import zipfile
+import tempfile
+import re
 import h5py
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
-# from PIL import Image
+from PIL import Image
+from pathlib import Path
+from datetime import datetime
+from IPython.display import display
 
 # from terra_ai.data.training.extra import ArchitectureChoice
 # from terra_ai.utils import decamelize
@@ -17,41 +24,224 @@ from terra_ai.datasets.preprocessing import CreatePreprocessing
 # from terra_ai.datasets import arrays_create
 # from terra_ai.datasets.utils import PATH_TYPE_LIST
 from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
+from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionData, VersionPathsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
+from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroup
+
+TERRA_PATH = Path('G:\\Мой диск\\TerraAI\\datasets')
 
 
 class PrepareDataset(object):
+    """
+    Класс для загрузки датасета.
+    """
 
-    def __init__(self, data: DatasetData, datasets_path=None):
+    dataframe: dict = {'train': None, 'val': None}
+    instructions: dict = {}
+    X: dict = {'train': {}, 'val': {}}
+    Y: dict = {'train': {}, 'val': {}}
+    service: dict = {'train': {}, 'val': {}}
+    dataset: dict = {'train': None, 'val': None}
+    version_data = None
+    preprocessing = CreatePreprocessing()
 
-        self.data = data
-        self.language = None
-        self.dts_prepared: bool = False
-        self.dataframe: dict = {}
-        self.instructions: dict = {}
-        if self.data.group != 'keras':
-            self.paths = DatasetPathsData(basepath=datasets_path)
-            self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
+    def __init__(self, alias: str = ''):
 
-            for put_id in list(self.data.inputs.keys()) + list(self.data.outputs.keys()):
-                self.instructions[put_id] = {}
-                for instr_json in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
-                    idx, *name = os.path.splitext(instr_json)[0].split('_')
-                    name = '_'.join(name)
-                    if put_id == int(idx):
-                        with open(os.path.join(self.paths.instructions, 'parameters', instr_json),
-                                  'r') as instr:
-                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
-        else:
-            self.preprocessing = CreatePreprocessing()
+        if alias.endswith('.' + DATASET_EXT):
+            self.dataset_paths_data = DatasetPathsData(basepath=Path(tempfile.mkdtemp()))
+            self.parent_dataset_paths_data = DatasetPathsData(
+                basepath=TERRA_PATH.joinpath(alias)
+            )
+            shutil.copy(self.parent_dataset_paths_data.basepath.joinpath(DATASET_CONFIG),
+                        self.dataset_paths_data.basepath.joinpath(DATASET_CONFIG))
+            with open(self.dataset_paths_data.basepath.joinpath(DATASET_CONFIG), 'r') as cfg:
+                config = json.load(cfg)
+            self.dataset_data = DatasetData(**config)
+            self.version_paths_data = None
+        elif alias.endswith('.trds_terra'):
+            self.dataset_paths_data = DatasetPathsData(basepath=Path(tempfile.mkdtemp()))
+            pass
+        elif alias.endswith('.keras'):
+            for d_config in DatasetsGroups[0]['datasets']:
+                if d_config['alias'] == re.search(r"[A-Za-z0-9_-]+", alias)[0]:
+                    self.dataset_data = DatasetData(**d_config)
+                    break
 
-        self.X: dict = {'train': {}, 'val': {}}
-        self.Y: dict = {'train': {}, 'val': {}}
-        self.service: dict = {'train': {}, 'val': {}}
+        # self.dataset_data: DatasetData = data
+        # if self.dataset_data.group != DatasetGroupChoice.keras:
+        #     self.version_paths_data = None
+        #     self.dataset_paths_data = DatasetPathsData(basepath=datasets_path)
+        #     self.parent_dataset_paths_data = DatasetPathsData(basepath=TERRA_PATH.joinpath('datasets'))
 
-        self.dataset: dict = {}
+        # else:
+        #     self.preprocessing = CreatePreprocessing()
 
+    def __str__(self):
+
+        dataset = f'{self.dataset_data.alias} / {self.dataset_data.name}'\
+            if self.__dict__.get('dataset_data') else "не выбран"
+        version = f'{self.version_data.alias} / {self.version_data.name}'\
+            if self.__dict__.get('version_data') else "не выбрана"
+
+        # dictio = {'alias': [self.dataset_data.alias if self.__dict__.get("dataset_data") else "не выбран",
+        #                     self.version_data.alias if self.__dict__.get("version_data") else "не выбран"],
+        #           'Название': [self.dataset_data.name if self.__dict__.get("dataset_data") else "не выбран",
+        #                        self.version_data.name if self.__dict__.get("version_data") else "не выбран"]}
+        #
+        # return pd.DataFrame(dictio, index=['Датасет', 'Версия'])
+
+        return f'Датасет: {dataset}.\n' \
+               f'Версия: {version}.'
+
+    @staticmethod
+    def list_datasets(category='custom'):
+
+        """
+        Метод просмотра доступных к выбору датасетов.
+        Input:
+            category: str = "custom"
+            Одна из трёх категорий датасетов: "custom", "terra", "keras".
+        Пример:
+        PrepareDataset().list_datasets("terra")
+        """
+
+        if category == 'custom':
+            build_table = {'alias': [], 'Название': [], 'Задача': [], 'Дата создания': []}
+            for d_path in Path(TERRA_PATH).glob('*.' + DATASET_EXT):  # В БУДУЩЕМ СДЕЛАТЬ TERRA_PATH.datasets
+                with open(d_path.joinpath(DATASET_CONFIG), 'r') as config:
+                    d_config = json.load(config)
+                build_table['alias'].append('.'.join([d_config.get('alias'), DATASET_EXT])
+                                            if d_config.get('alias') else '')
+                build_table['Название'].append(d_config.get('name', ''))
+                build_table['Задача'].append(d_config.get('architecture', ''))
+                build_table['Дата создания'].append(
+                    datetime.fromisoformat(d_config['date']).strftime('%d %b %Y, %H:%M:%S') if d_config.get('date',
+                                                                                                            '') else '')
+            dataframe = pd.DataFrame.from_dict(build_table)
+            display(dataframe)
+        elif category == 'keras':
+            build_table = {'alias': [], 'Название': [], 'Задача': []}
+            for d_config in DatasetsGroups[0]['datasets']:
+                build_table['alias'].append('.'.join([d_config.get('alias'), 'keras']) if d_config.get('alias') else '')
+                build_table['Название'].append(d_config.get('name', ''))
+                build_table['Задача'].append(d_config.get('architecture', ''))
+            dataframe = pd.DataFrame.from_dict(build_table)
+            display(dataframe)
+        elif category == 'terra':
+            pass
+
+        # print(dataframe)
+        # return dataframe
+        # display(dataframe) if hasattr(__builtins__, '__IPYTHON__') else print(dataframe.to_markdown())
+
+    # @staticmethod
+    # def list_keras_datasets():
+    #
+    #     build_table = {'alias': [], 'Название': [], 'Задача': []}
+    #     for d_config in DatasetsGroups[0]['datasets']:
+    #         build_table['alias'].append('.'.join([d_config.get('alias'), 'keras']) if d_config.get('alias') else '')
+    #         build_table['Название'].append(d_config.get('name', ''))
+    #         build_table['Задача'].append(d_config.get('architecture', ''))
+    #     dataframe = pd.DataFrame.from_dict(build_table)
+    #     display(dataframe)
+
+    # @staticmethod
+    # def list_preinstalled_datasets():
+    #     pass
+
+    def list_versions(self, alias: str = ''):
+
+        """
+        Метод просмотра доступных к выбору версий датасета.
+        Inputs:
+            alias(Optional): str - alias датасета.
+        Допускается не указывать alias при вызове данного метода в случае его вызова от созданного экземпляра
+        класса PrepareDataset() с выбранным датасетом. Пример:
+        dataset = PrepareDataset('cars_dataset.trds')
+        dataset.list_versions()
+        """
+
+        if not alias and not self.dataset_data:
+            raise ValueError('Укажите alias датасета или выберите датасет.')
+        elif not alias and self.dataset_data:
+            alias = self.dataset_data.alias
+            # alias = '.'.join([self.dataset_data.alias, self.dataset_data.group])
+
+        build_table = {'alias': [], 'Название': [], 'Входы': [], 'Выходы': []}
+        if self.dataset_data.group == 'trds':
+            build_table.update({'Размер': [], 'Генератор': [], 'Дата создания': []})
+            for d_path in Path(TERRA_PATH).joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + VERSION_EXT):
+                with open(d_path.joinpath(VERSION_CONFIG), 'r') as config:
+                    d_config = json.load(config)
+                build_table['alias'].append(d_config.get('alias') if d_config.get('alias') else '')
+                build_table['Название'].append(d_config.get('name', ''))
+                build_table['Генератор'].append(d_config.get('use_generator', ''))
+                build_table['Размер'].append(
+                    str(round(d_config['size']['short'], 2)) + d_config['size']['unit'] if d_config.get('size', '') else '')
+                build_table['Дата создания'].append(
+                    datetime.fromisoformat(d_config['date']).strftime('%d %b %Y, %H:%M:%S') if d_config.get('date',
+                                                                                                            '') else '')
+                for put in [['inputs', 'Входы'], ['outputs', 'Выходы']]:
+                    for idx, elem in enumerate(d_config[put[0]].values()):
+                        build_table[put[1]].append(f"{put[1][:-1]} {idx + 1}: {elem['shape']}")
+                max_len = max(len(build_table['Входы']), len(build_table['Выходы']))
+                for put in build_table:
+                    while not len(build_table[put]) == max_len:
+                        build_table[put].append('')
+        elif self.dataset_data.group == 'keras':
+            for ver in VersionsGroup[0]['datasets'][0][alias]:
+                build_table['alias'].append(ver.get('alias') if ver.get('alias') else '')
+                build_table['Название'].append(ver['name'])
+                for put in [['inputs', 'Входы'], ['outputs', 'Выходы']]:
+                    for idx, elem in enumerate(ver[put[0]].values()):
+                        build_table[put[1]].append(f"{put[1][:-1]} {idx + 1}: {elem['shape']}")
+        elif self.dataset_data.group == 'terra':
+            pass
+
+        dataframe = pd.DataFrame().from_dict(build_table)
+        display(dataframe)
+        # display(dataframe) if hasattr(__builtins__, '__IPYTHON__') else print(dataframe.to_markdown(index=False))
+
+    def generator_common(self, split_name):
+
+        inputs = {}
+        outputs = {}
+        for idx in range(len(self.dataframe[split_name])):
+            for inp_id in self.version_data.inputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[inp_id].items():
+                    if data['put_type'] in PATH_TYPE_LIST:
+                        sample = self.version_paths_data.sources.joinpath(self.dataframe[split_name].loc[idx, col_name])
+                    else:
+                        sample = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[inp_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                inputs[str(inp_id)] = np.concatenate(tmp, axis=0)
+
+            for out_id in self.version_data.outputs.keys():
+                tmp = []
+                for col_name, data in self.instructions[out_id].items():
+                    if data['put_type'] in PATH_TYPE_LIST:
+                        sample = self.version_paths_data.basepath.joinpath(
+                            self.dataframe[split_name].loc[idx, col_name]
+                        )
+                    else:
+                        sample = self.dataframe[split_name].loc[idx, col_name]
+                    array = getattr(CreateArray(), f'create_{data["put_type"]}')(sample, **{
+                        'preprocess': self.preprocessing.preprocessing[out_id][col_name]}, **data)
+                    array = getattr(CreateArray(), f'preprocess_{data["put_type"]}')(array['instructions'],
+                                                                                     **array['parameters'])
+                    tmp.append(array)
+                outputs[str(out_id)] = np.concatenate(tmp, axis=0)
+
+            yield inputs, outputs
     def generator(self, inputs, outputs, service=None):
 
         for i in range(len(inputs)):
@@ -88,6 +278,11 @@ class PrepareDataset(object):
                 y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
                 y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
 
+        # for split in ['train', 'val']:
+        #     for key in self.data.inputs.keys():
+        #         self.X[split][str(key)] = globals()[f'x_{split}']
+        #     for key in self.data.outputs.keys():
+        #         self.Y[split][str(key)] = globals()[f'y_{split}']
         for key in self.data.inputs.keys():
             self.X['train'][str(key)] = x_train
             self.X['val'][str(key)] = x_val
@@ -219,14 +414,13 @@ class PrepareDataset(object):
 
                 for split in ['train', 'val']:
                     for index in self.data.inputs.keys():
-                        self.X[split][str(index)] = joblib.load(self.paths.arrays.joinpath(split, f'{index}.gz'))
+                        self.X[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
                     for index in self.data.outputs.keys():
-                        self.Y[split][str(index)] = joblib.load(self.paths.arrays.joinpath(split, f'{index}.gz'))
-                    if self.data.service:
-                        for index in self.data.service.keys():
-                            self.service[split][str(index)] = joblib.load(
-                                self.paths.arrays.joinpath(split, f'{index}_service.gz')
-                            )
+                        self.Y[split][str(index)] = joblib.load(os.path.join(self.paths.arrays, split, f'{index}.gz'))
+                    for index in self.data.service.keys():
+                        if self.data.service[index]:
+                            self.service[split][str(index)] = joblib.load(os.path.join(self.paths.arrays,
+                                                                                       split, f'{index}_service.gz'))
 
                 for split in ['train', 'val']:
                     if self.service[split]:
@@ -255,8 +449,5 @@ class PrepareDataset(object):
                     os.makedirs(folder_dir, exist_ok=True)
                     joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
-        dataset_data = self.data.native()
-        dataset_data.update({"instructions": self.instructions})
-
-        with open(os.path.join(folder_path, 'dataset.json'), 'w') as cfg:
-            json.dump(dataset_data, cfg)
+        with open(os.path.join(folder_path, VERSION_CONFIG), 'w') as cfg:
+            json.dump(self.version_data.native(), cfg)

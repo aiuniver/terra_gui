@@ -3,7 +3,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt, PositiveFloat
 from pydantic.color import Color
 
-from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
+# from terra_ai.data.datasets.creations.layers.image_augmentation import AugmentationData
 from terra_ai.data.types import ConstrainedIntValueGe0
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
@@ -23,7 +23,10 @@ from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
-    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerTransformerMethodChoice,
+    LayerTypeProcessingClassificationChoice,
+    LayerImageFrameModeChoice,
+    LayerTypeProcessingClassificationChoice, LayerImageFrameModeChoice, LayerObjectDetectionModelChoice,
+    LayerYoloChoice, LayerODDatasetTypeChoice, LayerTransformerMethodChoice,
 )
 from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
 
@@ -33,6 +36,7 @@ class ParametersBaseData(BaseMixinData):
 
 
 class ParametersImageData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик изображений.
     Inputs:
@@ -48,11 +52,10 @@ class ParametersImageData(ParametersBaseData, MinMaxScalerData):
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     net: LayerNetChoice = LayerNetChoice.convolutional
     scaler: LayerScalerImageChoice
-    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
-    augmentation: Optional[AugmentationData]
 
 
 class ParametersTextData(ParametersBaseData):
+
     """
     Обработчик текстовых данных.
     Inputs:
@@ -68,7 +71,7 @@ class ParametersTextData(ParametersBaseData):
     """
 
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
-    text_mode: LayerTextModeChoice = LayerTextModeChoice.completely
+    text_mode: LayerTextModeChoice
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
@@ -77,6 +80,8 @@ class ParametersTextData(ParametersBaseData):
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
     transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
+    open_tags: Optional[str]
+    close_tags: Optional[str]
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
@@ -100,6 +105,7 @@ class ParametersTextData(ParametersBaseData):
 
 
 class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик аудиофайлов.
     Inputs:
@@ -138,6 +144,7 @@ class ParametersAudioData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик видеофайлов.
     Inputs:
@@ -173,6 +180,7 @@ class ParametersVideoData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик числовых значений.
     Inputs:
@@ -195,6 +203,7 @@ class ParametersScalerData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersClassificationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "классификация".
     Inputs:
@@ -221,6 +230,7 @@ class ParametersClassificationData(ParametersBaseData):
 
 
 class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик типа задачи "регрессия".
     Inputs:
@@ -231,6 +241,7 @@ class ParametersRegressionData(ParametersBaseData, MinMaxScalerData):
 
 
 class ParametersSegmentationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "сегментация".
     Inputs:
@@ -253,6 +264,7 @@ class ParametersSegmentationData(ParametersBaseData):
 
 
 class ParametersTextSegmentationData(ParametersBaseData):
+
     """
     Обработчик типа задачи "сегментация текстов".
     Inputs:
@@ -269,6 +281,8 @@ class ParametersTextSegmentationData(ParametersBaseData):
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
+    prepare_method: Optional[LayerPrepareMethodChoice]
+    max_words_count: Optional[PositiveInt]
 
     # def __init__(self\, **data):
     #     data.update({"cols_names": None})
@@ -285,6 +299,7 @@ class ParametersTextSegmentationData(ParametersBaseData):
 
 
 class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
+
     """
     Обработчик видеофайлов.
     Inputs:
@@ -324,7 +339,28 @@ class ParametersTimeseriesData(ParametersBaseData, MinMaxScalerData):
         return value
 
 
+class ParametersObjectDetectionData(ParametersBaseData):
+
+    """
+    Обработчик типа задачи обнаружения объектов.
+    """
+
+    model: LayerObjectDetectionModelChoice = LayerObjectDetectionModelChoice.yolo
+    yolo: LayerYoloChoice = LayerYoloChoice.v4
+    classes_names: Optional[list]
+    num_classes: Optional[PositiveInt]
+    model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
+    frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    # put: Optional[PositiveInt]
+    # cols_names: Optional[str]
+
+    # def __init__(self, **data):
+    #     data.update({"cols_names": None})
+    #     super().__init__(**data)
+
+
 class ParametersImageGANData(ParametersBaseData):
+
     """
     Обработчик типа задачи "ImageGAN".
     """
@@ -333,6 +369,7 @@ class ParametersImageGANData(ParametersBaseData):
 
 
 class ParametersImageCGANData(ParametersBaseData):
+
     """
     Обработчик типа задачи "ImageCGAN".
     """
@@ -341,6 +378,7 @@ class ParametersImageCGANData(ParametersBaseData):
 
 
 class ParametersTextToImageGANData(ParametersBaseData):
+
     """
     Обработчик типа задачи "CGAN".
     """
@@ -349,6 +387,7 @@ class ParametersTextToImageGANData(ParametersBaseData):
 
 
 class ParametersTransformerData(ParametersBaseData):
+
     """
     Обработчик типа задачи "Transformer".
     """
@@ -366,3 +405,15 @@ class ParametersDiscriminatorData(ParametersBaseData):
 
 class ParametersNoiseData(ParametersBaseData):
     shape: tuple
+
+
+class ParametersTrackerData(ParametersBaseData):
+    pass
+
+
+class ParametersText2SpeechData(ParametersBaseData):
+    pass
+
+
+class ParametersSpeech2TextData(ParametersBaseData):
+    pass

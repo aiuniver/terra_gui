@@ -5,7 +5,7 @@ from pydantic import validator
 from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
-
+from terra_ai.data.datasets.extra import DatasetTaskTypeChoice
 from ... import settings as terra_ai_settings
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import (
@@ -109,6 +109,12 @@ class CreationInfoData(BaseMixinData):
         return value
 
 
+class CreationParametersData(BaseMixinData):
+
+    sources_paths: Optional[list]
+    names: Dict[str, list]
+
+
 class CreationInputData(IDMixinData):
     """
     Информация о `input`-слое
@@ -116,29 +122,31 @@ class CreationInputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    type: LayerInputTypeChoice
-    "Тип данных"
-    parameters: Any
-    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
+    parameters: Dict[str, Dict[str, list]]
+    "Параметры"
+    # type: #LayerInputTypeChoice
+    # "Тип данных"
+    # parameters: Any
+    # "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", pre=True)
-    def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-        if value not in list(LayerInputTypeChoice):
-            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        name = (
-            value
-            if isinstance(value, LayerInputTypeChoice)
-            else LayerInputTypeChoice(value)
-        ).name
-        type_ = getattr(
-            creations.layers.input, getattr(creations.layers.input.Layer, name)
-        )
-        cls.__fields__["parameters"].type_ = type_
-        return value
+    # @validator("type", pre=True)
+    # def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
+    #     if value not in list(LayerInputTypeChoice):
+    #         raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+    #     name = (
+    #         value
+    #         if isinstance(value, LayerInputTypeChoice)
+    #         else LayerInputTypeChoice(value)
+    #     ).name
+    #     type_ = getattr(
+    #         creations.layers.input, getattr(creations.layers.input.Layer, name)
+    #     )
+    #     cls.__fields__["parameters"].type_ = type_
+    #     return value
 
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+    # @validator("parameters", always=True)
+    # def _validate_parameters(cls, value: Any, values, field) -> Any:
+    #     return field.type_(**value or {})
 
 
 class CreationOutputData(IDMixinData):
@@ -148,29 +156,32 @@ class CreationOutputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    type: LayerOutputTypeChoice
-    "Тип данных"
-    parameters: Any
-    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
+    parameters: Dict[str, Dict[str, list]]
+    "Параметры"
 
-    @validator("type", pre=True)
-    def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-        if value not in list(LayerOutputTypeChoice):
-            raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        name = (
-            value
-            if isinstance(value, LayerOutputTypeChoice)
-            else LayerOutputTypeChoice(value)
-        ).name
-        type_ = getattr(
-            creations.layers.output, getattr(creations.layers.output.Layer, name)
-        )
-        cls.__fields__["parameters"].type_ = type_
-        return value
+    # type: #LayerOutputTypeChoice
+    # "Тип данных"
+    # parameters: Any
+    # "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+    # @validator("type", pre=True)
+    # def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
+    #     if value not in list(LayerOutputTypeChoice):
+    #         raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+    #     name = (
+    #         value
+    #         if isinstance(value, LayerOutputTypeChoice)
+    #         else LayerOutputTypeChoice(value)
+    #     ).name
+    #     type_ = getattr(
+    #         creations.layers.output, getattr(creations.layers.output.Layer, name)
+    #     )
+    #     cls.__fields__["parameters"].type_ = type_
+    #     return value
+
+    # @validator("parameters", always=True)
+    # def _validate_parameters(cls, value: Any, values, field) -> Any:
+    #     return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):
@@ -228,6 +239,36 @@ class ColumnsProcessingData(BaseMixinData):
         return field.type_(**(value or {}))
 
 
+class CreationVersionData(AliasMixinData):
+    """
+    Полная информация о создании версии датасета
+    Inputs:
+        alias: str - alias версии
+        name: str - название версии
+        datasets_path: pathlib.Path - путь к директории датасетов проекта (./TerraAI/datasets)
+        parent_alias: str - alias датасета, от которого создаётся версия
+        info: CreationInfoData - соотношение обучающей выборки к валидационной, а также его перемешивание
+        use_generator: bool - использовать генератор при обучении. По умолчанию: False
+        inputs: CreationInputsList - входные слои
+        outputs: CreationOutputsList - выходные слои
+    """
+
+    name: str
+    "Название"
+    datasets_path: DirectoryPath
+    "Путь к директории датасетов проекта"
+    parent_alias: str
+    "Алиас родительского датасета"
+    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
+    "Информация о данных"
+    processing: Dict[str, ColumnsProcessingData] = {}
+    "Обработчики"
+    inputs: CreationInputsList = CreationInputsList()
+    "Входные слои"
+    outputs: CreationOutputsList = CreationOutputsList()
+    "Выходные слои"
+
+
 class CreationData(AliasMixinData):
     """
     Полная информация о создании датасета
@@ -239,38 +280,31 @@ class CreationData(AliasMixinData):
     "Путь к директории датасетов проекта"
     source_path: DirectoryPath
     "Путь к директории с исходниками, полученный после их загрузки"
-    info: CreationInfoData = CreationInfoData()
-    "Информация о данных"
+    task_type: DatasetTaskTypeChoice
+    "Тип задачи создаваемого датасета"
     tags: TagsList = TagsList()
     "Список тегов"
-    use_generator: bool = False
-    "Использовать генераторы"
-    columns_processing: Dict[str, ColumnsProcessingData] = {}
-    "Обработчики колонок"
-    inputs: CreationInputsList = CreationInputsList()
-    "`input`-слои"
-    outputs: CreationOutputsList = CreationOutputsList()
-    "`output`-слои"
+    version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 
     @property
     def path(self) -> Path:
         return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
 
-    @validator("inputs", "outputs")
-    def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
-        if not len(value):
-            raise ListEmptyException(type(value))
-        return value
-
-    @validator("outputs")
-    def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
-        if not value:
-            return value
-        is_object_detection = False
-        for layer in value:
-            if layer.type == LayerOutputTypeChoice.ObjectDetection:
-                is_object_detection = True
-                break
-        if is_object_detection and len(value) > 1:
-            raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
-        return value
+    # @validator("inputs", "outputs")
+    # def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
+    #     if not len(value):
+    #         raise ListEmptyException(type(value))
+    #     return value
+    #
+    # @validator("outputs")
+    # def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
+    #     if not value:
+    #         return value
+    #     is_object_detection = False
+    #     for layer in value:
+    #         if layer.type == LayerOutputTypeChoice.ObjectDetection:
+    #             is_object_detection = True
+    #             break
+    #     if is_object_detection and len(value) > 1:
+    #         raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
+    #     return value

@@ -32,9 +32,32 @@ class LayerTransformerMethodChoice(str, Enum):
     dec_out = "dec_out"
 
 
-class LayerTaskTypeChoice(str, Enum):
-    timeseries = "timeseries"
-    regression = "regression"
+# class LayerTaskTypeChoice(str, Enum):
+#     timeseries = "timeseries"
+#     regression = "regression"
+
+
+class DatasetTaskTypeChoice(str, Enum):
+    ImageClassification = 'ImageClassification'  # 1 вход, 1 выход
+    ImageSegmentation = 'ImageSegmentation'  # 1 вход, 1 выход
+    # ImageObjectDetection = 'ImageObjectDetection'  # 1 вход, 1(3+3) выход(ов)
+    ImageGAN = 'ImageGAN'
+    ImageCGAN = 'ImageCGAN'
+    TextClassification = 'TextClassification'  # 1 вход, 1 выход
+    TextSegmentation = 'TextSegmentation'  # 1 вход, 1 выход
+    VideoClassification = 'VideoClassification'  # 1 вход, 1 выход
+    VideoSegmentation = 'VideoSegmentation'  # 1 вход, 1 выход
+    VideoTracker = 'VideoTracker'  # 1 вход, 1 выход
+    AudioClassification = 'AudioClassification'  # * вход, 1 выход
+    AudioSegmentation = 'AudioSegmentation'  # * вход, 1 выход
+    DataframeClassification = 'DataframeClassification'  # *вход(ов), * выход(ов)
+    DataframeRegression = 'DataframeRegression'  # *вход(ов), * выход(ов)
+    DataframeTimeseries = 'DataframeTimeseries'  # 1 вход, 1 выход
+    DataframeTimeseriesTrend = 'DataframeTimeseriesTrend'  # 1 вход, 1 выход
+    YoloV3 = 'YoloV3'  # 1 вход, 1(3+3) выход(ов)
+    YoloV4 = 'YoloV4'  # 1 вход, 1(3+3) выход(ов)
+    Text2Speech = 'Text2Speech'
+    Speech2Text = 'Speech2Text'
 
 
 class LayerNetChoice(str, Enum):
@@ -191,8 +214,10 @@ class ColumnProcessingTypeChoice(str, Enum):
     Video = "Video"
     Scaler = "Scaler"
     Classification = "Classification"
+    ObjectDetection = "ObjectDetection"
     Regression = "Regression"
     Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
     Timeseries = "Timeseries"
     ImageGAN = "ImageGAN"
     ImageCGAN = "ImageCGAN"
@@ -200,6 +225,9 @@ class ColumnProcessingTypeChoice(str, Enum):
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
+    Tracker = "Tracker"
+    Text2Speech = "Text2Speech"
+    Speech2Text = "Speech2Text"
     Transformer = "Transformer"
 
 

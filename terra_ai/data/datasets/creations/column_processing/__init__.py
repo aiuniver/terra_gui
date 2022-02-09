@@ -29,11 +29,19 @@ class ColumnProcessingClassificationData(types.ParametersClassificationData):
     pass
 
 
+class ColumnProcessingObjectDetectionData(types.ParametersObjectDetectionData):
+    pass
+
+
 class ColumnProcessingRegressionData(types.ParametersRegressionData):
     pass
 
 
 class ColumnProcessingSegmentationData(types.ParametersSegmentationData):
+    pass
+
+
+class ColumnProcessingTextSegmentationData(types.ParametersTextSegmentationData):
     pass
 
 
@@ -66,6 +74,18 @@ class ColumnProcessingDiscriminatorData(types.ParametersDiscriminatorData):
 
 
 class ColumnProcessingTransformerData(types.ParametersTransformerData):
+    pass
+
+
+class ColumnProcessingTrackerData(types.ParametersTrackerData):
+    pass
+
+
+class ColumnProcessingText2SpeechData(types.ParametersText2SpeechData):
+    pass
+
+
+class ColumnProcessingSpeech2TextData(types.ParametersSpeech2TextData):
     pass
 
 

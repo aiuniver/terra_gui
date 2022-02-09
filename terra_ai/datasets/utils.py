@@ -697,25 +697,31 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #
 #     return real_boxes
 
-def get_od_names(creation_data):
+
+def get_od_names(version_data, source_path):
+
     names_list = []
-    for out in creation_data.outputs:
-        if out.type == LayerOutputTypeChoice.ObjectDetection:
-            if out.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1, LayerODDatasetTypeChoice.Yolo_terra]:
-                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
+    for worker_name, worker_params in version_data.processing.items():
+        if worker_params.type == LayerOutputTypeChoice.ObjectDetection:
+            for out in version_data.outputs:
+                if int(list(out.parameters[list(out.parameters.keys())[0]].values())[0][0]) == int(worker_name):
+                    ann_path = list(out.parameters[list(out.parameters.keys())[0]].keys())[0]
+            if worker_params.parameters.model_type in [LayerODDatasetTypeChoice.Yolov1,
+                                                       LayerODDatasetTypeChoice.Yolo_terra]:
+                with open(source_path.joinpath('obj.names'), 'r') as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split('\n') if elem]
 
-            elif out.parameters.model_type == LayerODDatasetTypeChoice.Coco:
-                for js_file in os.listdir(out.parameters.sources_paths[0]):
-                    json_data = json.load(open(os.path.join(out.parameters.sources_paths[0], js_file)))
+            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Coco:
+                for js_file in os.listdir(os.path.join(version_data.source_path, ann_path)):
+                    json_data = json.load(open(os.path.join(version_data.source_path, ann_path, js_file)))
 
                 names_list = [0 for i in json_data["categories"]]
                 for i in json_data["categories"]:
                     names_list[i['id']] = i['name']
 
-            elif out.parameters.model_type == LayerODDatasetTypeChoice.Voc:
-                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(out.parameters.sources_paths[0])))
+            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Voc:
+                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(os.path.join(version_data.source_path, ann_path))))
                 for filename in filenames:
                     xml = open(os.path.join(dir_path, filename), "r", encoding='utf-8')
                     tree = Et.parse(xml)
@@ -726,8 +732,8 @@ def get_od_names(creation_data):
                     xml.close()
                 names_list = sorted(set(names_list))
 
-            elif out.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
-                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(out.parameters.sources_paths[0])))
+            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
+                (dir_path, dir_names, filenames) = next(os.walk(os.path.abspath(os.path.join(version_data.source_path, ann_path))))
                 for filename in filenames:
                     txt = open(os.path.join(dir_path, filename), "r")
                     for line in txt:
@@ -736,10 +742,10 @@ def get_od_names(creation_data):
                     txt.close()
                 names_list = sorted(set(names_list))
 
-            elif out.parameters.model_type == LayerODDatasetTypeChoice.Udacity:
-                for i in os.listdir(creation_data.source_path):
+            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Udacity:
+                for i in os.listdir(version_data.source_path):
                     if i.endswith('.csv'):
-                        raw_f = open(os.path.join(creation_data.source_path, i), 'r', encoding='utf-8')
+                        raw_f = open(os.path.join(version_data.source_path, i), 'r', encoding='utf-8')
                 csv_f = csv.reader(raw_f)
                 raw_f.seek(0)
 
