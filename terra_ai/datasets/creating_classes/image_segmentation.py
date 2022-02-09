@@ -1,7 +1,7 @@
-from terra_ai.datasets.creating_classes.base import BaseClass, PreprocessingScalerClass
+from terra_ai.datasets.creating_classes.base import BaseClass, PreprocessingNumericClass
 
 
-class ImageSegmentationClass(PreprocessingScalerClass, BaseClass):
+class ImageSegmentationClass(PreprocessingNumericClass, BaseClass):
 
     @staticmethod
     def preprocess_version_data(**kwargs):

@@ -1,6 +1,6 @@
-from terra_ai.datasets.creating_classes.base import BaseClass, ClassificationClass, PreprocessingScalerClass
+from terra_ai.datasets.creating_classes.base import BaseClass, ClassificationClass, PreprocessingNumericClass
 
 
-class ImageClassificationClass(ClassificationClass, PreprocessingScalerClass, BaseClass):
+class ImageClassificationClass(ClassificationClass, PreprocessingNumericClass, BaseClass):
 
     pass

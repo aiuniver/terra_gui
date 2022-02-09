@@ -30,7 +30,7 @@ class LayerPrepareMethodChoice(str, Enum):
 #     regression = "regression"
 
 
-class LayerTaskTypeChoice(str, Enum):
+class DatasetTaskTypeChoice(str, Enum):
     ImageClassification = 'ImageClassification'  # 1 вход, 1 выход
     ImageSegmentation = 'ImageSegmentation'  # 1 вход, 1 выход
     # ImageObjectDetection = 'ImageObjectDetection'  # 1 вход, 1(3+3) выход(ов)
@@ -38,6 +38,7 @@ class LayerTaskTypeChoice(str, Enum):
     TextSegmentation = 'TextSegmentation'  # 1 вход, 1 выход
     VideoClassification = 'VideoClassification'  # 1 вход, 1 выход
     VideoSegmentation = 'VideoSegmentation'  # 1 вход, 1 выход
+    VideoTracker = 'VideoTracker'  # 1 вход, 1 выход
     AudioClassification = 'AudioClassification'  # * вход, 1 выход
     AudioSegmentation = 'AudioSegmentation'  # * вход, 1 выход
     DataframeClassification = 'DataframeClassification'  # *вход(ов), * выход(ов)
@@ -46,6 +47,8 @@ class LayerTaskTypeChoice(str, Enum):
     DataframeTimeseriesTrend = 'DataframeTimeseriesTrend'  # 1 вход, 1 выход
     YoloV3 = 'YoloV3'  # 1 вход, 1(3+3) выход(ов)
     YoloV4 = 'YoloV4'  # 1 вход, 1(3+3) выход(ов)
+    Text2Speech = 'Text2Speech'
+    Speech2Text = 'Speech2Text'
 
 
 class LayerNetChoice(str, Enum):
@@ -185,7 +188,6 @@ class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"
     custom = "custom"
-    trds = "trds"
 
     @staticmethod
     def values() -> list:
@@ -208,11 +210,14 @@ class ColumnProcessingTypeChoice(str, Enum):
     Segmentation = "Segmentation"
     TextSegmentation = "TextSegmentation"
     Timeseries = "Timeseries"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
+    Tracker = "Tracker"
+    Text2Speech = "Text2Speech"
+    Speech2Text = "Speech2Text"
 
 
 class LayerInputTypeChoice(str, Enum):

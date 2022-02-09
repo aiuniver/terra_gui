@@ -69,6 +69,18 @@ class ColumnProcessingDiscriminatorData(types.ParametersDiscriminatorData):
     pass
 
 
+class ColumnProcessingTrackerData(types.ParametersTrackerData):
+    pass
+
+
+class ColumnProcessingText2SpeechData(types.ParametersText2SpeechData):
+    pass
+
+
+class ColumnProcessingSpeech2TextData(types.ParametersSpeech2TextData):
+    pass
+
+
 ColumnProcessing = Enum(
     "ColumnProcessing",
     dict(

@@ -386,3 +386,15 @@ class ParametersDiscriminatorData(ParametersBaseData):
 
 class ParametersNoiseData(ParametersBaseData):
     shape: tuple
+
+
+class ParametersTrackerData(ParametersBaseData):
+    pass
+
+
+class ParametersText2SpeechData(ParametersBaseData):
+    pass
+
+
+class ParametersSpeech2TextData(ParametersBaseData):
+    pass

@@ -54,13 +54,13 @@ class ArchitectureChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     AudioClassification = "AudioClassification"
     VideoClassification = "VideoClassification"
+    VideoTracker = "VideoTracker"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
-    Tracker = "Tracker"
     Speech2Text = "Speech2Text"
     Text2Speech = "Text2Speech"
-    GAN = "GAN"
-    CGAN = "CGAN"
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
 
 
 class CheckpointIndicatorChoice(str, Enum):

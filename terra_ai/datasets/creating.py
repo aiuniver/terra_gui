@@ -6,7 +6,7 @@ from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationVersionData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionPathsData, VersionData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
-    LayerPrepareMethodChoice, LayerScalerImageChoice, LayerTaskTypeChoice
+    LayerPrepareMethodChoice, LayerScalerImageChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
 from terra_ai import progress
 
@@ -84,7 +84,7 @@ class CreateDataset(object):
         #     tags_list.append(tag.native())
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,
-                'group': DatasetGroupChoice.trds,
+                'group': DatasetGroupChoice.custom,
                 # 'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'architecture': creation_data.task_type,
@@ -148,20 +148,25 @@ class CreateVersion(object):
         )
 
         progress.pool(name=version_progress_name, message='Создание объектов обработки', percent=0)
-        self.preprocessing = architecture_class.create_preprocessing(
-            instructions=self.instructions,
-            preprocessing=self.preprocessing
-        )
-        self.preprocessing = architecture_class.fit_preprocessing(
-            put_data=self.instructions.inputs,
-            preprocessing=self.preprocessing,
-            sources_temp_directory=self.sources_temp_directory
-        )
-        self.preprocessing = architecture_class.fit_preprocessing(
-            put_data=self.instructions.outputs,
-            preprocessing=self.preprocessing,
-            sources_temp_directory=self.sources_temp_directory
-        )
+
+        for prep_type in ['numeric', 'text']:
+            self.preprocessing = getattr(architecture_class, f"create_{prep_type}_preprocessing")(
+                instructions=self.instructions,
+                preprocessing=self.preprocessing
+            )
+        print(self.preprocessing.preprocessing)
+        for prep_type in ['numeric', 'text']:
+            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+                put_data=self.instructions.inputs,
+                preprocessing=self.preprocessing,
+                sources_temp_directory=self.sources_temp_directory
+            )
+            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+                put_data=self.instructions.outputs,
+                preprocessing=self.preprocessing,
+                sources_temp_directory=self.sources_temp_directory
+            )
+
         self.create_table(version_data)
 
         self.inputs, inp_col = architecture_class.create_input_parameters(
@@ -188,14 +193,8 @@ class CreateVersion(object):
 
         progress.pool(name=version_progress_name, message='Создание массивов данных', percent=0)
 
-        architecture_class.create_dataset_arrays(
-            put_data=self.instructions.inputs,
-            version_paths_data=self.version_paths_data,
-            dataframe=self.dataframe,
-            preprocessing=self.preprocessing
-        )
-        architecture_class.create_dataset_arrays(
-            put_data=self.instructions.outputs,
+        architecture_class.create_arrays(
+            instructions=self.instructions,
             version_paths_data=self.version_paths_data,
             dataframe=self.dataframe,
             preprocessing=self.preprocessing

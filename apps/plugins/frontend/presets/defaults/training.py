@@ -599,5 +599,5 @@ Architectures = {
         },
         "yolo": ArchitectureGroupYoloV4,
     },
-    ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
+    ArchitectureChoice.VideoTracker: {**ArchitectureBasicForm},
 }

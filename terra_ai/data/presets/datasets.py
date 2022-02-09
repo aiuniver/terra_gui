@@ -3799,7 +3799,7 @@ DatasetsGroups = [
             {
                 "alias": "bus_video_tracker",
                 "name": "Видео для трекера",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
@@ -3834,7 +3834,7 @@ DatasetsGroups = [
             {
                 "alias": "video_progulka_po_piteru",
                 "name": "Видео_прогулка_по_Питеру",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {
@@ -3953,7 +3953,7 @@ DatasetsGroups = [
             {
                 "alias": "chess_tracker",
                 "name": "Трекер шахматы",
-                "architecture": ArchitectureChoice.Tracker.name,
+                "architecture": ArchitectureChoice.VideoTracker.name,
                 "group": DatasetGroupChoice.terra.value,
                 "inputs": {
                     1: {

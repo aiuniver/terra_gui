@@ -101,7 +101,8 @@ class BaseClass(object):
 
         return data_to_pass, parameters_to_pass
 
-    def create_put_instructions(self, dictio, parameters, version_sources_path):
+    @staticmethod
+    def create_put_instructions(dictio, parameters, version_sources_path):
 
         put_instructions = {}
         tags = {}
@@ -111,7 +112,7 @@ class BaseClass(object):
             tags[put_id] = {}
             for col_name, data in pass_data_parameters.items():
                 instructions = []
-                # classes_names = []
+                classes_names = []
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     results = executor.map(multithreading_instructions,
                                            data,
@@ -128,16 +129,24 @@ class BaseClass(object):
                                     str(version_sources_path), '')[1:]
                         instructions += result['instructions']
                         result_params = result['parameters']
+                        if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
+                            classes_names += result['parameters'].get('classes_names')
                         # classes_names += result['parameters']['classes_names']
                         # if put_id == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
                         # self.y_cls += [os.path.basename(os.path.dirname(data_to_pass[i])) for _ in
                         # range(len(result['instructions']))]
 
+                column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
                 instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
+                if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
+                    instructions_data.parameters.update({'classes_names': list(set(classes_names))})
+                    instructions_data.parameters.update({'num_classes': len(list(set(classes_names)))})
                 instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
-                # instructions_data.parameters.update({'classes_names': list(set(classes_names))})
-                put_instructions[put_id].update({col_name: instructions_data})
-                tags[put_id].update({col_name: decamelize(parameters[put_id][col_name]['type'])})
+                instructions_data.parameters.update({'col_name': column_name})
+                print(instructions_data.parameters)
+
+                put_instructions[put_id].update({column_name: instructions_data})
+                tags[put_id].update({column_name: decamelize(parameters[put_id][col_name]['type'])})
 
         return put_instructions, tags
 
@@ -176,16 +185,27 @@ class BaseClass(object):
         return instructions, tags
 
     @staticmethod
-    def create_preprocessing(instructions, preprocessing):
+    def create_numeric_preprocessing(instructions, preprocessing):
 
         return preprocessing
 
     @staticmethod
-    def fit_preprocessing(put_data, preprocessing, sources_temp_directory):
+    def create_text_preprocessing(instructions, preprocessing):
 
         return preprocessing
 
-    def create_input_parameters(self, input_instr, version_data, preprocessing, version_paths_data):
+    @staticmethod
+    def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
+
+        return preprocessing
+
+    @staticmethod
+    def fit_text_preprocessing(put_data, preprocessing, sources_temp_directory):
+
+        return preprocessing
+
+    @staticmethod
+    def create_input_parameters(input_instr, version_data, preprocessing, version_paths_data):
 
         inputs = {}
         columns = {}
@@ -248,7 +268,8 @@ class BaseClass(object):
 
         return inputs, columns
 
-    def create_output_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
+    @staticmethod
+    def create_output_parameters(output_instr, version_data, preprocessing, version_paths_data):
 
         outputs = {}
         columns = {}
@@ -314,13 +335,30 @@ class BaseClass(object):
 
         return outputs, columns
 
-    def create_service_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
+    @staticmethod
+    def create_service_parameters(output_instr, version_data, preprocessing, version_paths_data):
 
         service = {}
 
         return service
 
-    def create_dataset_arrays(self, put_data, version_paths_data, dataframe, preprocessing):
+    def create_arrays(self, instructions, version_paths_data, dataframe, preprocessing):
+
+        self.create_put_arrays(
+            put_data=instructions.inputs,
+            version_paths_data=version_paths_data,
+            dataframe=dataframe,
+            preprocessing=preprocessing
+        )
+        self.create_put_arrays(
+            put_data=instructions.outputs,
+            version_paths_data=version_paths_data,
+            dataframe=dataframe,
+            preprocessing=preprocessing
+        )
+
+    @staticmethod
+    def create_put_arrays(put_data, version_paths_data, dataframe, preprocessing):
 
         for split in ['train', 'val']:
             open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
@@ -400,10 +438,12 @@ class ClassificationClass(object):
                         if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                             classes_names += result['parameters'].get('classes_names')
                         else:
-                            self.y_cls += [Path(data[i]).parent.name for _ in range(len(result['instructions']))]
-
+                            if put_id == 1:
+                                self.y_cls += [Path(data[i]).parent.name for _ in range(len(result['instructions']))]
+                print("LEN SELF Y_CLS", len(self.y_cls))
                 instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
                 instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
+                column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
                 if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                     instructions_data.instructions = self.y_cls
                     if Path(classes_names[0]).is_file():
@@ -411,42 +451,86 @@ class ClassificationClass(object):
                             classes_names[i] = Path(classes_names[i]).parent.name
                     instructions_data.parameters.update({'classes_names': list(set(classes_names))})
                     instructions_data.parameters.update({'num_classes': len(list(set(classes_names)))})
-
-                column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
+                elif parameters[put_id][col_name]['type'] in [LayerOutputTypeChoice.Tracker,
+                                                              LayerOutputTypeChoice.Speech2Text,
+                                                              LayerOutputTypeChoice.Text2Speech]:
+                    print('BEFORE:', len(instructions_data.instructions))
+                    instructions_data.instructions = ['no_data' for _ in range(len(self.y_cls))]
+                    print('AFTER:', len(instructions_data.instructions))
+                instructions_data.parameters.update({'cols_names': column_name})
+                print(instructions_data.parameters)
                 put_instructions[put_id].update({column_name: instructions_data})
                 tags[put_id].update({column_name: decamelize(parameters[put_id][col_name]['type'])})
 
         return put_instructions, tags
 
 
-class PreprocessingScalerClass(object):
+class PreprocessingNumericClass(object):
 
     @staticmethod
-    def create_preprocessing(instructions, preprocessing):
+    def create_numeric_preprocessing(instructions, preprocessing):
 
-        for put in instructions.inputs.values():
+        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
                 preprocessing.create_scaler(**data.parameters)
 
         return preprocessing
 
     @staticmethod
-    def fit_preprocessing(put_data, preprocessing, sources_temp_directory):
+    def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
 
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
+                print(key, col_name)
                 if 'scaler' in data.parameters and \
                         data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
                     progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
                     for i in range(len(data.instructions)):
+                        if data.parameters['put_type'] in PATH_TYPE_LIST:
+                            data_to_pass = str(sources_temp_directory.joinpath(data.instructions[i]))
+                        else:
+                            data_to_pass = data.instructions[i]
 
-                        array = multithreading_array(
-                            [str(sources_temp_directory.joinpath(data.instructions[i]))],
-                            [data.parameters]
-                        )[0]
+                        array = getattr(getattr(arrays_classes, data.parameters["put_type"]),
+                                        f'{camelize(data.parameters["put_type"])}Array')().create(
+                            source=data_to_pass, **data.parameters)['instructions']
+
+                        # array = multithreading_array(
+                        #     [data_to_pass],
+                        #     [data.parameters]
+                        # )[0]
                         if data.parameters['scaler'] == LayerScalerImageChoice.terra_image_scaler:
                             preprocessing.preprocessing[key][col_name].fit(array)
                         else:
                             preprocessing.preprocessing[key][col_name].fit(array.reshape(-1, 1))
 
         return preprocessing
+
+
+class PreprocessingTextClass(object):
+
+    @staticmethod
+    def create_text_preprocessing(instructions, preprocessing):
+
+        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+            for col_name, data in put.items():
+                if data.parameters.get('prepare_method') and data.parameters['prepare_method'] in \
+                        [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                    preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+                elif data.parameters.get('prepare_method') and data.parameters['prepare_method'] ==\
+                        LayerPrepareMethodChoice.word_to_vec:
+                    preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+
+        return preprocessing
+
+    # @staticmethod
+    # def fit_text_preprocessing(put_data, preprocessing):
+
+        # Из-за невозможности создания Word2Vec без сразу передачи в него корпусов текста, обучение текстовых
+        # препроцессингов происходит сразу на этапе создания
+
+        # for key in put_data.keys():
+        #     for col_name, data in put_data[key].items():
+        #         progress.pool(version_progress_name, message=f'Обучение {camelize(data.parameters["scaler"])}')
+        #         preprocessing.preprocessing[key][col_name].fit_on_texts(data.instructions)
+        # pass

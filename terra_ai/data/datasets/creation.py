@@ -5,7 +5,7 @@ from pydantic import validator
 from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
-from terra_ai.data.datasets.extra import LayerTaskTypeChoice
+from terra_ai.data.datasets.extra import DatasetTaskTypeChoice
 from ... import settings as terra_ai_settings
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import (
@@ -280,7 +280,7 @@ class CreationData(AliasMixinData):
     "Путь к директории датасетов проекта"
     source_path: DirectoryPath
     "Путь к директории с исходниками, полученный после их загрузки"
-    task_type: LayerTaskTypeChoice
+    task_type: DatasetTaskTypeChoice
     "Тип задачи создаваемого датасета"
     tags: TagsList = TagsList()
     "Список тегов"

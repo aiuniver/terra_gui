@@ -115,7 +115,7 @@ class CreatePreprocessing(object):
     def create_scaler(self, **options):  # array=None,
 
         scaler = None
-        if options['scaler'] != 'no_scaler':
+        if options.get('scaler') and options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
             elif options['scaler'] == 'standard_scaler':

@@ -1,6 +1,15 @@
 from . import \
     base, \
-    image_segmentation, \
     image_classification, \
+    image_segmentation, \
+    text_classification, \
     text_segmentation, \
+    audio_classification, \
+    video_classification, \
+    video_tracker, \
+    dataframe_classification, \
+    dataframe_regression, \
+    dataframe_timeseries, \
+    text_2_speech, \
+    speech_2_text, \
     yolo_v4

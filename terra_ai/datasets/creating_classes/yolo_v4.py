@@ -10,12 +10,13 @@ from terra_ai.datasets.creating import version_progress_name
 from terra_ai.datasets.data import DataType
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.utils import decamelize, camelize
-from terra_ai.datasets.creating_classes.base import BaseClass, multithreading_array
+from terra_ai.datasets.creating_classes.base import BaseClass, multithreading_array, PreprocessingNumericClass
 
 
-class YoloV4Class(BaseClass):
+class YoloV4Class(PreprocessingNumericClass, BaseClass):
 
-    def preprocess_version_data(self, **kwargs):
+    @staticmethod
+    def preprocess_version_data(**kwargs):
         version_data = kwargs['version_data']
         version_path_data = kwargs['version_path_data']
         version_data.processing['1'].parameters.frame_mode = version_data.processing['0'].parameters.image_mode
@@ -25,7 +26,8 @@ class YoloV4Class(BaseClass):
 
         return version_data
 
-    def create_output_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
+    @staticmethod
+    def create_output_parameters(output_instr, version_data, preprocessing, version_paths_data):
 
         outputs = {}
         columns = {}
@@ -53,7 +55,8 @@ class YoloV4Class(BaseClass):
 
         return outputs, columns
 
-    def create_service_parameters(self, output_instr, version_data, preprocessing, version_paths_data):
+    @staticmethod
+    def create_service_parameters(output_instr, version_data, preprocessing, version_paths_data):
 
         service = {}
         for key in output_instr.keys():
@@ -79,7 +82,8 @@ class YoloV4Class(BaseClass):
 
         return service
 
-    def create_dataset_arrays(self, put_data, version_paths_data, dataframe, preprocessing):
+    @staticmethod
+    def create_put_arrays(put_data, version_paths_data, dataframe, preprocessing):
 
         for split in ['train', 'val']:
             open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
