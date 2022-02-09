@@ -165,7 +165,6 @@ class VersionData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
-    tags: Optional[TagsList] = TagsList()
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}
@@ -238,6 +237,7 @@ class DatasetData(AliasMixinData):
     name: str
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     group: Optional[DatasetGroupChoice]
+    tags: Optional[TagsList] = TagsList()
     version: Optional[VersionData] = None
 
     _path: Path = PrivateAttr()
@@ -259,10 +259,6 @@ class DatasetData(AliasMixinData):
     @property
     def outputs(self) -> Dict[PositiveInt, DatasetOutputsData]:
         return self.version.outputs if self.version else {}
-
-    @property
-    def tags(self) -> Optional[TagsList]:
-        return self.version.tags if self.version else TagsList()
 
     @property
     def path(self):
