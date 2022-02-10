@@ -78,6 +78,7 @@ class DatasetVersionData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
+    use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}
@@ -112,7 +113,7 @@ class DatasetVersionList(UniqueListMixin):
 
 class DatasetCommonData(AliasMixinData):
     name: str
-    architecture: ArchitectureChoice
+    architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: List[str]
 
     __versions__: List[dict] = PrivateAttr()
