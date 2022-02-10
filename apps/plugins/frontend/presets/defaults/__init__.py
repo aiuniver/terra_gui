@@ -2,19 +2,32 @@ from terra_ai.data.modeling.layers import Layer, types as layers_types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 
-from ...utils import prepare_pydantic_field
-from .datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
-from .modeling import ModelingLayerForm, ModelingLayersTypes
-from .cascades import CascadesBlockForm, CascadesBlocksTypes
-from .deploy import DeployTypeGroup, DeployServerGroup
+from apps.plugins.frontend.utils import prepare_pydantic_field
+from apps.plugins.frontend.presets.defaults.datasets import (
+    DatasetsColumnProcessing,
+    DatasetsInput,
+    DatasetsOutput,
+)
+from apps.plugins.frontend.presets.defaults.modeling import (
+    ModelingLayerForm,
+    ModelingLayersTypes,
+)
+from apps.plugins.frontend.presets.defaults.cascades import (
+    CascadesBlockForm,
+    CascadesBlocksTypes,
+)
+from apps.plugins.frontend.presets.defaults.deploy import (
+    DeployTypeGroup,
+    DeployServerGroup,
+)
 
 
 Defaults = {
     "datasets": {
         "creation": {
-            "column_processing": DataSetsColumnProcessing,
-            "input": DataSetsInput,
-            "output": DataSetsOutput,
+            "column_processing": DatasetsColumnProcessing,
+            "input": DatasetsInput,
+            "output": DatasetsOutput,
         },
     },
     "modeling": {

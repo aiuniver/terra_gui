@@ -1,4 +1,4 @@
-from ...choices import (
+from apps.plugins.frontend.choices import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerNetChoice,
@@ -23,7 +23,7 @@ from ...choices import (
     ColumnProcessingInputTypeChoice,
     ColumnProcessingOutputTypeChoice,
 )
-from .layers import (
+from apps.plugins.frontend.presets.defaults.layers import (
     SourcesPaths,
     LayerImageDefaults,
     LayerTextDefaults,
@@ -32,7 +32,7 @@ from .layers import (
 )
 
 
-DataSetsColumnProcessing = [
+DatasetsColumnProcessing = [
     {
         "type": "text",
         "label": "Название обработчика",
@@ -705,7 +705,7 @@ DataSetsColumnProcessing = [
     },
 ]
 
-DataSetsInput = [
+DatasetsInput = [
     {
         "type": "text",
         "label": "Название входа",
@@ -854,7 +854,7 @@ DataSetsInput = [
     },
 ]
 
-DataSetsOutput = [
+DatasetsOutput = [
     {
         "type": "text",
         "name": "name",
