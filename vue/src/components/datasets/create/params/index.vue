@@ -114,7 +114,7 @@ export default {
     padding: 0 20px;
   }
   &__inner {
-    padding: 0 20px;
+    padding: 0 20px 150px;
     height: 100%;
   }
   &__body {

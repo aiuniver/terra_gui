@@ -77,7 +77,7 @@ import ser from '@/assets/js/myserialize';
 import { mapGetters } from 'vuex';
 import LoadSpiner from '@/components/forms/LoadSpiner';
 import SaveTrainings from '@/components/app/modal/SaveTrainings';
-import TAutoFieldTrainings from './TAutoFieldTrainings.vue';
+import TAutoFieldTrainings from '@/components/new/blocks/TAutoFieldTrainings.vue';
 
 export default {
   name: 'params-traning',

@@ -1,7 +1,7 @@
 <template>
   <div>
     <template v-for="(data, index) of input">
-      <t-auto-field
+      <TAutoField
         v-bind="data"
         :parameters="parameters"
         :key="'inputData.color' + index"
@@ -19,8 +19,12 @@
 
 <script>
 import { mapGetters } from 'vuex';
+import TAutoField from '@/components/new/blocks/TAutoField';
+
 export default {
-  components: {},
+  components: {
+    TAutoField
+  },
   computed: {
     ...mapGetters({
       getDefault: 'create/getDefault',
