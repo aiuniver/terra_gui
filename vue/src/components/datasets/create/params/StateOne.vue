@@ -1,16 +1,16 @@
 <template>
-  <div class="tabs-download">
-    <div class="tabs-download-list flex align-center">
+  <div class="state-one">
+    <div class="state-one-list flex align-center">
       <div
         v-for="{ text, tab } in items"
-        :class="['tabs-download-list__item', { 'tabs-download-list__item--active': isActive(tab) }]"
+        :class="['state-one-list__item', { 'state-one-list__item--active': isActive(tab) }]"
         :key="`tab_${tab}`"
         @click="onTabs(tab)"
       >
         {{ text }}
       </div>
     </div>
-    <div class="tabs-download-content mt-10">
+    <div class="state-one-content mt-10">
       <t-field icon="google" label="Выберите файл на Google диске" v-if="project.active === 0">
         <d-auto-complete
           v-model="project.google"
@@ -29,33 +29,22 @@
       <t-field label="Название датасета">
         <d-input-text v-model="project.name" />
       </t-field>
-      <t-field label="Версия">
+      <t-field label="Тип архитектуры">
         <d-input-text v-model="project.version" />
       </t-field>
       <div class="mb-2">
         <DTags v-model="project.tags" />
       </div>
-      <div>
-        <DSlider v-model="project.train" />
-      </div>
-      <t-field label="Сохранить последовательность">
-        <d-checkbox v-model="project.shuffle"></d-checkbox>
-      </t-field>
-      <t-field label="Использовать генератор">
-        <d-checkbox v-model="project.use_generator"></d-checkbox>
-      </t-field>
     </div>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
-import DSlider from '@/components/forms/DSlider';
 import DTags from '@/components/forms/DTags';
 export default {
   name: 'DatasetDownloadTabs',
   components: {
-    DSlider,
     DTags,
   },
   data: () => ({
@@ -96,7 +85,7 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/assets/scss/variables/default.scss';
-.tabs-download {
+.state-one {
   &-list {
     height: 50px;
     &__item {

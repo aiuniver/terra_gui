@@ -1,3 +1,5 @@
+import { getFiles } from "../const/create";
+
 export default {
   namespaced: true,
   state: () => ({
@@ -69,6 +71,7 @@ export default {
     },
   },
   getters: {
+    getFiles: ({ file_manager }) => getFiles(file_manager),
     getFilesSource: ({ filesSource }) => filesSource,
     getSelectSource: ({ selectSource }) => selectSource,
     getFileManager: ({ file_manager }) => file_manager,

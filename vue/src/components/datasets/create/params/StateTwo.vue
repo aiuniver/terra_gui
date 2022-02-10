@@ -1,26 +1,30 @@
 <template>
-  <div class="preview">
-    <div class="preview__cards">
-      <template v-for="(file, i) of mixinFiles">
-        <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
-        <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
-      </template>
+  <div class="state-two">
+    <div class="state-two__cards">
+      <Cards>
+        <template v-for="(file, i) of getFiles">
+          <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
+          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
+        </template>
+      </Cards>
     </div>
-    <div class="preview__title mb-2">Файлы</div>
-    <div class="preview__files">
+    <div class="state-two__title mb-2">Файлы</div>
+    <div class="state-two__files">
       <files-menu v-model="filesSource" />
     </div>
   </div>
 </template>
 
 <script>
-import CardFile from '@/components/datasets/paramsFull/components/card/CardFile.vue';
-import CardTable from '@/components/datasets/paramsFull/components/card/CardTable';
+import Cards from './card/Cards';
+import CardFile from './card/CardFile';
+import CardTable from './card/CardTable';
 import { mapGetters } from 'vuex';
 export default {
   components: {
     CardFile,
     CardTable,
+    Cards
   },
   props: {
     list: {
@@ -39,19 +43,8 @@ export default {
   computed: {
     ...mapGetters({
       getFileManager: 'createDataset/getFileManager',
+      getFiles: 'createDataset/getFiles',
     }),
-    mixinFiles() {
-      return this.getFileManager.map(e => {
-        return {
-          id: e.id,
-          cover: e.cover,
-          label: e.title,
-          type: e.type,
-          table: e.table,
-          value: e.path,
-        };
-      });
-    },
     filesSource: {
       set(value) {
         this.$store.dispatch('datasets/setFilesSource', value);
@@ -61,12 +54,15 @@ export default {
       },
     },
   },
+  methods: {
+    
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 @import '@/assets/scss/variables/default.scss';
-.preview {
+.state-two {
   &__title {
     display: flex;
     align-items: center;
@@ -79,8 +75,8 @@ export default {
     line-height: 140%;
   }
   &__cards {
-    display: flex;
-    padding: 30px 0;
+    position: relative;
+    height: 170px;
   }
   &__files {
     height: 300px;

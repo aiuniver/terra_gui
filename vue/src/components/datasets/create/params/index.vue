@@ -1,7 +1,7 @@
 <template>
   <div class="params">
     <div class="params__body">
-      <div class="params__header">Данные</div>
+      <div class="params__header mb-2">{{ getComp.title }}</div>
       <scrollbar>
         <div class="params__inner">
           <component :is="getComp.component" />

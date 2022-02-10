@@ -1,8 +1,8 @@
 <template>
   <div>
-    <template v-for="(data, index) of formsHandler">
-      <t-auto-field-handler v-bind="data" :parameters="{}" :key="index" :idKey="'key_' + index" root @change="change" />
-    </template>
+    <t-field>
+      <d-input-text />
+    </t-field>
   </div>
 </template>
 

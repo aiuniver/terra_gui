@@ -1,35 +1,51 @@
 <template>
-  <div class="dataset-helpers">
-    <div class="dataset-helpers-header">
-      <p>Для создания датасета необходимо:</p>
-    </div>
-    <div class="dataset-helpers-list mt-5 ml-5">
-      <ul class="dataset-helpers-list__menu">
-        <li class="flex align-center">
-          <span class="panel-text-gray">1. Выбрать входные чистые данные</span>
-          <d-svg name="sloy-start-add" />
-        </li>
-        <li class="flex align-center">
-          <span class="panel-text-gray">2. Задать обработчик</span>
-          <d-svg name="sloy-middle-add" />
-        </li>
-        <li class="flex align-center">
-          <span class="panel-text-gray">3. Соединить все в инпут вход один</span>
-          <d-svg name="sloy-end-add" />
-        </li>
-      </ul>
+  <div class="state-four">
+    <div>
+      <t-field label="Название версии">
+        <d-input-text v-model="project.version" />
+      </t-field>
+      <div>
+        <DSlider v-model="project.train" />
+      </div>
+      <t-field label="Перемешать">
+        <d-checkbox v-model="project.shuffle"></d-checkbox>
+      </t-field>
+      <t-field label="Использовать генератор">
+        <d-checkbox v-model="project.use_generator"></d-checkbox>
+      </t-field>
     </div>
   </div>
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex';
+import DSlider from '@/components/forms/DSlider';
 export default {
-  name: 'DatasetHelpers',
+  name: 'state-four',
+  components: {
+    DSlider,
+  },
+  data: () => ({
+  }),
+  computed: {
+    ...mapGetters('createDataset', ['getFilesSource', 'getProject']),
+    project: {
+      set(value) {
+        this.setProject(value);
+      },
+      get() {
+        return this.getProject;
+      },
+    },
+  },
+  methods: {
+    ...mapActions('createDataset', ['getDatasetSources', 'setSelectSource']),
+  },
 };
 </script>
 
 <style lang="scss" scoped>
-.dataset-helpers {
+.state-four {
   &-list {
     &__menu {
       max-width: 320px;
