@@ -19,17 +19,16 @@ from datetime import datetime
 from IPython.display import display
 
 # from terra_ai.data.training.extra import ArchitectureChoice
-# from terra_ai.utils import decamelize
+from terra_ai.utils import get_tempdir
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 # from terra_ai.datasets import arrays_create
 # from terra_ai.datasets.utils import PATH_TYPE_LIST
-from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData
 from terra_ai.datasets.arrays_create import CreateArray
 from terra_ai.datasets.utils import PATH_TYPE_LIST
-from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionData, VersionPathsData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, VersionData, DatasetVersionPathsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, VERSION_CONFIG
 from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroups
 
 TERRA_PATH = Path('G:\\Мой диск\\TerraAI\\datasets')
@@ -52,8 +51,8 @@ class PrepareDataset(object):
     def __init__(self, alias: str = ''):
 
         if alias.endswith('.' + DATASET_EXT):
-            self.dataset_paths_data = DatasetPathsData(basepath=Path(tempfile.mkdtemp()))
-            self.parent_dataset_paths_data = DatasetPathsData(
+            self.dataset_paths_data = DatasetCommonPathsData(basepath=get_tempdir())
+            self.parent_dataset_paths_data = DatasetCommonPathsData(
                 basepath=TERRA_PATH.joinpath(alias)
             )
             shutil.copy(self.parent_dataset_paths_data.basepath.joinpath(DATASET_CONFIG),
@@ -63,7 +62,7 @@ class PrepareDataset(object):
             self.dataset_data = DatasetData(**config)
             self.version_paths_data = None
         elif alias.endswith('.trds_terra'):
-            self.dataset_paths_data = DatasetPathsData(basepath=Path(tempfile.mkdtemp()))
+            self.dataset_paths_data = DatasetCommonPathsData(basepath=get_tempdir())
             pass
         elif alias.endswith('.keras'):
             for d_config in DatasetsGroups[0]['datasets']:
@@ -74,8 +73,8 @@ class PrepareDataset(object):
         # self.dataset_data: DatasetData = data
         # if self.dataset_data.group != DatasetGroupChoice.keras:
         #     self.version_paths_data = None
-        #     self.dataset_paths_data = DatasetPathsData(basepath=datasets_path)
-        #     self.parent_dataset_paths_data = DatasetPathsData(basepath=TERRA_PATH.joinpath('datasets'))
+        #     self.dataset_paths_data = DatasetCommonPathsData(basepath=datasets_path)
+        #     self.parent_dataset_paths_data = DatasetCommonPathsData(basepath=TERRA_PATH.joinpath('datasets'))
 
         # else:
         #     self.preprocessing = CreatePreprocessing()
@@ -174,7 +173,7 @@ class PrepareDataset(object):
         build_table = {'alias': [], 'Название': [], 'Входы': [], 'Выходы': []}
         if self.dataset_data.group == 'trds':
             build_table.update({'Размер': [], 'Генератор': [], 'Дата создания': []})
-            for d_path in Path(TERRA_PATH).joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + VERSION_EXT):
+            for d_path in Path(TERRA_PATH).joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + DATASET_VERSION_EXT):
                 with open(d_path.joinpath(VERSION_CONFIG), 'r') as config:
                     d_config = json.load(config)
                 build_table['alias'].append(d_config.get('alias') if d_config.get('alias') else '')
