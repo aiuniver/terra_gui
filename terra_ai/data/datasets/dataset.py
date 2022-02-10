@@ -40,7 +40,7 @@ from terra_ai.settings import (
     DATASET_EXT,
     DATASET_CONFIG,
     DATASETS_LOADED_DIR,
-    VERSION_EXT,
+    DATASETS_VERSION_EXT,
 )
 
 
@@ -96,7 +96,7 @@ class DatasetVersionList(UniqueListMixin):
                 basepath=Path(TERRA_PATH.datasets, f"{alias}.{DATASET_EXT}")
             )
             for item in dataset_path.versions.iterdir():
-                if item.suffix[1:] != VERSION_EXT or not item.is_dir():
+                if item.suffix[1:] != DATASET_VERSION_EXT or not item.is_dir():
                     continue
                 try:
                     with open(Path(item, "version.json")) as version_ref:
