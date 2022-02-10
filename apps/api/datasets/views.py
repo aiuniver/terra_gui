@@ -7,6 +7,7 @@ from terra_ai.data.datasets.creation import CreationData
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.datasets.serializers import (
+    VersionsSerializer,
     ChoiceSerializer,
     SourceLoadSerializer,
     SourceSegmentationClassesAutosearchSerializer,
@@ -17,19 +18,29 @@ from apps.api.datasets.serializers import (
 
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        datasets = self.terra_exchange("datasets_info")
         return BaseResponseSuccess(
-            self.terra_exchange("datasets_info", path=TERRA_PATH.datasets).native()
+            {
+                "datasets": datasets.native(),
+                "tags": datasets.tags,
+            }
+        )
+
+
+class VersionsAPIView(BaseAPIView):
+    @decorators.serialize_data(VersionsSerializer)
+    def post(self, request, serializer, **kwargs):
+        return BaseResponseSuccess(
+            self.terra_exchange(
+                "datasets_versions", **serializer.validated_data
+            ).native()
         )
 
 
 class ChoiceAPIView(BaseAPIView):
     @decorators.serialize_data(ChoiceSerializer)
     def post(self, request, serializer, **kwargs):
-        self.terra_exchange(
-            "dataset_choice",
-            custom_path=TERRA_PATH.datasets,
-            **serializer.validated_data,
-        )
+        self.terra_exchange("dataset_choice", **serializer.validated_data)
         return BaseResponseSuccess()
 
 

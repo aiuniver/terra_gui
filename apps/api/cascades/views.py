@@ -118,9 +118,7 @@ class PreviewAPIView(BaseAPIView):
 
 class DatasetsAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        datasets_list = self.terra_exchange(
-            "datasets_info", path=TERRA_PATH.datasets
-        ).native()
+        datasets_list = self.terra_exchange("datasets_info").native()
         response = []
         for datasets in datasets_list:
             for dataset in datasets.get("datasets", []):

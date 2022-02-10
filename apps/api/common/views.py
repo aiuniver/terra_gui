@@ -23,7 +23,7 @@ class ValidateDatasetModelAPIView(BaseAPIView):
         model = None
 
         if dataset_load:
-            datasets = self.terra_exchange("datasets_info", path=TERRA_PATH.datasets)
+            datasets = self.terra_exchange("datasets_info")
             dataset = datasets.get(dataset_load.get("group")).datasets.get(
                 dataset_load.get("alias")
             )

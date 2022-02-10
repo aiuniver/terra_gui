@@ -7,7 +7,7 @@ from django.conf import settings
 
 from terra_ai.settings import TERRA_PATH, PROJECT_PATH, DEPLOY_PATH
 from terra_ai.deploy.prepare_deploy import DeployCreator
-from terra_ai.data.datasets.dataset import DatasetInfo, DatasetLoadData
+from terra_ai.data.datasets.dataset import DatasetLoadData
 from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.deploy.extra import DeployTypePageChoice, DeployTypeDemoChoice
 
@@ -49,7 +49,8 @@ class GetProgressAPIView(BaseAPIView):
                 progress.message = ""
                 datasets = progress.data.get("datasets")
                 dataset_data = datasets[0].native() if len(datasets) else None
-                dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
+                # dataset = DatasetInfo(**dataset_data).dataset if dataset_data else None
+                dataset = None
                 request.project.deploy = DeployCreator().get_deploy(
                     dataset=dataset,
                     training_path=PROJECT_PATH.training,

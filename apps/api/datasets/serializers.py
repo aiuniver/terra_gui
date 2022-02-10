@@ -15,9 +15,15 @@ class MinMaxScalerSerializer(serializers.Serializer):
     max_scaler: serializers.IntegerField(default=1)
 
 
+class VersionsSerializer(serializers.Serializer):
+    group = serializers.CharField()
+    alias = serializers.CharField()
+
+
 class ChoiceSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+    version = serializers.CharField()
     reset_model = serializers.BooleanField(default=False)
 
 

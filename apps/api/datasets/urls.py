@@ -6,13 +6,14 @@ from . import views
 app_name = "datasets"
 
 urlpatterns = [
+    path("info/", views.InfoAPIView.as_view(), name="info"),
+    path("versions/", views.VersionsAPIView.as_view(), name="versions"),
     path(
         "choice/progress/",
         views.ChoiceProgressAPIView.as_view(),
         name="choice_progress",
     ),
     path("choice/", views.ChoiceAPIView.as_view(), name="choice"),
-    path("info/", views.InfoAPIView.as_view(), name="info"),
     path(
         "create/progress/",
         views.CreateProgressAPIView.as_view(),

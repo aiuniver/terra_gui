@@ -12,7 +12,7 @@ from terra_ai.data.modeling.layers.extra import ActivationChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 
 
-class Tags(dict, Enum):
+class TagsAlias(dict, Enum):
     image = {"alias": "image", "name": "Image"}
     video = {"alias": "video", "name": "Video"}
     classification = {"alias": "classification", "name": "Classification"}
@@ -35,6 +35,31 @@ class Tags(dict, Enum):
     speech_to_text = {"alias": "speech_to_text", "name": "Speech-to-Text"}
     gan = {"alias": "gan", "name": "GAN"}
     cgan = {"alias": "cgan", "name": "CGAN"}
+
+
+class Tags(str, Enum):
+    image = "Image"
+    video = "Video"
+    classification = "Classification"
+    tensorflow_keras = "Tensorflow.keras"
+    text = "Text"
+    english = "English"
+    russian = "Russian"
+    regression = "Regression"
+    timeseries = "Timeseries"
+    timeseriestrend = "TimeseriesTrend"
+    terra_ai = "Terra AI"
+    object_detection = "Object detection"
+    segmentation = "Segmentation"
+    text_segmentation = "Text Segmentation"
+    audio = "Audio"
+    smart_home = "Smart home"
+    trading = "Trading"
+    tracker = "Tracker"
+    text_to_speech = "Text-to-Speech"
+    speech_to_text = "Speech-to-Text"
+    gan = "GAN"
+    cgan = "CGAN"
 
 
 OutputLayersDefaults = {
@@ -227,6 +252,108 @@ KerasInstructions = {
         },
     },
 }
+
+
+DatasetCommonGroup = [
+    {
+        "alias": "keras",
+        "name": "Keras",
+        "datasets": [
+            {
+                "alias": "mnist",
+                "name": "Mnist",
+                "architecture": ArchitectureChoice.ImageClassification,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+                "versions": [
+                    {
+                        "alias": "default",
+                        "name": "Default",
+                    },
+                ],
+            },
+            {
+                "alias": "fashion_mnist",
+                "name": "Fashion mnist",
+                "architecture": ArchitectureChoice.ImageClassification,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+                "versions": [
+                    {
+                        "alias": "default",
+                        "name": "Default",
+                    },
+                ],
+            },
+            {
+                "alias": "cifar10",
+                "name": "Cifar 10",
+                "architecture": ArchitectureChoice.ImageClassification,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+                "versions": [
+                    {
+                        "alias": "default",
+                        "name": "Default",
+                    },
+                ],
+            },
+            {
+                "alias": "cifar100",
+                "name": "Cifar 100",
+                "architecture": ArchitectureChoice.ImageClassification,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+                "versions": [
+                    {
+                        "alias": "default",
+                        "name": "Default",
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        "alias": "terra",
+        "name": "Terra",
+        "datasets": [
+            {
+                "alias": "cars",
+                "name": "Автомобили",
+                "architecture": ArchitectureChoice.ImageClassification,
+                "tags": [
+                    Tags.image,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+                "versions": [
+                    {
+                        "alias": "default",
+                        "name": "Default",
+                    },
+                ],
+            }
+        ],
+    },
+    {
+        "alias": "custom",
+        "name": "Пользовательские",
+        "datasets": [],
+    },
+]
+
 
 VersionsGroups = [
     {
@@ -1326,9 +1453,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.tensorflow_keras.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
@@ -1408,9 +1535,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.tensorflow_keras.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
@@ -1490,9 +1617,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.tensorflow_keras.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
@@ -1752,9 +1879,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.tensorflow_keras.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.tensorflow_keras.value,
                 ],
                 "use_generator": False,
             },
@@ -1769,8 +1896,8 @@ DatasetsGroups = [
             #     "name": "Акции сбербанка",
             #     "group": DatasetGroupChoice.terra.value,
             #     "tags": [
-            #         Tags.timeseries.value,
-            #         Tags.terra_ai.value,
+            #         TagsAlias.timeseries.value,
+            #         TagsAlias.terra_ai.value,
             #     ],
             # },
             {
@@ -1802,9 +1929,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -1898,9 +2025,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -1933,9 +2060,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -1968,9 +2095,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2003,9 +2130,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2038,9 +2165,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2073,9 +2200,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2119,9 +2246,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.video.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.video.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2153,9 +2280,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2194,9 +2321,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2236,9 +2363,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2332,9 +2459,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2428,9 +2555,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2515,9 +2642,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2590,9 +2717,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2644,9 +2771,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2740,9 +2867,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2794,9 +2921,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2850,10 +2977,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2899,10 +3026,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2934,10 +3061,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -2991,10 +3118,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3040,10 +3167,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3075,10 +3202,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3132,10 +3259,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3181,10 +3308,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3216,10 +3343,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3258,10 +3385,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.text_segmentation.value,
-                    Tags.russian.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.text_segmentation.value,
+                    TagsAlias.russian.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3333,9 +3460,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.audio.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.audio.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3431,9 +3558,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.audio.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.audio.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -3689,9 +3816,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.audio.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.audio.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4007,10 +4134,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.classification.value,
-                    Tags.text.value,
-                    Tags.regression.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.text.value,
+                    TagsAlias.regression.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4082,10 +4209,10 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.classification.value,
-                    Tags.text.value,
-                    Tags.regression.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.text.value,
+                    TagsAlias.regression.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4308,9 +4435,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.classification.value,
-                    Tags.regression.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.regression.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4340,9 +4467,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4681,9 +4808,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4713,8 +4840,8 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.timeseries.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.timeseries.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4744,8 +4871,8 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.timeseriestrend.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.timeseriestrend.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4775,8 +4902,8 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.timeseries.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.timeseries.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4806,8 +4933,8 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.timeseries.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.timeseries.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4840,9 +4967,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.video.value,
-                    Tags.tracker.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.video.value,
+                    TagsAlias.tracker.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4875,9 +5002,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.video.value,
-                    Tags.tracker.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.video.value,
+                    TagsAlias.tracker.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4910,9 +5037,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.speech_to_text.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.speech_to_text.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4959,9 +5086,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.text.value,
-                    Tags.text_to_speech.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.text.value,
+                    TagsAlias.text_to_speech.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -4994,9 +5121,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.video.value,
-                    Tags.tracker.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.video.value,
+                    TagsAlias.tracker.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5029,9 +5156,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5064,9 +5191,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5099,9 +5226,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.classification.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.classification.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5135,9 +5262,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5171,9 +5298,9 @@ DatasetsGroups = [
                     }
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.segmentation.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.segmentation.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5237,9 +5364,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5291,9 +5418,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5345,9 +5472,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5399,9 +5526,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.object_detection.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.object_detection.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5453,9 +5580,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.gan.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.gan.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5507,9 +5634,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.gan.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.gan.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
             {
@@ -5603,9 +5730,9 @@ DatasetsGroups = [
                     },
                 },
                 "tags": [
-                    Tags.image.value,
-                    Tags.cgan.value,
-                    Tags.terra_ai.value,
+                    TagsAlias.image.value,
+                    TagsAlias.cgan.value,
+                    TagsAlias.terra_ai.value,
                 ],
             },
         ],

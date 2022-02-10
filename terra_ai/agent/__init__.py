@@ -18,11 +18,10 @@ from terra_ai.agent.exceptions import (
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.projects.project import ProjectsInfoData, ProjectsList
 from terra_ai.data.datasets.dataset import (
-    DatasetsGroupsList,
+    DatasetVersionList,
+    DatasetCommonGroupList,
     DatasetData,
     DatasetLoadData,
-    CustomDatasetConfigData,
-    DatasetInfo,
 )
 from terra_ai.data.datasets.creation import (
     CreationData,
@@ -45,7 +44,7 @@ from terra_ai.data.cascades.cascade import (
 )
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.deploy.tasks import DeployPageData
-from terra_ai.data.presets.datasets import DatasetsGroups
+from terra_ai.data.presets.datasets import DatasetCommonGroup
 from terra_ai.data.presets.models import ModelsGroups
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
@@ -123,31 +122,27 @@ class Exchange:
         """
         project_load(Path(dataset_path), Path(source), Path(target))
 
-    def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
+    def _call_datasets_info(self) -> DatasetCommonGroupList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
-        info = DatasetsGroupsList(DatasetsGroups)
-        for dirname in os.listdir(str(path.absolute())):
-            if dirname.endswith(DATASET_EXT):
-                try:
-                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                    info.get(DatasetGroupChoice.custom.name).datasets.append(
-                        DatasetData(**dataset_config.config)
-                    )
-                except Exception:
-                    pass
-        return info
+        return DatasetCommonGroupList()
+
+    def _call_datasets_versions(self, group: str, alias: str) -> DatasetVersionList:
+        """
+        Получение списка версий датасетов
+        """
+        return DatasetVersionList(group=group, alias=alias)
 
     def _call_dataset_choice(
-        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+        self, group: str, alias: str, version: str, reset_model: bool = False
     ):
         """
         Выбор датасета
         """
         dataset_choice(
             "dataset_choice",
-            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            DatasetLoadData(group=group, alias=alias, version=version),
             reset_model=reset_model,
         )
 
@@ -397,10 +392,10 @@ class Exchange:
                 continue
             sources.update(
                 {
-                    block.id: DatasetInfo(
-                        alias=datasets_source[0].alias,
-                        group=datasets_source[0].group,
-                    ).dataset.sources
+                    # block.id: DatasetInfo(
+                    #     alias=datasets_source[0].alias,
+                    #     group=datasets_source[0].group,
+                    # ).dataset.sources
                 }
             )
         self(
