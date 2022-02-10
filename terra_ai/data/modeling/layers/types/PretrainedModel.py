@@ -2,16 +2,14 @@
 ## Тип слоя `PretrainedModel`
 """
 
-from pydantic.types import PositiveInt
-
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layers.extra import (
     LayerConfigData,
     LayerValidationMethodChoice,
     ModuleChoice,
     ModuleTypeChoice,
-    YOLOModeChoice,
 )
+
 
 LayerConfig = LayerConfigData(
     **{

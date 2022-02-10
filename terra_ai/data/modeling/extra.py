@@ -51,9 +51,9 @@ class LayerTypeChoice(str, Enum):
     Conv1DTranspose = "Conv1DTranspose"
     Conv2DTranspose = "Conv2DTranspose"
     Conv3DTranspose = "Conv3DTranspose"
-    ConvLSTM1D = "ConvLSTM1D",
-    ConvLSTM2D = "ConvLSTM2D",
-    ConvLSTM3D = "ConvLSTM3D",
+    ConvLSTM1D = "ConvLSTM1D"
+    ConvLSTM2D = "ConvLSTM2D"
+    ConvLSTM3D = "ConvLSTM3D"
     SeparableConv1D = "SeparableConv1D"
     SeparableConv2D = "SeparableConv2D"
     DepthwiseConv2D = "DepthwiseConv2D"
@@ -135,6 +135,7 @@ class LayerTypeChoice(str, Enum):
     UNETBlock1D = "UNETBlock1D"
     UNETBlock2D = "UNETBlock2D"
     UNETBlock3D = "UNETBlock3D"
+    PretrainedModel = "PretrainedModel"
     PretrainedYOLO = "PretrainedYOLO"
     ConditionalMergeLayer = "ConditionalMergeLayer"
     ResnetBlock2D = "ResnetBlock2D"

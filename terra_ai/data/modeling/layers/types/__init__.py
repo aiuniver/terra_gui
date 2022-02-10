@@ -153,5 +153,5 @@ from . import (
     ResnetBlock2D,
     RGBNormalization,
     VAEDiscriminatorBlock,
-    PretrainedModel
+    PretrainedModel,
 )
