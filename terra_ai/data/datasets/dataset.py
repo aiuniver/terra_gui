@@ -376,6 +376,11 @@ class VersionData(AliasMixinData):
 #         self._path = Path(value)
 
 
+class DatasetInfo(BaseMixinData):
+    alias: str
+    group: DatasetGroupChoice
+
+
 # class DatasetInfo(BaseMixinData):
 #     alias: str
 #     group: DatasetGroupChoice

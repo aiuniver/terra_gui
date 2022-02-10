@@ -12,12 +12,10 @@ from .. import progress, settings
 from ..data.datasets.creation import SourceData
 from ..data.datasets.dataset import (
     DatasetLoadData,
-    DatasetsGroupsList,
-    CustomDatasetConfigData,
+    DatasetCommonGroupList,
     DatasetInfo,
 )
 from ..data.datasets.extra import DatasetGroupChoice
-from ..data.presets.datasets import DatasetsGroups
 from ..exceptions.datasets import (
     DatasetSourceLoadUndefinedMethodException,
     DatasetChoiceUndefinedMethodException,
@@ -107,11 +105,7 @@ def _choice_from_keras(
     reset_model: bool,
     **kwargs,
 ):
-    dataset = (
-        DatasetsGroupsList(DatasetsGroups)
-        .get(DatasetGroupChoice.keras)
-        .datasets.get(name)
-    )
+    dataset = DatasetCommonGroupList().get(DatasetGroupChoice.keras).datasets.get(name)
     if dataset:
         shutil.rmtree(destination, ignore_errors=True)
         os.makedirs(destination, exist_ok=True)
@@ -153,7 +147,6 @@ def _choice_from_terra(
             zipfile_path,
         )
         os.remove(zipfile_path)
-        data = CustomDatasetConfigData(path=zip_destination)
         zip_filepath = Path(zip_destination, "dataset.zip")
         progress_utils.unpack(
             progress_name,
@@ -202,11 +195,8 @@ def _choice_from_custom(
     **kwargs,
 ):
     try:
-        data = CustomDatasetConfigData(
-            path=Path(source, f"{name}.{settings.DATASET_EXT}")
-        )
         zip_destination = get_tempdir(False)
-        shutil.copytree(data.path, zip_destination)
+        shutil.copytree(Path(source, f"{name}.{settings.DATASET_EXT}"), zip_destination)
         zip_filepath = Path(zip_destination, "dataset.zip")
         progress_utils.unpack(
             progress_name,

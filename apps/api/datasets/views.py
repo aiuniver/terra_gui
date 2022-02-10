@@ -22,7 +22,15 @@ class InfoAPIView(BaseAPIView):
         return BaseResponseSuccess(
             {
                 "datasets": datasets.native(),
-                "tags": datasets.tags,
+                "groups": list(
+                    map(lambda item: {"alias": item.alias, "name": item.name}, datasets)
+                ),
+                "tags": [
+                    {
+                        "name": "Tags",
+                        "items": datasets.tags,
+                    }
+                ],
             }
         )
 
