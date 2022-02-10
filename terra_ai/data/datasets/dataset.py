@@ -40,7 +40,7 @@ from terra_ai.settings import (
     DATASET_EXT,
     DATASET_CONFIG,
     DATASETS_LOADED_DIR,
-    DATASETS_VERSION_EXT,
+    DATASET_VERSION_EXT,
 )
 
 

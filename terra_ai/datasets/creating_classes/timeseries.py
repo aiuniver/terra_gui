@@ -1,0 +1,197 @@
+from terra_ai import progress
+from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetInputsData
+from terra_ai.datasets.creating_classes.base import BaseClass, PreprocessingNumericClass, multithreading_array
+from terra_ai.datasets.data import DataType
+from terra_ai.settings import VERSION_PROGRESS_NAME
+from math import ceil
+import numpy as np
+import h5py
+import concurrent.futures
+
+from terra_ai.utils import camelize
+
+
+def postprocess_timeseries(full_array):
+    try:
+        new_array = np.array(full_array).transpose()
+    except:
+        new_array = []
+        array = []
+        for el in full_array:
+            if type(el[0]) == np.ndarray:
+                tmp = []
+                for j in range(len(el)):
+                    tmp.append(list(el[j]))
+                array.append(tmp)
+            else:
+                array.append(el.tolist())
+        array = np.array(array).transpose().tolist()
+        for i in array:
+            tmp = []
+            for j in i:
+                if type(j) == list:
+                    tmp.extend(j)
+                else:
+                    tmp.append(j)
+            new_array.append(tmp)
+        new_array = np.array(new_array)
+    return new_array
+
+
+class TimeseriesClass(PreprocessingNumericClass, BaseClass):
+
+    @staticmethod
+    def preprocess_version_data(**kwargs):
+
+        version_data = kwargs['version_data']
+
+        worker_keys = list(version_data.processing.keys())
+        for worker_name in worker_keys:
+            if version_data.processing[worker_name].type == 'Timeseries':
+                if version_data.processing[worker_name].parameters.trend:
+                    version_data.processing[worker_name].parameters.depth = 1
+                # В скейлер перекидываем инфу о length depth step
+                for w_name, w_params in version_data.processing.items():
+                    if version_data.processing[w_name].type in ['Classification', 'Scaler', 'Raw']:
+                        version_data.processing[w_name].parameters.length = \
+                            version_data.processing[worker_name].parameters.length
+                        version_data.processing[w_name].parameters.depth = \
+                            version_data.processing[worker_name].parameters.depth
+                        version_data.processing[w_name].parameters.step = \
+                            version_data.processing[worker_name].parameters.step
+
+        return version_data
+
+    @staticmethod
+    def create_input_parameters(input_instr, version_data, preprocessing, version_paths_data):
+
+        inputs = {}
+        columns = {}
+        for key in input_instr.keys():
+            columns[key] = {}
+            put_array = []
+            parameters_to_pass = {}
+            for col_name, data in input_instr[key].items():
+                data_to_pass = data.instructions[:data.parameters['length']]
+                parameters_to_pass = data.parameters.copy()
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    parameters_to_pass.update([('preprocess',
+                                                preprocessing.preprocessing.get(key).get(col_name))])
+                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                array = postprocess_timeseries(array)
+                put_array.append(array)
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.shape,
+                                  'name': version_data.inputs.get(key).name,
+                                  'task': camelize(parameters_to_pass.get('put_type')),
+                                  'classes_names': parameters_to_pass.get('classes_names'),
+                                  'classes_colors': None,
+                                  'num_classes': parameters_to_pass.get('num_classes'),
+                                  'encoding': parameters_to_pass.get('encoding', 'none')}
+                current_column = DatasetInputsData(**col_parameters)
+                columns[key].update({col_name: current_column.native()})
+            put_array = np.concatenate(put_array, axis=1)
+            out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': version_data.inputs.get(key).name,
+                              'task': camelize(parameters_to_pass.get('put_type')),
+                              'classes_names': parameters_to_pass.get('classes_names'),
+                              'classes_colors': None,
+                              'num_classes': parameters_to_pass.get('num_classes'),
+                              'encoding': parameters_to_pass.get('encoding', 'none')}
+            current_out = DatasetInputsData(**out_parameters)
+            inputs[key] = current_out.native()
+
+        return inputs, columns
+
+    @staticmethod
+    def create_output_parameters(output_instr, version_data, preprocessing, version_paths_data):
+
+        outputs = {}
+        columns = {}
+        for key in output_instr.keys():
+            columns[key] = {}
+            put_array = []
+            parameters_to_pass = {}
+            for col_name, data in output_instr[key].items():
+                data_to_pass = data.instructions[:data.parameters['length']]
+                parameters_to_pass = data.parameters.copy()
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    parameters_to_pass.update([('preprocess',
+                                                preprocessing.preprocessing.get(key).get(col_name))])
+                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                array = postprocess_timeseries(array)
+                put_array.append(array)
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.shape,
+                                  'name': version_data.outputs.get(key).name,
+                                  'task': camelize(parameters_to_pass.get('put_type')),
+                                  'classes_names': None,
+                                  'classes_colors': None,
+                                  'num_classes': parameters_to_pass.get('num_classes'),
+                                  'encoding': parameters_to_pass.get('encoding', 'none')}
+                current_column = DatasetOutputsData(**col_parameters)
+                columns[key].update({col_name: current_column.native()})
+            put_array = np.concatenate(put_array, axis=1)
+            out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': version_data.outputs.get(key).name,
+                              'task': 'Timeseries',
+                              'classes_names': None,
+                              'classes_colors': None,
+                              'num_classes': parameters_to_pass.get('num_classes'),
+                              'encoding': parameters_to_pass.get('encoding', 'none')}
+            current_out = DatasetOutputsData(**out_parameters)
+            outputs[key] = current_out.native()
+
+        return outputs, columns
+
+    @staticmethod
+    def create_put_arrays(put_data, version_paths_data, dataframe, preprocessing):
+
+        for split in ['train', 'val']:
+            open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
+            hdf = h5py.File(version_paths_data.arrays.joinpath('dataset.h5'), open_mode)
+            if split not in list(hdf.keys()):
+                hdf.create_group(split)
+            for key in put_data.keys():
+                data_to_pass = []
+                dict_to_pass = []
+                for col_name, data in put_data[key].items():
+                    depth = data.parameters['depth'] if 'depth' in data.parameters.keys() and \
+                                                        data.parameters['depth'] else 0
+                    length = data.parameters['length'] if depth else 0
+                    step = data.parameters['step'] if depth else 1
+                for i in range(0, len(dataframe[split]) - length - depth, step):
+                    tmp_data = []
+                    tmp_parameter_data = []
+                    for col_name, data in put_data[key].items():
+                        parameters_to_pass = data.parameters.copy()
+                        if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                            parameters_to_pass.update([('preprocess',
+                                                        preprocessing.preprocessing.get(key).get(col_name))])
+                        tmp_data.append(dataframe[split].loc[i:i + length - 1, col_name])
+                        tmp_parameter_data.append(parameters_to_pass)
+                    data_to_pass.append(tmp_data)
+                    dict_to_pass.append(tmp_parameter_data)
+
+                progress.pool(
+                    VERSION_PROGRESS_NAME,
+                    message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
+                    percent=0
+                )
+
+                hdf[split].create_group(f'id_{key}')
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
+                    for i, result in enumerate(results):
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
+                        array = postprocess_timeseries(result)
+                        hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
+                        del result
+            hdf.close()

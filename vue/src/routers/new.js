@@ -133,5 +133,6 @@ const router = [
     },
 
 ]
-const newRouter = (process.env.NODE_ENV === 'development' ) ? router  : []
+// const newRouter = (process.env.NODE_ENV === 'development' ) ? router  : []
+const newRouter = router
 export { newRouter }

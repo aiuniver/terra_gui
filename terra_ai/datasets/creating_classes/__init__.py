@@ -11,7 +11,7 @@ from . import \
     video_tracker, \
     dataframe_classification, \
     dataframe_regression, \
-    dataframe_timeseries, \
+    timeseries, \
     text_2_speech, \
     speech_2_text, \
     yolo_v4

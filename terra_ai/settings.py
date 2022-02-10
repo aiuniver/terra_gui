@@ -63,13 +63,13 @@ PROJECT_EXT = "project"
 DATASET_EXT = (
     "trds_NEW"  # Окончание _NEW исключительно на момент разработки новой версии.
 )
+DATASET_VERSION_EXT = "vrs"
 DATASET_CONFIG = "config.json"
 DATASET_ANNOTATION = "labelmap.txt"
 DATASETS_SOURCE_DIR = Path(TMP_DIR, "datasets", "sources")
 DATASETS_LOADED_DIR = Path(TMP_DIR, "datasets", "loaded")
 DATASET_PROGRESS_NAME = "create_dataset"
 VERSION_PROGRESS_NAME = "create_version"
-VERSION_EXT = "vrs"
 VERSION_CONFIG = "version.json"
 
 # Modeling

@@ -52,8 +52,8 @@ class DatasetTaskTypeChoice(str, Enum):
     AudioSegmentation = 'AudioSegmentation'  # * вход, 1 выход
     DataframeClassification = 'DataframeClassification'  # *вход(ов), * выход(ов)
     DataframeRegression = 'DataframeRegression'  # *вход(ов), * выход(ов)
-    DataframeTimeseries = 'DataframeTimeseries'  # 1 вход, 1 выход
-    DataframeTimeseriesTrend = 'DataframeTimeseriesTrend'  # 1 вход, 1 выход
+    Timeseries = 'Timeseries'  # 1 вход, 1 выход
+    TimeseriesTrend = 'TimeseriesTrend'  # 1 вход, 1 выход
     YoloV3 = 'YoloV3'  # 1 вход, 1(3+3) выход(ов)
     YoloV4 = 'YoloV4'  # 1 вход, 1(3+3) выход(ов)
     Text2Speech = 'Text2Speech'

@@ -1,13 +1,13 @@
-from terra_ai.utils import decamelize, camelize
+from terra_ai.utils import decamelize, camelize, get_tempdir
 from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets import creating_classes
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationVersionData
-from terra_ai.data.datasets.dataset import DatasetData, DatasetPathsData, VersionPathsData, VersionData
+from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, DatasetVersionPathsData, VersionData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, VERSION_EXT, VERSION_CONFIG, \
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, VERSION_CONFIG, \
     DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME
 from terra_ai import progress
 
@@ -16,7 +16,6 @@ import random
 import numpy as np
 import pandas as pd
 import json
-import tempfile
 import shutil
 import zipfile
 from distutils.dir_util import copy_tree
@@ -46,9 +45,9 @@ class CreateDataset(object):
                             message='Начало',
                             finished=False)
         logger.info(f'Начало формирования датасета {creation_data.name}.')
-        self.temp_directory: Path = Path(tempfile.mkdtemp())
+        self.temp_directory: Path = get_tempdir()
         os.makedirs(self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])), exist_ok=True)
-        self.dataset_paths_data: DatasetPathsData = DatasetPathsData(
+        self.dataset_paths_data: DatasetCommonPathsData = DatasetCommonPathsData(
             basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
         progress.pool(name=DATASET_PROGRESS_NAME, message='Копирование файлов', percent=10)
         copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
@@ -107,10 +106,10 @@ class CreateVersion(object):
         self.tags = {}
 
         # Подготовка путей и файлов
-        self.temp_directory: Path = Path(tempfile.mkdtemp())
-        self.sources_temp_directory: Path = Path(tempfile.mkdtemp())
-        self.dataset_paths_data = DatasetPathsData(basepath=self.temp_directory)
-        self.parent_dataset_paths_data = DatasetPathsData(
+        self.temp_directory: Path = get_tempdir()
+        self.sources_temp_directory: Path = get_tempdir()
+        self.dataset_paths_data = DatasetCommonPathsData(basepath=self.temp_directory)
+        self.parent_dataset_paths_data = DatasetCommonPathsData(
             basepath=version_data.datasets_path.joinpath('.'.join([version_data.parent_alias, DATASET_EXT]))
         )
         progress.pool(name=VERSION_PROGRESS_NAME, message='Копирование исходного архива', percent=0)
@@ -121,9 +120,9 @@ class CreateVersion(object):
         progress.pool(name=VERSION_PROGRESS_NAME, message='Распаковка исходного архива', percent=0)
         with zipfile.ZipFile(self.dataset_paths_data.basepath.joinpath('sources.zip'), 'r') as z_file:
             z_file.extractall(self.sources_temp_directory)
-        current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
+        current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
         os.makedirs(current_version)
-        self.version_paths_data = VersionPathsData(basepath=current_version)
+        self.version_paths_data = DatasetVersionPathsData(basepath=current_version)
         with open(self.parent_dataset_paths_data.basepath.joinpath('config.json'), 'r') as cfg:
             parent_architecture = json.load(cfg)['architecture']
 
@@ -200,7 +199,7 @@ class CreateVersion(object):
         progress.pool(name=VERSION_PROGRESS_NAME, message='Сохранение', percent=100)
         self.write_instructions_to_files()
         zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
-        version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, VERSION_EXT]))
+        version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, DATASET_VERSION_EXT]))
         if version_dir.is_dir():
             shutil.rmtree(version_dir)
         os.makedirs(version_dir)
@@ -669,6 +668,6 @@ class CreateVersion(object):
                 'columns': self.columns
                 }
 
-        with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{VERSION_EXT}')
+        with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
                       .joinpath(VERSION_CONFIG), 'w') as fp:
             json.dump(VersionData(**data).native(), fp)
