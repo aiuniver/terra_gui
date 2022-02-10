@@ -111,7 +111,7 @@ class DatasetLayerData(BaseMixinData):
     encoding: LayerEncodingChoice = LayerEncodingChoice.none
 
 
-class DatasetPathsData(BaseMixinData):
+class DatasetCommonPathsData(BaseMixinData):
     basepath: DirectoryPath
 
     versions: Optional[DirectoryPath]
@@ -128,7 +128,7 @@ class DatasetPathsData(BaseMixinData):
         return path
 
 
-class VersionPathsData(BaseMixinData):
+class DatasetVersionPathsData(BaseMixinData):
     basepath: DirectoryPath
 
     arrays: Optional[DirectoryPath]

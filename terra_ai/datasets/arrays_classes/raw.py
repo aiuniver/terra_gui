@@ -10,7 +10,10 @@ from .base import Array
 class RawArray(Array):
 
     def prepare(self, sources, dataset_folder=None, **options):
-        pass
+        instructions = {'instructions': sources,
+                        'parameters': options}
+
+        return instructions
 
     def create(self, source: Any = None, **options):
         if isinstance(source, str):

@@ -9,7 +9,7 @@ from math import ceil
 from pathlib import Path
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import VersionPathsData, DatasetOutputsData, DatasetInputsData
+from terra_ai.data.datasets.dataset import DatasetVersionPathsData, DatasetOutputsData, DatasetInputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice, \
     LayerScalerImageChoice
 from terra_ai.datasets import arrays_classes
@@ -80,14 +80,8 @@ class BaseClass(object):
                 for name, proc in val.items():
                     collected_data = []
                     parameters = processing[str(proc[0])].native()  # Аккуратно с [0]
-                    if Path(sources_temp_directory).joinpath(name.split(':')[0]).is_dir():
-                        for folder_name in name.split(':'):
-                            current_path = Path(sources_temp_directory).joinpath(folder_name)
-                            for direct, folder, files_name in os.walk(current_path):
-                                if files_name:
-                                    for file_name in sorted(files_name):
-                                        collected_data.append(os.path.join(current_path, file_name))
-                    elif Path(sources_temp_directory).joinpath(path.split(':')[0]).is_file():
+
+                    if Path(sources_temp_directory).joinpath(path.split(':')[0]).is_file():
                         current_path = Path(sources_temp_directory).joinpath(path.split(':')[0])
                         _, enc = autodetect_encoding(str(current_path), True)
                         collected_data = pd.read_csv(current_path, sep=None, usecols=[name],
@@ -95,6 +89,14 @@ class BaseClass(object):
                         if decamelize(parameters['type']) in PATH_TYPE_LIST:
                             collected_data = [str(Path(sources_temp_directory).joinpath(Path(x)))
                                               for x in collected_data]
+                    elif Path(sources_temp_directory).joinpath(name.split(':')[0]).is_dir():
+                        for folder_name in name.split(':'):
+                            current_path = Path(sources_temp_directory).joinpath(folder_name)
+                            for direct, folder, files_name in os.walk(current_path):
+                                if files_name:
+                                    for file_name in sorted(files_name):
+                                        collected_data.append(os.path.join(current_path, file_name))
+
                     data_to_pass[idx].update({f'{idx}_{name}': collected_data})
                     parameters_to_pass[idx].update({f'{idx}_{name}': parameters})
 
@@ -130,12 +132,9 @@ class BaseClass(object):
                         result_params = result['parameters']
                         if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                             classes_names += result['parameters'].get('classes_names')
-                        # classes_names += result['parameters']['classes_names']
-                        # if put_id == put_data[0].id and parameters['type'] != LayerOutputTypeChoice.Classification:
-                        # self.y_cls += [os.path.basename(os.path.dirname(data_to_pass[i])) for _ in
-                        # range(len(result['instructions']))]
 
                 column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
+                # '\/:*?"<>|'
                 instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
                 if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                     instructions_data.parameters.update({'classes_names': list(set(classes_names))})
