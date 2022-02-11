@@ -121,8 +121,8 @@ def _choice_from_keras(
                 break
         if not version_config:
             raise Exception("Dataset not found")
-        shutil.rmtree(destination, ignore_errors=True)
-        os.makedirs(destination, exist_ok=True)
+        shutil.rmtree(str(destination), ignore_errors=True)
+        os.makedirs(str(destination), exist_ok=True)
         dataset_config = dataset_config.native()
         version_alias = version_config.pop("alias", "")
         version_name = version_config.pop("name", "")
@@ -137,9 +137,9 @@ def _choice_from_keras(
             }
         )
         dataset = DatasetData(**dataset_config)
-        dataset_config_path = Path(destination, settings.DATASET_CONFIG)
-        with open(dataset_config_path, "w") as dataset_config_path_ref:
-            json.dump(dataset.native(), dataset_config_path_ref)
+        # dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        # with open(dataset_config_path, "w") as dataset_config_path_ref:
+        #     json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
             progress_name,
             percent=100,
@@ -147,7 +147,7 @@ def _choice_from_keras(
             finished=True,
         )
     except Exception as error:
-        shutil.rmtree(destination, ignore_errors=True)
+        shutil.rmtree(str(destination), ignore_errors=True)
         progress.pool(progress_name, finished=True, error=error)
 
 
@@ -173,11 +173,13 @@ def _choice_from_terra(
             % (DatasetGroupChoice.terra.value, name, version),
             zipfile_path,
         )
-        os.remove(zipfile_path)
+        os.remove(str(zipfile_path))
         dataset_path = DatasetCommonPathsData(basepath=source)
         shutil.copytree(
-            Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}"),
-            zip_destination,
+            str(
+                Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}")
+            ),
+            str(zip_destination),
         )
         zip_filepath = Path(zip_destination, "version.zip")
         progress_utils.unpack(
@@ -187,17 +189,17 @@ def _choice_from_terra(
             zip_filepath,
             zip_destination,
         )
-        os.remove(zip_filepath)
-        shutil.rmtree(destination, ignore_errors=True)
-        os.makedirs(destination, exist_ok=True)
-        os.rename(zip_destination, destination)
+        os.remove(str(zip_filepath))
+        shutil.rmtree(str(destination), ignore_errors=True)
+        os.makedirs(str(destination), exist_ok=True)
+        os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
         version_path = Path(destination, settings.VERSION_CONFIG)
         with open(version_path) as version_ref:
             version_config = json.load(version_ref)
-        os.remove(version_path)
-        shutil.rmtree(source, ignore_errors=True)
+        os.remove(str(version_path))
+        shutil.rmtree(str(source), ignore_errors=True)
         version_alias = version_config.pop("alias", "")
         version_name = version_config.pop("name", "")
         version_config.update(
@@ -222,9 +224,9 @@ def _choice_from_terra(
         )
     except Exception as error:
         if source:
-            shutil.rmtree(source, ignore_errors=True)
-        shutil.rmtree(zip_destination, ignore_errors=True)
-        shutil.rmtree(destination, ignore_errors=True)
+            shutil.rmtree(str(source), ignore_errors=True)
+        shutil.rmtree(str(zip_destination), ignore_errors=True)
+        shutil.rmtree(str(destination), ignore_errors=True)
         progress.pool(progress_name, finished=True, error=error)
 
 
@@ -243,8 +245,10 @@ def _choice_from_custom(
             basepath=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
         shutil.copytree(
-            Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}"),
-            zip_destination,
+            str(
+                Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}")
+            ),
+            str(zip_destination),
         )
         zip_filepath = Path(zip_destination, "version.zip")
         progress_utils.unpack(
@@ -254,16 +258,16 @@ def _choice_from_custom(
             zip_filepath,
             zip_destination,
         )
-        os.remove(zip_filepath)
-        shutil.rmtree(destination, ignore_errors=True)
-        os.makedirs(destination, exist_ok=True)
-        os.rename(zip_destination, destination)
+        os.remove(str(zip_filepath))
+        shutil.rmtree(str(destination), ignore_errors=True)
+        os.makedirs(str(destination), exist_ok=True)
+        os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
         version_path = Path(destination, settings.VERSION_CONFIG)
         with open(version_path) as version_ref:
             version_config = json.load(version_ref)
-        os.remove(version_path)
+        os.remove(str(version_path))
         version_alias = version_config.pop("alias", "")
         version_name = version_config.pop("name", "")
         version_config.update(
@@ -287,7 +291,7 @@ def _choice_from_custom(
             finished=True,
         )
     except Exception as error:
-        shutil.rmtree(destination, ignore_errors=True)
+        shutil.rmtree(str(destination), ignore_errors=True)
         progress.pool(progress_name, finished=True, error=error)
 
 
