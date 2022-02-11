@@ -218,7 +218,7 @@ class DatasetVersionList(UniqueListMixin):
 class DatasetCommonData(AliasMixinData):
     name: str
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
-    tags: List[str]
+    tags: List[str] = []
 
     __versions__: List[dict] = PrivateAttr()
 
