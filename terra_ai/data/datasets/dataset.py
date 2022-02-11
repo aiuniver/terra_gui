@@ -155,6 +155,36 @@ class DatasetData(DatasetVersionData):
         data.update({"layers": layers})
         return ModelDetailsData(**data)
 
+    @property
+    def training_available(self) -> bool:
+        return self.architecture not in (
+            ArchitectureChoice.VideoTracker,
+            ArchitectureChoice.Speech2Text,
+            ArchitectureChoice.Text2Speech,
+        )
+
+    @property
+    def sources(self) -> List[str]:
+        out = []
+        sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
+        for column in sources.columns:
+            match = re.findall(r"^([\d]+_)(.+)$", column)
+            if not match:
+                continue
+            _title = match[0][1].title()
+            if _title in ["Image", "Text", "Audio", "Video"]:
+                out = sources[column].to_list()
+                if _title != "Text":
+                    out = list(
+                        map(
+                            lambda item: str(
+                                Path(self.path, PureWindowsPath(item).as_posix())
+                            ),
+                            out,
+                        )
+                    )
+        return out
+
 
 class DatasetVersionList(UniqueListMixin):
     class Meta:
