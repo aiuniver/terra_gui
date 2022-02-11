@@ -3,8 +3,6 @@ import json
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from django.conf import settings
-
 from apps.api import remote
 from apps.api.validators import validate_slug
 from apps.plugins.frontend.choices import DeployTypePageChoice

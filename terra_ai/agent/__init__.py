@@ -42,7 +42,7 @@ from terra_ai.data.modeling.model import (
 )
 from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
+from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.cascades.cascade import (
     CascadeDetailsData,
     CascadesList,
@@ -50,7 +50,6 @@ from terra_ai.data.cascades.cascade import (
 )
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.deploy.tasks import DeployPageData
-from terra_ai.data.presets.datasets import DatasetCommonGroup
 from terra_ai.data.presets.models import ModelsGroups
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
