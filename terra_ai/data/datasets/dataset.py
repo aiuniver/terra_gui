@@ -51,10 +51,6 @@ class DatasetLoadData(BaseMixinData):
     version: str
 
 
-class DatasetData(AliasMixinData):
-    pass
-
-
 class DatasetLayerData(BaseMixinData):
     name: str
     datatype: str
@@ -78,11 +74,86 @@ class DatasetVersionData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
+
+
+class DatasetVersionExtData(AliasMixinData):
+    name: str
+
+
+class DatasetData(DatasetVersionData):
+    architecture: ArchitectureChoice
+    tags: List[str] = []
+    version: DatasetVersionExtData
+    group: DatasetGroupChoice
     use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}
     columns: Dict[PositiveInt, Dict[str, Any]] = {}
+
+    _path: Path = PrivateAttr()
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    @property
+    def model(self) -> ModelDetailsData:
+        data = {**EmptyModelDetailsData}
+        layers = []
+        for _id, layer in self.inputs.items():
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": LayerTypeChoice.Input,
+                "group": LayerGroupChoice.input,
+                "shape": {"input": [layer.shape]},
+                "task": layer.task,
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
+        for _id, layer in self.outputs.items():
+            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
+                layer.datatype, {}
+            )
+            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
+            units = layer.num_classes
+            params = {
+                "activation": activation,
+            }
+            if units:
+                params.update(
+                    {
+                        "units": units,
+                        "filters": units,
+                    }
+                )
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
+                "group": LayerGroupChoice.output,
+                "shape": {"output": [layer.shape]},
+                "task": layer.task,
+                "parameters": {
+                    "main": params,
+                    "extra": params,
+                },
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
+        data.update({"layers": layers})
+        return ModelDetailsData(**data)
 
 
 class DatasetVersionList(UniqueListMixin):
@@ -107,7 +178,10 @@ class DatasetVersionList(UniqueListMixin):
             args = (versions,)
         else:
             datasets = DatasetCommonGroupList()
-            args = (datasets.get(group).datasets.get(alias).versions,)
+            try:
+                args = (datasets.get(group).datasets.get(alias).versions,)
+            except Exception:
+                args = ()
         super().__init__(*args)
 
 

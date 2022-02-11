@@ -831,7 +831,7 @@ DatasetCommonGroup = [
                 ],
                 "versions": [
                     {
-                        "alias": "default",
+                        "alias": "samoleti_drugaja",
                         "name": "Default",
                     },
                 ],
