@@ -76,6 +76,7 @@ class BaseTerraModel:
     def save_weights(self, path_=None):
         if not path_:
             path_ = self.file_path_model_weights
+        logger.debug(f'save_weights path_: {path_}')
         self.base_model.save_weights(path_)
 
     def load_weights(self):

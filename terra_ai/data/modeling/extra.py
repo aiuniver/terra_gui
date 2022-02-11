@@ -141,6 +141,7 @@ class LayerTypeChoice(str, Enum):
     ConditionalMergeLayer = "ConditionalMergeLayer"
     ResnetBlock2D = "ResnetBlock2D"
     Transformer = "Transformer"
+    FNetTransformer = "FNetTransformer"
     PretrainedBERT = "PretrainedBERT"
     RGBNormalization = "RGBNormalization"
 

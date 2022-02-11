@@ -34,7 +34,7 @@ class ParametersMainData(BaseMixinData):
     # shape: Optional[Tuple[PositiveInt, ...]]
     # batch_size: Optional[PositiveInt]
     # name: Optional[str]
-    dtype: Optional[DtypeInputLayerChoice] = DtypeInputLayerChoice.float32
+    # dtype: Optional[DtypeInputLayerChoice] = DtypeInputLayerChoice.float32
     # sparse: Optional[bool]
     # # tensor: Optional[str]   # тут тензор а не str
     # ragged: Optional[bool]

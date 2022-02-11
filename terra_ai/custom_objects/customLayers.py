@@ -37,6 +37,7 @@ terra_custom_layers = {
     "ResnetBlock2D": "customLayers",
     "RgbNormalization": "customLayers",
     "Transformer": "customLayers",
+    "FNetTransformer": "customLayers",
     "PretrainedBERT": "customLayers",
 }
 
@@ -2448,19 +2449,22 @@ class TransformerDecoder(layers.Layer):
 
 
 class Transformer(layers.Layer):
-    def __init__(self, embed_dim=256, latent_dim=2048, num_heads=8, vocab_size=10000, sequence_length=20, **kwargs):
+    def __init__(self, embed_dim=256, latent_dim=2048, num_heads=8, vocab_size_enc=10000, vocab_size_dec=10000,
+                 enc_seq_length=20, dec_seq_length=20, **kwargs):
         super(Transformer, self).__init__(**kwargs)
         self.embed_dim = embed_dim
         self.latent_dim = latent_dim
         self.num_heads = num_heads
-        self.vocab_size = vocab_size
-        self.sequence_length = sequence_length
-        self.pos_emb_encoder = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)
+        self.vocab_size_enc = vocab_size_enc
+        self.vocab_size_dec = vocab_size_dec
+        self.enc_seq_length = enc_seq_length
+        self.dec_seq_length = dec_seq_length
+        self.pos_emb_encoder = PositionalEmbedding(self.enc_seq_length, self.vocab_size_enc, self.embed_dim)
         self.tr_encoder = TransformerEncoder(self.embed_dim, self.latent_dim, self.num_heads)
-        self.pos_emb_decoder = PositionalEmbedding(self.sequence_length, self.vocab_size, self.embed_dim)
+        self.pos_emb_decoder = PositionalEmbedding(self.dec_seq_length, self.vocab_size_dec, self.embed_dim)
         self.tr_decoder = TransformerDecoder(self.embed_dim, self.latent_dim, self.num_heads)
         self.dr_decoder = layers.Dropout(0.5)
-        self.fn_decoder = layers.Dense(self.vocab_size, activation="softmax")
+        self.fn_decoder = layers.Dense(self.vocab_size_dec, activation="softmax")
 
     def call(self, input_, training=True, **kwargs):
         x = self.pos_emb_encoder(input_[0])
@@ -2476,8 +2480,10 @@ class Transformer(layers.Layer):
             'embed_dim': self.embed_dim,
             'latent_dim': self.latent_dim,
             'num_heads': self.num_heads,
-            'vocab_size': self.vocab_size,
-            'sequence_length': self.sequence_length,
+            'vocab_size_enc': self.vocab_size_enc,
+            'vocab_size_dec': self.vocab_size_dec,
+            'enc_seq_length': self.enc_seq_length,
+            'dec_seq_length': self.dec_seq_length,
         }
         base_config = super(Transformer, self).get_config()
         return dict(tuple(base_config.items()) + tuple(config.items()))
@@ -2487,27 +2493,32 @@ class Transformer(layers.Layer):
         return cls(**config)
 
     def compute_output_shape(self, input_shape):
-        output_shape = (None, input_shape[0][1])  # , self.vocab_size
+        output_shape = (None, input_shape[1][1]) #, self.vocab_size_dec
         return output_shape
+        # input_0 = tensorflow.keras.Input(shape=(input_shape[0][1],), dtype=tf.int64)
+        # input_1 = tensorflow.keras.Input(shape=(input_shape[1][1],), dtype=tf.int64)
+        # outputs = self.call([input_0, input_1])
+        # return outputs.shape
 
 
-bert_model_name = ['bert_multi_cased_L-12_H-768_A-12', 'distilbert_multi_cased_L-6_H-768_A-12_32lang',
-                   'use-cmlm_multilingual-base-br_100lang', 'large_LaBSE_109lang', "smaller_LaBSE_15lang",
-                   'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang', "bert_en_uncased_L-12_H-768_A-12",
-                   "bert_en_cased_L-12_H-768_A-12", "small_bert/bert_en_uncased_L-2_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-2_H-256_A-4", "small_bert/bert_en_uncased_L-2_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-2_H-768_A-12", "small_bert/bert_en_uncased_L-4_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-4_H-256_A-4", "small_bert/bert_en_uncased_L-4_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-4_H-768_A-12", "small_bert/bert_en_uncased_L-6_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-6_H-256_A-4", "small_bert/bert_en_uncased_L-6_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-6_H-768_A-12", "small_bert/bert_en_uncased_L-8_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-8_H-256_A-4", "small_bert/bert_en_uncased_L-8_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-8_H-768_A-12", "small_bert/bert_en_uncased_L-10_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-10_H-256_A-4", "small_bert/bert_en_uncased_L-10_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-10_H-768_A-12", "small_bert/bert_en_uncased_L-12_H-128_A-2",
-                   "small_bert/bert_en_uncased_L-12_H-256_A-4", "small_bert/bert_en_uncased_L-12_H-512_A-8",
-                   "small_bert/bert_en_uncased_L-12_H-768_A-12", "albert_en_base", "electra_small", "electra_base",
-                   "experts_pubmed", "experts_wiki_books", "talking-heads_base"]
+bert_model_name = {'bert_multi_cased_L-12_H-768_A-12': 768, 'distilbert_multi_cased_L-6_H-768_A-12_32lang': 768,
+                   'use-cmlm_multilingual-base-br_100lang': 768, 'large_LaBSE_109lang': 768, "smaller_LaBSE_15lang": 768,
+                   'xlm_roberta_multi_cased_L-12_H-768_A-12_53lang': 768, "bert_en_uncased_L-12_H-768_A-12": 768,
+                   "bert_en_cased_L-12_H-768_A-12": 768, "small_bert/bert_en_uncased_L-2_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-2_H-256_A-4": 256, "small_bert/bert_en_uncased_L-2_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-2_H-768_A-12": 768, "small_bert/bert_en_uncased_L-4_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-4_H-256_A-4": 256, "small_bert/bert_en_uncased_L-4_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-4_H-768_A-12": 768, "small_bert/bert_en_uncased_L-6_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-6_H-256_A-4": 256, "small_bert/bert_en_uncased_L-6_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-6_H-768_A-12": 768, "small_bert/bert_en_uncased_L-8_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-8_H-256_A-4": 256, "small_bert/bert_en_uncased_L-8_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-8_H-768_A-12": 768, "small_bert/bert_en_uncased_L-10_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-10_H-256_A-4": 256, "small_bert/bert_en_uncased_L-10_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-10_H-768_A-12": 768, "small_bert/bert_en_uncased_L-12_H-128_A-2": 128,
+                   "small_bert/bert_en_uncased_L-12_H-256_A-4": 256, "small_bert/bert_en_uncased_L-12_H-512_A-8": 512,
+                   "small_bert/bert_en_uncased_L-12_H-768_A-12": 768, "albert_en_base": 768, "electra_small": 256,
+                   "electra_base": 768, "experts_pubmed": 768, "experts_wiki_books": 768, "talking-heads_base": 768
+                   }
 
 
 class PretrainedBERT(layers.Layer):
@@ -2716,14 +2727,16 @@ class PretrainedBERT(layers.Layer):
 
     def compute_output_shape(self, input_shape):
         print('input_shape', input_shape)
-        input_ = tf.constant('text', shape=(input_shape[1]), dtype=tf.string)
-        print('input_', input_)
-        encoder_inputs = self.preprocessing_layer(input_)
-        print(encoder_inputs)
-        outputs = self.encoder(encoder_inputs)
-        print('tf.shape(outputs[pooled_output])', tf.shape(outputs['pooled_output']))
+        # input_ = tf.constant('text', shape=(input_shape[1]), dtype=tf.string)
+        input_ = tensorflow.keras.Input(shape=(), dtype=tf.string)
+        # print('input_', input_)
+        # encoder_inputs = self.preprocessing_layer(input_)
+        # print(encoder_inputs)
+        # outputs = self.encoder(encoder_inputs)
+        outputs = self.call(input_)
+        # print('tf.shape(outputs[pooled_output])', tf.shape(outputs['pooled_output']))
         # outputs = self.net_bert(input_)
-        return outputs['pooled_output'].shape
+        return outputs.shape
 
 
 
@@ -2810,27 +2823,199 @@ class FNetDecoder(layers.Layer):
         )
         return tf.tile(mask, mult)
 
+class FNetTransformer(layers.Layer):
+    def __init__(self, embed_dim=256, latent_dim=2048, num_heads=8, vocab_size_enc=10000, vocab_size_dec=10000,
+                 enc_seq_length=20, dec_seq_length=20, **kwargs):
+        super(FNetTransformer, self).__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.latent_dim = latent_dim
+        self.num_heads = num_heads
+        self.vocab_size_enc = vocab_size_enc
+        self.vocab_size_dec = vocab_size_dec
+        self.enc_seq_length = enc_seq_length
+        self.dec_seq_length = dec_seq_length
+        self.pos_emb_encoder = PositionalEmbedding(self.enc_seq_length, self.vocab_size_enc, self.embed_dim)
+        self.tr_encoder = FNetEncoder(self.embed_dim, self.latent_dim)
+        self.pos_emb_decoder = PositionalEmbedding(self.dec_seq_length, self.vocab_size_dec, self.embed_dim)
+        self.tr_decoder = FNetDecoder(self.embed_dim, self.latent_dim, self.num_heads)
+        self.dr_decoder = layers.Dropout(0.5)
+        self.fn_decoder = layers.Dense(self.vocab_size_dec, activation="softmax")
 
-# def create_model():
-#     encoder_inputs = keras.Input(shape=(None,), dtype="int32", name="encoder_inputs")
-#     x = PositionalEmbedding(MAX_LENGTH, VOCAB_SIZE, EMBED_DIM)(encoder_inputs)
-#     encoder_outputs = FNetEncoder(EMBED_DIM, LATENT_DIM)(x)
-#     encoder = keras.Model(encoder_inputs, encoder_outputs)
-#     decoder_inputs = keras.Input(shape=(None,), dtype="int32", name="decoder_inputs")
-#     encoded_seq_inputs = keras.Input(
-#         shape=(None, EMBED_DIM), name="decoder_state_inputs"
-#     )
-#     x = PositionalEmbedding(MAX_LENGTH, VOCAB_SIZE, EMBED_DIM)(decoder_inputs)
-#     x = FNetDecoder(EMBED_DIM, LATENT_DIM, NUM_HEADS)(x, encoded_seq_inputs)
-#     x = layers.Dropout(0.5)(x)
-#     decoder_outputs = layers.Dense(VOCAB_SIZE, activation="softmax")(x)
-#     decoder = keras.Model(
-#         [decoder_inputs, encoded_seq_inputs], decoder_outputs, name="outputs"
-#     )
-#     decoder_outputs = decoder([decoder_inputs, encoder_outputs])
-#     fnet = keras.Model([encoder_inputs, decoder_inputs], decoder_outputs, name="fnet")
-#     return fnet
+    def call(self, input_, training=True, **kwargs):
+        x = self.pos_emb_encoder(input_[0])
+        encoder_outputs = self.tr_encoder(x)
+        x = self.pos_emb_decoder(input_[1])
+        x = self.tr_decoder(x, encoder_outputs)
+        x = self.dr_decoder(x)
+        decoder_outputs = self.fn_decoder(x)
+        return decoder_outputs
 
+    def get_config(self):
+        config = {
+            'embed_dim': self.embed_dim,
+            'latent_dim': self.latent_dim,
+            'num_heads': self.num_heads,
+            'vocab_size_enc': self.vocab_size_enc,
+            'vocab_size_dec': self.vocab_size_dec,
+            'enc_seq_length': self.enc_seq_length,
+            'dec_seq_length': self.dec_seq_length,
+        }
+        base_config = super(FNetTransformer, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        # tf.print('input_shape', input_shape)
+        output_shape = (None, input_shape[1][1]) #, self.vocab_size_dec
+        return output_shape
+        # input_0 = tensorflow.keras.Input(shape=(input_shape[0][1],), dtype=tf.int64)
+        # input_1 = tensorflow.keras.Input(shape=(input_shape[1][1],), dtype=tf.int64)
+        # outputs = self.call([input_0, input_1])
+        # return outputs.shape
+
+
+class Bert(layers.Layer):
+    def __init__(self, embed_dim, num_layers, num_heads, max_len, vocab_size, ff_dim, **kwargs):
+        super(Bert, self).__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.num_layers = num_layers
+        self.num_heads = num_heads
+        self.max_len = max_len
+        self.vocab_size = vocab_size
+        self.ff_dim = ff_dim
+
+        self.word_embeddings = layers.Embedding(self.vocab_size, self.embed_dim, name="word_embedding")
+        self.position_embeddings = layers.Embedding(
+            input_dim=self.max_len,
+            output_dim=self.embed_dim,
+            weights=[self.get_pos_encoding_matrix(self.max_len, self.embed_dim)],
+            name="position_embedding")
+        self.mlm_output = layers.Dense(self.vocab_size, name="mlm_cls", activation="softmax")
+
+
+    def bert_module(self, query, key, value, i):
+        # Multi headed self-attention
+        attention_output = layers.MultiHeadAttention(
+            num_heads=self.num_heads,
+            key_dim=self.embed_dim // self.num_heads,
+            name="encoder_{}/multiheadattention".format(i),
+        )(query, key, value)
+        attention_output = layers.Dropout(0.1, name="encoder_{}/att_dropout".format(i))(
+            attention_output
+        )
+        attention_output = layers.LayerNormalization(
+            epsilon=1e-6, name="encoder_{}/att_layernormalization".format(i)
+        )(query + attention_output)
+
+        # Feed-forward layer
+        ffn = tf.keras.Sequential(
+            [
+                layers.Dense(self.ff_dim, activation="relu"),
+                layers.Dense(self.embed_dim),
+            ],
+            name="encoder_{}/ffn".format(i),
+        )
+        ffn_output = ffn(attention_output)
+        ffn_output = layers.Dropout(0.1, name="encoder_{}/ffn_dropout".format(i))(
+            ffn_output
+        )
+        sequence_output = layers.LayerNormalization(
+            epsilon=1e-6, name="encoder_{}/ffn_layernormalization".format(i)
+        )(attention_output + ffn_output)
+        return sequence_output
+
+
+    def get_pos_encoding_matrix(self, max_len, d_emb):
+        pos_enc = np.array(
+            [
+                [pos / np.power(10000, 2 * (j // 2) / d_emb) for j in range(d_emb)]
+                if pos != 0
+                else np.zeros(d_emb)
+                for pos in range(max_len)
+            ]
+        )
+        pos_enc[1:, 0::2] = np.sin(pos_enc[1:, 0::2])  # dim 2i
+        pos_enc[1:, 1::2] = np.cos(pos_enc[1:, 1::2])  # dim 2i+1
+        return pos_enc
+
+
+    # class MaskedLanguageModel(tf.keras.Model):
+    #     def train_step(self, inputs):
+    #         if len(inputs) == 3:
+    #             features, labels, sample_weight = inputs
+    #         else:
+    #             features, labels = inputs
+    #             sample_weight = None
+    #
+    #         with tf.GradientTape() as tape:
+    #             predictions = self(features, training=True)
+    #             loss = self.loss_fn(labels, predictions, sample_weight=sample_weight)
+    #
+    #         # Compute gradients
+    #         trainable_vars = self.trainable_variables
+    #         gradients = tape.gradient(loss, trainable_vars)
+    #
+    #         # Update weights
+    #         self.optimizer.apply_gradients(zip(gradients, trainable_vars))
+    #
+    #         # Compute our own metrics
+    #         self.loss_tracker.update_state(loss, sample_weight=sample_weight)
+    #
+    #         # Return a dict mapping metric names to current value
+    #         return {"loss": self.loss_tracker.result()}
+    #
+    #     @property
+    #     def metrics(self):
+    #         # We list our `Metric` objects here so that `reset_states()` can be
+    #         # called automatically at the start of each epoch
+    #         # or at the start of `evaluate()`.
+    #         # If you don't implement this property, you have to call
+    #         # `reset_states()` yourself at the time of your choosing.
+    #         return [self.loss_tracker]
+
+
+    def call(self, input_, training=True, **kwargs):
+        # inputs = layers.Input((self.max_len,), dtype=tf.int64)
+
+        word_embeddings = self.word_embeddings(input_)
+        position_embeddings = self.position_embeddings(tf.range(start=0, limit=self.max_len, delta=1))
+        embeddings = word_embeddings + position_embeddings
+
+        encoder_output = embeddings
+        for i in range(self.num_layers):
+            encoder_output = self.bert_module(encoder_output, encoder_output, encoder_output, i)
+
+        mlm_output = self.mlm_output(encoder_output)
+
+        return mlm_output
+
+    def get_config(self):
+        config = {
+            'embed_dim': self.embed_dim,
+            'num_layers': self.num_layers,
+            'num_heads': self.num_heads,
+            'max_len': self.max_len,
+            'vocab_size': self.vocab_size,
+            'ff_dim': self.ff_dim,
+        }
+        base_config = super(Bert, self).get_config()
+        return dict(tuple(base_config.items()) + tuple(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+    def compute_output_shape(self, input_shape):
+        # print('input_shape', ((1,)+input_shape))
+        input_ = tensorflow.keras.Input(shape=(input_shape), dtype=tf.int64)
+        # input_ = tf.constant(1, shape=(((1,)+input_shape)), dtype=tf.int64)
+        # print('input_', input_)
+        outputs = self.call(input_)
+        # print('tf.shape(outputs)', tf.shape(outputs))
+        return outputs.shape
 
 
 if __name__ == "__main__":
@@ -2867,34 +3052,54 @@ if __name__ == "__main__":
     # x = InstanceNormalization()
     # print(x.compute_output_shape(input_shape=(None, 100)))
 
-    # params = {
-    #     'filters_base': 16, 'n_pooling_branches': 5, 'activation': None, 'normalization': 'instance',
-    #     'dropout_layer': False, 'leaky_relu_layer': True, 'use_activation_layer': False,
-    #     'maxpooling': False, 'upsampling': False, 'filters_coef': 1, 'n_conv_layers': 4,
-    #     'use_bias': False, 'kernel_size': [3, 3], 'kernel_initializer': 'random_normal',
-    #     'dropout_rate': 0.1, 'leaky_relu_alpha': 0.3, 'name': 'UNETBlock2D_3'
-    # }
-    params = {'model_name': 'small_bert/bert_en_uncased_L-10_H-512_A-8', 'set_trainable': True}
+    # #Bert
+    # params = {'embed_dim': 128, 'num_layers': 1, 'num_heads': 8, 'max_len': 256, 'vocab_size': 30000, 'ff_dim': 128}
+    # input_shape = (256,)
+    # text_input = tensorflow.keras.Input(shape=(input_shape), dtype=tf.int64)
+    # layer = Bert(**params)
+    # x = layer(text_input)
+    # print(x.shape)
+    # model = tf.keras.Model(text_input, x)
+    # model.summary()
+    # # text = np.ones((1, 256))
+    # # pred = model(text)
+    # # print(pred.shape)
+    # # print(pred)
+    # print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
+    # pass
 
-    # params = {
-    #     'filters': 256, 'num_resblocks': 9, 'n_conv_layers': 2, 'use_activation_layer': True,
-    #     'activation': 'relu', 'kernel_size': (3, 3), 'kernel_initializer': 'glorot_uniform',
-    #     'normalization': 'instance', "merge_layer": 'concatenate', "use_bias": True
-    # }
-    # # for i in range(5):
-    input_shape = (20,1)
 
-    text_input = tensorflow.keras.Input(shape=(), dtype=tf.string)
-    layer = PretrainedBERT(**params)
-    # print(input)
-    x = layer(text_input)
-    print(x.shape)
-    model = tf.keras.Model(text_input, x)
-    model.summary()
-    text = np.array([["раз one two three 123125 . !"], ["text one two three 123125 data one. !"]])
-    print(text.shape,text[0])
-    pred = model(text)
-    print(pred.shape)
-    print(pred)
+    # # PretrainedBert
+    # params = {'model_name': "talking-heads_base", 'set_trainable': False}
+    # input_shape = (20, 1)
+    #
+    # # text_input = tensorflow.keras.Input(shape=(), dtype=tf.string)
+    # layer = PretrainedBERT(**params)
+    # # # print(input)
+    # # x = layer(text_input)
+    # # print(x.shape)
+    # # model = tf.keras.Model(text_input, x)
+    # # model.summary()
+    # # text = np.array([["раз one two three 123125 . !"], ["text one two three 123125 data one. !"]])
+    # # print(text.shape,text[0])
+    # # pred = model(text)
+    # # print(pred.shape)
+    # # print(pred)
+    # print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
+    # pass
+
+    #FNetTransformer
+    params = {'embed_dim':256, 'latent_dim':512, 'num_heads':8, 'vocab_size_enc':10000, 'vocab_size_dec':10000,
+                 'enc_seq_length':40, 'dec_seq_length':40}
+    input_shape = ((None, 40,),(None, 40,))
+    layer = FNetTransformer(**params)
     print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
     pass
+
+    # #Transformer
+    # params = {'embed_dim':256, 'latent_dim':512, 'num_heads':8, 'vocab_size_enc':10000, 'vocab_size_dec':20000,
+    #              'enc_seq_length':50, 'dec_seq_length':50}
+    # input_shape = ((None, 50,),(None, 50,))
+    # layer = Transformer(**params)
+    # print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
+    # pass
