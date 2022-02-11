@@ -30,6 +30,7 @@ class ModelValidator:
 
     def __init__(self, model: ModelDetailsData, dataset_data: Optional[DatasetData] = None):
         logger.info(f"Валидируемая модель: \n{model.layers}\n")
+        logger.info(f"{dataset_data.path}")
         self.name = "ModelValidator"
         self.validator: LayerValidation = LayerValidation()
         self.model: ModelDetailsData = model
@@ -631,7 +632,7 @@ class LayerValidation:
             if self.module_type == ModuleTypeChoice.keras \
                     or self.module_type == ModuleTypeChoice.terra_layer \
                     or self.module_type == ModuleTypeChoice.keras_pretrained_model:
-                try:
+                # try:
                     params = copy.deepcopy(self.layer_parameters)
                     if self.layer_type == LayerTypeChoice.Input:
                         return self.inp_shape, None
@@ -649,18 +650,15 @@ class LayerValidation:
                         params['use_weights'] = False
                         output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
+                    elif self.layer_type == LayerTypeChoice.PretrainedModel:
+                        params['load_weights'] = False
+                        output_shape = getattr(self.module, self.layer_type)(**params).compute_output_shape(
+                            self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape)
                     else:
-                        # if self.layer_type == LayerTypeChoice.UNETBlock2D:
-                        #     logger.debug(f"ResnetBlock2D inp_shape = {self.inp_shape}")
-                        #     logger.debug(f"ResnetBlock2D module = {self.module}")
-                        #     logger.debug(f"ResnetBlock2D params = {params}")
-                        #     logger.debug(f"ResnetBlock2D obj = {getattr(self.module, self.layer_type)(**params)}")
                         output_shape = [
                             tuple(getattr(self.module, self.layer_type)(**params).compute_output_shape(
                                 self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
                         ]
-                        # if self.layer_type == LayerTypeChoice.ResnetBlock2D:
-                        #     logger.debug(f"ResnetBlock2D output_shape = {output_shape}")
                     # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
@@ -669,9 +667,9 @@ class LayerValidation:
                             new.append(tensor_shape_to_tuple(shape))
                         return new, None
                     return output_shape, None
-                except:
-                    # logger.debug(f"{self.layer_type} output_shape = {output_shape}")
-                    return output_shape, self.parameters_validation()
+                # except:
+                #     # logger.debug(f"{self.layer_type} output_shape = {output_shape}")
+                #     return output_shape, self.parameters_validation()
 
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -877,6 +875,7 @@ class LayerValidation:
                     "'Identity'", key, 2, len(self.inp_shape[0]), self.inp_shape[0]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # strides and dilation_rate in 1D layers
         if isinstance(self.layer_parameters.get("strides"), int) and \
                 isinstance(self.layer_parameters.get("dilation_rate"), int):
@@ -884,6 +883,7 @@ class LayerValidation:
                 exc = str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # strides and dilation_rate in 2+D layers
         if isinstance(self.layer_parameters.get("dilation_rate"), (tuple, list)) and \
                 isinstance(self.layer_parameters.get("strides"), (tuple, list)):
@@ -892,6 +892,7 @@ class LayerValidation:
                 exc = str(exceptions.CannotHaveValueException("'dilation_rate' and 'strides'", "> 1"))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # value range for axis
         if self.layer_parameters.get("axis", None) and (
                 self.layer_parameters.get("axis", None) == 0
@@ -903,6 +904,7 @@ class LayerValidation:
             exc = str(exceptions.CanTakeOneOfTheFollowingValuesException('axis', axis_values))
             logging.warning(f"Слой {self.layer_type}: {exc}")
             return exc
+
         # groups with data_format, filters and inp_shape
         if self.layer_parameters.get("groups", None) and \
                 self.layer_parameters.get("data_format", None) and \
@@ -937,6 +939,7 @@ class LayerValidation:
                         "strides", "> 1", self.layer_parameters.get('strides')))
                     logging.warning(f"Слой {self.layer_type}: {exc}")
                     return exc
+
         # maxwordcount
         if self.layer_type == LayerTypeChoice.Embedding and self.kwargs.get("maxwordcount") \
                 and self.layer_parameters.get("input_dim"):
@@ -946,6 +949,7 @@ class LayerValidation:
                     "equal or greater", f"words dictionary (maxwordcount={self.kwargs.get('maxwordcount')})"))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # pretrained models exclusions
         if self.module_type == layers.extra.ModuleTypeChoice.keras_pretrained_model:
             if self.layer_parameters.get("include_top") and \
@@ -1074,6 +1078,7 @@ class LayerValidation:
                     return exc
             else:
                 pass
+
         # UNETBlock2D and PSPBlock2D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock2D or self.layer_type == LayerTypeChoice.PSPBlock2D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
@@ -1090,6 +1095,7 @@ class LayerValidation:
                     self.inp_shape[0][1:]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # UNETBlock1D and PSPBlock1D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock1D or self.layer_type == LayerTypeChoice.PSPBlock1D:
             if self.inp_shape[0][1] % 4 != 0:
@@ -1104,6 +1110,7 @@ class LayerValidation:
                     self.inp_shape[0][1:]))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # UNETBlock3D and PSPBlock3D exceptions
         if self.layer_type == LayerTypeChoice.UNETBlock3D or self.layer_type == LayerTypeChoice.PSPBlock3D:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0 or self.inp_shape[0][3] % 4 != 0:
@@ -1147,6 +1154,7 @@ class LayerValidation:
                     f"block_size = {self.layer_parameters.get('block_size')}"))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
         # ResnetBlock2D exceptions
         if self.layer_type == LayerTypeChoice.ResnetBlock2D and \
                 self.layer_parameters.get("merge_layer") != MergeLayerChoice.concatenate and \
@@ -1163,7 +1171,8 @@ class LayerValidation:
                   f"can only be used with 'use_activation_layer'=True"
             logger.warning(f"Слой {self.layer_type}: {exc}")
             return exc
-        # OnlyYOLO exceptions
+
+        # PretrainedYOLO exceptions
         if self.layer_type == LayerTypeChoice.PretrainedYOLO:
             if self.inp_shape[0][1:] != (416, 416, 3):
                 exc = str(exceptions.InputShapeMustBeOnlyException(
@@ -1175,6 +1184,34 @@ class LayerValidation:
                     3, '', len(self.kwargs.get('down_links'))))
                 logger.warning(f"Слой {self.layer_type}: {exc}")
                 return exc
+
+        # PretrainedModel exceptions
+        if self.layer_type == LayerTypeChoice.PretrainedModel:
+            params = copy.deepcopy(self.layer_parameters)
+            params['load_weights'] = False
+            try:
+                model = getattr(self.module, self.layer_type)(**params)
+            except:
+                exc = str(exceptions.IncorrentModelPathException(
+                    "'PretrainedModel'", params.get('model_path')))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
+            model_input_shape = model.input_shapes
+            if len(self.inp_shape) != len(model_input_shape):
+                exc = str(exceptions.IncorrectQuantityInputShapeException(
+                    len(model_input_shape), 's' if len(model_input_shape) > 1 else "", len(self.inp_shape)))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
+            if self.inp_shape != model_input_shape:
+                exc = str(exceptions.PretrainedModelInputShapeMustBeException(
+                    "'PretrainedModel'",
+                    [shape[1:] for shape in model_input_shape]
+                    if len(model_input_shape) > 1 else model_input_shape[0][1:],
+                    self.inp_shape[0][1:]))
+                logger.warning(f"Слой {self.layer_type}: {exc}")
+                return exc
+
+        # VAEDiscriminatorBlock exceptions
         if self.layer_type == LayerTypeChoice.VAEDiscriminatorBlock and self.kwargs.get('down_links'):
             exc = str(exceptions.OnlyOutputLayerException())
             logger.warning(f"Слой {self.layer_type}: {exc}")
