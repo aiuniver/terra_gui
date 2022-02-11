@@ -271,26 +271,15 @@ DatasetCommonGroup = [
                 "versions": [
                     {
                         "alias": "default",
-                        "name": "Default",
+                        "name": "Стандартная",
+                        "date": datetime.now().isoformat(),
+                        "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
                         "inputs": {
-                            1: {
-                                "datatype": "2D",
-                                "dtype": "float32",
-                                "name": "Вход 1",
-                                "shape": (28, 28, 1),
-                                "task": LayerInputTypeChoice.Image,
-                                "num_classes": 1,
-                                "classes_names": ["mnist"],
-                                "encoding": LayerEncodingChoice.none,
-                            }
-                        },
-                        "outputs": {
-                            2: {
-                                "datatype": "DIM",
+                            "1": {
+                                "name": "Изображения цифр",
+                                "datatype": "1D",
                                 "dtype": "uint8",
-                                "name": "Выход 1",
-                                "shape": (10,),
-                                "task": LayerOutputTypeChoice.Classification,
+                                "shape": [28, 28],
                                 "num_classes": 10,
                                 "classes_names": [
                                     "0",
@@ -304,29 +293,43 @@ DatasetCommonGroup = [
                                     "8",
                                     "9",
                                 ],
-                                "encoding": LayerEncodingChoice.ohe,
+                                "classes_colors": None,
+                                "encoding": "none",
+                                "task": "Image",
                             }
                         },
+                        "outputs": {
+                            "2": {
+                                "name": "Метки классов",
+                                "datatype": "DIM",
+                                "dtype": "uint8",
+                                "shape": [10],
+                                "num_classes": 10,
+                                "classes_names": [
+                                    "0",
+                                    "1",
+                                    "2",
+                                    "3",
+                                    "4",
+                                    "5",
+                                    "6",
+                                    "7",
+                                    "8",
+                                    "9",
+                                ],
+                                "classes_colors": None,
+                                "encoding": "ohe",
+                                "task": "Classification",
+                            }
+                        },
+                        "service": {},
                         "columns": {
-                            1: {
-                                "1_mnist": {
-                                    "datatype": "2D",
+                            "1": {
+                                "1_image": {
+                                    "name": "Изображения цифр",
+                                    "datatype": "1D",
                                     "dtype": "float32",
-                                    "name": "Вход 1",
-                                    "shape": (28, 28, 1),
-                                    "task": LayerInputTypeChoice.Image,
-                                    "num_classes": 1,
-                                    "classes_names": ["mnist"],
-                                    "encoding": LayerEncodingChoice.none,
-                                }
-                            },
-                            2: {
-                                "2_classification": {
-                                    "datatype": "DIM",
-                                    "dtype": "uint8",
-                                    "name": "Выход 1",
-                                    "shape": (10,),
-                                    "task": LayerOutputTypeChoice.Classification,
+                                    "shape": [28, 28],
                                     "num_classes": 10,
                                     "classes_names": [
                                         "0",
@@ -340,11 +343,143 @@ DatasetCommonGroup = [
                                         "8",
                                         "9",
                                     ],
-                                    "encoding": LayerEncodingChoice.ohe,
+                                    "classes_colors": None,
+                                    "encoding": "none",
+                                    "task": "Image",
+                                }
+                            },
+                            "2": {
+                                "2_classification": {
+                                    "name": "Метки классов",
+                                    "datatype": "DIM",
+                                    "dtype": "uint8",
+                                    "shape": [10],
+                                    "num_classes": 10,
+                                    "classes_names": [
+                                        "0",
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7",
+                                        "8",
+                                        "9",
+                                    ],
+                                    "classes_colors": None,
+                                    "encoding": "ohe",
+                                    "task": "Classification",
                                 }
                             },
                         },
                     },
+                    {
+                        "alias": "add_dimension",
+                        "name": "Добавленная размерность",
+                        "date": datetime.now().isoformat(),
+                        "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
+                        "inputs": {
+                            "1": {
+                                "name": "Изображения цифр",
+                                "datatype": "2D",
+                                "dtype": "float32",
+                                "shape": [28, 28, 1],
+                                "num_classes": 10,
+                                "classes_names": [
+                                    "0",
+                                    "1",
+                                    "2",
+                                    "3",
+                                    "4",
+                                    "5",
+                                    "6",
+                                    "7",
+                                    "8",
+                                    "9",
+                                ],
+                                "classes_colors": None,
+                                "encoding": "none",
+                                "task": "Image",
+                            }
+                        },
+                        "outputs": {
+                            "2": {
+                                "name": "Метки классов",
+                                "datatype": "DIM",
+                                "dtype": "uint8",
+                                "shape": [10],
+                                "num_classes": 10,
+                                "classes_names": [
+                                    "0",
+                                    "1",
+                                    "2",
+                                    "3",
+                                    "4",
+                                    "5",
+                                    "6",
+                                    "7",
+                                    "8",
+                                    "9",
+                                ],
+                                "classes_colors": None,
+                                "encoding": "ohe",
+                                "task": "Classification",
+                            }
+                        },
+                        "service": {},
+                        "columns": {
+                            "1": {
+                                "1_image": {
+                                    "name": "Изображения цифр",
+                                    "datatype": "2D",
+                                    "dtype": "float32",
+                                    "shape": [28, 28, 1],
+                                    "num_classes": 10,
+                                    "classes_names": [
+                                        "0",
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7",
+                                        "8",
+                                        "9",
+                                    ],
+                                    "classes_colors": None,
+                                    "encoding": "none",
+                                    "task": "Image",
+                                }
+                            },
+                            "2": {
+                                "2_classification": {
+                                    "name": "Метки классов",
+                                    "datatype": "DIM",
+                                    "dtype": "uint8",
+                                    "shape": [10],
+                                    "num_classes": 10,
+                                    "classes_names": [
+                                        "0",
+                                        "1",
+                                        "2",
+                                        "3",
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7",
+                                        "8",
+                                        "9",
+                                    ],
+                                    "classes_colors": None,
+                                    "encoding": "ohe",
+                                    "task": "Classification",
+                                }
+                            },
+                        },
+                    },
+
                 ],
             },
             {
@@ -1676,7 +1811,6 @@ VersionsGroups = [
                         "name": "Стандартная",
                         "date": datetime.now().isoformat(),
                         "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
-                        "use_generator": False,
                         "inputs": {
                             "1": {
                                 "name": "Изображения цифр",
@@ -1782,7 +1916,6 @@ VersionsGroups = [
                         "name": "Добавленная размерность",
                         "date": datetime.now().isoformat(),
                         "size": {"value": 0, "short": 0, "unit": "\u041a\u0431"},
-                        "use_generator": False,
                         "inputs": {
                             "1": {
                                 "name": "Изображения цифр",
