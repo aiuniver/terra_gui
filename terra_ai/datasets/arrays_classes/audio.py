@@ -68,6 +68,10 @@ class AudioArray(Array):
 
         instructions = {'instructions': instructions_paths if instructions_paths else audio_arrays,
                         'parameters': {'duration': duration_,
+                                       'audio_mode': options['audio_mode'],
+                                       'max_length': options['max_length'],
+                                       'length': options['length'],
+                                       'step': options['step'],
                                        'sample_rate': options['sample_rate'],
                                        'resample': options['resample'],
                                        'parameter': options['parameter'],
@@ -89,7 +93,7 @@ class AudioArray(Array):
             y, sr = librosa_load(path=source, sr=options.get('sample_rate'), res_type=options.get('resample'))
         else:
             orig_sr = source.frame_rate
-            y = np.array(source.get_array_of_samples())
+            y = np.array(source.get_array_of_samples()).astype('float')  # ВНИМАТЕЛЬНО С FLOAT!!!!!!!!!@@@@@@@@@@@@@@
             y = librosa.resample(y, orig_sr=orig_sr, target_sr=sample_rate, res_type=options.get('resample'))
 
         if round(sample_rate * options['duration'], 0) > y.shape[0]:
