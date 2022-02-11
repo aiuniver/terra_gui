@@ -255,8 +255,8 @@ class Project(BaseMixinData):
         self._set_data(name=name)
         self.save_config()
 
-    def set_dataset(self, info: DatasetData, reset_model: bool = False):
-        self._set_data(dataset_info=info)
+    def set_dataset(self, dataset: DatasetData, reset_model: bool = False):
+        self._set_data(dataset=dataset)
 
         if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = self.dataset.model

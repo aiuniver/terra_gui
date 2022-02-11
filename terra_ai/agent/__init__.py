@@ -9,7 +9,13 @@ from typing import Any, Dict, List
 
 from terra_ai import exceptions as terra_ai_exceptions
 from terra_ai import progress as terra_ai_progress
-from terra_ai.settings import DATASET_EXT, ASSETS_PATH, MODEL_EXT, PROJECT_PATH
+from terra_ai.settings import (
+    TERRA_PATH,
+    DATASET_EXT,
+    ASSETS_PATH,
+    MODEL_EXT,
+    PROJECT_PATH,
+)
 from terra_ai.agent.exceptions import (
     CallMethodNotFoundException,
     MethodNotCallableException,
@@ -142,7 +148,9 @@ class Exchange:
         """
         dataset_choice(
             "dataset_choice",
-            DatasetLoadData(group=group, alias=alias, version=version),
+            DatasetLoadData(
+                path=TERRA_PATH.datasets, group=group, alias=alias, version=version
+            ),
             reset_model=reset_model,
         )
 

@@ -8,32 +8,34 @@ from pathlib import Path
 from typing import List, Callable
 from pydantic.networks import HttpUrl
 
-from .. import progress, settings
-from ..data.datasets.creation import SourceData
-from ..data.datasets.dataset import (
+from terra_ai import progress, settings
+from terra_ai.data.datasets.creation import SourceData
+from terra_ai.data.datasets.dataset import (
+    DatasetData,
     DatasetLoadData,
     DatasetCommonGroupList,
     DatasetInfo,
+    DatasetCommonPathsData,
 )
-from ..data.datasets.extra import DatasetGroupChoice
-from ..exceptions.datasets import (
+from terra_ai.data.datasets.extra import DatasetGroupChoice
+from terra_ai.exceptions.datasets import (
     DatasetSourceLoadUndefinedMethodException,
     DatasetChoiceUndefinedMethodException,
     DatasetNotFoundInGroupException,
 )
-from ..utils import get_tempdir
-from ..progress import utils as progress_utils
+from terra_ai.utils import get_tempdir
+from terra_ai.progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
-DATASET_CHOICE_TITLE = "Загрузка датасета `%s.%s`"
-DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета `%s.%s`"
-DATASET_CHOICE_TERRA_URL = f"{settings.GOOGLE_STORAGE_URL}DataSets/Numpy/"
+DATASET_CHOICE_TITLE = "Загрузка датасета `%s.%s.%s`"
+DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета `%s.%s.%s`"
+DATASET_CHOICE_TERRA_URL = f"{settings.GOOGLE_STORAGE_URL}DataSets/Numpy_new/"
 
 
 os.makedirs(settings.DATASETS_SOURCE_DIR, exist_ok=True)
 os.makedirs(settings.DATASETS_LOADED_DIR, exist_ok=True)
-for item in DatasetGroupChoice:
+for item in list(DatasetGroupChoice):
     os.makedirs(Path(settings.DATASETS_LOADED_DIR, item.name), exist_ok=True)
 
 
@@ -102,87 +104,127 @@ def _choice_from_keras(
     progress_name: str,
     destination: Path,
     name: str,
+    version: str,
     reset_model: bool,
     **kwargs,
 ):
-    dataset = DatasetCommonGroupList().get(DatasetGroupChoice.keras).datasets.get(name)
-    if dataset:
+    try:
+        dataset_config = (
+            DatasetCommonGroupList().get(DatasetGroupChoice.keras).datasets.get(name)
+        )
+        if not dataset_config:
+            raise Exception("Dataset not found")
+        version_config = None
+        for item in dataset_config.versions:
+            if item.get("alias") == version:
+                version_config = item
+                break
+        if not version_config:
+            raise Exception("Dataset not found")
         shutil.rmtree(destination, ignore_errors=True)
         os.makedirs(destination, exist_ok=True)
-        with open(Path(destination, settings.DATASET_CONFIG), "w") as config_ref:
-            json.dump(dataset.native(), config_ref)
+        dataset_config = dataset_config.native()
+        version_alias = version_config.pop("alias", "")
+        version_name = version_config.pop("name", "")
+        version_config.update(
+            {"version": {"alias": version_alias, "name": version_name}}
+        )
+        dataset_config.update(
+            {
+                "path": destination,
+                "group": DatasetGroupChoice.keras,
+                **version_config,
+            }
+        )
+        dataset = DatasetData(**dataset_config)
+        dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        with open(dataset_config_path, "w") as dataset_config_path_ref:
+            json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
             progress_name,
             percent=100,
-            data={
-                "info": DatasetInfo(group=DatasetGroupChoice.keras, alias=name),
-                "reset_model": reset_model,
-            },
+            data={"dataset": dataset, "reset_model": reset_model},
             finished=True,
         )
-    else:
-        progress.pool(
-            progress_name,
-            finished=True,
-            error=DatasetNotFoundInGroupException(name, DatasetGroupChoice.keras.value),
-        )
+    except Exception as error:
+        shutil.rmtree(destination, ignore_errors=True)
+        progress.pool(progress_name, finished=True, error=error)
 
 
 def _choice_from_terra(
     progress_name: str,
     destination: Path,
     name: str,
+    version: str,
     reset_model: bool,
     **kwargs,
 ):
+    source = None
+    zip_destination = get_tempdir(False)
     try:
         zipfile_path = progress_utils.download(
             progress_name,
-            DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name),
+            DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name, version),
             f"{DATASET_CHOICE_TERRA_URL}{name}.zip",
         )
-        zip_destination = progress_utils.unpack(
+        source = progress_utils.unpack(
             progress_name,
-            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
+            DATASET_CHOICE_UNPACK_TITLE
+            % (DatasetGroupChoice.terra.value, name, version),
             zipfile_path,
         )
         os.remove(zipfile_path)
-        zip_filepath = Path(zip_destination, "dataset.zip")
+        dataset_path = DatasetCommonPathsData(basepath=source)
+        shutil.copytree(
+            Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}"),
+            zip_destination,
+        )
+        zip_filepath = Path(zip_destination, "version.zip")
         progress_utils.unpack(
             progress_name,
-            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
+            DATASET_CHOICE_UNPACK_TITLE
+            % (DatasetGroupChoice.custom.value, name, version),
             zip_filepath,
             zip_destination,
         )
         os.remove(zip_filepath)
         shutil.rmtree(destination, ignore_errors=True)
+        os.makedirs(destination, exist_ok=True)
         os.rename(zip_destination, destination)
-        config_path = Path(destination, settings.DATASET_CONFIG)
-        if config_path.is_file():
-            with open(config_path) as config_ref:
-                config_data = json.load(config_ref)
-                config_data["group"] = DatasetGroupChoice.terra.name
-            with open(config_path, "w") as config_ref:
-                json.dump(config_data, config_ref)
-            progress.pool(
-                progress_name,
-                percent=100,
-                data={
-                    "info": DatasetInfo(group=DatasetGroupChoice.terra, alias=name),
-                    "reset_model": reset_model,
-                },
-                finished=True,
-            )
-        else:
-            shutil.rmtree(destination, ignore_errors=True)
-            progress.pool(
-                progress_name,
-                finished=True,
-                error=DatasetNotFoundInGroupException(
-                    name, DatasetGroupChoice.terra.value
-                ),
-            )
+        with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
+            dataset_config = json.load(config_ref)
+        version_path = Path(destination, settings.VERSION_CONFIG)
+        with open(version_path) as version_ref:
+            version_config = json.load(version_ref)
+        os.remove(version_path)
+        shutil.rmtree(source, ignore_errors=True)
+        version_alias = version_config.pop("alias", "")
+        version_name = version_config.pop("name", "")
+        version_config.update(
+            {"version": {"alias": version_alias, "name": version_name}}
+        )
+        dataset_config.update(
+            {
+                "path": destination,
+                "group": DatasetGroupChoice.custom,
+                **version_config,
+            }
+        )
+        dataset = DatasetData(**dataset_config)
+        dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        with open(dataset_config_path, "w") as dataset_config_path_ref:
+            json.dump(dataset.native(), dataset_config_path_ref)
+        progress.pool(
+            progress_name,
+            percent=100,
+            data={"dataset": dataset, "reset_model": reset_model},
+            finished=True,
+        )
     except Exception as error:
+        if source:
+            shutil.rmtree(source, ignore_errors=True)
+        shutil.rmtree(zip_destination, ignore_errors=True)
+        shutil.rmtree(destination, ignore_errors=True)
         progress.pool(progress_name, finished=True, error=error)
 
 
@@ -190,44 +232,62 @@ def _choice_from_custom(
     progress_name: str,
     destination: Path,
     name: str,
+    version: str,
     source: Path,
     reset_model: bool,
     **kwargs,
 ):
     try:
         zip_destination = get_tempdir(False)
-        shutil.copytree(Path(source, f"{name}.{settings.DATASET_EXT}"), zip_destination)
-        zip_filepath = Path(zip_destination, "dataset.zip")
+        dataset_path = DatasetCommonPathsData(
+            basepath=Path(source, f"{name}.{settings.DATASET_EXT}")
+        )
+        shutil.copytree(
+            Path(dataset_path.versions, f"{version}.{settings.DATASET_VERSION_EXT}"),
+            zip_destination,
+        )
+        zip_filepath = Path(zip_destination, "version.zip")
         progress_utils.unpack(
             progress_name,
-            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.custom.value, name),
+            DATASET_CHOICE_UNPACK_TITLE
+            % (DatasetGroupChoice.custom.value, name, version),
             zip_filepath,
             zip_destination,
         )
         os.remove(zip_filepath)
         shutil.rmtree(destination, ignore_errors=True)
+        os.makedirs(destination, exist_ok=True)
         os.rename(zip_destination, destination)
-        config_path = Path(destination, settings.DATASET_CONFIG)
-        if config_path.is_file():
-            progress.pool(
-                progress_name,
-                percent=100,
-                data={
-                    "info": DatasetInfo(group=DatasetGroupChoice.custom, alias=name),
-                    "reset_model": reset_model,
-                },
-                finished=True,
-            )
-        else:
-            shutil.rmtree(destination, ignore_errors=True)
-            progress.pool(
-                progress_name,
-                finished=True,
-                error=DatasetNotFoundInGroupException(
-                    name, DatasetGroupChoice.custom.value
-                ),
-            )
+        with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
+            dataset_config = json.load(config_ref)
+        version_path = Path(destination, settings.VERSION_CONFIG)
+        with open(version_path) as version_ref:
+            version_config = json.load(version_ref)
+        os.remove(version_path)
+        version_alias = version_config.pop("alias", "")
+        version_name = version_config.pop("name", "")
+        version_config.update(
+            {"version": {"alias": version_alias, "name": version_name}}
+        )
+        dataset_config.update(
+            {
+                "path": destination,
+                "group": DatasetGroupChoice.custom,
+                **version_config,
+            }
+        )
+        dataset = DatasetData(**dataset_config)
+        dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        with open(dataset_config_path, "w") as dataset_config_path_ref:
+            json.dump(dataset.native(), dataset_config_path_ref)
+        progress.pool(
+            progress_name,
+            percent=100,
+            data={"dataset": dataset, "reset_model": reset_model},
+            finished=True,
+        )
     except Exception as error:
+        shutil.rmtree(destination, ignore_errors=True)
         progress.pool(progress_name, finished=True, error=error)
 
 
@@ -242,17 +302,17 @@ def _run_choice_method(
         settings.DATASETS_LOADED_DIR,
         dataset_choice.group.name,
         dataset_choice.alias,
+        dataset_choice.version,
     )
-    if Path(_destination, settings.DATASET_CONFIG).is_file():
+    config_path = Path(_destination, settings.DATASET_CONFIG)
+    if config_path.is_file():
+        with open(config_path) as config_path_ref:
+            config = json.load(config_path_ref)
+        dataset = DatasetData(**config)
         progress.pool(
             progress_name,
             percent=100,
-            data={
-                "info": DatasetInfo(
-                    group=dataset_choice.group.name, alias=dataset_choice.alias
-                ),
-                "reset_model": reset_model,
-            },
+            data={"dataset": dataset, "reset_model": reset_model},
             finished=set_finished,
         )
     else:
@@ -260,6 +320,7 @@ def _run_choice_method(
             progress_name=progress_name,
             destination=_destination,
             name=dataset_choice.alias,
+            version=dataset_choice.version,
             source=dataset_choice.path,
             reset_model=reset_model,
         )
@@ -271,12 +332,12 @@ def choice_no_thread(
     _method = getattr(
         sys.modules.get(__name__), f"_choice_from_{dataset_choice.group.name}", None
     )
-    progress.pool.reset(
-        progress_name,
-        message=DATASET_CHOICE_TITLE
-        % (dataset_choice.group.value, dataset_choice.alias),
-        finished=False,
+    message = DATASET_CHOICE_TITLE % (
+        dataset_choice.group.value,
+        dataset_choice.alias,
+        dataset_choice.version,
     )
+    progress.pool.reset(progress_name, message=message, finished=False)
     if _method:
         _run_choice_method(
             method=_method,
@@ -312,7 +373,11 @@ def multiload_no_thread(
             progress.pool(
                 progress_name,
                 message=DATASET_CHOICE_TITLE
-                % (dataset_choice.group.value, dataset_choice.alias),
+                % (
+                    dataset_choice.group.value,
+                    dataset_choice.alias,
+                    dataset_choice.version,
+                ),
                 percent=0,
             )
             _run_choice_method(
