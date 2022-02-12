@@ -63,10 +63,10 @@ export default {
       blocks: 'create/getBlocks',
       links: 'create/getLinks',
       selectLength: 'create/getSelectedLength',
-      getPagination: 'createDataset/getPagination',
+      pagination: 'createDataset/getPagination',
     }),
     isActive() {
-      return Boolean([3, 4].includes(this.getPagination));
+      return Boolean([3, 4].includes(this.pagination));
     },
     keyEvent: {
       set(value) {
@@ -184,7 +184,6 @@ export default {
       this.keyEvent = event;
       const { code, ctrlKey, shiftKey } = event;
       const mouseIsOver = this.mouseIsOver;
-      console.log(event);
       if (event.type === 'keyup') {
         if (mouseIsOver && code === 'Delete') {
           this.remove();
@@ -305,7 +304,7 @@ export default {
       let y = 0;
       x += block.position[0];
       y += block.position[1];
-      const { width = 0, heigth = 0 } = this.$refs?.['block_' + block.id]?.[0]?.getH() || {};
+      const { width = 150, heigth = 60 } = this.$refs?.['block_' + block.id]?.[0]?.getH() || {};
       if (isInput) {
         x += width / 2;
         y += -3;
