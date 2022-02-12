@@ -1,15 +1,15 @@
 <template>
   <div>
     <div class="menu-list">
-      <div @click="selectedType = 0" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 0 }]">
+      <div @click="$emit('select', 0)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 0 }]">
         <d-svg name="clock" />
         <span>Недавние</span>
       </div>
-      <div @click="selectedType = 1" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
+      <div @click="$emit('select', 1)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
         <d-svg name="file-outline" />
         <span>Проектные</span>
       </div>
-      <div @click="selectedType = 2" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
+      <div @click="$emit('select', 2)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
         <d-svg name="world" />
         <span>Terra</span>
       </div>
@@ -42,19 +42,9 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
 export default {
   name: 'choice-menu',
-  data: () => ({
-    selectedType: 2,
-  }),
-  computed: {
-    ...mapGetters({
-      datasets: 'datasets/getDatasets',
-      choiceDataset: 'datasets/choiceDataset',
-    }),
-  },
+  props: ['selectedType']
 };
 </script>
 

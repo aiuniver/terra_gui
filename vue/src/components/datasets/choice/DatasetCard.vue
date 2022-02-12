@@ -1,6 +1,6 @@
 <template>
   <div class="dataset-card-new" @click="onClick">
-    <div class="card-borders"></div>
+    <div :class="['card-borders', { 'card-borders--active': isActive }]"></div>
     <div class="dataset-card-new__wrapper">
       <p class="dataset-card-new__title">{{ dataset.name }}</p>
       <div class="dataset-card-new__info">
@@ -21,7 +21,12 @@ export default {
     dataset: {
       type: Object,
       default: () => {},
-    },
+    }
+  },
+  computed: {
+    isActive() {
+      return this.$store.getters['projects/getProject'].dataset?.alias === this.dataset.alias
+    }
   },
   methods: {
     onClick() {
@@ -85,5 +90,8 @@ export default {
   background-color: #65B9F4;
   clip-path: polygon(0% 0%, 0 40px, 100% 40px, 100% 95px, 0 95px, 0 100%, 15px 100%, 15px 130px, 80px 130px, 80px 100%, 100% 100%, 100% 0);
   z-index: -1;
+  &--active {
+    background-color: #3eba31;
+  }
 }
 </style>
