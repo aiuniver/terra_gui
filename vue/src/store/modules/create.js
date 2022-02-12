@@ -1,9 +1,15 @@
-import { getBlock } from '../const/blocks';
+import { createBlock, setLinks, getLinks } from '../const/blocks';
 
 export default {
   namespaced: true,
   state: () => ({
-    blocks: [getBlock({ id: 1, type: 'data', }), getBlock({ id: 2, type: 'handler', position: [20, 20] }), getBlock({ id: 4, type: 'output', position: [60, 60] })],
+    inputs: [
+      createBlock({ id: 1, type: 'data', position: [0, 0], bind: { up: [], down: [2,3] } }),
+      createBlock({ id: 2, type: 'handler', position: [0, 100], bind: { up: [1], down: [3] } }),
+      createBlock({ id: 3, type: 'handler', position: [200, 100], bind: { up: [2,1], down: [] } })
+    ],
+    outputs: [],
+    blocks: [],
     links: [],
     key: {},
     creation: {},
@@ -14,6 +20,7 @@ export default {
     },
     SET_LINKS (state, value) {
       state.links = value;
+      state.blocks = setLinks(state.blocks, value)
     },
     SET_KEY_EVENT (state, value) {
       state.key = value;
@@ -21,12 +28,44 @@ export default {
     SET_CREATION (state, value) {
       state.creation = value;
     },
+    SET_OUTPUT (state, value) {
+      state.outputs = value;
+    },
+    SET_INTPUT (state, value) {
+      state.inputs = value;
+    },
   },
   actions: {
     // BLOCKS____________________________________________________
+
+    main ({ commit, state: { blocks, inputs, outputs } }, { value, old }) {
+      if (value === 3 && old === 2) {
+        commit('SET_BLOCKS', [...inputs]);
+      }
+      if (value === 4 && old === 3) {
+        commit('SET_INTPUT', [...blocks]);
+        commit('SET_BLOCKS', [...outputs]);
+      }
+      if (value === 5 && old === 4) {
+        commit('SET_OUTPUT', [...blocks]);
+        commit('SET_BLOCKS', []);
+      }
+      if (value === 4 && old === 5) {
+        commit('SET_BLOCKS', [...outputs]);
+      }
+      if (value === 3 && old === 4) {
+        commit('SET_OUTPUT', [...blocks]);
+        commit('SET_BLOCKS', [...inputs]);
+      }
+      if (value === 2 && old === 3) {
+        commit('SET_INTPUT', [...blocks]);
+        commit('SET_BLOCKS', []);
+      }
+    },
+
     add ({ commit, state: { blocks } }, { type, position }) {
       const id = Math.max(0, ...blocks.map(o => o.id)) + 1;
-      const block = getBlock({ id, type, position, selected: true })
+      const block = createBlock({ id, type, position, selected: true })
       commit('SET_BLOCKS', [...blocks, block]);
     },
 
@@ -155,7 +194,7 @@ export default {
     getDefault: ({ creation }) => (key) => creation[key] || [],
     getBlocks: ({ blocks }) => blocks,
     getKeyEvent: ({ key }) => key,
-    getLinks: ({ links }) => links,
+    getLinks: ({ blocks }) => getLinks(blocks),
     getBlock: ({ blocks }) => id => {
       const index = blocks.findIndex(item => item.id == id);
       return blocks[index] || {};

@@ -7,18 +7,41 @@ export default {
     selectSource: {},
     file_manager: [],
     source_path: '',
-    pagination: 3,
+    pagination: 2,
     project: {
       active: 0,
-      name: '',
-      version: '',
-      shuffle: false,
-      use_generator: false,
-      url: '',
-      google: '',
-      train: 70,
-      tags: [],
-    }
+      alias: 'airplane',
+      name: 'Самолеты',
+      task_type: "ImageSegmentation",
+      source_path: "sdsdsdsd",
+      tags: [
+        {
+          alias: "proverka",
+          name: "проверка"
+        }
+      ],
+      verAlias: "samoleti_drugaja",
+      verName: "самолеты другая",
+      parent_alias: "airplane",
+      train: 0.7,
+      shuffle: true
+    },
+    inputs: [],
+    outputs: []
+    // "alias": "airplane",
+    // "name": "Самолеты",
+    // "datasets_path": "G:\\Мой диск\\TerraAI\\datasets",
+    // "source_path": "C:\\Users\\Arthur\\AppData\\Local\\Temp\\terraai\\datasets\\sources\\googledrive\\airplane",
+    // "task_type": "ImageSegmentation",
+    // "tags": [
+    //   {
+    //     "alias": "proverka",
+    //     "name": "проверка"
+    //   }
+    // ],
+    // "version": {
+
+
   }),
   mutations: {
     SET_PROJECT (state, value) {

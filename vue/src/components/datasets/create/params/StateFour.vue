@@ -2,16 +2,13 @@
   <div class="state-four">
     <div>
       <t-field label="Название версии">
-        <d-input-text v-model="project.version" />
+        <d-input-text v-model="project.verName" />
       </t-field>
       <div>
         <DSlider v-model="project.train" />
       </div>
       <t-field label="Перемешать">
         <d-checkbox v-model="project.shuffle"></d-checkbox>
-      </t-field>
-      <t-field label="Использовать генератор">
-        <d-checkbox v-model="project.use_generator"></d-checkbox>
       </t-field>
     </div>
   </div>

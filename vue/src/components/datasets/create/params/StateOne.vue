@@ -13,7 +13,7 @@
     <div class="state-one-content mt-10">
       <t-field icon="google" label="Выберите файл на Google диске" v-if="project.active === 0">
         <d-auto-complete
-          v-model="project.google"
+          v-model="project.source_path"
           icon="google-drive"
           placeholder="Введите имя файла"
           :list="getFilesSource"
@@ -22,7 +22,7 @@
         />
       </t-field>
       <t-field icon="link" label="Загрузите по ссылке" v-if="project.active === 1">
-        <d-input-text v-model="project.url" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+        <d-input-text v-model="project.source_path" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
       </t-field>
     </div>
     <div>
@@ -30,7 +30,7 @@
         <d-input-text v-model="project.name" />
       </t-field>
       <t-field label="Тип архитектуры">
-        <d-input-text v-model="project.version" />
+        <d-input-text v-model="project.task_type" />
       </t-field>
       <div class="mb-2">
         <DTags v-model="project.tags" />
@@ -75,8 +75,7 @@ export default {
     },
     onTabs(tab) {
       this.project.active = tab;
-      this.project.google = '';
-      this.project.url = '';
+      this.project.source_path = '';
       this.setSelectSource({});
     },
   },

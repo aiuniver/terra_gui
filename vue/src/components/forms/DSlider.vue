@@ -114,7 +114,7 @@ export default {
         let pos = e.pageX - btn.parentNode.getBoundingClientRect().x;
         const width = this.$refs.slider.clientWidth
         this.btnFirstVal = Math.round((pos / width) * 100);
-        console.log(this.btnFirstVal)
+        // console.log(this.btnFirstVal)
         if (this.btnFirstVal < 10) this.btnFirstVal = 10;
         if (this.btnFirstVal > 90) this.btnFirstVal = 90;
       }
@@ -152,10 +152,10 @@ export default {
     },
     btnFirstVal: {
       set(value) {
-        this.$emit('input', value);
+        this.$emit('input', (value / 100));
       },
       get() {
-        return this.value;
+        return Math.round(this.value * 100);
       },
     },
   },

@@ -1,4 +1,4 @@
-{
+const project = {
     "alias": "airplane",
     "name": "Самолеты",
     "datasets_path": "G:\\Мой диск\\TerraAI\\datasets",
@@ -258,3 +258,5 @@
         ]
     }
 }
+
+export { project }

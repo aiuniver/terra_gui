@@ -63,6 +63,7 @@ export default {
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
       setPagination: 'createDataset/setPagination',
       setOverlay: 'settings/setOverlay',
+      blockSelect: 'create/main',
     }),
     onNext() {
       if (this.value === 1) this.onDownload();
@@ -97,6 +98,12 @@ export default {
   },
   beforeDestroy() {
     this.debounce(false);
+  },
+  watch: {
+    value(value, old) {
+      console.log(value, old)
+      this.blockSelect({ value, old });
+    },
   },
 };
 </script>
