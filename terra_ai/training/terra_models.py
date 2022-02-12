@@ -16,7 +16,7 @@ from tensorflow.python.keras.models import Model
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.gan_callback import CGANCallback
 from terra_ai.callbacks.utils import loss_metric_config, get_dataset_length, CLASSIFICATION_ARCHITECTURE
-from terra_ai.custom_objects.customLayers import terra_custom_layers
+from terra_ai.custom_objects.custom_layers import terra_custom_layers
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.training.train import TrainingDetailsData
 from terra_ai.datasets.preparing import PrepareDataset
@@ -24,6 +24,7 @@ from terra_ai.logging import logger
 from terra_ai.training.yolo_utils import decode, compute_loss, get_mAP
 import terra_ai.exceptions.callbacks as exception
 from typing import Optional
+from tensorflow.keras import backend as K
 
 
 class BaseTerraModel:
@@ -32,10 +33,10 @@ class BaseTerraModel:
     def __init__(self, model, model_name: str, model_path: Path):
 
         self.model_name = model_name
-        self.model_json = f"{model_name}_json.trm"
-        self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
-        self.model_weights = f"{model_name}_weights"
-        self.model_best_weights = f"{model_name}_best_weights"
+        self.model_json = f"model_json.trm"
+        self.custom_obj_json = f"model_custom_obj_json.trm"
+        self.model_weights = f"model_weights"
+        self.model_best_weights = f"model_best_weights"
 
         self.saving_path = model_path
         self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
@@ -114,6 +115,7 @@ class BaseTerraModel:
             except:
                 continue
         return custom_object
+
 
     def __get_json_data(self):
         with open(self.file_path_model_json) as json_file:
@@ -926,7 +928,7 @@ class GANTerraModel:
     def __init__(self, model: dict, model_name: str, model_path: Path, **options):
         self.saving_path = model_path
         self.model_name = model_name
-        self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
+        self.custom_obj_json = f"model_custom_obj_json.trm"
         self.file_path_gen_json = os.path.join(self.saving_path, "generator_json.trm")
         self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
@@ -942,6 +944,11 @@ class GANTerraModel:
             self.generator: Model = model.get('generator')
             self.discriminator: Model = model.get('discriminator')
 
+        self.vae_discriminator = self.detect_vae_discriminator()
+        # if self.vae_discriminator:
+        #     for layer in self.discriminator.layers:
+        #         layer.training = True
+
         self.generator_json = self.generator.to_json()
         self.discriminator_json = self.discriminator.to_json()
         self.noise = self.generator.inputs[0].shape[1:]
@@ -954,6 +961,15 @@ class GANTerraModel:
         self.train_length = 0
         self.custom_object = {}
         pass
+
+    def detect_vae_discriminator(self):
+        vae = False
+        for layer in self.discriminator.layers:
+            if "VAEDiscriminatorBlock" in layer.name:
+                vae = True
+                break
+        return vae
+
 
     def save(self) -> None:
         method_name = 'save'
@@ -1067,12 +1083,45 @@ class GANTerraModel:
             return tf.random.normal(shape=shape)
 
     @staticmethod
+    def VDB_loss(loss_func, out, label, mean, logvar, beta):
+        I_c = 0.5
+        normal_D_loss = loss_func(out, label)
+        kldiv_loss = - 0.5 * K.mean(1 + logvar - K.square(mean) - K.exp(logvar))
+        kldiv_loss = kldiv_loss - I_c
+        final_loss = normal_D_loss + beta * kldiv_loss
+        return final_loss, kldiv_loss
+
+    @staticmethod
     def discriminator_loss(loss_func, real_output, fake_output):
         NOISE_COEF = 0.02
         real_loss = loss_func(tf.ones_like(real_output) * (1 - NOISE_COEF), real_output)
         fake_loss = loss_func(tf.ones_like(fake_output) * NOISE_COEF, fake_output)
         total_loss = real_loss + fake_loss
         return total_loss, real_loss, fake_loss
+
+    @staticmethod
+    def vae_discriminator_loss(loss_func, real_output, fake_output, beta):
+        alpha = 1e-5
+        real_loss, loss_kldiv_real = GANTerraModel.VDB_loss(
+            loss_func=loss_func,
+            out=real_output[0][0],
+            label=tf.ones_like(real_output[0][0]),
+            mean=real_output[0][1],
+            logvar=real_output[0][2],
+            beta=beta
+        )
+        fake_loss, loss_kldiv_fake = GANTerraModel.VDB_loss(
+            loss_func=loss_func,
+            out=fake_output[0][0],
+            label=tf.zeros_like(fake_output[0][0]),
+            mean=fake_output[0][1],
+            logvar=fake_output[0][2],
+            beta=beta
+        )
+        total_loss = real_loss + fake_loss
+        loss_kldiv = loss_kldiv_real + loss_kldiv_fake
+        new_beta = tf.reduce_max([0., beta + alpha * loss_kldiv])
+        return total_loss, real_loss, fake_loss, new_beta
 
     @staticmethod
     def generator_loss(loss_func, fake_output):
@@ -1098,7 +1147,8 @@ class GANTerraModel:
         return image
 
     @tf.function
-    def __train_step(self, images, gen_batch, dis_batch, grad_penalty=False, gp_weight=1, **options):
+    def __train_step(self, images, gen_batch, dis_batch, beta, **options):
+        # new_beta = tf.convert_to_tensor(0.)
         images = tf.cast(images, dtype='float32')
         noise_shape = [gen_batch]
         noise_shape.extend(list(self.noise))
@@ -1108,17 +1158,30 @@ class GANTerraModel:
 
             real_output = self.discriminator(images, training=True)
             fake_output = self.discriminator(generated_images, training=True)
+            # print('real_output', real_output[0])
+            # print('fake_output', fake_output[0][0])
 
-            gen_loss = self.generator_loss(loss_func=self.generator_loss_func, fake_output=fake_output)
-            disc_loss, disc_real_loss, disc_fake_loss = self.discriminator_loss(
-                loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
+            if self.vae_discriminator:
+                gen_loss = self.generator_loss(loss_func=self.generator_loss_func, fake_output=fake_output[0][0])
+                disc_loss, disc_real_loss, disc_fake_loss, new_beta = self.vae_discriminator_loss(
+                    loss_func=self.discriminator_loss_func,
+                    real_output=real_output,
+                    fake_output=fake_output,
+                    beta=beta
+                )
+                # print('disc_loss, disc_real_loss, disc_fake_loss, new_beta', disc_loss, disc_real_loss, disc_fake_loss, new_beta)
+            else:
+                new_beta = tf.convert_to_tensor(0.)
+                gen_loss = self.generator_loss(loss_func=self.generator_loss_func, fake_output=fake_output)
+                disc_loss, disc_real_loss, disc_fake_loss = self.discriminator_loss(
+                    loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
         self.generator_optimizer.apply_gradients(
             zip(gradients_of_generator, self.generator.trainable_variables))
         self.discriminator_optimizer.apply_gradients(
             zip(gradients_of_discriminator, self.discriminator.trainable_variables))
-        return gen_loss, disc_loss, disc_real_loss, disc_fake_loss
+        return gen_loss, disc_loss, disc_real_loss, disc_fake_loss, new_beta
 
     def fit(self, params: TrainingDetailsData, dataset: PrepareDataset):
         method_name = 'fit'
@@ -1134,6 +1197,8 @@ class GANTerraModel:
             end_epoch = self.callback.total_epochs
             train_data_idxs = np.arange(self.train_length).tolist()
             self.callback.on_train_begin()
+            beta = 0
+
             for epoch in range(current_epoch, end_epoch):
                 self.callback.on_epoch_begin()
                 current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
@@ -1143,8 +1208,15 @@ class GANTerraModel:
                         buffer_size=params.base.batch).batch(params.base.batch):
                     cur_step += 1
                     image = self.add_noise_to_image(image_data.get(self.discriminator.inputs[0].name))
+                    # print(tf.reduce_max(image))
                     results = self.__train_step(
-                        images=image, gen_batch=params.base.batch, dis_batch=params.base.batch)
+                        images=image,
+                        gen_batch=params.base.batch,
+                        dis_batch=params.base.batch,
+                        beta=beta
+                    )
+                    beta = results[-1].numpy()
+                    # print('gen_loss, disc_loss, new_beta', results[0].numpy(), results[1].numpy(), results[-1].numpy())
                     gen_loss += results[0].numpy()
                     disc_loss += results[1].numpy()
                     disc_real_loss += results[2].numpy()
@@ -1164,8 +1236,6 @@ class GANTerraModel:
                         break
 
                 self.save_weights()
-                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1182,7 +1252,6 @@ class GANTerraModel:
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # self.predict(data_array=None, options=None)
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1361,12 +1430,8 @@ class ConditionalGANTerraModel(GANTerraModel):
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:
                         break
-                    # if cur_step > 50:
-                    #     break
 
                 self.save_weights()
-                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1399,22 +1464,6 @@ class ConditionalGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # for image_data, _ in dataset.dataset.get('train').batch(256).take(1):
-                # batch_size = 16
-                # shape = [32*batch_size]
-                # image_size = (64, 64, 3)
-                # shape.extend(image_size)
-                # pred = np.zeros(shape)
-                # for i in range(32):
-                #     pred[i*batch_size:(i+1)*batch_size] = self.predict(data_array=dataset.dataset.get('train').batch(batch_size)).numpy()
-                # pred = self.predict(data_array=dataset.dataset.get('train'), batch_size=1)
-                # logger.debug(f"pred: {pred.shape}")
-                # postprocc = CGANCallback.postprocess_deploy(
-                #     array=pred, options=dataset, save_path=Path("D:\AI")
-                # )
-                # logger.debug(f"postprocc: {postprocc, len(postprocc['output'])}")
-                # break
-
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1599,8 +1648,6 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                         break
 
                 self.save_weights()
-                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1639,10 +1686,6 @@ class TextToImageGANTerraModel(ConditionalGANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # for image_data, _ in dataset.dataset.get('train').shuffle(
-                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                #     self.predict(data_array=image_data, options=dataset)
-                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -1814,12 +1857,8 @@ class ImageToImageGANTerraModel(GANTerraModel):
                         self.callback.on_train_batch_end(batch=cur_step)
                     if self.callback.stop_training:
                         break
-                    # if cur_step > 50:
-                    #     break
 
                 self.save_weights()
-                # if (epoch + 1) % params.base.architecture.parameters.checkpoint.epoch_interval == 0:
-                #     self.save_weights(save_type=f'epoch_{epoch + 1}')
 
                 if self.callback.stop_training:
                     break
@@ -1837,10 +1876,6 @@ class ImageToImageGANTerraModel(GANTerraModel):
                     train_data_idxs=train_data_idxs,
                     logs=current_logs
                 )
-                # for image_data, _ in dataset.dataset.get('train').shuffle(
-                #         buffer_size=params.base.batch).batch(params.base.batch).take(1):
-                #     self.predict(data_array=image_data, options=dataset)
-                #     break
             self.callback.on_train_end()
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(

@@ -33,12 +33,12 @@ Defaults = {
 }
 
 
-def __get_group_type_params(data, group) -> list:
+def __get_group_type_params(layer, data, group) -> list:
     output = []
     for name in data.__fields__:
         output.append(
             prepare_pydantic_field(
-                data.__fields__[name], f"parameters[{group}][{name}]"
+                layer, data.__fields__[name], f"parameters[{group}][{name}]"
             )
         )
     return output
@@ -49,8 +49,16 @@ for layer in Layer:
     Defaults["modeling"]["layers_types"].update(
         {
             LayerTypeChoice[layer.name].value: {
-                "main": __get_group_type_params(params.ParametersMainData, "main"),
-                "extra": __get_group_type_params(params.ParametersExtraData, "extra"),
+                "main": __get_group_type_params(
+                    LayerTypeChoice[layer.name].value,
+                    params.ParametersMainData,
+                    "main",
+                ),
+                "extra": __get_group_type_params(
+                    LayerTypeChoice[layer.name].value,
+                    params.ParametersExtraData,
+                    "extra",
+                ),
             }
         }
     )

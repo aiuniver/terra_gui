@@ -642,15 +642,6 @@ class LayerDepthToSpaceData(LayerMixinData):
 #     extra: types.DarkNetResBlock.ParametersExtraData = (
 #         types.DarkNetResBlock.ParametersExtraData()
 #     )
-#
-#
-# class LayerDarkNetBatchNormalizationData(LayerMixinData):
-#     main: types.DarkNetBatchNormalization.ParametersMainData = (
-#         types.DarkNetBatchNormalization.ParametersMainData()
-#     )
-#     extra: types.DarkNetBatchNormalization.ParametersExtraData = (
-#         types.DarkNetBatchNormalization.ParametersExtraData()
-#     )
 
 
 class LayerCONVBlockData(LayerMixinData):
@@ -728,6 +719,16 @@ class LayerPretrainedBERTData(LayerMixinData):
     extra: types.PretrainedBERT.ParametersExtraData = (
         types.PretrainedBERT.ParametersExtraData()
     )
+
+
+class LayerVAEDiscriminatorBlockData(LayerMixinData):
+    main: types.VAEDiscriminatorBlock.ParametersMainData = types.VAEDiscriminatorBlock.ParametersMainData()
+    extra: types.VAEDiscriminatorBlock.ParametersExtraData = (types.VAEDiscriminatorBlock.ParametersExtraData())
+
+
+class LayerPretrainedModelData(LayerMixinData):
+    main: types.PretrainedModel.ParametersMainData = types.PretrainedModel.ParametersMainData()
+    extra: types.PretrainedModel.ParametersExtraData = (types.PretrainedModel.ParametersExtraData())
 
 
 class LayerPretrainedYOLOData(LayerMixinData):

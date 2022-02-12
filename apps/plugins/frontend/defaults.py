@@ -7,6 +7,7 @@ from pydantic.main import ModelMetaclass
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.layer import LayersList
+from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.training.extra import (
     ArchitectureChoice,
     TasksRelations,
@@ -898,3 +899,19 @@ class DefaultsData(BaseMixinData):
                 {"value": str(CASCADE_PATH.absolute()), "label": "Текущий каскад"}
             ]
             deploy_cascade_field.value = deploy_cascade_field.list[0].get("value")
+
+        modeling_model_path = self.modeling.layers_types.get(
+            LayerTypeChoice.PretrainedModel
+        ).get("main")[0]
+        if modeling_model_path:
+            modeling_model_path.list = [
+                {"value": "__current", "label": "Текущее обучение"}
+            ] + options
+            if modeling_model_path.value not in list(
+                map(lambda item: item.get("value"), modeling_model_path.list)
+            ):
+                modeling_model_path.value = (
+                    modeling_model_path.list[0].get("value")
+                    if len(modeling_model_path.list)
+                    else None
+                )
