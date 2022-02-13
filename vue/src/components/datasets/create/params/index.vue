@@ -62,6 +62,7 @@ export default {
       setSourceLoad: 'createDataset/setSourceLoad',
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
       setPagination: 'createDataset/setPagination',
+      create: 'createDataset/create',
       setOverlay: 'settings/setOverlay',
       blockSelect: 'create/main',
     }),
@@ -74,6 +75,7 @@ export default {
     },
     onCreate() {
       console.log('create')
+      this.create()
     },
     async onProgress() {
       const res = await this.sourceLoadProgress();

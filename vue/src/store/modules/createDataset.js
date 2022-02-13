@@ -1,4 +1,4 @@
-import { getFiles } from "../const/create";
+import { getFiles, createObj } from "../const/create";
 
 export default {
   namespaced: true,
@@ -50,6 +50,12 @@ export default {
     },
   },
   actions: {
+    
+    async create ({ dispatch, state: { project, source_path }, rootState: { create: { inputs, outputs } } }) {
+      const data = createObj({ project, inputs, outputs, source_path })
+      return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
+    },
+
     setProject ({ commit }, value) {
       commit('SET_PROJECT', value)
     },
