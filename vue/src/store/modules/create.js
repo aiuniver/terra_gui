@@ -4,9 +4,9 @@ export default {
   namespaced: true,
   state: () => ({
     inputs: [
-      createBlock({ id: 1, type: 'data', position: [0, 0], bind: { up: [], down: [2,3] } }),
+      createBlock({ id: 1, type: 'data', position: [0, 0], bind: { up: [], down: [2, 3] } }),
       createBlock({ id: 2, type: 'handler', position: [0, 100], bind: { up: [1], down: [3] } }),
-      createBlock({ id: 3, type: 'handler', position: [200, 100], bind: { up: [2,1], down: [] } })
+      createBlock({ id: 3, type: 'handler', position: [200, 100], bind: { up: [2, 1], down: [] } })
     ],
     outputs: [],
     blocks: [],
@@ -61,6 +61,17 @@ export default {
         commit('SET_INTPUT', [...blocks]);
         commit('SET_BLOCKS', []);
       }
+    },
+
+    setParameters ({ commit, state: { blocks } }, { parameters, id }) {
+      console.log(parameters, id)
+      const newBlocks = blocks.map(i => {
+        if (i.id === id) {
+          i.parameters = parameters
+        }
+        return i
+      })
+      commit('SET_BLOCKS', [...newBlocks]);
     },
 
     add ({ commit, state: { blocks } }, { type, position }) {

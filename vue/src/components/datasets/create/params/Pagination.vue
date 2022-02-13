@@ -11,7 +11,7 @@
         <span>{{ getTitle }}</span>
       </div>
     </div>
-    <d-button style="width: 40%" color="secondary" direction="left" text="Далее" :disabled="isStatus" @click="$emit('next', $event)" />
+    <d-button style="width: 40%" color="secondary" direction="left" :text="getTextBtn" :disabled="isStatus" @click="onNext" />
   </div>
 </template>
 
@@ -42,12 +42,19 @@ export default {
       return false;
     },
     getTitle() {
-      return this.list.find(i => i.id === this.value).title
-    }
+      return this.list.find(i => i.id === this.value).title;
+    },
+    getTextBtn() {
+      return this.value === this.list.length ? 'Создать' : 'Далее';
+    },
   },
   methods: {
     isActive(value) {
       return this.value === value;
+    },
+    onNext(event) {
+      this.$emit('next', event);
+      if (this.value === this.list.length) this.$emit('create', event);
     },
   },
 };

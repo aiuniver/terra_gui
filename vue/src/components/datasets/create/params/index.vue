@@ -9,7 +9,7 @@
       </scrollbar>
     </div>
     <div class="params__footer">
-      <Pagination :value="value" :list="list" @next="onNext" @prev="onPrev" />
+      <Pagination :value="value" :list="list" @next="onNext" @prev="onPrev" @create="onCreate" />
     </div>
   </div>
 </template>
@@ -72,6 +72,9 @@ export default {
     onPrev() {
       if (this.value > 1) this.value = this.value - 1;
     },
+    onCreate() {
+      console.log('create')
+    },
     async onProgress() {
       const res = await this.sourceLoadProgress();
       if (!res?.data?.finished) {
@@ -101,7 +104,7 @@ export default {
   },
   watch: {
     value(value, old) {
-      console.log(value, old)
+      console.log(value, old);
       this.blockSelect({ value, old });
     },
   },

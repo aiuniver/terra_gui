@@ -13,7 +13,7 @@ export default {
       alias: 'airplane',
       name: 'Самолеты',
       task_type: "ImageSegmentation",
-      source_path: "sdsdsdsd",
+      source_path: "",
       tags: [
         {
           alias: "proverka",
@@ -28,20 +28,6 @@ export default {
     },
     inputs: [],
     outputs: []
-    // "alias": "airplane",
-    // "name": "Самолеты",
-    // "datasets_path": "G:\\Мой диск\\TerraAI\\datasets",
-    // "source_path": "C:\\Users\\Arthur\\AppData\\Local\\Temp\\terraai\\datasets\\sources\\googledrive\\airplane",
-    // "task_type": "ImageSegmentation",
-    // "tags": [
-    //   {
-    //     "alias": "proverka",
-    //     "name": "проверка"
-    //   }
-    // ],
-    // "version": {
-
-
   }),
   mutations: {
     SET_PROJECT (state, value) {

@@ -1,8 +1,9 @@
 <template>
   <div>
     <t-field>
-      <d-input-text />
+      <v-select></v-select>
     </t-field>
+    {{parameters}}
   </div>
 </template>
 
@@ -10,12 +11,20 @@
 import { mapGetters } from 'vuex';
 export default {
   components: {},
+  props: {
+    selected: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
   computed: {
     ...mapGetters({
-      getSelected: 'create/getSelected',
       getFileManager: 'createDataset/getFileManager',
       getDefault: 'create/getDefault',
     }),
+    parameters() {
+      return this?.selected?.parameters || {};
+    },
   },
 };
 </script>

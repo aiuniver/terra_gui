@@ -48,6 +48,9 @@ export default {
     getFile() {
       return this.getFiles.map(i => ({ label: i.title, value: i.value }));
     },
+    getParametrs() {
+      return this?.selected?.parametrs || {};
+    },
   },
 };
 </script>

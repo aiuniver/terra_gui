@@ -1,6 +1,5 @@
 <template>
   <div class="panel-settings">
-    {{ type }}
     <SettingData v-if="type === 'data'" :selected="getSelected" />
     <SettingHandler v-if="type === 'handler'" :selected="getSelected" />
     <SettingOutput v-if="['output', 'input'].includes(type)" :selected="getSelected" />
