@@ -229,6 +229,7 @@ class ModuleChoice(str, Enum):
     terra_normalization_custom_layers = "terra_ai.custom_objects.normalization_custom_layers"
     terra_pretrained_custom_layers = "terra_ai.custom_objects.pretrained_custom_layers"
     terra_yolo_custom_layers = "terra_ai.custom_objects.yolo_custom_layers"
+    terra_transformer_custom_layers = "terra_ai.custom_objects.transformer_custom_layers"
     tensorflow_keras_layers_preprocessing = (
         "tensorflow.keras.layers.experimental.preprocessing"
     )

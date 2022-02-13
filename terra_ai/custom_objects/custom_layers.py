@@ -15,6 +15,9 @@ terra_custom_layers = {
     "ConditionalMergeLayer": "gan_custom_layers",
     "ResnetBlock2D": "base_custom_layers",
     "RGBNormalization": "normalization_custom_layers",
+    "FNetTransformer": "transformer_custom_layers",
+    "Transformer": "transformer_custom_layers",
+    "PretrainedBERT": "pretrained_custom_layers",
     "VAEDiscriminatorBlock": "gan_custom_layers",
     "PretrainedModel": "pretrained_custom_layers",
 }

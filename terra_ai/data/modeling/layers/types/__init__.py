@@ -154,7 +154,7 @@ from . import (
     Transformer,
     FNetTransformer,
     PretrainedBERT,
-    RGBNormalization
+    RGBNormalization,
     VAEDiscriminatorBlock,
     PretrainedModel,
 )
