@@ -7,7 +7,7 @@ export default {
     selectSource: {},
     file_manager: [],
     source_path: '',
-    pagination: 2,
+    pagination: 1,
     project: {
       active: 0,
       alias: 'airplane',
@@ -50,7 +50,7 @@ export default {
     },
   },
   actions: {
-    
+
     async create ({ dispatch, state: { project, source_path }, rootState: { create: { inputs, outputs } } }) {
       const data = createObj({ project, inputs, outputs, source_path })
       return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
