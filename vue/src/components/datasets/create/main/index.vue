@@ -62,7 +62,7 @@ export default {
       getKeyEvent: 'create/getKeyEvent',
       blocks: 'create/getBlocks',
       links: 'create/getLinks',
-      selectLength: 'create/getSelectedLength',
+      getSelected: 'create/getSelected',
       pagination: 'createDataset/getPagination',
     }),
     isActive() {

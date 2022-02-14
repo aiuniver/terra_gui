@@ -10,7 +10,7 @@
     </div>
     <div class="panel-input__forms">
       <t-field label="Входные данные">
-        <d-auto-complete :value="getValueData" placeholder="Архитектуры" :list="listFiles" @change="onArchitectures" />
+        <d-multi-select :value="getValueData" placeholder="Данные" :list="listFiles" @change="onFile" />
       </t-field>
       {{ getParametrs }}
     </div>
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import Cards from '../card/Cards';
 import CardFile from '../card/CardFile';
 import CardTable from '../card/CardTable';
@@ -47,14 +47,34 @@ export default {
       return this.getFileManager.map(i => ({ label: i.title, value: i.value }));
     },
     getFile() {
-      return this.getFiles.map(i => ({ label: i.title, value: i.value }));
+      return this.getFiles.filter(i => this.items.includes(i.label));
     },
-    getValueData () {
-      const value = this.selected?.parametrs?.filename || ''
-      return this.listFiles.find(i => i.value === value)
+    getValueData() {
+      return this.selected?.parameters?.items || [];
     },
     getParametrs() {
-      return this?.selected?.parametrs || {};
+      return this?.selected?.parameters || {};
+    },
+    id() {
+      return this.selected.id;
+    },
+    items() {
+      return this.selected?.parameters?.items || [];
+    },
+  },
+  methods: {
+    ...mapActions({
+      setParameters: 'create/setParameters',
+    }),
+    onFile(data) {
+      let items = this.items;
+      if (items.includes(data.label)) {
+        items = items.filter(i => i !== data.label);
+      } else {
+        items.push(data.label);
+      }
+      const parameters = { ...this.parameters, items };
+      this.setParameters({ id: this.id, parameters });
     },
   },
 };

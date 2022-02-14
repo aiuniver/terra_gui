@@ -1,8 +1,8 @@
 <template>
   <div class="panel-settings">
-    <SettingData v-if="type === 'data'" :selected="getSelected" />
-    <SettingHandler v-if="type === 'handler'" :selected="getSelected" />
-    <SettingOutput v-if="['output', 'input'].includes(type)" :selected="getSelected" />
+    <SettingData v-if="type === 'data'" :selected="selected" />
+    <SettingHandler v-if="type === 'handler'" :selected="selected" />
+    <SettingOutput v-if="['output', 'input'].includes(type)" :selected="selected" />
     <SettingEmpty v-if="!type" />
   </div>
 </template>
@@ -30,12 +30,15 @@ export default {
     ...mapGetters({
       getSelected: 'create/getSelected',
     }),
+    selected() {
+      const len = this.getSelected.filter(i => i.selected).length;
+      return len === 1 ? this.getSelected.find(i => i.selected) : {};
+    },
     type() {
-      return this?.getSelected?.type || '';
+      return this?.selected?.type || '';
     },
   },
-  methods: {
-  },
+  methods: {},
 };
 </script>
 

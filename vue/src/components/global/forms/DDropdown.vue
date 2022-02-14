@@ -2,7 +2,6 @@
   <div class="dropdown" :class='{ "t-dropdown--active": show }' v-outside="outside">
     <div class="dropdown__activator">
       <slot name="activator" :on="on"></slot>
-      <i class="ci-icon ci-caret_down" @click="click"/>
     </div>
     <div v-show="show" class="dropdown__content" @click="click">
       <slot></slot>
@@ -47,19 +46,19 @@ export default {
     display: flex;
     align-items: center;
     cursor: pointer;
-    &::before {
-      position: absolute;
-      z-index: 1;
-      top: 0;
-      right: 3px;
-      bottom: 0;
-      width: 0.8rem;
-      height: 0.4rem;
-      margin: auto;
-      content: '';
-      pointer-events: none;
-      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0L10 0L5 6L0 0Z' fill='%23777E78'/%3E%3C/svg%3E%0A") no-repeat center center/cover
-    }
+    // &::before {
+    //   position: absolute;
+    //   z-index: 1;
+    //   top: 0;
+    //   right: 3px;
+    //   bottom: 0;
+    //   width: 0.8rem;
+    //   height: 0.4rem;
+    //   margin: auto;
+    //   content: '';
+    //   pointer-events: none;
+    //   background: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0L10 0L5 6L0 0Z' fill='%23777E78'/%3E%3C/svg%3E%0A") no-repeat center center/cover
+    // }
 
   }
   &__content {

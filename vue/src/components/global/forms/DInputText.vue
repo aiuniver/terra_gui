@@ -1,5 +1,9 @@
 <template>
-  <div class="d-input" :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]">
+  <div
+    class="d-input"
+    :class="[{ 'd-input--error': error }, { 'd-input--small': small }, { 'd-input--disabled': isDisabled }]"
+    @click="$emit('click', $event)"
+  >
     <div v-if="icon" class="d-input__icon">
       <i :class="`ci-icon ci-${icon}`" />
     </div>
@@ -73,5 +77,4 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/assets/scss/components/fields.scss';
-
 </style>

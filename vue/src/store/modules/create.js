@@ -221,7 +221,6 @@ export default {
       const index = blocks.findIndex(item => item.id == id);
       return blocks[index] || {};
     },
-    getSelectedLength: ({ blocks }) => blocks.filter(i => i.selected).length,
-    getSelected: ({ blocks }) => blocks.find(i => i.selected),
+    getSelected: ({ blocks }) => blocks.filter(i => i.selected),
   },
 };
