@@ -42,7 +42,6 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      select: 'createDataset/getSelectSource',
       getPagination: 'createDataset/getPagination',
     }),
     getComp() {
@@ -86,8 +85,7 @@ export default {
       }
     },
     async onDownload() {
-      const { mode, value } = this.select;
-      const success = await this.setSourceLoad({ mode, value });
+      const success = await this.setSourceLoad();
       if (success) {
         this.setOverlay(true);
         this.debounce(true);

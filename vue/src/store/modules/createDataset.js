@@ -4,16 +4,19 @@ export default {
   namespaced: true,
   state: () => ({
     filesSource: [],
-    selectSource: {},
     file_manager: [],
+    architectures: [],
     source_path: '',
     pagination: 1,
     project: {
       active: 0,
       alias: 'airplane',
       name: 'Самолеты',
-      task_type: "ImageSegmentation",
-      source_path: "",
+      architecture: "ImageClassification",
+      source_path: {
+        mode: 'GoogleDrive',
+        value: '/home/bondrogeen/github/terra_gui/TerraAI/datasets/sources/Seasons.zip'
+      },
       tags: [
         {
           alias: "proverka",
@@ -30,6 +33,9 @@ export default {
     outputs: []
   }),
   mutations: {
+    SET_ARCHITECTURES (state, value) {
+      state.architectures = value;
+    },
     SET_PROJECT (state, value) {
       state.project = value;
     },
@@ -38,9 +44,6 @@ export default {
     },
     SET_FILES_SOURCE (state, value) {
       state.filesSource = value;
-    },
-    SET_SELECT_SOURCE (state, value) {
-      state.selectSource = value;
     },
     SET_FILE_MANAGER (state, value) {
       state.file_manager = value;
@@ -71,8 +74,9 @@ export default {
       }
       return res
     },
-    async setSourceLoad ({ dispatch }, { mode, value }) {
-      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { mode, value } }, { root: true });
+    async setSourceLoad ({ dispatch, state: { project } }) {
+      const { source_path, architecture } = project
+      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { ...source_path, architecture } }, { root: true });
       return success
     },
     async getDatasetSources ({ commit, dispatch }) {
@@ -80,18 +84,14 @@ export default {
       commit('SET_FILES_SOURCE', data || [])
       return data
     },
-    async setSelectSource ({ commit }, select) {
-      console.log(select)
-      commit('SET_SELECT_SOURCE', select)
-    },
   },
   getters: {
     getFiles: ({ file_manager }) => getFiles(file_manager),
     getFilesSource: ({ filesSource }) => filesSource,
-    getSelectSource: ({ selectSource }) => selectSource,
     getFileManager: ({ file_manager }) => file_manager,
     getProject: ({ project }) => project,
     getPagination: ({ pagination }) => pagination,
+    getArchitectures: ({ architectures }) => architectures,
 
   },
 };

@@ -26,7 +26,7 @@ export default {
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation }, training: form, cascades: formsCascades, deploy } } = data;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation, architectures }, training: form, cascades: formsCascades, deploy } } = data;
       const { model, training, cascade } = project;
 
       commit("SET_PROJECT", project);
@@ -37,6 +37,7 @@ export default {
       commit("cascades/SET_MODEL", cascade, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
       commit("create/SET_CREATION", creation, { root: true });
+      commit("createDataset/SET_ARCHITECTURES", architectures, { root: true });
       dispatch("trainings/parseStruct", { ...training, form }, { root: true });
       dispatch("deploy/parseStruct", { form: deploy }, { root: true });
       if (training?.deploy) {

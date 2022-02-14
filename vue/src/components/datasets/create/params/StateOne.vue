@@ -2,27 +2,27 @@
   <div class="state-one">
     <div class="state-one-list flex align-center">
       <div
-        v-for="{ text, tab } in items"
-        :class="['state-one-list__item', { 'state-one-list__item--active': isActive(tab) }]"
-        :key="`tab_${tab}`"
-        @click="onTabs(tab)"
+        v-for="{ text, mode } in items"
+        :class="['state-one-list__item', { 'state-one-list__item--active': isActive(mode) }]"
+        :key="`tab_${mode}`"
+        @click="onTabs(mode)"
       >
         {{ text }}
       </div>
     </div>
     <div class="state-one-content mt-10">
-      <t-field icon="google" label="Выберите файл на Google диске" v-if="project.active === 0">
+      <t-field v-if="project.source_path.mode === 'GoogleDrive'" icon="google" label="Выберите файл на Google диске">
         <d-auto-complete
-          v-model="project.source_path"
-          icon="google-drive"
+          :value="getValueSource"
+          :key="getValueSource"
           placeholder="Введите имя файла"
           :list="getFilesSource"
           @click="getDatasetSources"
           @change="onSelect({ mode: 'GoogleDrive', value: $event.value })"
         />
       </t-field>
-      <t-field icon="link" label="Загрузите по ссылке" v-if="project.active === 1">
-        <d-input-text v-model="project.source_path" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+      <t-field v-else icon="link" label="Загрузите по ссылке">
+        <d-input-text v-model="project.source_path.value" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
       </t-field>
     </div>
     <div>
@@ -30,11 +30,12 @@
         <d-input-text v-model="project.name" />
       </t-field>
       <t-field label="Тип архитектуры">
-        <d-input-text v-model="project.task_type" />
+        <d-auto-complete :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" />
       </t-field>
       <div class="mb-2">
         <DTags v-model="project.tags" />
       </div>
+
     </div>
   </div>
 </template>
@@ -49,13 +50,12 @@ export default {
   },
   data: () => ({
     items: [
-      { text: 'Google диск', tab: 0 },
-      { text: 'URL', tab: 1 },
+      { text: 'Google диск', mode: 'GoogleDrive' },
+      { text: 'URL', mode: 'URL' },
     ],
-    active: 0,
   }),
   computed: {
-    ...mapGetters('createDataset', ['getFilesSource', 'getProject']),
+    ...mapGetters('createDataset', ['getFilesSource', 'getProject', 'getArchitectures']),
     project: {
       set(value) {
         this.setProject(value);
@@ -64,25 +64,38 @@ export default {
         return this.getProject;
       },
     },
+    getValueSource() {
+      const value = this.project.source_path.value;
+      return this.getFilesSource.find(i => i.value === value)?.label || '';
+    },
+    getValueArchitectures() {
+      const value = this.project.architecture;
+      return this.getArchitectures.find(i => i.value === value)?.label || '';
+    },
   },
   methods: {
-    ...mapActions('createDataset', ['getDatasetSources', 'setSelectSource']),
-    isActive(tab) {
-      return this.project.active === tab;
+    ...mapActions('createDataset', ['getDatasetSources']),
+    isActive(mode) {
+      return this.project.source_path.mode === mode;
     },
     onSelect(data) {
-      this.setSelectSource(data);
+      this.project.source_path = data;
     },
-    onTabs(tab) {
-      this.project.active = tab;
-      this.project.source_path = '';
-      this.setSelectSource({});
+    onTabs(mode) {
+      this.project.source_path.mode = mode;
+      this.project.source_path.value = '';
     },
+    onArchitectures(value) {
+      console.log(value);
+    },
+  },
+  created() {
+    this.getDatasetSources();
   },
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import '@/assets/scss/variables/default.scss';
 .state-one {
   &-list {
