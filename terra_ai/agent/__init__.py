@@ -43,7 +43,7 @@ from terra_ai.data.modeling.model import (
 )
 from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.data.training.extra import StateStatusChoice
+from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
 from terra_ai.data.cascades.cascade import (
     CascadeDetailsData,
     CascadesList,
@@ -170,7 +170,10 @@ class Exchange:
         """
         Загрузка исходников датасета
         """
-        dataset_source(SourceData(mode=mode, value=value, architecture=architecture))
+        dataset_source(
+            SourceData(mode=mode, value=value),
+            architecture=ArchitectureChoice(architecture),
+        )
 
     def _call_dataset_source_segmentation_classes_auto_search(
         self, path: Path, num_classes: int, mask_range: int
