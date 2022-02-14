@@ -70,7 +70,7 @@ DATASETS_SOURCE_DIR = Path(TMP_DIR, "datasets", "sources")
 DATASETS_LOADED_DIR = Path(TMP_DIR, "datasets", "loaded")
 DATASET_PROGRESS_NAME = "create_dataset"
 VERSION_PROGRESS_NAME = "create_version"
-VERSION_CONFIG = "version.json"
+DATASET_VERSION_CONFIG = "version.json"
 
 # Modeling
 MODEL_EXT = "model"

@@ -7,7 +7,7 @@ from terra_ai.data.datasets.creation import CreationData, CreationVersionData
 from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, DatasetVersionPathsData, VersionData
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
     LayerPrepareMethodChoice, LayerScalerImageChoice
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, VERSION_CONFIG, \
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG, \
     DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME
 from terra_ai import progress
 
@@ -71,7 +71,7 @@ class CreateDataset(object):
         logger.info(f'Создан датасет {creation_data.name}.')
 
         # if creation_data.version:  # Больше сделано для дебаггинга
-        #     self.version = CreateVersion(version_data=creation_data.version)
+        # self.version = CreateVersion(version_data=creation_data.version)
 
     def write_dataset_configure(self, creation_data):
 
@@ -85,7 +85,7 @@ class CreateDataset(object):
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'architecture': creation_data.task_type,
                 }
-        dataset_data = DatasetData(**data)
+        dataset_data = DatasetData(**data) # DatasetCommonData???
         with open(os.path.join(self.dataset_paths_data.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(dataset_data.native(), fp)
 
@@ -97,7 +97,7 @@ class CreateVersion(object):
     @progress.threading
     def __init__(self, version_data: CreationVersionData):
 
-        progress.pool.reset(name=VERSION_PROGRESS_NAME, message='Начало', finished=False)
+        progress.pool.reset(name=VERSION_PROGRESS_NAME, message='Начало создания версии датасета', finished=False)
 
         self.dataframe: dict = {}
         self.columns: dict = {}
@@ -210,34 +210,6 @@ class CreateVersion(object):
         progress.pool(name=VERSION_PROGRESS_NAME, message='Формирование версии датасета завершено', data=version_data,
                       percent=100, finished=True)
         logger.info(f'Создана версия {version_data.name}', extra={'type': "info"})
-
-    @staticmethod
-    def postprocess_timeseries(full_array):
-        try:
-            new_array = np.array(full_array).transpose()
-        except:
-            new_array = []
-            array = []
-            for el in full_array:
-                if type(el[0]) == np.ndarray:
-                    tmp = []
-                    for j in range(len(el)):
-                        tmp.append(list(el[j]))
-                    array.append(tmp)
-                else:
-                    array.append(el.tolist())
-            array = np.array(array).transpose().tolist()
-            for i in array:
-                tmp = []
-                for j in i:
-                    if type(j) == list:
-                        tmp.extend(j)
-                    else:
-                        tmp.append(j)
-                new_array.append(tmp)
-            new_array = np.array(new_array)
-        return new_array
-
 
     #
     # def create_put_instructions(self, put_data, processing):
@@ -625,24 +597,24 @@ class CreateVersion(object):
 
     def write_instructions_to_files(self):
 
-        parameters_path = os.path.join(self.version_paths_data.instructions, 'parameters')
-        tables_path = os.path.join(self.version_paths_data.instructions, 'tables')
-
+        parameters_path = self.version_paths_data.instructions.joinpath('parameters')
         os.makedirs(parameters_path, exist_ok=True)
 
         for cols in self.instructions.inputs.values():
             for col_name, data in cols.items():
-                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as cfg:
+                with open(parameters_path.joinpath(f'{col_name}.json'), 'w') as cfg:
                     json.dump(data.parameters, cfg)
 
         for cols in self.instructions.outputs.values():
             for col_name, data in cols.items():
-                with open(os.path.join(parameters_path, f'{col_name}.json'), 'w') as cfg:
+                with open(parameters_path.joinpath(f'{col_name}.json'), 'w') as cfg:
                     json.dump(data.parameters, cfg)
 
+        tables_path = self.version_paths_data.instructions.joinpath('tables')
         os.makedirs(tables_path, exist_ok=True)
+
         for key in self.dataframe.keys():
-            self.dataframe[key].to_csv(os.path.join(self.version_paths_data.instructions, 'tables', f'{key}.csv'))
+            self.dataframe[key].to_csv(self.version_paths_data.instructions.joinpath('tables', f'{key}.csv'))
 
     def write_version_configure(self, version_data):
         """
@@ -669,5 +641,5 @@ class CreateVersion(object):
                 }
 
         with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
-                      .joinpath(VERSION_CONFIG), 'w') as fp:
+                      .joinpath(DATASET_VERSION_CONFIG), 'w') as fp:
             json.dump(VersionData(**data).native(), fp)
