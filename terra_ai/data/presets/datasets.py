@@ -2790,6 +2790,7 @@ DatasetCommonGroup = [
             {
                 "alias": "cars",
                 "name": "Автомобили",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -2805,6 +2806,7 @@ DatasetCommonGroup = [
             {
                 "alias": "cars_30",
                 "name": "Автомобили (30 классов)",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -2820,6 +2822,7 @@ DatasetCommonGroup = [
             {
                 "alias": "airplane",
                 "name": "Самолеты",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -2835,6 +2838,7 @@ DatasetCommonGroup = [
             {
                 "alias": "guby",
                 "name": "Губы",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -2850,6 +2854,7 @@ DatasetCommonGroup = [
             {
                 "alias": "ljudi",
                 "name": "Люди",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -2865,6 +2870,7 @@ DatasetCommonGroup = [
             {
                 "alias": "monety",
                 "name": "Монеты",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -2880,6 +2886,7 @@ DatasetCommonGroup = [
             {
                 "alias": "zapisi_s_videoregistratora",
                 "name": "Записи с видеорегистратора",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -2895,6 +2902,7 @@ DatasetCommonGroup = [
             {
                 "alias": "video_new",
                 "name": "Видео",
+                "architecture": ArchitectureChoice.VideoClassification,
                 "tags": [
                     Tags.video,
                     Tags.classification,
@@ -2910,6 +2918,7 @@ DatasetCommonGroup = [
             {
                 "alias": "bus_passengers",
                 "name": "Пассажиры автобусов",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -2925,6 +2934,7 @@ DatasetCommonGroup = [
             {
                 "alias": "heads",
                 "name": "Пассажиры автобусов (попарно)",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -2940,6 +2950,7 @@ DatasetCommonGroup = [
             {
                 "alias": "marki_moloka",
                 "name": "Марки молока",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -2955,6 +2966,7 @@ DatasetCommonGroup = [
             {
                 "alias": "chess_v3",
                 "name": "Шахматы v3",
+                "architecture": ArchitectureChoice.YoloV3,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -2970,6 +2982,7 @@ DatasetCommonGroup = [
             {
                 "alias": "chess_v4_new",
                 "name": "Шахматы v4 (генератор)",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -2985,6 +2998,7 @@ DatasetCommonGroup = [
             {
                 "alias": "milk_v4_new",
                 "name": "Молоко v4 (генератор)",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3000,6 +3014,7 @@ DatasetCommonGroup = [
             {
                 "alias": "cards_v4",
                 "name": "Игральные карты v4",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3015,6 +3030,7 @@ DatasetCommonGroup = [
             {
                 "alias": "potholes_v4",
                 "name": "Ямы на дорогах v4",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3030,6 +3046,7 @@ DatasetCommonGroup = [
             {
                 "alias": "trash_v4_new",
                 "name": "Подводный мусор v4 (генератор)",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3045,6 +3062,7 @@ DatasetCommonGroup = [
             {
                 "alias": "bus_split_new",
                 "name": "Автобусы v4 (генератор)",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3060,6 +3078,7 @@ DatasetCommonGroup = [
             {
                 "alias": "symptoms",
                 "name": "Симптомы",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3076,6 +3095,7 @@ DatasetCommonGroup = [
             {
                 "alias": "writers",
                 "name": "Тексты писателей",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3092,6 +3112,7 @@ DatasetCommonGroup = [
             {
                 "alias": "tesla",
                 "name": "Отзывы на Теслу",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3108,6 +3129,7 @@ DatasetCommonGroup = [
             {
                 "alias": "symptoms_bow",
                 "name": "Симптомы (bow)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3124,6 +3146,7 @@ DatasetCommonGroup = [
             {
                 "alias": "writers_bow",
                 "name": "Тексты писателей (bow)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3140,6 +3163,7 @@ DatasetCommonGroup = [
             {
                 "alias": "tesla_bow",
                 "name": "Отзывы на Теслу (bow)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3156,6 +3180,7 @@ DatasetCommonGroup = [
             {
                 "alias": "symptoms_w2v",
                 "name": "Симптомы (w2v)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3172,6 +3197,7 @@ DatasetCommonGroup = [
             {
                 "alias": "writers_w2v",
                 "name": "Тексты писателей (w2v)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3188,6 +3214,7 @@ DatasetCommonGroup = [
             {
                 "alias": "tesla_w2v",
                 "name": "Отзывы на Теслу (w2v)",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3204,6 +3231,7 @@ DatasetCommonGroup = [
             {
                 "alias": "docs",
                 "name": "Договоры",
+                "architecture": ArchitectureChoice.TextClassification,
                 "tags": [
                     Tags.text,
                     Tags.text_segmentation,
@@ -3220,6 +3248,7 @@ DatasetCommonGroup = [
             {
                 "alias": "smarthome",
                 "name": "Умный дом",
+                "architecture": ArchitectureChoice.AudioClassification,
                 "tags": [
                     Tags.audio,
                     Tags.classification,
@@ -3235,6 +3264,7 @@ DatasetCommonGroup = [
             {
                 "alias": "audio_genres",
                 "name": "Жанры музыки",
+                "architecture": ArchitectureChoice.AudioClassification,
                 "tags": [
                     Tags.audio,
                     Tags.classification,
@@ -3250,6 +3280,7 @@ DatasetCommonGroup = [
             {
                 "alias": "esc_50",
                 "name": "Окружающая среда",
+                "architecture": ArchitectureChoice.AudioClassification,
                 "tags": [
                     Tags.audio,
                     Tags.classification,
@@ -3265,6 +3296,7 @@ DatasetCommonGroup = [
             {
                 "alias": "kvartiry",
                 "name": "Квартиры",
+                "architecture": ArchitectureChoice.DataframeRegression,
                 "tags": [
                     Tags.classification,
                     Tags.text,
@@ -3281,6 +3313,7 @@ DatasetCommonGroup = [
             {
                 "alias": "rezjume",
                 "name": "Резюме",
+                "architecture": ArchitectureChoice.DataframeRegression,
                 "tags": [
                     Tags.classification,
                     Tags.text,
@@ -3297,6 +3330,7 @@ DatasetCommonGroup = [
             {
                 "alias": "tsena_avtomobilej",
                 "name": "Цена автомобилей",
+                "architecture": ArchitectureChoice.DataframeRegression,
                 "tags": [
                     Tags.classification,
                     Tags.regression,
@@ -3312,6 +3346,7 @@ DatasetCommonGroup = [
             {
                 "alias": "spam_soobschenija",
                 "name": "Спам сообщения",
+                "architecture": ArchitectureChoice.DataframeClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3327,6 +3362,7 @@ DatasetCommonGroup = [
             {
                 "alias": "klassifikatsija_rezjume",
                 "name": "Классификация резюме",
+                "architecture": ArchitectureChoice.DataframeClassification,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -3342,6 +3378,7 @@ DatasetCommonGroup = [
             {
                 "alias": "lukojl",
                 "name": "Лукойл",
+                "architecture": ArchitectureChoice.Timeseries,
                 "tags": [
                     Tags.timeseries,
                     Tags.terra_ai,
@@ -3356,6 +3393,7 @@ DatasetCommonGroup = [
             {
                 "alias": "lukoil_trend",
                 "name": "Лукойл (тренд)",
+                "architecture": ArchitectureChoice.TimeseriesTrend,
                 "tags": [
                     Tags.timeseriestrend,
                     Tags.terra_ai,
@@ -3370,6 +3408,7 @@ DatasetCommonGroup = [
             {
                 "alias": "polimetall",
                 "name": "Полиметалл",
+                "architecture": ArchitectureChoice.Timeseries,
                 "tags": [
                     Tags.timeseries,
                     Tags.terra_ai,
@@ -3384,6 +3423,7 @@ DatasetCommonGroup = [
             {
                 "alias": "trafik_sajta",
                 "name": "Трафик сайта",
+                "architecture": ArchitectureChoice.Timeseries,
                 "tags": [
                     Tags.timeseries,
                     Tags.terra_ai,
@@ -3398,6 +3438,7 @@ DatasetCommonGroup = [
             {
                 "alias": "bus_video_tracker",
                 "name": "Видео для трекера",
+                "architecture": ArchitectureChoice.VideoTracker,
                 "tags": [
                     Tags.video,
                     Tags.tracker,
@@ -3413,6 +3454,7 @@ DatasetCommonGroup = [
             {
                 "alias": "video_progulka_po_piteru",
                 "name": "Видео_прогулка_по_Питеру",
+                "architecture": ArchitectureChoice.VideoTracker,
                 "tags": [
                     Tags.video,
                     Tags.tracker,
@@ -3428,6 +3470,7 @@ DatasetCommonGroup = [
             {
                 "alias": "audio_kniga_hobit_60sek",
                 "name": "аудио_книга_Хобит_60сек",
+                "architecture": ArchitectureChoice.Speech2Text,
                 "tags": [
                     Tags.text,
                     Tags.speech_to_text,
@@ -3443,6 +3486,7 @@ DatasetCommonGroup = [
             {
                 "alias": "teksty_pisatelej_1000",
                 "name": "тексты_писателей_1000",
+                "architecture": ArchitectureChoice.Text2Speech,
                 "tags": [
                     Tags.text,
                     Tags.text_to_speech,
@@ -3458,6 +3502,7 @@ DatasetCommonGroup = [
             {
                 "alias": "chess_tracker",
                 "name": "Трекер шахматы",
+                "architecture": ArchitectureChoice.VideoTracker,
                 "tags": [
                     Tags.video,
                     Tags.tracker,
@@ -3473,6 +3518,7 @@ DatasetCommonGroup = [
             {
                 "alias": "brain_tumor",
                 "name": "Опухоль мозга",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -3488,6 +3534,7 @@ DatasetCommonGroup = [
             {
                 "alias": "breast_cancer",
                 "name": "Рак груди",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -3503,6 +3550,7 @@ DatasetCommonGroup = [
             {
                 "alias": "pnevmonija",
                 "name": "Пневмония",
+                "architecture": ArchitectureChoice.ImageClassification,
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -3518,6 +3566,7 @@ DatasetCommonGroup = [
             {
                 "alias": "obnaruzhenie_znachimyh_obektov_1",
                 "name": "Обнаружение значимых объектов 1",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -3533,6 +3582,7 @@ DatasetCommonGroup = [
             {
                 "alias": "obnaruzhenie_znachimyh_obektov_2",
                 "name": "Обнаружение значимых объектов 2",
+                "architecture": ArchitectureChoice.ImageSegmentation,
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -3548,6 +3598,7 @@ DatasetCommonGroup = [
             {
                 "alias": "maski_na_litse",
                 "name": "Маски на лице",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3563,6 +3614,7 @@ DatasetCommonGroup = [
             {
                 "alias": "obnaruzhenie_ognja",
                 "name": "Обнаружение огня",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3578,6 +3630,7 @@ DatasetCommonGroup = [
             {
                 "alias": "ufc",
                 "name": "UFC",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3593,6 +3646,7 @@ DatasetCommonGroup = [
             {
                 "alias": "kaski_i_zhilety",
                 "name": "Каски и жилеты",
+                "architecture": ArchitectureChoice.YoloV4,
                 "tags": [
                     Tags.image,
                     Tags.object_detection,
@@ -3608,6 +3662,7 @@ DatasetCommonGroup = [
             {
                 "alias": "mnist_gan",
                 "name": "Mnist GAN",
+                "architecture": ArchitectureChoice.ImageGAN,
                 "tags": [
                     Tags.image,
                     Tags.gan,
@@ -3623,6 +3678,7 @@ DatasetCommonGroup = [
             {
                 "alias": "chasy_gan",
                 "name": "Часы GAN",
+                "architecture": ArchitectureChoice.ImageGAN,
                 "tags": [
                     Tags.image,
                     Tags.gan,
@@ -3638,6 +3694,7 @@ DatasetCommonGroup = [
             {
                 "alias": "mnist_cgan",
                 "name": "Mnist CGAN",
+                "architecture": ArchitectureChoice.ImageCGAN,
                 "tags": [
                     Tags.image,
                     Tags.cgan,
