@@ -94,7 +94,7 @@ def __load_from_googledrive(
 
 
 @progress.threading
-def source(strict_object: SourceData):
+def source(strict_object: SourceData, architecture: ArchitectureChoice):
     progress_name = "dataset_source_load"
     progress.pool.reset(progress_name, message=DOWNLOAD_SOURCE_TITLE)
     try:
@@ -107,7 +107,7 @@ def source(strict_object: SourceData):
                 progress_name,
                 mode_folder,
                 strict_object.value,
-                strict_object.architecture,
+                architecture,
             )
         else:
             progress.pool(
