@@ -6,8 +6,11 @@ from terra_ai.data.datasets.extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
+    LayerGroupChoice,
+    LayerTypeChoice,
+    LayerDatatypeChoice,
 )
-from terra_ai.data.modeling.extra import LayerTypeChoice
+from terra_ai.data.modeling import extra as modeling_extra
 from terra_ai.data.modeling.layers.extra import ActivationChoice
 from terra_ai.data.training.extra import ArchitectureChoice
 
@@ -65,7 +68,7 @@ class Tags(str, Enum):
 OutputLayersDefaults = {
     LayerOutputTypeChoice.Classification: {
         "DIM": {
-            "type": LayerTypeChoice.Dense.value,
+            "type": modeling_extra.LayerTypeChoice.Dense.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.softmax.value,
@@ -73,7 +76,7 @@ OutputLayersDefaults = {
             },
         },
         "1D": {
-            "type": LayerTypeChoice.Conv1D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv1D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.softmax.value,
@@ -83,7 +86,7 @@ OutputLayersDefaults = {
     },
     LayerOutputTypeChoice.Segmentation: {
         "1D": {
-            "type": LayerTypeChoice.Conv1D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv1D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.softmax.value,
@@ -91,7 +94,7 @@ OutputLayersDefaults = {
             },
         },
         "2D": {
-            "type": LayerTypeChoice.Conv2D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv2D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.softmax.value,
@@ -99,7 +102,7 @@ OutputLayersDefaults = {
             },
         },
         "3D": {
-            "type": LayerTypeChoice.Conv3D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv3D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.softmax.value,
@@ -109,7 +112,7 @@ OutputLayersDefaults = {
     },
     LayerOutputTypeChoice.TextSegmentation: {
         "DIM": {
-            "type": LayerTypeChoice.Dense.value,
+            "type": modeling_extra.LayerTypeChoice.Dense.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.sigmoid.value,
@@ -117,7 +120,7 @@ OutputLayersDefaults = {
             },
         },
         "1D": {
-            "type": LayerTypeChoice.Conv1D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv1D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.sigmoid.value,
@@ -127,7 +130,7 @@ OutputLayersDefaults = {
     },
     LayerOutputTypeChoice.Regression: {
         "DIM": {
-            "type": LayerTypeChoice.Dense.value,
+            "type": modeling_extra.LayerTypeChoice.Dense.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.linear.value,
@@ -137,7 +140,7 @@ OutputLayersDefaults = {
     },
     LayerOutputTypeChoice.Timeseries: {
         "1D": {
-            "type": LayerTypeChoice.Conv1D.value,
+            "type": modeling_extra.LayerTypeChoice.Conv1D.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.linear.value,
@@ -145,7 +148,7 @@ OutputLayersDefaults = {
             },
         },
         "DIM": {
-            "type": LayerTypeChoice.Dense.value,
+            "type": modeling_extra.LayerTypeChoice.Dense.value,
             "parameters": {
                 "main": {
                     "activation": ActivationChoice.linear.value,
@@ -155,7 +158,7 @@ OutputLayersDefaults = {
     },
     LayerOutputTypeChoice.ObjectDetection: {
         "3D": {
-            "type": LayerTypeChoice.Reshape.value,
+            "type": modeling_extra.LayerTypeChoice.Reshape.value,
             "parameters": {
                 "main": {
                     "target_shape": "@shape",
@@ -251,6 +254,72 @@ KerasInstructions = {
             }
         },
     },
+}
+
+
+DatasetCreationArchitecture = {
+    ArchitectureChoice.ImageClassification: {
+        LayerGroupChoice.inputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Block 1",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [0, 0],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Block 2",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [0, 0],
+                "datatype": "Image",
+                "parameters": {},
+            },
+            {
+                "id": 3,
+                "type": "layer",
+                "name": "Block 3",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [0, 0],
+                "parameters": {},
+            },
+        ],
+        LayerGroupChoice.outputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Block 1",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [0, 0],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Block 2",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [0, 0],
+                "datatype": "Image",
+                "parameters": {},
+            },
+            {
+                "id": 3,
+                "type": "layer",
+                "name": "Block 3",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [0, 0],
+                "parameters": {},
+            },
+        ],
+    }
 }
 
 
@@ -479,7 +548,6 @@ DatasetCommonGroup = [
                             },
                         },
                     },
-
                 ],
             },
             {

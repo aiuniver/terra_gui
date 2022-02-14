@@ -329,6 +329,17 @@ class CreationBlockData(IDMixinData):
     parameters: Any
 
 
+class CreationBlockList(UniqueListMixin):
+    class Meta:
+        source = CreationBlockData
+        identifier = "id"
+
+
 class CreationValidateBlocksData(BaseMixinData):
     type: LayerGroupChoice
     items: List[CreationBlockData]
+
+
+class DatasetCreationArchitectureData(BaseMixinData):
+    inputs: CreationBlockList
+    outputs: CreationBlockList

@@ -19,8 +19,8 @@ class SourceModeChoice(str, Enum):
 
 
 class LayerGroupChoice(str, Enum):
-    input = "input"
-    output = "output"
+    inputs = "inputs"
+    outputs = "outputs"
 
     @staticmethod
     def values() -> list:
