@@ -15,6 +15,11 @@ urlpatterns = [
     ),
     path("choice/", views.ChoiceAPIView.as_view(), name="choice"),
     path(
+        "create/validate/",
+        views.CreateValidateAPIView.as_view(),
+        name="create_validate",
+    ),
+    path(
         "create/progress/",
         views.CreateProgressAPIView.as_view(),
         name="create_progress",

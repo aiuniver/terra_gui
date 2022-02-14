@@ -8,6 +8,11 @@ from apps.plugins.frontend import choices as frontend_choices
 from apps.api.fields import DirectoryPathField, DirectoryOrFilePathField
 
 from terra_ai.settings import TERRA_PATH
+from terra_ai.data.datasets.extra import (
+    LayerTypeChoice,
+    LayerGroupChoice,
+    LayerDatatypeChoice,
+)
 
 
 class MinMaxScalerSerializer(serializers.Serializer):
@@ -367,6 +372,29 @@ class CreateSerializer(serializers.Serializer):
         if _errors:
             raise serializers.ValidationError(_errors)
         return value
+
+
+class LayerBindSerializer(serializers.Serializer):
+    up = serializers.ListSerializer(child=serializers.IntegerField(min_value=1))
+    down = serializers.ListSerializer(child=serializers.IntegerField(min_value=1))
+
+
+class CreateValidateBlockSerializer(serializers.Serializer):
+    id = serializers.IntegerField(min_value=1)
+    name = serializers.CharField()
+    type = serializers.ChoiceField(choices=tuple(LayerTypeChoice.values()))
+    removable = serializers.BooleanField(default=False)
+    bind = LayerBindSerializer()
+    position = serializers.ListSerializer(child=serializers.IntegerField())
+    datatype = serializers.ChoiceField(
+        required=False, choices=tuple(LayerDatatypeChoice.values())
+    )
+    parameters = serializers.DictField()
+
+
+class CreateValidateSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=tuple(LayerGroupChoice.values()))
+    items = CreateValidateBlockSerializer(many=True)
 
 
 class DeleteSerializer(serializers.Serializer):

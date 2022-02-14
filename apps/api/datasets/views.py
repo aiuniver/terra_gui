@@ -2,7 +2,7 @@ from pathlib import Path
 
 from terra_ai.settings import TERRA_PATH
 from terra_ai.data.extra import FileManagerItem
-from terra_ai.data.datasets.creation import CreationData
+from terra_ai.data.datasets.creation import CreationData, CreationValidateBlocksData
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -12,6 +12,7 @@ from apps.api.datasets.serializers import (
     SourceLoadSerializer,
     SourceSegmentationClassesAutosearchSerializer,
     CreateSerializer,
+    CreateValidateSerializer,
     DeleteSerializer,
 )
 
@@ -124,6 +125,17 @@ class CreateProgressAPIView(BaseAPIView):
     @decorators.progress_error("create_dataset")
     def post(self, request, progress, **kwargs):
         return BaseResponseSuccess(progress.native())
+
+
+class CreateValidateAPIView(BaseAPIView):
+    @decorators.serialize_data(CreateValidateSerializer)
+    def post(self, request, serializer, **kwargs):
+        return BaseResponseSuccess(
+            self.terra_exchange(
+                "dataset_create_validate",
+                data=CreationValidateBlocksData(**serializer.validated_data),
+            )
+        )
 
 
 class DeleteAPIView(BaseAPIView):

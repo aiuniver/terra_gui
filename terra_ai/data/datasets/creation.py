@@ -1,36 +1,45 @@
 from math import fsum
 from pathlib import Path
-from typing import Union, Optional, Any, Dict, List
+from typing import Union, Optional, Any, Dict, List, Tuple
 from pydantic import validator
-from pydantic.types import DirectoryPath
+from pydantic.types import DirectoryPath, PositiveInt
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
+
+from terra_ai import settings as terra_ai_settings
 from terra_ai.data.datasets.extra import DatasetTaskTypeChoice
-from ... import settings as terra_ai_settings
-from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
-from ..types import (
+from terra_ai.data.mixins import (
+    BaseMixinData,
+    UniqueListMixin,
+    AliasMixinData,
+    IDMixinData,
+)
+from terra_ai.data.types import (
     confilepath,
     confilename,
     FilePathType,
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
 )
-from ..exceptions import (
+from terra_ai.data.exceptions import (
     ValueTypeException,
     PartTotalException,
     ListEmptyException,
     ObjectDetectionQuantityLayersException,
 )
-from .extra import (
+from terra_ai.data.datasets.extra import (
     SourceModeChoice,
+    LayerTypeChoice,
+    LayerGroupChoice,
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
+    LayerDatatypeChoice,
     ColumnProcessingTypeChoice,
 )
+from terra_ai.data.datasets.creations import column_processing
+from terra_ai.data.datasets.tags import TagsList
+from terra_ai.data.datasets import creations
 from terra_ai.data.training.extra import ArchitectureChoice
-from .creations import column_processing
-from .tags import TagsList
-from . import creations
 
 
 class FilePathSourceData(BaseMixinData):
@@ -303,3 +312,23 @@ class CreationData(AliasMixinData):
     #     if is_object_detection and len(value) > 1:
     #         raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
     #     return value
+
+
+class LayerBindData(BaseMixinData):
+    up: List[PositiveInt] = []
+    down: List[PositiveInt] = []
+
+
+class CreationBlockData(IDMixinData):
+    name: str
+    type: LayerTypeChoice
+    removable: bool = False
+    bind: LayerBindData
+    position: Tuple[int, int]
+    datatype: Optional[LayerDatatypeChoice]
+    parameters: Any
+
+
+class CreationValidateBlocksData(BaseMixinData):
+    type: LayerGroupChoice
+    items: List[CreationBlockData]

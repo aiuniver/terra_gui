@@ -5,7 +5,7 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from terra_ai import exceptions as terra_ai_exceptions
 from terra_ai import progress as terra_ai_progress
@@ -31,6 +31,7 @@ from terra_ai.data.datasets.dataset import (
 )
 from terra_ai.data.datasets.creation import (
     CreationData,
+    CreationValidateBlocksData,
     FilePathSourcesList,
     SourceData,
 )
@@ -192,6 +193,14 @@ class Exchange:
         Создание датасета из исходников
         """
         CreateDataset(creation_data)
+
+    def _call_dataset_create_validate(
+        self, data: CreationValidateBlocksData
+    ) -> List[Optional[str]]:
+        """
+        Валидация создания датасета
+        """
+        return list(map(lambda item: None, data.items))
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
