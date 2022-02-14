@@ -1,14 +1,14 @@
 <template>
   <div>
     <t-field>
-      <d-input-text></d-input-text>
+      <d-input-text :value="value" @change="onChange"></d-input-text>
     </t-field>
-    {{parameters}}
+    {{ selected }}
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 export default {
   components: {},
   props: {
@@ -24,6 +24,20 @@ export default {
     }),
     parameters() {
       return this?.selected?.parameters || {};
+    },
+    value() {
+      return this.selected?.name || '';
+    },
+  },
+  methods: {
+    ...mapActions({
+      setParameters: 'create/setParameters',
+      editBlock: 'create/editBlock',
+    }),
+    onChange({ value }) {
+      const block = { ...this.selected };
+      block.name = value;
+      this.editBlock(block);
     },
   },
 };

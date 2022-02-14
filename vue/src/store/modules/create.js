@@ -78,6 +78,13 @@ export default {
       commit('SET_BLOCKS', [...newBlocks]);
     },
 
+    editBlock ({ commit, state: { blocks } }, block) {
+      const newBlocks = blocks.map(i => {
+        return (i.id === block.id) ? block : i
+      })
+      commit('SET_BLOCKS', [...newBlocks]);
+    },
+
     add ({ commit, state: { blocks } }, { type, position }) {
       const id = Math.max(0, ...blocks.map(o => o.id)) + 1;
       const block = createBlock({ id, type, position, selected: true })

@@ -9,10 +9,10 @@
     <div class="block__line-right" :style="setColor"></div>
     <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
       <div class="block__header">
-        <div class="block__title text--bold">{{ type }} {{ id }}</div>
-        <div class="block__subtitle text--bold">22,28,1</div>
+        <div class="block__title text--bold">{{ name || ' ' }}</div>
+        <div class="block__subtitle text--bold">{{ type }} {{ id }}</div>
       </div>
-      <div v-if="showTop"  class="block__inputs">
+      <div v-if="showTop" class="block__inputs">
         <div
           class="input inputSlot"
           :class="{ 'input--linking-active': linkingCheck && !linking }"
@@ -23,7 +23,7 @@
     </div>
     <div class="block__part">
       <div v-if="showTop" class="block__point block__point--top" :style="setColor"></div>
-      <div  v-if="showBottom" class="block__point block__point--bottom" :style="setColor" @mousedown="slotMouseDown($event, 0)"></div>
+      <div v-if="showBottom" class="block__point block__point--bottom" :style="setColor" @mousedown="slotMouseDown($event, 0)"></div>
     </div>
   </div>
 </template>
@@ -93,7 +93,7 @@ export default {
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
         zIndex: this.selected || this.hover ? 10 : 1,
-        boxShadow: `0px 0px 4px ${this.color}75`
+        boxShadow: `0px 0px 4px ${this.color}75`,
       };
     },
     isError() {
@@ -103,11 +103,11 @@ export default {
       return { backgroundColor: this.color };
     },
     showTop() {
-      return ['output', 'middle'].includes(this.typeBlock)
+      return ['output', 'middle'].includes(this.typeBlock);
     },
     showBottom() {
-      return ['input', 'middle'].includes(this.typeBlock)
-    }
+      return ['input', 'middle'].includes(this.typeBlock);
+    },
   },
   mounted() {
     const doc = document.documentElement;
@@ -207,6 +207,7 @@ $bg-color: #0e1621;
 $borderBlock: 2px;
 
 .block {
+  user-select: none;
   position: absolute;
   background-color: $bg-color;
   border-radius: 23px 4px 24px 4px;

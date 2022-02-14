@@ -113,6 +113,7 @@ export default {
 
 <style lang="scss">
 .params {
+  user-select: none;
   position: relative;
   display: flex;
   flex-direction: column;

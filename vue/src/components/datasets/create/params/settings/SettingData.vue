@@ -12,7 +12,7 @@
       <t-field label="Входные данные">
         <d-auto-complete :value="getValueData" placeholder="Архитектуры" :list="listFiles" @change="onArchitectures" />
       </t-field>
-      {{ selected }}
+      {{ getParametrs }}
     </div>
   </div>
 </template>
@@ -41,12 +41,17 @@ export default {
     ...mapGetters({
       getFiles: 'createDataset/getFiles',
       getFileManager: 'createDataset/getFileManager',
+      editBlock: 'create/editBlock',
     }),
     listFiles() {
       return this.getFileManager.map(i => ({ label: i.title, value: i.value }));
     },
     getFile() {
       return this.getFiles.map(i => ({ label: i.title, value: i.value }));
+    },
+    getValueData () {
+      const value = this.selected?.parametrs?.filename || ''
+      return this.listFiles.find(i => i.value === value)
     },
     getParametrs() {
       return this?.selected?.parametrs || {};

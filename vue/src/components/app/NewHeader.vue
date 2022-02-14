@@ -98,6 +98,7 @@ export default {
 
 <style lang="scss" scoped>
 .header {
+  user-select: none;
   width: 100%;
   height: 52px;
   padding: 0 10px;
