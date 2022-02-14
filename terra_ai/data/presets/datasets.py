@@ -265,7 +265,7 @@ DatasetCreationArchitecture = {
                 "name": "Данные",
                 "removable": False,
                 "bind": {"up": [], "down": [2]},
-                "position": [0, 100],
+                "position": [-75, -120],
                 "parameters": {
                     "select_type": "",
                     "select_data": [],
@@ -277,14 +277,14 @@ DatasetCreationArchitecture = {
                 "name": "Изображения",
                 "removable": False,
                 "bind": {"up": [1], "down": [3]},
-                "position": [0, 50],
+                "position": [-75, -30],
                 "datatype": "Image",
                 "parameters": {
                     "width": 0,
                     "height": 0,
                     "image_mode": "stretch",
                     "net": "convolutional",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -293,7 +293,7 @@ DatasetCreationArchitecture = {
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
-                "position": [0, 0],
+                "position": [-75, 60],
                 "parameters": {},
             },
         ],
@@ -304,7 +304,7 @@ DatasetCreationArchitecture = {
                 "name": "Данные",
                 "removable": False,
                 "bind": {"up": [], "down": [2]},
-                "position": [0, 100],
+                "position": [-75, -120],
                 "parameters": {
                     "select_type": "",
                     "select_data": [],
@@ -316,7 +316,7 @@ DatasetCreationArchitecture = {
                 "name": "Классификация",
                 "removable": False,
                 "bind": {"up": [1], "down": [3]},
-                "position": [0, 50],
+                "position": [-75, -30],
                 "datatype": "Classification",
                 "parameters": {},
             },
@@ -326,7 +326,7 @@ DatasetCreationArchitecture = {
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
-                "position": [0, 0],
+                "position": [-75, 60],
                 "parameters": {},
             },
         ],
@@ -440,7 +440,7 @@ DatasetCreationArchitecture = {
                     "fill_mode": "last_millisecond",
                     "parameter": "audio_signal",
                     "resample": "kaiser_best",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -587,9 +587,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "Scaler",
-                "parameters": {
-                    "scaler": "min_max_scaler"
-                },
+                "parameters": {"scaler": "min_max_scaler"},
             },
             {
                 "id": 3,
@@ -657,9 +655,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "Scaler",
-                "parameters": {
-                    "scaler": "min_max_scaler"
-                },
+                "parameters": {"scaler": "min_max_scaler"},
             },
             {
                 "id": 3,
@@ -692,9 +688,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "Regression",
-                "parameters": {
-                    "scaler": "min_max_scaler"
-                },
+                "parameters": {"scaler": "min_max_scaler"},
             },
             {
                 "id": 3,
@@ -734,7 +728,7 @@ DatasetCreationArchitecture = {
                     "height": 0,
                     "image_mode": "stretch",
                     "net": "convolutional",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -846,10 +840,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "TextSegmentation",
-                "parameters": {
-                    "open_tags": "",
-                    "close_tags": ""
-                },
+                "parameters": {"open_tags": "", "close_tags": ""},
             },
             {
                 "id": 3,
@@ -884,9 +875,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "Scaler",
-                "parameters": {
-                    "scaler": "min_max_scaler"
-                },
+                "parameters": {"scaler": "min_max_scaler"},
             },
             {
                 "id": 3,
@@ -926,7 +915,7 @@ DatasetCreationArchitecture = {
                     "step": 30,
                     "trend": False,
                     "depth": 1,
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -1047,7 +1036,7 @@ DatasetCreationArchitecture = {
                     "height": 416,
                     "image_mode": "stretch",
                     "net": "convolutional",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -1081,10 +1070,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "ObjectDetection",
-                "parameters": {
-                    "yolo": "v3",
-                    "model_type": "Yolo_terra"
-                },
+                "parameters": {"yolo": "v3", "model_type": "Yolo_terra"},
             },
             {
                 "id": 3,
@@ -1124,7 +1110,7 @@ DatasetCreationArchitecture = {
                     "height": 416,
                     "image_mode": "stretch",
                     "net": "convolutional",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -1158,10 +1144,7 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [0, 50],
                 "datatype": "ObjectDetection",
-                "parameters": {
-                    "yolo": "v4",
-                    "model_type": "Yolo_terra"
-                },
+                "parameters": {"yolo": "v4", "model_type": "Yolo_terra"},
             },
             {
                 "id": 3,
@@ -1283,7 +1266,7 @@ DatasetCreationArchitecture = {
                     "fill_mode": "last_millisecond",
                     "parameter": "audio_signal",
                     "resample": "kaiser_best",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -1357,7 +1340,7 @@ DatasetCreationArchitecture = {
                     "height": 0,
                     "image_mode": "stretch",
                     "net": "convolutional",
-                    "scaler": "no_scaler"
+                    "scaler": "no_scaler",
                 },
             },
             {
@@ -1444,7 +1427,7 @@ DatasetCreationArchitecture = {
             },
         ],
     },
-    ArchitectureChoice.ImageCGAN: {}
+    ArchitectureChoice.ImageCGAN: {},
 }
 
 DatasetCommonGroup = [
@@ -1809,7 +1792,7 @@ DatasetCommonGroup = [
                                     "Shirt",
                                     "Sneaker",
                                     "Bag",
-                                    "Ankle boot"
+                                    "Ankle boot",
                                 ],
                                 "num_classes": 10,
                             }
@@ -1855,7 +1838,7 @@ DatasetCommonGroup = [
                                         "Shirt",
                                         "Sneaker",
                                         "Bag",
-                                        "Ankle boot"
+                                        "Ankle boot",
                                     ],
                                     "num_classes": 10,
                                 }
@@ -1885,7 +1868,7 @@ DatasetCommonGroup = [
                             },
                         },
                     },
-{
+                    {
                         "alias": "add_dimension",
                         "name": "Добавить размерность",
                         "inputs": {
@@ -1905,7 +1888,7 @@ DatasetCommonGroup = [
                                     "Shirt",
                                     "Sneaker",
                                     "Bag",
-                                    "Ankle boot"
+                                    "Ankle boot",
                                 ],
                                 "num_classes": 10,
                             }
@@ -1951,7 +1934,7 @@ DatasetCommonGroup = [
                                         "Shirt",
                                         "Sneaker",
                                         "Bag",
-                                        "Ankle boot"
+                                        "Ankle boot",
                                     ],
                                     "num_classes": 10,
                                 }
@@ -1981,7 +1964,7 @@ DatasetCommonGroup = [
                             },
                         },
                     },
-{
+                    {
                         "alias": "flatten",
                         "name": "Выпрямить",
                         "inputs": {
@@ -2001,7 +1984,7 @@ DatasetCommonGroup = [
                                     "Shirt",
                                     "Sneaker",
                                     "Bag",
-                                    "Ankle boot"
+                                    "Ankle boot",
                                 ],
                                 "num_classes": 10,
                             }
@@ -2047,7 +2030,7 @@ DatasetCommonGroup = [
                                         "Shirt",
                                         "Sneaker",
                                         "Bag",
-                                        "Ankle boot"
+                                        "Ankle boot",
                                     ],
                                     "num_classes": 10,
                                 }
@@ -2163,7 +2146,7 @@ DatasetCommonGroup = [
                             },
                         },
                     },
-{
+                    {
                         "alias": "flatten",
                         "name": "Выпрямить",
                         "inputs": {
@@ -2525,7 +2508,7 @@ DatasetCommonGroup = [
                             },
                         },
                     },
-{
+                    {
                         "alias": "flatten",
                         "name": "Выпрямить",
                         "inputs": {
