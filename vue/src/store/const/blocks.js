@@ -9,13 +9,24 @@ const types = [
 
 
 const Block = class {
-  constructor({ id, name = 'Block', type = 'input', position = [0, 0], selected = false, color = '#6c7883', typeBlock = 'middle', bind = { up: [], down: [] } }) {
+  constructor({
+    id,
+    name = 'Block',
+    type = 'input',
+    position = [0, 0],
+    selected = false,
+    color = '#6c7883',
+    removable = true,
+    typeBlock = 'middle',
+    bind = { up: [], down: [] }
+  }) {
     this.id = id
     this.name = name
     this.type = type
     this.color = color
     this.typeBlock = typeBlock
     this.position = position
+    this.removable = removable
     this.selected = selected
     this.bind = bind
     this.parameters = {}
@@ -26,6 +37,13 @@ const Block = class {
 const createBlock = (opt) => {
   const type = types.find(i => i.type === opt.type) || {}
   return new Block({ ...opt, ...type })
+}
+
+const preloadBlock = (arr, type) => {
+  return arr.map(i => {
+    if (i.type === 'layer') i.type = type
+    return createBlock(i)
+  })
 }
 
 const setLinks = (blocks, links) => {
@@ -66,4 +84,4 @@ const getLinks = function (blocks) {
   return links;
 };
 
-export { createBlock, types, setLinks, getLinks };
+export { createBlock, types, setLinks, getLinks, preloadBlock };

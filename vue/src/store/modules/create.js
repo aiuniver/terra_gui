@@ -1,4 +1,4 @@
-import { createBlock, setLinks, getLinks } from '../const/blocks';
+import { createBlock, setLinks, getLinks, preloadBlock } from '../const/blocks';
 
 export default {
   namespaced: true,
@@ -16,8 +16,8 @@ export default {
   }),
   mutations: {
     SET_INPUT_AND_OUTPUT (state, { inputs, outputs }) {
-      state.inputs = inputs;
-      state.outputs = outputs;
+      state.inputs = preloadBlock(inputs, 'input');
+      state.outputs = preloadBlock(outputs, 'output');
     },
     SET_BLOCKS (state, value) {
       state.blocks = value;
