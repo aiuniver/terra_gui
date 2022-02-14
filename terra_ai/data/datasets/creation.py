@@ -69,6 +69,7 @@ class SourceData(BaseMixinData):
     "Режим загрузки исходных данных"
     value: Union[confilepath(ext="zip"), HttpUrl, confilename(ext="zip")]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
+    architecture: ArchitectureChoice
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(

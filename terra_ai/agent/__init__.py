@@ -166,11 +166,11 @@ class Exchange:
         files.sort(key=lambda item: item.label)
         return files
 
-    def _call_dataset_source_load(self, mode: str, value: str):
+    def _call_dataset_source_load(self, mode: str, value: str, architecture: str):
         """
         Загрузка исходников датасета
         """
-        dataset_source(SourceData(mode=mode, value=value))
+        dataset_source(SourceData(mode=mode, value=value, architecture=architecture))
 
     def _call_dataset_source_segmentation_classes_auto_search(
         self, path: Path, num_classes: int, mask_range: int

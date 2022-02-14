@@ -2,7 +2,12 @@ from pathlib import Path
 
 from terra_ai.settings import TERRA_PATH
 from terra_ai.data.extra import FileManagerItem
-from terra_ai.data.datasets.creation import CreationData, CreationValidateBlocksData
+from terra_ai.data.presets.datasets import DatasetCreationArchitecture
+from terra_ai.data.datasets.creation import (
+    CreationData,
+    CreationValidateBlocksData,
+    DatasetCreationArchitectureData,
+)
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -82,11 +87,14 @@ class SourceLoadProgressAPIView(BaseAPIView):
     @decorators.progress_error("dataset_source_load")
     def post(self, request, progress, **kwargs):
         if progress.finished and progress.data:
-            source_path = Path(progress.data).absolute()
+            source_path = Path(progress.data.get("path")).absolute()
             file_manager = FileManagerItem(path=source_path).native().get("children")
             progress.data = {
                 "file_manager": file_manager,
                 "source_path": source_path,
+                "blocks": DatasetCreationArchitectureData(
+                    **DatasetCreationArchitecture.get(progress.data.get("architecture"))
+                ).native(),
             }
         return BaseResponseSuccess(progress.native())
 

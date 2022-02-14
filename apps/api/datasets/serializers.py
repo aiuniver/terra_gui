@@ -35,6 +35,7 @@ class ChoiceSerializer(serializers.Serializer):
 class SourceLoadSerializer(serializers.Serializer):
     mode = serializers.CharField()
     value = serializers.CharField()
+    architecture = serializers.CharField()
 
 
 class LayerParametersSerializer(serializers.Serializer):

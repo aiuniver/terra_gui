@@ -23,6 +23,7 @@ from terra_ai.exceptions.datasets import (
     DatasetChoiceUndefinedMethodException,
     DatasetNotFoundInGroupException,
 )
+from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import get_tempdir
 from terra_ai.progress import utils as progress_utils
 
@@ -39,7 +40,9 @@ for item in list(DatasetGroupChoice):
     os.makedirs(Path(settings.DATASETS_LOADED_DIR, item.name), exist_ok=True)
 
 
-def __load_from_url(progress_name: str, folder: Path, url: HttpUrl):
+def __load_from_url(
+    progress_name: str, folder: Path, url: HttpUrl, architecture: ArchitectureChoice
+):
     folder_name = base64.b64encode(url.encode("UTF-8")).decode("UTF-8")
     dataset_path = Path(folder, folder_name)
 
@@ -55,12 +58,21 @@ def __load_from_url(progress_name: str, folder: Path, url: HttpUrl):
         )
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
-        progress.pool(progress_name, finished=True, data=dataset_path.absolute())
+        progress.pool(
+            progress_name,
+            finished=True,
+            data={"path": dataset_path.absolute(), "architecture": architecture},
+        )
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
 
 
-def __load_from_googledrive(progress_name: str, folder: Path, zipfile_path: Path):
+def __load_from_googledrive(
+    progress_name: str,
+    folder: Path,
+    zipfile_path: Path,
+    architecture: ArchitectureChoice,
+):
     folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]
     dataset_path = Path(folder, folder_name)
 
@@ -72,7 +84,11 @@ def __load_from_googledrive(progress_name: str, folder: Path, zipfile_path: Path
             progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
         )
         shutil.move(zip_destination, dataset_path)
-        progress.pool(progress_name, finished=True, data=dataset_path.absolute())
+        progress.pool(
+            progress_name,
+            finished=True,
+            data={"path": dataset_path.absolute(), "architecture": architecture},
+        )
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
 
@@ -87,7 +103,12 @@ def source(strict_object: SourceData):
         if __method:
             mode_folder = Path(settings.DATASETS_SOURCE_DIR, strict_object.mode.lower())
             os.makedirs(mode_folder, exist_ok=True)
-            __method(progress_name, mode_folder, strict_object.value)
+            __method(
+                progress_name,
+                mode_folder,
+                strict_object.value,
+                strict_object.architecture,
+            )
         else:
             progress.pool(
                 progress_name,
