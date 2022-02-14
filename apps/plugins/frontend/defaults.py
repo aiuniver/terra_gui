@@ -29,8 +29,14 @@ class DefaultsDatasetsCreationData(BaseMixinData):
     output: List[Field]
 
 
+class ArchitectureData(BaseMixinData):
+    value: str
+    label: str
+
+
 class DefaultsDatasetsData(BaseMixinData):
     creation: DefaultsDatasetsCreationData
+    architectures: List[ArchitectureData]
 
 
 class DefaultsModelingData(BaseMixinData):

@@ -1,6 +1,6 @@
 from math import fsum
 from pathlib import Path
-from typing import Union, Optional, Any, Dict
+from typing import Union, Optional, Any, Dict, List
 from pydantic import validator
 from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
@@ -27,6 +27,7 @@ from .extra import (
     LayerOutputTypeChoice,
     ColumnProcessingTypeChoice,
 )
+from terra_ai.data.training.extra import ArchitectureChoice
 from .creations import column_processing
 from .tags import TagsList
 from . import creations
@@ -275,15 +276,9 @@ class CreationData(AliasMixinData):
     """
 
     name: str
-    "Название"
-    datasets_path: DirectoryPath
-    "Путь к директории датасетов проекта"
-    source_path: DirectoryPath
-    "Путь к директории с исходниками, полученный после их загрузки"
-    task_type: DatasetTaskTypeChoice
-    "Тип задачи создаваемого датасета"
-    tags: TagsList = TagsList()
-    "Список тегов"
+    source: SourceData
+    architecture: ArchitectureChoice
+    tags: List[str]
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 
     @property
