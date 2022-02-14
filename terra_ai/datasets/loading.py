@@ -117,7 +117,7 @@ def _choice_from_keras(
         version_config = None
         for item in dataset_config.versions:
             if item.get("alias") == version:
-                version_config = item
+                version_config = {**item}
                 break
         if not version_config:
             raise Exception("Dataset not found")
