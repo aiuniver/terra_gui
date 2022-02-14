@@ -15,6 +15,10 @@ export default {
     creation: {},
   }),
   mutations: {
+    SET_INPUT_AND_OUTPUT (state, { inputs, outputs }) {
+      state.inputs = inputs;
+      state.outputs = outputs;
+    },
     SET_BLOCKS (state, value) {
       state.blocks = value;
     },

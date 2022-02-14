@@ -1,7 +1,7 @@
 <template>
   <div>
     <t-field>
-      <v-select></v-select>
+      <d-input-text></d-input-text>
     </t-field>
     {{parameters}}
   </div>

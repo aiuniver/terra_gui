@@ -9,8 +9,8 @@
       </Cards>
     </div>
     <div class="panel-input__forms">
-      <t-field label="Данные">
-        <d-select v-model="sel" :list="listFiles"></d-select>
+      <t-field label="Входные данные">
+        <d-auto-complete :value="getValueData" placeholder="Архитектуры" :list="listFiles" @change="onArchitectures" />
       </t-field>
       {{ selected }}
     </div>
