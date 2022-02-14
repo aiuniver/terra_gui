@@ -195,7 +195,7 @@ def _choice_from_terra(
         os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
-        version_path = Path(destination, settings.VERSION_CONFIG)
+        version_path = Path(destination, settings.DATASET_VERSION_CONFIG)
         with open(version_path) as version_ref:
             version_config = json.load(version_ref)
         os.remove(str(version_path))
@@ -264,7 +264,7 @@ def _choice_from_custom(
         os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
-        version_path = Path(destination, settings.VERSION_CONFIG)
+        version_path = Path(destination, settings.DATASET_VERSION_CONFIG)
         with open(version_path) as version_ref:
             version_config = json.load(version_ref)
         os.remove(str(version_path))
