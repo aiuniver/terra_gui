@@ -5,6 +5,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
+import tensorflow_text
 from tensorflow.python.layers.base import Layer
 from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
@@ -672,6 +673,7 @@ class PretrainedBERT(layers.Layer):
     def call(self, input_, training=True, **kwargs):
         encoder_inputs = self.preprocessing_layer(input_)
         outputs = self.encoder(encoder_inputs)
+        print('outputs', outputs)
         return outputs['pooled_output']
         # #
         # return self.net_bert(input_)
@@ -722,21 +724,21 @@ if __name__ == "__main__":
     # print(m(inp, training=True))
     # print(layer.compute_output_shape(input_shape=input_shape))
 
-    # # PretrainedBert
-    # params = {'model_name': "talking-heads_base", 'set_trainable': False}
-    # input_shape = (20, 1)
-    #
-    # # text_input = tf.keras.Input(shape=(), dtype=tf.string)
-    # layer = PretrainedBERT(**params)
-    # # # print(input)
-    # # x = layer(text_input)
-    # # print(x.shape)
-    # # model = tf.keras.Model(text_input, x)
-    # # model.summary()
-    # # text = np.array([["раз one two three 123125 . !"], ["text one two three 123125 data one. !"]])
-    # # print(text.shape,text[0])
-    # # pred = model(text)
-    # # print(pred.shape)
-    # # print(pred)
-    # print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
+    # PretrainedBERT
+    params = {'model_name': "small_bert/bert_en_uncased_L-2_H-128_A-2", 'set_trainable': False}
+    input_shape = (20, 1)
+
+    # text_input = tf.keras.Input(shape=(), dtype=tf.string)
+    layer = PretrainedBERT(**params)
+    # # print(input)
+    # x = layer(text_input)
+    # print(x.shape)
+    # model = tf.keras.Model(text_input, x)
+    # model.summary()
+    # text = np.array([["раз one two three 123125 . !"], ["text one two three 123125 data one. !"]])
+    # print(text.shape,text[0])
+    # pred = model(text)
+    # print(pred.shape)
+    # print(pred)
+    print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
     pass

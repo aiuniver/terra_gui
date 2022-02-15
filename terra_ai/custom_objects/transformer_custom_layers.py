@@ -301,9 +301,9 @@ class FNetTransformer(layers.Layer):
         # return outputs.shape
 
 
-class Bert(layers.Layer):
+class BERT(layers.Layer):
     def __init__(self, embed_dim, num_layers, num_heads, max_len, vocab_size, ff_dim, **kwargs):
-        super(Bert, self).__init__(**kwargs)
+        super(BERT, self).__init__(**kwargs)
         self.embed_dim = embed_dim
         self.num_layers = num_layers
         self.num_heads = num_heads
@@ -425,7 +425,7 @@ class Bert(layers.Layer):
             'vocab_size': self.vocab_size,
             'ff_dim': self.ff_dim,
         }
-        base_config = super(Bert, self).get_config()
+        base_config = super(BERT, self).get_config()
         return dict(tuple(base_config.items()) + tuple(config.items()))
 
     @classmethod
@@ -460,7 +460,7 @@ if __name__ == "__main__":
     # print('layer.compute_output_shape', layer.compute_output_shape(input_shape=input_shape))
     # pass
 
-    # #Bert
+    # #BERT
     # params = {'embed_dim': 128, 'num_layers': 1, 'num_heads': 8, 'max_len': 256, 'vocab_size': 30000, 'ff_dim': 128}
     # input_shape = (256,)
     # text_input = tf.keras.Input(shape=(input_shape), dtype=tf.int64)
