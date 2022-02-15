@@ -28,7 +28,7 @@ def scheduler_rsync():
         "gui",
         "%d-%04d%02d%02d%02d%02d%02d.log"
         % (
-            int(settings.USER_PORT),
+            int(settings.USER.get("port")),
             date.year,
             date.month,
             date.day,
