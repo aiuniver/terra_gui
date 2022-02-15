@@ -1,16 +1,10 @@
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
+from terra_ai.data.datasets.extra import LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerScalerVideoChoice, \
+    LayerVideoModeChoice
 from typing import Optional
-
 from pydantic import validator
 from pydantic.types import PositiveInt
-
-from terra_ai.data.mixins import BaseMixinData
-from ...extra import MinMaxScalerData
-from .....extra import (
-    LayerVideoFillModeChoice,
-    LayerVideoFrameModeChoice,
-    LayerScalerVideoChoice,
-    LayerVideoModeChoice,
-)
 
 
 class ParametersData(BaseMixinData, MinMaxScalerData):
@@ -25,6 +19,7 @@ class ParametersData(BaseMixinData, MinMaxScalerData):
     scaler: LayerScalerVideoChoice
     put: Optional[PositiveInt]
 
+    # Внутренние параметры
     deploy: Optional[bool] = False
 
     @validator("video_mode", allow_reuse=True)
