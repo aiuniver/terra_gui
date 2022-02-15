@@ -10,6 +10,7 @@ from terra_ai.data.datasets.creations.blocks import handlers
 class BlockDataParameters(BaseMixinData):
     type: Optional[LayerSelectTypeChoice]
     data: List[str] = []
+    file: Optional[str]
 
 
 class BlockHandlerParameters(BaseMixinData):

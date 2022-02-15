@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Union, Optional, Any, Dict, List, Tuple
 from transliterate import slugify
 
-from pydantic import validator, DirectoryPath, PositiveInt
+from pydantic import validator, DirectoryPath, PositiveInt, PrivateAttr
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
@@ -234,78 +234,6 @@ class CreationOutputsList(UniqueListMixin):
 #         return field.type_(**(value or {}))
 
 
-class CreationVersionData(AliasMixinData):
-    """
-    Полная информация о создании версии датасета
-    Inputs:
-        alias: str - alias версии
-        name: str - название версии
-        datasets_path: pathlib.Path - путь к директории датасетов проекта (./TerraAI/datasets)
-        parent_alias: str - alias датасета, от которого создаётся версия
-        info: CreationInfoData - соотношение обучающей выборки к валидационной, а также его перемешивание
-        use_generator: bool - использовать генератор при обучении. По умолчанию: False
-        inputs: CreationInputsList - входные слои
-        outputs: CreationOutputsList - выходные слои
-    """
-
-    name: str
-    datasets_path: DirectoryPath
-    parent_alias: str
-    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
-    inputs: CreationInputsList = CreationInputsList()
-    outputs: CreationOutputsList = CreationOutputsList()
-
-
-class CreationData(AliasMixinData):
-    """
-    Полная информация о создании датасета
-    """
-
-    name: str
-    source: SourceData
-    architecture: ArchitectureChoice
-    tags: List[str]
-    version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
-
-    def __init__(self, **data):
-        data.update(
-            {
-                "alias": data.get(
-                    "alias",
-                    re.sub(
-                        r"([\-]+)",
-                        "_",
-                        slugify(data.get("name", ""), language_code="ru"),
-                    ),
-                )
-            }
-        )
-        super().__init__(**data)
-
-    @property
-    def path(self) -> Path:
-        return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
-
-    # @validator("inputs", "outputs")
-    # def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
-    #     if not len(value):
-    #         raise ListEmptyException(type(value))
-    #     return value
-    #
-    # @validator("outputs")
-    # def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
-    #     if not value:
-    #         return value
-    #     is_object_detection = False
-    #     for layer in value:
-    #         if layer.type == LayerOutputTypeChoice.ObjectDetection:
-    #             is_object_detection = True
-    #             break
-    #     if is_object_detection and len(value) > 1:
-    #         raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
-    #     return value
-
-
 class LayerBindData(BaseMixinData):
     up: List[PositiveInt] = []
     down: List[PositiveInt] = []
@@ -354,3 +282,103 @@ class CreationValidateBlocksData(BaseMixinData):
 class DatasetCreationArchitectureData(BaseMixinData):
     inputs: CreationBlockList = CreationBlockList()
     outputs: CreationBlockList = CreationBlockList()
+
+
+class CreationVersionData(AliasMixinData, DatasetCreationArchitectureData):
+    """
+    Полная информация о создании версии датасета
+    Inputs:
+        alias: str - alias версии
+        name: str - название версии
+        datasets_path: pathlib.Path - путь к директории датасетов проекта (./TerraAI/datasets)
+        info: CreationInfoData - соотношение обучающей выборки к валидационной, а также его перемешивание
+        use_generator: bool - использовать генератор при обучении. По умолчанию: False
+        inputs: CreationInputsList - входные слои
+        outputs: CreationOutputsList - выходные слои
+    """
+
+    name: str
+    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
+
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        data.update(
+            {
+                "alias": data.get(
+                    "alias",
+                    re.sub(
+                        r"([\-]+)",
+                        "_",
+                        slugify(data.get("name", ""), language_code="ru"),
+                    ),
+                )
+            }
+        )
+        self._path = Path(
+            data.get("path"),
+            "versions",
+            f'{data.get("alias")}.{terra_ai_settings.DATASET_VERSION_EXT}',
+        )
+        super().__init__(**data)
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+
+class CreationData(AliasMixinData):
+    """
+    Полная информация о создании датасета
+    """
+
+    name: str
+    source: SourceData
+    architecture: ArchitectureChoice
+    tags: List[str]
+    version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
+
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        data.update(
+            {
+                "alias": data.get(
+                    "alias",
+                    re.sub(
+                        r"([\-]+)",
+                        "_",
+                        slugify(data.get("name", ""), language_code="ru"),
+                    ),
+                )
+            }
+        )
+        self._path = Path(
+            terra_ai_settings.TERRA_PATH.datasets,
+            f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
+        )
+        data.get("version").update({"path": self._path})
+        super().__init__(**data)
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    # @validator("inputs", "outputs")
+    # def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
+    #     if not len(value):
+    #         raise ListEmptyException(type(value))
+    #     return value
+    #
+    # @validator("outputs")
+    # def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
+    #     if not value:
+    #         return value
+    #     is_object_detection = False
+    #     for layer in value:
+    #         if layer.type == LayerOutputTypeChoice.ObjectDetection:
+    #             is_object_detection = True
+    #             break
+    #     if is_object_detection and len(value) > 1:
+    #         raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
+    #     return value
