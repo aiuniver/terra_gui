@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from tensorflow.python.keras.utils.np_utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.classification_callbacks import BaseClassificationCallback
