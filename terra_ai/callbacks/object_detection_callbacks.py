@@ -5,7 +5,7 @@ import os
 import matplotlib
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
-from tensorflow.python.keras.utils.np_utils import to_categorical
+from tensorflow.keras.utils.np_utils import to_categorical
 
 from terra_ai.callbacks.utils import sort_dict, round_loss_metric, fill_heatmap_front_structure, \
     fill_graph_front_structure, fill_graph_plot_data, set_preset_count, get_link_from_dataframe
