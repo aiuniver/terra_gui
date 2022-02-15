@@ -32,7 +32,6 @@ from terra_ai.data.datasets.dataset import (
 from terra_ai.data.datasets.creation import (
     CreationData,
     CreationValidateBlocksData,
-    FilePathSourcesList,
     SourceData,
 )
 from terra_ai.data.datasets.extra import DatasetGroupChoice
@@ -154,16 +153,16 @@ class Exchange:
             reset_model=reset_model,
         )
 
-    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
+    def _call_datasets_sources(self, path: str) -> List[Dict[str, str]]:
         """
         Получение списка исходников датасетов
         """
-        files = FilePathSourcesList()
+        files = []
         for filename in os.listdir(path):
-            if filename.endswith(".zip"):
-                filepath = Path(path, filename)
-                files.append({"value": filepath})
-        files.sort(key=lambda item: item.label)
+            filepath = Path(path, filename)
+            if filename.endswith(".zip") and filepath.is_file():
+                files.append({"value": filename[:-4], "label": filename[:-4]})
+        files.sort(key=lambda item: item.get("label"))
         return files
 
     def _call_dataset_source_load(self, mode: str, value: str, architecture: str):

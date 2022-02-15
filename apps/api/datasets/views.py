@@ -70,9 +70,7 @@ class ChoiceProgressAPIView(BaseAPIView):
 class SourcesAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            self.terra_exchange(
-                "datasets_sources", path=str(TERRA_PATH.sources)
-            ).native()
+            self.terra_exchange("datasets_sources", path=str(TERRA_PATH.sources))
         )
 
 

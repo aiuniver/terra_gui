@@ -14,8 +14,6 @@ class SourceModeChoice(str, Enum):
     "Использовать путь к архиву в папке Google-диска"
     URL = "URL"
     "Использовать ссылку на архив"
-    Terra = "Terra"
-    "Terra"
 
 
 class LayerGroupChoice(str, Enum):

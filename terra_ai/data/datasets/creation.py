@@ -1,9 +1,11 @@
+import re
+
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any, Dict, List, Tuple
+from transliterate import slugify
 
-from pydantic import validator
-from pydantic.types import DirectoryPath, PositiveInt
+from pydantic import validator, DirectoryPath, PositiveInt
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
@@ -43,24 +45,6 @@ from terra_ai.data.datasets import creations
 from terra_ai.data.training.extra import ArchitectureChoice
 
 
-class FilePathSourceData(BaseMixinData):
-    value: confilepath(ext="zip")
-    label: Optional[str]
-
-    @validator("label", allow_reuse=True, always=True)
-    def _validate_label(cls, value: str, values) -> str:
-        file_path = values.get("value")
-        if not file_path:
-            return value
-        return file_path.name.split(".zip")[0]
-
-
-class FilePathSourcesList(UniqueListMixin):
-    class Meta:
-        source = FilePathSourceData
-        identifier = "label"
-
-
 class SourceData(BaseMixinData):
     """
     Информация для загрузки исходников датасета
@@ -68,17 +52,17 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
-    value: Union[confilepath(ext="zip"), HttpUrl, confilename(ext="zip")]
+    value: Union[HttpUrl, str]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl, str], values
-    ) -> Union[FilePathType, HttpUrl, str]:
+        cls, value: Union[HttpUrl, str], values
+    ) -> Union[HttpUrl, str]:
         mode = values.get("mode")
         if mode == SourceModeChoice.GoogleDrive:
-            if not isinstance(value, Path):
-                raise ValueTypeException(value, FilePathType)
+            if not isinstance(value, str):
+                raise ValueTypeException(value, str)
         if mode == SourceModeChoice.URL:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
@@ -282,6 +266,21 @@ class CreationData(AliasMixinData):
     architecture: ArchitectureChoice
     tags: List[str]
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
+
+    def __init__(self, **data):
+        data.update(
+            {
+                "alias": data.get(
+                    "alias",
+                    re.sub(
+                        r"([\-]+)",
+                        "_",
+                        slugify(data.get("name", ""), language_code="ru"),
+                    ),
+                )
+            }
+        )
+        super().__init__(**data)
 
     @property
     def path(self) -> Path:

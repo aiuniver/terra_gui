@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Optional
 from pydantic import validator
 from pydantic.errors import EnumMemberError
 
@@ -8,8 +8,8 @@ from terra_ai.data.datasets.creations.blocks import handlers
 
 
 class BlockDataParameters(BaseMixinData):
-    type: LayerSelectTypeChoice
-    data: List[str]
+    type: Optional[LayerSelectTypeChoice]
+    data: List[str] = []
 
 
 class BlockHandlerParameters(BaseMixinData):

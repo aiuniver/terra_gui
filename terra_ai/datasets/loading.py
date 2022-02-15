@@ -70,10 +70,10 @@ def __load_from_url(
 def __load_from_googledrive(
     progress_name: str,
     folder: Path,
-    zipfile_path: Path,
+    folder_name: str,
     architecture: ArchitectureChoice,
 ):
-    folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]
+    zipfile_path = Path(settings.TERRA_PATH.sources, f"{folder_name}.zip")
     dataset_path = Path(folder, folder_name)
 
     if dataset_path.exists():
