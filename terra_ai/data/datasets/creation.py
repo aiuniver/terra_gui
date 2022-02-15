@@ -35,7 +35,8 @@ from terra_ai.data.datasets.extra import (
     LayerOutputTypeChoice,
     ColumnProcessingTypeChoice,
 )
-from terra_ai.data.datasets.creations import column_processing
+
+# from terra_ai.data.datasets.creations import column_processing
 from terra_ai.data.datasets.tags import TagsList
 from terra_ai.data.datasets import creations
 from terra_ai.data.training.extra import ArchitectureChoice
@@ -223,29 +224,29 @@ class CreationOutputsList(UniqueListMixin):
         identifier = "id"
 
 
-class ColumnsProcessingData(BaseMixinData):
-    type: ColumnProcessingTypeChoice
-    parameters: Any
-
-    @validator("type", pre=True)
-    def _validate_type(
-        cls, value: ColumnProcessingTypeChoice
-    ) -> ColumnProcessingTypeChoice:
-        if not value:
-            return value
-        name = (
-            value
-            if isinstance(value, ColumnProcessingTypeChoice)
-            else ColumnProcessingTypeChoice(value)
-        ).name
-        cls.__fields__["parameters"].type_ = getattr(
-            column_processing, column_processing.ColumnProcessing[name].value
-        )
-        return value
-
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**(value or {}))
+# class ColumnsProcessingData(BaseMixinData):
+#     type: ColumnProcessingTypeChoice
+#     parameters: Any
+#
+#     @validator("type", pre=True)
+#     def _validate_type(
+#         cls, value: ColumnProcessingTypeChoice
+#     ) -> ColumnProcessingTypeChoice:
+#         if not value:
+#             return value
+#         name = (
+#             value
+#             if isinstance(value, ColumnProcessingTypeChoice)
+#             else ColumnProcessingTypeChoice(value)
+#         ).name
+#         cls.__fields__["parameters"].type_ = getattr(
+#             column_processing, column_processing.ColumnProcessing[name].value
+#         )
+#         return value
+#
+#     @validator("parameters", always=True)
+#     def _validate_parameters(cls, value: Any, values, field) -> Any:
+#         return field.type_(**(value or {}))
 
 
 class CreationVersionData(AliasMixinData):
@@ -270,8 +271,6 @@ class CreationVersionData(AliasMixinData):
     "Алиас родительского датасета"
     info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
     "Информация о данных"
-    processing: Dict[str, ColumnsProcessingData] = {}
-    "Обработчики"
     inputs: CreationInputsList = CreationInputsList()
     "Входные слои"
     outputs: CreationOutputsList = CreationOutputsList()
