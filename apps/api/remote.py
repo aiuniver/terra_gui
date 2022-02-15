@@ -15,7 +15,7 @@ def request(url: str, data: dict = None) -> Any:
         data = {}
     response = requests.post(
         f"{settings.TERRA_API_URL}{url}",
-        json={"config": settings.USER_PORT, **data},
+        json=data,
         cookies={"sessionid": settings.USER_SESSION},
     )
     if response.status_code == HTTP_401_UNAUTHORIZED:
