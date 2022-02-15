@@ -8,7 +8,7 @@ import colorsys
 from tensorflow.keras.preprocessing.image import load_img
 import os
 
-from tensorflow.python.keras import Model
+from tensorflow.keras import Model
 
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.datasets.utils import resize_bboxes
