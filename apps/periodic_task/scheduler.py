@@ -1,7 +1,6 @@
 import subprocess
 
 from pathlib import Path
-from logging import getLogger
 from apscheduler.executors.pool import ProcessPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
 
