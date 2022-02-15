@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow
 
 
-
 def masked_image(class_id=1):
 
     def mul_mask(mask, image):
