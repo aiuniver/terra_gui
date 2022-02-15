@@ -1,13 +1,17 @@
-from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
-from terra_ai.data.datasets.extra import LayerAudioModeChoice, LayerAudioParameterChoice, LayerAudioFillModeChoice, \
-    LayerAudioResampleChoice, LayerScalerAudioChoice
-from terra_ai.data.mixins import BaseMixinData
-from pydantic.types import PositiveInt, PositiveFloat
-from pydantic import validator
 from typing import Optional
+from pydantic import validator, PositiveInt, PositiveFloat
+
+from terra_ai.data.datasets.extra import (
+    LayerAudioModeChoice,
+    LayerAudioParameterChoice,
+    LayerAudioFillModeChoice,
+    LayerAudioResampleChoice,
+    LayerScalerAudioChoice,
+)
+from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
 
 
-class ParametersAudioData(BaseMixinData, MinMaxScalerData):
+class OptionsData(MinMaxScalerData):
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice
     max_seconds: Optional[PositiveFloat]

@@ -9,7 +9,7 @@ from terra_ai.data.datasets.extra import (
 )
 
 
-class ParametersData(BaseMixinData):
+class OptionsData(BaseMixinData):
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice

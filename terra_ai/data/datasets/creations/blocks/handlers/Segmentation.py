@@ -1,16 +1,16 @@
-from terra_ai.data.mixins import BaseMixinData
 from typing import List, Optional
-from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic import validator, PositiveInt
 from pydantic.color import Color
 
+from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import ConstrainedIntValueGe0
 
 
-class ParametersData(BaseMixinData):
+class OptionsData(BaseMixinData):
     mask_range: ConstrainedIntValueGe0
     classes_names: List[str]
     classes_colors: List[Color]
+
     # Внутренние параметры
     width: Optional[PositiveInt]
     height: Optional[PositiveInt]

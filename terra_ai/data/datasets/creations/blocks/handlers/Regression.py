@@ -1,11 +1,11 @@
-from terra_ai.data.datasets.creations.layers.extra import MinMaxScalerData
-from terra_ai.data.datasets.extra import LayerScalerRegressionChoice
-from terra_ai.data.mixins import BaseMixinData
 from pydantic.types import PositiveInt
 from typing import Optional
 
+from terra_ai.data.datasets.extra import LayerScalerRegressionChoice
+from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
 
-class ParametersData(BaseMixinData, MinMaxScalerData):
+
+class OptionsData(MinMaxScalerData):
     """
     Обработчик типа задачи "регрессия".
     Inputs:
@@ -13,5 +13,6 @@ class ParametersData(BaseMixinData, MinMaxScalerData):
     """
 
     scaler: LayerScalerRegressionChoice
+
     # Внутренние параметры
     put: Optional[PositiveInt]

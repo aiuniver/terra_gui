@@ -1,23 +1,20 @@
-from terra_ai.data.datasets.extra import LayerScalerTimeseriesChoice
+from typing import Optional
+from pydantic import validator, PositiveInt
+
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.types import confilepath
-from typing import Optional, List
-from pydantic import validator
-from pydantic.types import PositiveInt
+from terra_ai.data.datasets.extra import LayerScalerTimeseriesChoice
 
 
-class ParametersData(BaseMixinData):
-    # sources_paths: List[confilepath(ext="csv")]
+class OptionsData(BaseMixinData):
     length: PositiveInt
     step: PositiveInt
     trend: bool
     trend_limit: Optional[str]
     depth: Optional[PositiveInt]
     scaler: Optional[LayerScalerTimeseriesChoice]
+
     # Внутренние параметры
     put: Optional[PositiveInt]
-    # transpose: Optional[bool]
-    # separator: Optional[str]
 
     @validator("trend")
     def _validate_trend(cls, value: bool) -> bool:

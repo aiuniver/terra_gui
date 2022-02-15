@@ -1,11 +1,15 @@
 from typing import Optional
-from pydantic.types import PositiveInt
-from terra_ai.data.datasets.extra import LayerTextModeChoice, LayerPrepareMethodChoice, LayerTransformerMethodChoice
+from pydantic import validator, PositiveInt
+
 from terra_ai.data.mixins import BaseMixinData
-from pydantic import validator
+from terra_ai.data.datasets.extra import (
+    LayerTextModeChoice,
+    LayerPrepareMethodChoice,
+    LayerTransformerMethodChoice,
+)
 
 
-class ParametersTextData(BaseMixinData):
+class OptionsData(BaseMixinData):
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     text_mode: LayerTextModeChoice
     max_words: Optional[PositiveInt]

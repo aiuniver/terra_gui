@@ -1,12 +1,11 @@
-from terra_ai.data.datasets.extra import LayerTypeProcessingClassificationChoice
+from typing import Optional
+from pydantic import validator, PositiveInt
+
 from terra_ai.data.mixins import BaseMixinData
-from pathlib import Path
-from typing import Optional, List
-from pydantic import validator
-from pydantic.types import PositiveInt
+from terra_ai.data.datasets.extra import LayerTypeProcessingClassificationChoice
 
 
-class ParametersData(BaseMixinData):
+class OptionsData(BaseMixinData):
     one_hot_encoding: bool = True
     type_processing: Optional[
         LayerTypeProcessingClassificationChoice
@@ -26,12 +25,4 @@ class ParametersData(BaseMixinData):
     ) -> LayerTypeProcessingClassificationChoice:
         if value == LayerTypeProcessingClassificationChoice.ranges:
             cls.__fields__["ranges"].required = True
-        return value
-
-    @validator("sources_paths")
-    def _validate_sources_paths(cls, value: List[Path]) -> List[Path]:
-        if not len(value):
-            return value
-        if value[0].is_file():
-            cls.__fields__["type_processing"].required = True
         return value

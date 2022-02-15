@@ -27,6 +27,11 @@ class LayerGroupChoice(str, Enum):
         return list(map(lambda item: item.value, LayerGroupChoice))
 
 
+class LayerSelectTypeChoice(str, Enum):
+    table = "table"
+    folder = "folder"
+
+
 class LayerTypeChoice(str, Enum):
     data = "data"
     handler = "handler"
@@ -294,30 +299,24 @@ class LayerOutputTypeChoice(str, Enum):
 
 
 class LayerHandlerChoice(str, Enum):
-    Image = "Image"
-    Text = "Text"
     Audio = "Audio"
-    Dataframe = "Dataframe"
-    Video = "Video"
     Classification = "Classification"
-    Scaler = "Scaler"
-    Raw = "Raw"
-    Noise = "Noise"
-    Segmentation = "Segmentation"
-    TextSegmentation = "TextSegmentation"
-    Regression = "Regression"
-    Timeseries = "Timeseries"
-    TimeseriesTrend = "TimeseriesTrend"
-    ObjectDetection = "ObjectDetection"
-    Tracker = "Tracker"
-    Speech2Text = "Speech2Text"
-    Text2Speech = "Text2Speech"
-    ImageGAN = "ImageGAN"
-    ImageCGAN = "ImageCGAN"
-    TextToImageGAN = "TextToImageGAN"
     Discriminator = "Discriminator"
     Generator = "Generator"
-
-    @staticmethod
-    def values() -> list:
-        return list(map(lambda item: item.value, LayerHandlerChoice))
+    Image = "Image"
+    ImageCGAN = "ImageCGAN"
+    ImageGAN = "ImageGAN"
+    Noise = "Noise"
+    ObjectDetection = "ObjectDetection"
+    Regression = "Regression"
+    Scaler = "Scaler"
+    Segmentation = "Segmentation"
+    Speech2Text = "Speech2Text"
+    Text = "Text"
+    Text2Speech = "Text2Speech"
+    TextSegmentation = "TextSegmentation"
+    TextToImageGAN = "TextToImageGAN"
+    Timeseries = "Timeseries"
+    Tracker = "Tracker"
+    Transformer = "Transformer"
+    Video = "Video"

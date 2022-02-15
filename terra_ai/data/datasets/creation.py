@@ -1,6 +1,7 @@
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any, Dict, List, Tuple
+
 from pydantic import validator
 from pydantic.types import DirectoryPath, PositiveInt
 from pydantic.networks import HttpUrl
@@ -264,17 +265,11 @@ class CreationVersionData(AliasMixinData):
     """
 
     name: str
-    "Название"
     datasets_path: DirectoryPath
-    "Путь к директории датасетов проекта"
     parent_alias: str
-    "Алиас родительского датасета"
     info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
-    "Информация о данных"
     inputs: CreationInputsList = CreationInputsList()
-    "Входные слои"
     outputs: CreationOutputsList = CreationOutputsList()
-    "Выходные слои"
 
 
 class CreationData(AliasMixinData):
@@ -324,6 +319,26 @@ class CreationBlockData(IDMixinData):
     bind: LayerBindData
     position: Tuple[int, int]
     parameters: Any
+
+    def __init__(self, **data):
+        data.update({"parameters": data.get("parameters", {})})
+        super().__init__(**data)
+
+    @validator("type", pre=True)
+    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
+        if value not in list(LayerTypeChoice):
+            raise EnumMemberError(enum_values=list(LayerTypeChoice))
+        name = (
+            value if isinstance(value, LayerTypeChoice) else LayerTypeChoice(value)
+        ).name
+        type_ = getattr(creations.blocks.types, f"Block{name.title()}Parameters")
+        cls.__fields__["parameters"].required = True
+        cls.__fields__["parameters"].type_ = type_
+        return value
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class CreationBlockList(UniqueListMixin):

@@ -1,10 +1,12 @@
-from terra_ai.data.mixins import BaseMixinData
 from typing import Optional
 from pydantic.types import PositiveInt
 
+from terra_ai.data.mixins import BaseMixinData
 
-class ParametersGeneratorData(BaseMixinData):
+
+class OptionsData(BaseMixinData):
+
     # Внутренние параметры
-    shape: tuple
+    shape: Optional[tuple]
     put: Optional[PositiveInt]
     deploy: Optional[bool] = False

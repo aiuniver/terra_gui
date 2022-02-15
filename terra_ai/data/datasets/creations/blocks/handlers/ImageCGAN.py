@@ -1,5 +1,5 @@
 from terra_ai.data.mixins import BaseMixinData
 
 
-class ParametersImageCGANData(BaseMixinData):
+class OptionsData(BaseMixinData):
     pass

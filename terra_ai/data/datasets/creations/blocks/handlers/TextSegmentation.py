@@ -1,22 +1,21 @@
-from terra_ai.data.datasets.extra import LayerTextModeChoice
-from terra_ai.data.mixins import BaseMixinData
 from typing import Optional
-from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic import validator, PositiveInt
+
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.extra import LayerTextModeChoice
 
 
-class ParametersData(BaseMixinData):
+class OptionsData(BaseMixinData):
     open_tags: Optional[str]
     close_tags: Optional[str]
+
     # Внутренние параметры
-    # sources_paths: Optional[list]
     filters: Optional[str]
     text_mode: Optional[LayerTextModeChoice]
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
     put: Optional[PositiveInt]
-    # cols_names: Optional[str]
 
     def __init__(self, **data):
         data.update({"cols_names": None})
