@@ -293,7 +293,7 @@ class LayerOutputTypeChoice(str, Enum):
     Generator = "Generator"
 
 
-class LayerDatatypeChoice(str, Enum):
+class LayerHandlerChoice(str, Enum):
     Image = "Image"
     Text = "Text"
     Audio = "Audio"
@@ -320,4 +320,4 @@ class LayerDatatypeChoice(str, Enum):
 
     @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.value, LayerDatatypeChoice))
+        return list(map(lambda item: item.value, LayerHandlerChoice))

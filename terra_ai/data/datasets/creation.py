@@ -33,7 +33,6 @@ from terra_ai.data.datasets.extra import (
     LayerGroupChoice,
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
-    LayerDatatypeChoice,
     ColumnProcessingTypeChoice,
 )
 from terra_ai.data.datasets.creations import column_processing
@@ -325,7 +324,6 @@ class CreationBlockData(IDMixinData):
     removable: bool = False
     bind: LayerBindData
     position: Tuple[int, int]
-    datatype: Optional[LayerDatatypeChoice]
     parameters: Any
 
 

@@ -7,7 +7,7 @@ from terra_ai.data.datasets.extra import (
     LayerEncodingChoice,
     LayerGroupChoice,
     LayerTypeChoice,
-    LayerDatatypeChoice,
+    LayerHandlerChoice,
 )
 from terra_ai.data.modeling import extra as modeling_extra
 from terra_ai.data.modeling.layers.extra import ActivationChoice

@@ -8,11 +8,7 @@ from apps.plugins.frontend import choices as frontend_choices
 from apps.api.fields import DirectoryPathField, DirectoryOrFilePathField
 
 from terra_ai.settings import TERRA_PATH
-from terra_ai.data.datasets.extra import (
-    LayerTypeChoice,
-    LayerGroupChoice,
-    LayerDatatypeChoice,
-)
+from terra_ai.data.datasets.extra import LayerTypeChoice, LayerGroupChoice
 
 
 class MinMaxScalerSerializer(serializers.Serializer):
@@ -387,9 +383,6 @@ class CreateValidateBlockSerializer(serializers.Serializer):
     removable = serializers.BooleanField(default=False)
     bind = LayerBindSerializer()
     position = serializers.ListSerializer(child=serializers.IntegerField())
-    datatype = serializers.ChoiceField(
-        required=False, choices=tuple(LayerDatatypeChoice.values())
-    )
     parameters = serializers.DictField()
 
 
