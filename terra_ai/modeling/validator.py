@@ -94,7 +94,7 @@ class ModelValidator:
 
     def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
-        logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
+        # logger.debug(f"{self.name}, {self.compile_keras_code.__name__}")
         logger.info("Компиляция керас-кода модели...")
         self._plan_separation()
         self.keras_code = ""
@@ -220,7 +220,7 @@ class ModelValidator:
 
     def get_keras_model(self):
         self._plan_separation()
-        logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
+        # logger.debug(f"{self.name}, {self.get_keras_model.__name__}")
         if self.architecture in GAN_ARCHITECTURE:
             models = {'generator': None, 'discriminator': None}
             for model_plan in self.separated_plans:
@@ -254,7 +254,7 @@ class ModelValidator:
             return mc.create_model()
 
     def _get_layer_str(self, _layer, name_dict, identifier="", _block_uplinks=None):
-        logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
+        # logger.debug(f"{self.name}, {self._get_layer_str.__name__}")
         _layer_str = ""
         if _block_uplinks:
             _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
@@ -323,7 +323,7 @@ class ModelValidator:
         return _layer_str
 
     def _build_model_plan(self):
-        logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
+        # logger.debug(f"{self.name}, {self._build_model_plan.__name__}")
         # logger.info("Предобработка плана модели...")
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
@@ -430,6 +430,7 @@ class ModelValidator:
         if self.output_shape:
             outputs = []
             for layer in self.model_plan:
+                # print('\nlayer', layer)
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     logger.debug(f"self.output_shape: {layer}, {self.output_shape}, {self.layer_output_shapes}")
@@ -1336,7 +1337,9 @@ class ModelCreator:
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
         # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
+        # logger.debug(f"{self.layer_config.get(terra_layer[0]).module.value}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
+        # logger.debug(f"{module, terra_layer[1], terra_layer[2]}")
         if terra_layer[1] == LayerTypeChoice.Input:
             # logger.debug(f"terra_layer[2] {terra_layer[2]}")
             if self.architecture == ArchitectureChoice.ImageSRGAN and self.model_type == "Generator":
@@ -1344,13 +1347,12 @@ class ModelCreator:
             else:
                 _input_shape = self.input_shape.get(int(terra_layer[2].get("name")))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
-                shape=(_input_shape), name=terra_layer[2].get("name")) #shape=(), dtype=tensorflow.string
+                shape=_input_shape, name=terra_layer[2].get("name")) #shape=(), dtype=tensorflow.string
         else:
             marker = None
             yolo_out_idx = None
             for idx, layer in enumerate(self.model_plan):
-                if terra_layer[0] in layer[4] and \
-                        layer[1] == LayerTypeChoice.PretrainedYOLO and \
+                if terra_layer[0] in layer[4] and  layer[1] == LayerTypeChoice.PretrainedYOLO and \
                         terra_layer[0] != layer[0]:
                     marker = LayerTypeChoice.PretrainedYOLO
                     yolo_out_idx = layer[4].index(terra_layer[0])
@@ -1364,6 +1366,7 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+
             # logger.debug(f"'input_tensors' {input_tensors}")
             # logger.debug(f"'terra_layer[1]' {terra_layer[1]}")
             # logger.debug(f"'terra_layer[2]' {terra_layer[2]}")
