@@ -116,7 +116,7 @@ export default {
   &__input {
     height: 42px;
     padding: 5px 10px;
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 400;
     border: 1px solid;
     border-radius: 4px;

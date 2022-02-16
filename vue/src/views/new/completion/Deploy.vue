@@ -1,5 +1,5 @@
 <template>
-  <main class="page-deploy">
+  <div class="page-deploy">
     <div class="cont">
       <div class="board">
         <scrollbar>
@@ -56,16 +56,16 @@
         @clear="clearParams"
       />
     </div>
-  </main>
+  </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 export default {
-  name: 'Deploy',
+  name: 'Datasets',
   components: {
-    Params: () => import('@/components/deploy/params/Params'),
+    Params: () => import('@/components/new/deploy/Params'),
     IndexCard: () => import('@/components/deploy/IndexCard'),
     Table: () => import('@/components/deploy/Table'),
     TableClass: () => import('@/components/deploy/TableClass'),
@@ -73,9 +73,9 @@ export default {
   computed: {
     ...mapGetters({
       defaultLayout: 'deploy/getDefaultLayout',
-      // dataLoaded: 'deploy/getDataLoaded',
+      dataLoaded: 'deploy/getDataLoaded',
       cards: 'deploy/getCards',
-      // autoHeight: 'settings/autoHeight',
+      autoHeight: 'settings/autoHeight',
       type: 'deploy/getDeployType',
       deploy: 'deploy/getDeploy',
       params: 'deploy/getParams',

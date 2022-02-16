@@ -1,7 +1,8 @@
-from enum import Enum, EnumMeta
 from typing import Any
+from enum import Enum, EnumMeta
 from pydantic.types import ConstrainedNumberMeta
 
+from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.modeling.layers.extra import (
     PaddingAddCausalChoice,
     ActivationChoice,
@@ -22,13 +23,13 @@ from terra_ai.data.modeling.layers.extra import (
     ResblockActivationChoice,
     NormalizationChoice,
     MergeLayerChoice,
-    ConditionalMergeModeChoice
+    ConditionalMergeModeChoice,
 )
 
 from terra_ai.data.cascades.blocks.extra import (
     BlockOutputDataSaveAsChoice,
     BlockFunctionGroupChoice,
-    BlockCustomGroupChoice
+    BlockCustomGroupChoice,
 )
 
 from .base import Field
@@ -65,7 +66,7 @@ SELECT_TYPES = [
     ResblockActivationChoice,
     NormalizationChoice,
     MergeLayerChoice,
-    ConditionalMergeModeChoice
+    ConditionalMergeModeChoice,
 ]
 
 
@@ -125,7 +126,7 @@ def __prepare_choice_value(value: Any) -> Any:
     return value
 
 
-def prepare_pydantic_field(field, parse: str) -> Field:
+def prepare_pydantic_field(layer, field, parse: str) -> Field:
     __value = field.default
     __list = None
 
@@ -152,6 +153,10 @@ def prepare_pydantic_field(field, parse: str) -> Field:
         else:
             __type = FieldTypeChoice.text
             __value = str(__value)
+    elif layer == LayerTypeChoice.PretrainedModel and field.name == "model_path":
+        __type = FieldTypeChoice.select
+        __value = None
+        __list = []
     else:
         __type = FieldTypeChoice.text
         __value = None

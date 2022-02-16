@@ -599,6 +599,7 @@ export default {
     font-size: 14px;
     .at-select__selection {
       height: 30px;
+      padding: 0 24px 0 5px;
     }
   }
   &__arrow {

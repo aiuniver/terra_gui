@@ -18,7 +18,7 @@
 import { mapActions, mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 import Preview from './Preview';
-import Settings from './Settings';
+import Settings from './settings/';
 import Download from './Download';
 import Helpers from './Helpers';
 import Pagination from './Pagination';
@@ -31,7 +31,6 @@ export default {
     Helpers,
   },
   data: () => ({
-    value: 3,
     debounce: null,
     list: [
       { id: 1, title: 'Download', component: 'download' },
@@ -43,15 +42,25 @@ export default {
   computed: {
     ...mapGetters({
       select: 'createDataset/getSelectSource',
+      getPagination: 'createDataset/getPagination',
     }),
     getComp() {
       return this.list.find(i => i.id === this.value);
+    },
+    value: {
+      set(value) {
+        this.setPagination(value);
+      },
+      get() {
+        return this.getPagination;
+      },
     },
   },
   methods: {
     ...mapActions({
       setSourceLoad: 'createDataset/setSourceLoad',
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
+      setPagination: 'createDataset/setPagination',
       setOverlay: 'settings/setOverlay',
     }),
     onNext() {

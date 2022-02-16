@@ -151,5 +151,7 @@ from . import (
     PretrainedYOLO,
     ConditionalMergeLayer,
     ResnetBlock2D,
-    RGBNormalization
+    RGBNormalization,
+    VAEDiscriminatorBlock,
+    PretrainedModel,
 )

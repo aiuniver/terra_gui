@@ -109,7 +109,7 @@ export default {
     background: #242f3d;
     height: 42px;
     padding: 0 10px;
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 400;
     border-radius: 4px;
     border: 1px solid #65B9F4;
@@ -145,10 +145,14 @@ export default {
   }
   > input {
     height: 30px;
-    font-size: 14px;
+    font-size: 1rem;
     padding: 0 5px;
     line-height: 24px;
     width: 150px;
   }
+}
+
+input:focus {
+  border-color: #65B9F4;
 }
 </style>

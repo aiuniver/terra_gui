@@ -1,5 +1,7 @@
 <template>
-  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small, 't-select--disabled': isDisabled }]" v-click-outside="outside">
+  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small, 't-select--disabled': isDisabled }]"
+  :style="`width: ${width}`"
+  v-click-outside="outside">
     <div class="t-select__btn" @click="click">
       <i :class="['t-select__icon t-icon icon-file-arrow', { 't-select__icon--rotate': show }]"></i>
     </div>
@@ -17,7 +19,7 @@
     />
     <label :for="name">{{ inputLabel }}</label>
     <div class="t-select__content" v-show="show">
-      <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
+      <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)" :title="item.label">
         {{ item.label }}
       </div>
       <div class="t-select__content--empty" v-if="!filterList.length">Нет данных</div>
@@ -46,6 +48,7 @@ export default {
     small: Boolean,
     error: String,
     update: Boolean, //wtf
+    width: String
   },
   data() {
     return {
@@ -218,21 +221,24 @@ export default {
     border-radius: 4px 4px 0 0;
   }
   &--small {
-    height: 24px;
-    width: 109px;
+    height: 30px;
+    .t-select__btn {
+      width: 24px;
+    }
   }
   &--small &__input {
-    height: 24px;
+    height: 30px;
     font-size: 12px;
-    padding: 0 15px 0 5px;
+    padding: 0 24px 0 5px;
     line-height: 24px;
   }
   &--small &__icon {
-    top: 0px;
+    top: 3px;
+    right: 7px;
   }
   &--small &__content {
-    top: 23px;
-    min-width: 100%;
+    top: 29px;
+    width: 100%;
     &--item {
       padding: 0 5px;
       font-size: 12px;

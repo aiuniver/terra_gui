@@ -18,6 +18,8 @@ class ModelingMessages(dict, Enum):
                                 "eng": "Input shape must be %s %s in each dim but received input shape %s"}
     InputShapeMustBeOnly = {"ru": "With %s input shape must be only %s but received: %s",
                             "eng": "With %s input shape must be only %s but received: %s"}
+    PretrainedModelInputShapeMustBe = {"ru": "Layer %s with loaded model must have input shape %s but received: %s",
+                                        "eng": "Layer %s with loaded model must have input shape %s but received: %s"}
     InputShapeMustBeWholeDividedBy = {"ru": "Input shape `%s` except channels must be whole divided by %s",
                                       "eng": "Input shape `%s` except channels must be whole divided by %s"}
     LayerDoesNotHaveInputShape = {"ru": "У слоя не задана входная размерность",
@@ -60,11 +62,11 @@ class ModelingMessages(dict, Enum):
     InputShapeEmpty = {"ru": "Получена пустая размерность входных данных",
                        "eng": "Received empty input shape"}
     # Input dimension
-    IncorrectQuantityInputDimensions = {"ru": "Ожидаемое количество входов: %s, однако принято: %s",
+    IncorrectQuantityInputDimensions = {"ru": "Ожидается размерность входных данных: %s, но получена размерность: %s",
                                         "eng": "Expected %s input dimensions but got %s"}
     InputShapesAreDifferent = {"ru": "Все размерности входных данных должны быть одинаковыми: %s",
                                "eng": "All input shapes must be the same but received: %s"}
-    InputShapesHaveDifferentSizes = {"ru": "Во входной размерности присутствуют неодинаковые размеры: %s",
+    InputShapesHaveDifferentSizes = {"ru": "В размерностях входных данных присутствуют неодинаковые размерности: %s",
                                      "eng": "Input shapes have different sizes: %s"}
     MismatchedInputShapes = {
         "ru": "Required inputs with matching shapes except for the concat axis `%s` but received: %s",
@@ -72,6 +74,12 @@ class ModelingMessages(dict, Enum):
     NotInitializedLayer = {
         "ru": "Невозможно инициалицировать слой `%s`",
         "eng": "Can't initialize layer `%s`"}
+    OnlyOutputLayer = {
+        "ru": "Слой может быть только выходным",
+        "eng": "Layer must be used only as output layer"}
+    IncorrentModelPath = {
+        "ru": "Слой %s не может найти сохраненную модель по указанному пути '%s', проверьте правильность указанного пути",
+        "eng": "Layer %s can not figure out saved model in the directory '%s'. Please check correctness of the directory"}
 
 
 class ModelingException(TerraBaseException):
@@ -90,6 +98,22 @@ class ExpectedMoreModelsException(ModelingException):
 
     def __init__(self, __expected, __found, **kwargs):
         super().__init__(str(__expected), str(__found), **kwargs)
+
+
+class PretrainedModelInputShapeMustBeException(ModelingException):
+    class Meta:
+        message = ModelingMessages.PretrainedModelInputShapeMustBe
+
+    def __init__(self, __layer, __shape, __input, **kwargs):
+        super().__init__(str(__layer), str(__shape), str(__input), **kwargs)
+
+
+class IncorrentModelPathException(ModelingException):
+    class Meta:
+        message = ModelingMessages.IncorrentModelPath
+
+    def __init__(self, __layer, __path, **kwargs):
+        super().__init__(str(__layer), str(__path), **kwargs)
 
 
 class ExpectedOtherInputShapeDimException(ModelingException):
@@ -257,3 +281,11 @@ class NotInitializedLayerException(ModelingException):
 
     def __init__(self, __layer_name, **kwargs):
         super().__init__(str(__layer_name), **kwargs)
+
+
+class OnlyOutputLayerException(ModelingException):
+    class Meta:
+        message = ModelingMessages.OnlyOutputLayer
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
