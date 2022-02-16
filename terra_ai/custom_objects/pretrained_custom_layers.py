@@ -3,10 +3,11 @@ import json
 import os
 
 import numpy as np
+import tensorflow
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_text
-from tensorflow.python.layers.base import Layer
+from tensorflow.keras.layers import Layer
 from tensorflow.keras import layers
 from tensorflow.keras.layers import BatchNormalization
 
@@ -386,15 +387,15 @@ class PretrainedModel(Layer):
         if self.model_path:
             self.system_path = os.path.join(PROJECT_PATH, 'training', self.model_path, "model")
             logger.debug(f"self.system_path {self.system_path}")
-            self.custom_obj_json = f"model_custom_obj_json.trm"
-            self.model_json = f"model_json.trm"
-            self.model_weights = f"model_weights"
+            self.custom_obj_json = "model_custom_obj_json.trm"
+            self.model_json = "model_json.trm"
+            self.model_weights = "model_weights"
             with os.scandir(self.system_path) as files:
                 for f in files:
                     if 'generator_json' in f.name:
-                        self.model_json = f"generator_json.trm"
+                        self.model_json = "generator_json.trm"
                     if 'generator_weights' in f.name:
-                        self.model_weights = f"generator_weights.trm"
+                        self.model_weights = "generator_weights.trm"
 
             self.file_path_model_json = os.path.join(self.system_path, self.model_json)
             self.file_path_custom_obj_json = os.path.join(self.system_path, self.custom_obj_json)
@@ -405,8 +406,8 @@ class PretrainedModel(Layer):
                 self.input_shapes.append(tuple(inp.shape))
             for outp in self.model.outputs:
                 self.output_shapes.append(tuple(outp.shape))
-            logger.debug(f"self.input_shapes - {self.input_shapes}")
-            logger.debug(f"self.model.outputs - {self.output_shapes}")
+            # logger.debug(f"self.input_shapes - {self.input_shapes}")
+            # logger.debug(f"self.model.outputs - {self.output_shapes}")
             if self.load_weights:
                 self.load_model_weights()
             if self.froze_model:

@@ -1,6 +1,6 @@
 import tensorflow as tf
 import tensorflow
-from tensorflow.python.layers.base import Layer
+from tensorflow.keras.layers import Layer
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 

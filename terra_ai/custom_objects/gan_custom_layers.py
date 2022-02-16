@@ -1,4 +1,4 @@
-from tensorflow.python.layers.base import Layer
+from tensorflow.keras.layers import Layer
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
 

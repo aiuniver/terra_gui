@@ -11,7 +11,7 @@ import tensorflow as tf
 from PIL import Image
 from tensorflow import keras
 from tensorflow.keras.applications.vgg19 import preprocess_input, VGG19
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.models import Model
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.gan_callback import CGANCallback
