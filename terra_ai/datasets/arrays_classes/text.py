@@ -141,7 +141,6 @@ class TextArray(Array):
             array = array[:options['length']]
 
         array = np.array(array)
-        print("ARRAY: ", array)
         return array
 
     @staticmethod

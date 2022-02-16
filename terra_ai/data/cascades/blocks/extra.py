@@ -248,19 +248,7 @@ class BlocksBindChoice(Enum):
     )
     OutputData = (
         "OutputData",
-        (
-            (
-                BlockGroupChoice.Model,
-                BlockFunctionTypeChoice.PlotBboxes,
-                BlockFunctionTypeChoice.PlotMaskSegmentation,
-                BlockFunctionTypeChoice.MaskedImage,
-                BlockFunctionTypeChoice.PutTag,
-                BlockServiceTypeChoice.YoloV5,
-                BlockServiceTypeChoice.GoogleTTS,
-                BlockServiceTypeChoice.Wav2Vec,
-                BlockServiceTypeChoice.TinkoffAPI,
-            ),
-        ),
+        tuple(),
         tuple(),
     )
 
@@ -295,7 +283,7 @@ class BlocksBindChoice(Enum):
         (LayerInputTypeChoice.Image,),
     )
     YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image,))
-    GoogleTTS = ("GoogleTTS", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Text,))
+    GoogleTTS = ("GoogleTTS", ((BlockGroupChoice.Model, BlockGroupChoice.InputData),), tuple())
     Wav2Vec = ("Wav2Vec", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Audio,))
     TinkoffAPI = ("TinkoffAPI", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Audio,))
     ChangeType = (
@@ -333,7 +321,7 @@ class BlocksBindChoice(Enum):
     PutTag = ("PutTag", (BlockGroupChoice.Model,), (LayerInputTypeChoice.Text,))
     PostprocessBoxes = (
         "PostprocessBoxes",
-        (BlockGroupChoice.Model, BlockGroupChoice.InputData),
+        (BlockGroupChoice.Model,),
         (LayerInputTypeChoice.Image,),
     )
     PlotBboxes = (
@@ -345,8 +333,8 @@ class BlocksBindChoice(Enum):
                 BlockServiceTypeChoice.BiTBasedTracker,
                 BlockServiceTypeChoice.DeepSort,
                 BlockServiceTypeChoice.FilterClasses,
+                BlockGroupChoice.Model
             ),
-            BlockGroupChoice.InputData,
         ),
         (LayerInputTypeChoice.Image,),
     )

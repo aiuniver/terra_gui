@@ -16,8 +16,8 @@ from .arrays_classes.object_detection import ObjectDetectionArray
 from .arrays_classes.regression import RegressionArray
 from .arrays_classes.scaler import ScalerArray
 from .arrays_classes.segmentation import SegmentationArray
-from .arrays_classes.speech_2_text import SpeechToTextArray
-from .arrays_classes.text_2_speech import TextToSpeechArray
+# from .arrays_classes.speech_2_text import SpeechToTextArray
+# from .arrays_classes.text_2_speech import TextToSpeechArray
 from .arrays_classes.text_segmentation import TextSegmentationArray
 from .arrays_classes.timeseries import TimeseriesArray
 from .arrays_classes.tracker import TrackerArray
@@ -40,8 +40,8 @@ class CreateArray(object):
         self.regression = RegressionArray()
         self.scaler = ScalerArray()
         self.segmentation = SegmentationArray()
-        self.speech_2_text = SpeechToTextArray()
-        self.text_2_speech = TextToSpeechArray()
+        # self.speech_2_text = SpeechToTextArray()
+        # self.text_2_speech = TextToSpeechArray()
         self.text_segmentation = TextSegmentationArray()
         self.timeseries = TimeseriesArray()
         self.tracker = TrackerArray()
@@ -56,14 +56,15 @@ class CreateArray(object):
         if not isinstance(sources, list):
             sources = [sources]
         executor = self.__dict__[array_class]
-        if isinstance(sources[0], str):
-            source, parameters = self.get_result_items(result=executor.prepare(sources, dataset_folder=None, **options))
-            array, parameters = self.get_result_items(result=executor.create(source[0], **parameters))
-        else:
-            array = sources[0]
-            # print(array)
-            parameters = options
-        out_array = executor.preprocess(array, **parameters)
+        out_array = []
+
+        source, parameters = self.get_result_items(result=executor.prepare(sources, dataset_folder=None, **options))
+        for sour in source:
+            array, parameters = self.get_result_items(result=executor.create(sour, **parameters))
+            parameters['preprocess'] = options.get('preprocess')
+            out_array.append(executor.preprocess(array, **parameters))
+
+        out_array = np.array(out_array)
 
         return out_array
 
@@ -76,19 +77,13 @@ class CreateArray(object):
 
         for put_id, cols_names in instructions.items():
             temp_array[put_id] = {}
+            concat_list = []
             for col_name, data in cols_names.items():
                 data['preprocess'] = preprocessing.preprocessing[put_id][col_name]
-                if isinstance(sources, dict):
-                    array = self.execute_array(array_class=array_class, sources=sources[put_id][col_name], **data)
-                else:
-                    array = self.execute_array(array_class=array_class, sources=sources, **data)
-                temp_array[put_id][col_name] = array
-
-            concat_list = []
-            for col_name in temp_array[put_id].keys():
-                concat_list.append(temp_array[put_id][col_name])
-
-            out_array[put_id] = np.concatenate(concat_list, axis=1)
+                for elem in sources[put_id][col_name]:
+                    array = self.execute_array(array_class=array_class, sources=elem, **data)
+                    concat_list.append(array)
+            out_array[put_id] = np.concatenate(concat_list, axis=0)
 
         return out_array
 

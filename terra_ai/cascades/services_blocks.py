@@ -16,15 +16,17 @@ from time import time
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 from mutagen import mp3
 from gtts import gTTS
-from io import BytesIO
 from scipy.spatial.distance import cosine
+from PIL import Image
 
 from .common import _associate_detections_to_trackers, _non_max_suppression
 from .advansed_services import _SpeechToTextStub, _KalmanBoxTracker
 from .function_blocks import ChangeSize
-from .input_blocks import Input
+from .input_blocks import Input, BaseInput
+from .internal_out_blocks import ModelOutput
 from .main_blocks import CascadeBlock, BaseBlock
 from .advansed_services import _Extractor, _NearestNeighborDistanceMetric, _Tracker, _Detection
+from .model_blocks import BaseModel
 from .utils import stt_pb2
 
 
@@ -34,9 +36,15 @@ class BaseService(BaseBlock):
         super().__init__()
 
         self.path: str = ""
+        self.save_path: str = ""
+        self.outs = {}
 
-    def set_path(self, model_path: str):
-        self.path = os.path.join(model_path, self.path)
+    def get_outputs(self):
+        return list(self.outs.keys())
+
+    def set_path(self, model_path: str, save_path: str):
+        self.path = os.path.join(model_path, self.path, 'model')
+        self.save_path = save_path
 
     def execute(self):
         pass
@@ -168,15 +176,27 @@ class GoogleTTS(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.outs = {out.front_name: out for out in ModelOutput().get(type_='Text2Speech')}
         self.language = kwargs.get("language", "ru")
 
     def execute(self):
-        text = list(self.inputs.values())[0].execute()
-        tts = gTTS(text, lang=self.language)
-        fp = BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        return fp
+        if max([issubclass(type(input_), BaseModel) for input_ in list(self.inputs.values())]):
+            outs_ = list(self.inputs.values())[0].get_outputs()
+            idx = outs_.index('Текст')
+            source = list(self.inputs.values())[0].execute()[idx]
+        else:
+            source = list(self.inputs.values())[0].execute()
+
+        result = gTTS(source, lang=self.language)
+
+        data = {
+            'source': source,
+            'model_predict': result,
+            'options': {},
+            'save_path': self.save_path
+        }
+
+        return [out().execute(**data) for name, out in self.outs.items()]
 
 
 class YoloV5(BaseService):
@@ -195,13 +215,18 @@ class YoloV5(BaseService):
         if not self.model:
             self.model = torch.hub.load(self.model_url, self.version,
                                         pretrained=self.pretrained, force_reload=self.force_reload)
+
         frame = list(self.inputs.values())[0].execute()
+        out_source = ''
+        if isinstance(frame, str):
+            out_source = frame
+            frame = Image.open(frame)
         frame = np.squeeze(frame)
         out = self.model(frame)
         if self.render_img:
-            return out.render()[0]
+            return {'image_array': out.render()[0], 'source': out_source}
 
-        return out.xyxy[0].cpu().numpy()
+        return {'bboxes': out.xyxy[0].cpu().numpy(), 'source': out_source}
 
 
 class DeepSort(BaseService):

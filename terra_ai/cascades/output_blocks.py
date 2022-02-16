@@ -40,8 +40,16 @@ class ImageOutput(BaseOutput):
         self.result_type = ".webp"
 
     def execute(self):
+        outs_ = list(self.inputs.values())[0].get_outputs()
+        # if 'Список классов с вероятностями' in outs_:
+        #     idx = outs_.index('Список классов с вероятностями')
+        #     output = list(self.inputs.values())[0].execute()[idx][0]
+        #     output = ', '.join([elem[0] for elem in output])
+        #     print(output)
+        #     return output
         source = self.cascade_input.prepare_sources()
         self.cascade_input.set_source(source)
+        return [input_.execute() for input_ in list(self.inputs.values())]
 
         # img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         # cv2.imwrite(path, img)
@@ -74,6 +82,9 @@ class TextOutput(BaseOutput):
     def execute(self):
         source = self.cascade_input.prepare_sources()
         self.cascade_input.set_source(source)
+        # outs_ = list(self.inputs.values())[0].get_outputs()
+        # idx = outs_.index('Результат предикта')
+        # output = list(self.inputs.values())[0].execute()[idx][0]
         with open(f"{self.output_file}{self.result_type}", 'a') as f:
             f.write(str(list(self.inputs.values())[0].execute()) + '\n')
         return f"{self.output_file}{self.result_type}"
@@ -88,10 +99,13 @@ class AudioOutput(BaseOutput):
     def execute(self):
         source = self.cascade_input.prepare_sources()
         self.cascade_input.set_source(source)
-        audio = list(self.inputs.values())[0].execute()
-        result = AudioSegment.from_file(audio, format="mp3")
-        result.export(f"{self.output_file}{self.result_type}", format="webm")
-        return f"{self.output_file}{self.result_type}"
+
+        outs_ = list(self.inputs.values())[0].get_outputs()
+        idx = outs_.index('Аудиофайл')
+        output = list(self.inputs.values())[0].execute()[idx][0]
+
+        print(output)
+        return output
 
 
 class DataframeOutput(BaseOutput):

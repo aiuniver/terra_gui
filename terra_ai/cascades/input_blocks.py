@@ -113,6 +113,12 @@ class VideoInput(BaseInput):
     def __init__(self, **kwargs):
         super().__init__()
 
+    def set_source(self, source):
+        self.sources = source
+
+    def prepare_sources(self):
+        return self.sources
+
     def execute(self):
         return self.sources[0]
 

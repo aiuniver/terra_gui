@@ -36,8 +36,9 @@ class CascadeRunner:
         method_name = "start cascade"
         logger.info("Запуск сборки каскада", extra={"type": "info"})
         weight_path = self._add_deepsort_weight_path(cascade_data=cascade_data)
-
-        cascade = Cascade(**cascade_data.native(), model_path=training_path, weight_path=weight_path)
+        save_path = os.path.join(str(DEPLOY_PATH), 'deploy_presets')
+        cascade = Cascade(**cascade_data.native(), model_path=training_path,
+                          weight_path=weight_path, save_path=save_path)
 
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
 
@@ -95,13 +96,14 @@ class CascadeRunner:
             out_data = []
             i = 1
             for source in sources[:example_count]:
+                print(source)
                 res = cascade.execute([
                     source],
                     f"F:\\test_result\\test_{i}")
                 out_data.append(res)
                 i += 1
 
-            print(out_data)
+            # print(out_data)
             # out_data = dict([
             #     ("path_deploy", str(DEPLOY_PATH)),
             #     ("type", type_),

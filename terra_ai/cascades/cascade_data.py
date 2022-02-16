@@ -1,8 +1,11 @@
+import datetime
+import time
+
 from .input_blocks import Input, BaseInput
 from .model_blocks import Model, BaseModel
 from .output_blocks import Output, BaseOutput
-from .services_blocks import Service, DeepSort
-from .function_blocks import Function
+from .services_blocks import Service, DeepSort, BaseService
+from .function_blocks import Function, PlotBboxes
 from terra_ai.data.cascades.blocks.extra import ObjectDetectionFilterClassesList
 
 
@@ -14,7 +17,7 @@ class BlockClasses:
     Model = Model
 
     @staticmethod
-    def add_block(block_config: dict):
+    def add_block(block_config: dict, model_path: str):
         block_type = block_config.get("parameters").get("main").get("type")
         if block_type is None:
             block_type = block_config.get('group')
@@ -22,6 +25,13 @@ class BlockClasses:
         if group in [BlockClasses.InputData, BlockClasses.OutputData]:
             if block_type == "Video" and block_config.get("parameters").get("main").get("switch_on_frame"):
                 block_type = "VideoFrameInput"
+        if group == BlockClasses.Model:
+            block_object = group().get(type_=block_type, **block_config.get("parameters").get("main"))
+            block_object.set_path(model_path=model_path, save_path='')
+            block_object.get_outputs()
+            if 'yolo' in block_object.model_architecture:
+                block_type = 'yolo'
+            del block_object
         block_object = group().get(type_=block_type, **block_config.get("parameters").get("main"))
         return block_object
 
@@ -33,27 +43,30 @@ class BlockClasses:
         return None
 
     @staticmethod
-    def get(cascade_config: dict, model_path=None, weight_path=None):
+    def get(cascade_config: dict, model_path=None, save_path=None, weight_path=None):
         cascade_blocks = cascade_config.get("blocks", [])
-        blocks_ = {}
+        blocks_ = {"output": []}
+
         for block in cascade_blocks:
             id_ = block.get("id")
             if id_ not in blocks_.keys():
-                blocks_[id_] = BlockClasses.add_block(BlockClasses.get_bind(cascade_blocks, id_))
+                blocks_[id_] = BlockClasses.add_block(BlockClasses.get_bind(cascade_blocks, id_),
+                                                      model_path=model_path)
                 if issubclass(blocks_[id_].__class__, BaseOutput):
-                    blocks_["output"] = id_
+                    blocks_["output"].append(id_)
                 if issubclass(blocks_[id_].__class__, BaseInput):
                     blocks_["input"] = id_
             block_inputs = block.get("bind").get("up")
             for bind in block_inputs:
                 if bind not in blocks_.keys():
-                    blocks_[bind] = BlockClasses.add_block(BlockClasses.get_bind(cascade_blocks, bind))
+                    blocks_[bind] = BlockClasses.add_block(BlockClasses.get_bind(cascade_blocks, bind),
+                                                           model_path=model_path)
                 bind_type = BlockClasses.get_bind(cascade_blocks, bind).get("parameters").get("main").get("type")
                 blocks_.get(id_).inputs[bind_type] = blocks_.get(bind)
 
         for idx, block in blocks_.items():
-            if issubclass(block.__class__, BaseModel):
-                block.set_path(model_path)
+            if issubclass(block.__class__, (BaseModel, BaseService, PlotBboxes)):
+                block.set_path(model_path=model_path, save_path=save_path)
             if issubclass(block.__class__, DeepSort):
                 block.set_path(weight_path)
 
@@ -61,19 +74,27 @@ class BlockClasses:
 
 
 class Cascade:
-    def __init__(self, model_path=None, weight_path=None, **config):
-        self.blocks = BlockClasses.get(cascade_config=config, model_path=model_path, weight_path=weight_path)
+    def __init__(self, model_path=None, save_path=None, weight_path=None, **config):
+        self.blocks = BlockClasses.get(cascade_config=config, model_path=model_path,
+                                       save_path=save_path, weight_path=weight_path)
         self.input_block = self.blocks.get(self.blocks["input"])
-        self.output_block = self.blocks.get(self.blocks["output"])
+        self.output_block = {output: self.blocks.get(output) for output in self.blocks.get("output")}
+
+    def get_outputs(self):
+        return {id_: list(out.inputs.values())[0].get_outputs() for id_, out in self.output_block.items()}
 
     def __prepare_data(self, sources, output_file=None):
         self.input_block.set_source(sources)
-        self.output_block.set_inputs(self.input_block)
-        self.output_block.set_out(output_file)
+        for id_, output in self.output_block.items():
+            output.set_inputs(self.input_block)
+            output.set_out(output_file)
 
     def execute(self, sources, output_file=None):
+        result = {}
         self.__prepare_data(sources, output_file)
-        return self.output_block.execute()
+        for id_, output in self.output_block.items():
+            result[id_] = output.execute()
+        return result
 
 
 if __name__ == "__main__":

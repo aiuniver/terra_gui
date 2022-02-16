@@ -16,7 +16,10 @@ class BaseBlock(ABC):
 class CascadeBlock:
 
     def get(self, type_, **kwargs):
-        return self.__getattribute__(type_)(**kwargs)
+        if kwargs:
+            return self.__getattribute__(type_)(**kwargs)
+        else:
+            return self.__getattribute__(type_)
 
 
 class ModelOut(BaseBlock, CascadeBlock):

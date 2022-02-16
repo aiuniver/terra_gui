@@ -20,6 +20,16 @@ def decamelize(camel_case_string: str):
     return re.sub("([a-z0-9])([A-Z0-9])", r"\1_\2", string).lower()
 
 
+def is_terra_file(path: str) -> bool:
+    suffixes = ('.webm', '.webp', '.jpg', '.png', '.jpeg',
+                '.mp3', '.wav', '.avi', '.mp4', '.txt',
+                '.csv', '.svg', '.bmp')
+    if path.endswith(suffixes):
+        return True
+    else:
+        return False
+
+
 def load_images(path):
     data = os.listdir(path)
 
