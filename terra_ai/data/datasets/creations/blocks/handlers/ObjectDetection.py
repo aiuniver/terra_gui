@@ -19,4 +19,3 @@ class OptionsData(BaseMixinData):
     frame_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
     classes_names: Optional[list]
     num_classes: Optional[PositiveInt]
-    put: Optional[PositiveInt]

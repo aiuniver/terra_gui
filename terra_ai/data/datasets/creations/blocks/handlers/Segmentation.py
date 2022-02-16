@@ -14,7 +14,6 @@ class OptionsData(BaseMixinData):
     # Внутренние параметры
     width: Optional[PositiveInt]
     height: Optional[PositiveInt]
-    # put: Optional[PositiveInt]
 
     @validator("width", "height", pre=True)
     def _validate_empty_number(cls, value: PositiveInt) -> PositiveInt:

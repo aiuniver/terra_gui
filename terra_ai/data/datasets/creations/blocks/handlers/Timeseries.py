@@ -13,9 +13,6 @@ class OptionsData(BaseMixinData):
     depth: Optional[PositiveInt]
     scaler: Optional[LayerScalerTimeseriesChoice]
 
-    # Внутренние параметры
-    put: Optional[PositiveInt]
-
     @validator("trend")
     def _validate_trend(cls, value: bool) -> bool:
         if value:

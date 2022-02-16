@@ -13,6 +13,3 @@ class OptionsData(MinMaxScalerData):
     """
 
     scaler: LayerScalerRegressionChoice
-
-    # Внутренние параметры
-    put: Optional[PositiveInt]

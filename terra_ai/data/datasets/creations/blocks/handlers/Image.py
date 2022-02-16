@@ -18,5 +18,4 @@ class OptionsData(MinMaxScalerData, BaseMixinData):
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
     # Внутренние параметры
-    # put: Optional[PositiveInt]
     # object_detection: Optional[bool] = False

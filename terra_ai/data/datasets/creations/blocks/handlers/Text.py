@@ -22,7 +22,6 @@ class OptionsData(BaseMixinData):
 
     # Внутренние параметры
     transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
-    put: Optional[PositiveInt]
     deploy: Optional[bool] = False
     open_tags: Optional[str]
     close_tags: Optional[str]

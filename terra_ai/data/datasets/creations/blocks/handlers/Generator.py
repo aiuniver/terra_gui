@@ -8,5 +8,4 @@ class OptionsData(BaseMixinData):
 
     # Внутренние параметры
     shape: Optional[tuple]
-    put: Optional[PositiveInt]
     deploy: Optional[bool] = False
