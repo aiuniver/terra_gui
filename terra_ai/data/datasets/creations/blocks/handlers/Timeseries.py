@@ -1,17 +1,15 @@
 from typing import Optional
 from pydantic import validator, PositiveInt
 
-from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.extra import LayerScalerTimeseriesChoice
+from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
 
 
-class OptionsData(BaseMixinData):
+class OptionsData(MinMaxScalerData):
     length: PositiveInt
     step: PositiveInt
     trend: bool
     trend_limit: Optional[str]
     depth: Optional[PositiveInt]
-    scaler: Optional[LayerScalerTimeseriesChoice]
 
     @validator("trend")
     def _validate_trend(cls, value: bool) -> bool:

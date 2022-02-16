@@ -2,14 +2,12 @@ from typing import Optional
 from pydantic import validator, PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.extra import LayerTypeProcessingClassificationChoice
+from terra_ai.data.datasets.extra import LayerTypeProcessingChoice
 
 
 class OptionsData(BaseMixinData):
     one_hot_encoding: bool = True
-    type_processing: Optional[
-        LayerTypeProcessingClassificationChoice
-    ] = LayerTypeProcessingClassificationChoice.categorical
+    type_processing: LayerTypeProcessingChoice = LayerTypeProcessingChoice.categorical
     ranges: Optional[str]
 
     # Внутренние параметры
@@ -20,8 +18,8 @@ class OptionsData(BaseMixinData):
 
     @validator("type_processing")
     def _validate_type_processing(
-        cls, value: LayerTypeProcessingClassificationChoice
-    ) -> LayerTypeProcessingClassificationChoice:
-        if value == LayerTypeProcessingClassificationChoice.ranges:
+        cls, value: LayerTypeProcessingChoice
+    ) -> LayerTypeProcessingChoice:
+        if value == LayerTypeProcessingChoice.ranges:
             cls.__fields__["ranges"].required = True
         return value

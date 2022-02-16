@@ -10,15 +10,15 @@ from terra_ai.data.datasets.extra import (
 
 
 class OptionsData(BaseMixinData):
-    filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     text_mode: LayerTextModeChoice
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
-    pymorphy: bool  # = False
     prepare_method: LayerPrepareMethodChoice
     max_words_count: Optional[PositiveInt]
     word_to_vec_size: Optional[PositiveInt]
+    pymorphy: bool  # = False
+    filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
 
     # Внутренние параметры
     transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
@@ -34,10 +34,7 @@ class OptionsData(BaseMixinData):
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
         if value == LayerTextModeChoice.completely:
             cls.__fields__["max_words"].required = True
-            cls.__fields__["length"].required = False
-            cls.__fields__["step"].required = False
         elif value == LayerTextModeChoice.length_and_step:
-            cls.__fields__["max_words"].required = False
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value
@@ -51,8 +48,6 @@ class OptionsData(BaseMixinData):
             LayerPrepareMethodChoice.bag_of_words,
         ]:
             cls.__fields__["max_words_count"].required = True
-            cls.__fields__["word_to_vec_size"].required = False
         elif value == LayerPrepareMethodChoice.word_to_vec:
-            cls.__fields__["max_words_count"].required = False
             cls.__fields__["word_to_vec_size"].required = True
         return value
