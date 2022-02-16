@@ -24,7 +24,8 @@ except ImportError:
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
-TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
+# TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
+TMP_DIR = Path('C:\\Users\\Arthur\\Usage')
 os.makedirs(TMP_DIR, exist_ok=True)
 
 GOOGLE_STORAGE_URL = "https://storage.googleapis.com/terra_ai/"
@@ -69,7 +70,7 @@ DATASET_ANNOTATION = "labelmap.txt"
 DATASETS_SOURCE_DIR = Path(TMP_DIR, "datasets", "sources")
 DATASETS_LOADED_DIR = Path(TMP_DIR, "datasets", "loaded")
 DATASET_PROGRESS_NAME = "create_dataset"
-VERSION_PROGRESS_NAME = "create_version"
+VERSION_PROGRESS_NAME = "create_dataset"  ###########################################################
 DATASET_VERSION_CONFIG = "version.json"
 
 # Modeling
