@@ -22,7 +22,7 @@ class PretrainedYOLO(Layer):
         self.version = version
         self.use_weights = use_weights
         self.save_weights = str(save_weights)
-        logger.debug(f"self.save_weights {self.save_weights}")
+        # logger.debug(f"self.save_weights {self.save_weights}")
         self.yolo = self.create_yolo(classes=self.num_classes)
         if use_weights:
             self.base_yolo = self.create_yolo()
