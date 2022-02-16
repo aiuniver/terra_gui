@@ -23,6 +23,7 @@ from apps.plugins.frontend.choices import (
     ColumnProcessingInputTypeChoice,
     ColumnProcessingOutputTypeChoice,
 )
+from apps.plugins.frontend.presets.defaults import fields
 from apps.plugins.frontend.presets.defaults.layers import (
     SourcesPaths,
     LayerImageDefaults,
@@ -30,6 +31,8 @@ from apps.plugins.frontend.presets.defaults.layers import (
     LayerAudioDefaults,
     LayerDataframeDefaults,
 )
+
+from terra_ai.data.datasets.extra import LayerHandlerChoice
 
 
 DatasetsColumnProcessing = [
@@ -1093,3 +1096,73 @@ DatasetsOutput = [
         },
     },
 ]
+
+
+BlockHandlerParameters = {
+    LayerHandlerChoice.Audio: [
+        fields.SampleRateField,
+        fields.AudioModeField,
+        fields.AudioFillModeField,
+        fields.AudioParameterField,
+        fields.AudioResampleField,
+        fields.ScalerDefaultField,
+    ],
+    LayerHandlerChoice.Classification: [
+        fields.OneHotEncodingField,
+        fields.TypeProcessingField,
+    ],
+    LayerHandlerChoice.Discriminator: [],
+    LayerHandlerChoice.Generator: [],
+    LayerHandlerChoice.Image: [
+        fields.WidthField,
+        fields.HeightField,
+        fields.NetField,
+        fields.ScalerImageField,
+        fields.ImageModeField,
+    ],
+    LayerHandlerChoice.ImageCGAN: [],
+    LayerHandlerChoice.ImageGAN: [],
+    LayerHandlerChoice.Noise: [],
+    LayerHandlerChoice.ObjectDetection: [
+        fields.YoloVersionField,
+        fields.ODModelTypeField,
+    ],
+    LayerHandlerChoice.Regression: [
+        fields.ScalerDefaultField,
+    ],
+    LayerHandlerChoice.Scaler: [
+        fields.ScalerDefaultField,
+    ],
+    LayerHandlerChoice.Segmentation: [
+        fields.MaskRangeField,
+        fields.ClassesField,
+    ],
+    LayerHandlerChoice.Speech2Text: [],
+    LayerHandlerChoice.Text: [
+        fields.TextModeField,
+        fields.TextPrepareMethodField,
+        fields.TextPymorphyField,
+        fields.TextFiltersField,
+    ],
+    LayerHandlerChoice.Text2Speech: [],
+    LayerHandlerChoice.TextSegmentation: [
+        fields.TextOpenTagsField,
+        fields.TextCloseTagsField,
+    ],
+    LayerHandlerChoice.TextToImageGAN: [],
+    LayerHandlerChoice.Timeseries: [
+        fields.TimeseriesLengthField,
+        fields.TimeseriesStepField,
+        fields.TimeseriesTrendField,
+    ],
+    LayerHandlerChoice.Tracker: [],
+    LayerHandlerChoice.Transformer: [],
+    LayerHandlerChoice.Video: [
+        fields.VideoWidthField,
+        fields.VideoHeightField,
+        fields.VideoFillModeField,
+        fields.VideoFrameModeField,
+        fields.VideoModeField,
+        fields.ScalerVideoField,
+    ],
+}

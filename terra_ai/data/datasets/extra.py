@@ -183,6 +183,11 @@ class LayerImageFrameModeChoice(str, Enum):
     cut = "cut"
 
 
+class LayerTypeProcessingChoice(str, Enum):
+    categorical = "categorical"
+    ranges = "ranges"
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "categorical"
     ranges = "ranges"

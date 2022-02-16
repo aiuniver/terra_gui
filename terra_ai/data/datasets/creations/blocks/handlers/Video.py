@@ -4,13 +4,12 @@ from pydantic import validator, PositiveInt
 from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
-    LayerScalerVideoChoice,
     LayerVideoModeChoice,
 )
-from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
+from terra_ai.data.datasets.creations.blocks.extra import VideoScalerData
 
 
-class OptionsData(MinMaxScalerData):
+class OptionsData(VideoScalerData):
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.average_value
@@ -19,10 +18,9 @@ class OptionsData(MinMaxScalerData):
     max_frames: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
-    scaler: LayerScalerVideoChoice
-    put: Optional[PositiveInt]
 
     # Внутренние параметры
+    put: Optional[PositiveInt]
     deploy: Optional[bool] = False
 
     @validator("video_mode", allow_reuse=True)

@@ -1,7 +1,7 @@
 from pydantic.types import PositiveInt
 from typing import Optional
 
-from terra_ai.data.datasets.extra import LayerScalerRegressionChoice
+from terra_ai.data.datasets.extra import LayerScalerDefaultChoice
 from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
 
 
@@ -12,7 +12,7 @@ class OptionsData(MinMaxScalerData):
         scaler: str - тип скейлера. Варианты: 'standard_scaler', 'min_max_scaler'
     """
 
-    scaler: LayerScalerRegressionChoice
+    scaler: LayerScalerDefaultChoice
 
     # Внутренние параметры
     put: Optional[PositiveInt]
