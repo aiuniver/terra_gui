@@ -25,7 +25,8 @@ export default {
   },
   computed: {
     isActive() {
-      return this.$store.getters['projects/getProject'].dataset?.alias === this.dataset.alias
+      const { alias, group } = this.$store.getters['projects/getProject'].dataset || {}
+      return `${group}_${alias}` === this.dataset.id
     }
   },
   methods: {
