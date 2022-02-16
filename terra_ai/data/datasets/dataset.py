@@ -220,15 +220,30 @@ class DatasetCommonData(AliasMixinData):
     architecture: ArchitectureChoice = ArchitectureChoice.Basic
     tags: List[str] = []
 
+    __group__: DatasetGroupChoice = PrivateAttr()
     __versions__: List[dict] = PrivateAttr()
 
     def __init__(self, **data):
+        self.__group__ = data.pop("group", "")
         self.__versions__ = data.pop("versions", [])
         super().__init__(**data)
 
     @property
+    def id(self) -> str:
+        return f"{self.group}_{self.alias}"
+
+    @property
+    def group(self) -> DatasetGroupChoice:
+        return self.__group__
+
+    @property
     def versions(self) -> List[dict]:
         return self.__versions__
+
+    def dict(self, **kwargs) -> dict:
+        data = super().dict(**kwargs)
+        data.update({"id": self.id})
+        return data
 
 
 class DatasetCommonList(UniqueListMixin):
@@ -248,7 +263,7 @@ class DatasetCommonGroupList(UniqueListMixin):
         identifier = "alias"
 
     def __init__(self):
-        args = (DatasetCommonGroup,)
+        args = (list(map(lambda item: {**item}, DatasetCommonGroup)),)
         custom = []
         for item in TERRA_PATH.datasets.iterdir():
             if item.suffix[1:] != DATASET_EXT or not item.is_dir():
@@ -259,9 +274,10 @@ class DatasetCommonGroupList(UniqueListMixin):
             except Exception:
                 pass
         for item in args[0]:
-            if item.get("alias") != "custom":
-                continue
-            item["datasets"] = custom
+            if item.get("alias") == "custom":
+                item["datasets"] = custom
+            for dataset in item.get("datasets"):
+                dataset.update({"group": item.get("alias")})
         super().__init__(*args)
 
     @property

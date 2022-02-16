@@ -51,9 +51,8 @@ class SourceData(BaseMixinData):
     """
 
     mode: SourceModeChoice
-    "Режим загрузки исходных данных"
     value: Union[HttpUrl, str]
-    "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
+    path: DirectoryPath
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
