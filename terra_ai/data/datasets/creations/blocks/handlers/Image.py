@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import PositiveInt
 
+from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerNetChoice,
@@ -9,7 +10,7 @@ from terra_ai.data.datasets.extra import (
 )
 
 
-class OptionsData(BaseMixinData):
+class OptionsData(MinMaxScalerData, BaseMixinData):
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice
@@ -17,5 +18,5 @@ class OptionsData(BaseMixinData):
     image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
 
     # Внутренние параметры
-    put: Optional[PositiveInt]
-    object_detection: Optional[bool] = False
+    # put: Optional[PositiveInt]
+    # object_detection: Optional[bool] = False
