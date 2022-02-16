@@ -38,7 +38,7 @@ export default {
       return this.value === 1;
     },
     isStatus() {
-      if (this.value === 1 && (!this?.project?.source_path.value || !this?.project?.name || !this?.project?.architecture)) return true;
+      if (this.value === 1 && (!this?.project?.source.value || !this?.project?.name || !this?.project?.architecture)) return true;
       return false;
     },
     getTitle() {

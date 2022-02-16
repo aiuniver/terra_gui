@@ -10,22 +10,15 @@ export default {
     pagination: 1,
     project: {
       active: 0,
-      alias: 'airplane',
       name: 'Самолеты',
       architecture: "ImageClassification",
-      source_path: {
+      source: {
         mode: 'GoogleDrive',
-        value: '/home/bondrogeen/github/terra_gui/TerraAI/datasets/sources/Seasons.zip'
+        value: '/home/bondrogeen/github/terra_gui/TerraAI/datasets/sources/Seasons.zip',
+        path: ''
       },
-      tags: [
-        {
-          alias: "proverka",
-          name: "проверка"
-        }
-      ],
-      verAlias: "samoleti_drugaja",
+      tags: ["проверка"],
       verName: "самолеты другая",
-      parent_alias: "airplane",
       train: 0.7,
       shuffle: true
     },
@@ -49,13 +42,13 @@ export default {
       state.file_manager = value;
     },
     SET_SOURCE_PATH (state, value) {
-      state.source_path = value;
+      state.project.source.path = value;
     },
   },
   actions: {
 
-    async create ({ dispatch, state: { project, source_path }, rootState: { create: { inputs, outputs } } }) {
-      const data = createObj({ project, inputs, outputs, source_path })
+    async create ({ dispatch, state: { project }, rootState: { create: { inputs, outputs } } }) {
+      const data = createObj({ project, inputs, outputs })
       return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
     },
 
@@ -69,15 +62,15 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/source/load/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
         const { data: { file_manager, source_path, blocks } } = res.data;
-        commit('create/SET_INPUT_AND_OUTPUT', blocks, {root: true});
+        commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
         commit('SET_FILE_MANAGER', file_manager);
         commit('SET_SOURCE_PATH', source_path);
       }
       return res
     },
     async setSourceLoad ({ dispatch, state: { project } }) {
-      const { source_path, architecture } = project
-      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { ...source_path, architecture } }, { root: true });
+      const { source: { mode, value }, architecture } = project
+      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { mode, value, architecture } }, { root: true });
       return success
     },
     async getDatasetSources ({ commit, dispatch }) {

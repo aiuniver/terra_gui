@@ -31,20 +31,15 @@ const chnageType = (arr) => {
 }
 
 const createObj = (data) => {
-  const { project, inputs, outputs, source_path } = JSON.parse(JSON.stringify(data))
-  const { alias, name, task_type, tags, verAlias, verName, parent_alias, train, shuffle, datasets_path } = project
+  const { project, inputs, outputs } = JSON.parse(JSON.stringify(data))
+  const { name, architecture, tags, verName, train, shuffle, source } = project
   return {
-    alias,
     name,
-    datasets_path,
-    source_path,
-    task_type,
+    source,
+    architecture,
     tags,
     version: {
-      alias: verAlias,
       name: verName,
-      datasets_path,
-      parent_alias,
       info: {
         part: {
           train,

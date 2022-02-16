@@ -6,7 +6,7 @@
         <i class="d-tags__add--icon t-icon icon-tag-plus" @click="create"></i>
         <input type="text" class="d-tags__add--input" :disabled="tags.length >= 3" :placeholder="'Добавить'" @keypress.enter.prevent="create" />
       </button>
-      <template v-for="({ name }, i) in tags">
+      <template v-for="(name, i) in tags">
         <div class="d-tags__item mr-2" :key="'tag_' + i">
           <input
             :value="name"
@@ -69,7 +69,7 @@ export default {
       const el = this.$el.getElementsByClassName('d-tags__add--input')?.[0];
       console.log(el.value);
       if (el.value && el.value.length >= 3 && this.tags.length <= 3) {
-        this.tags.push({ name: el.value });
+        this.tags.push(el.value);
         this.tags = [...this.tags];
         el.value = '';
       }

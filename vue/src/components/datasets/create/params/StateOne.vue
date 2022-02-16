@@ -11,7 +11,7 @@
       </div>
     </div>
     <div class="state-one-content mt-10">
-      <t-field v-if="project.source_path.mode === 'GoogleDrive'" icon="google" label="Выберите файл на Google диске">
+      <t-field v-if="project.source.mode === 'GoogleDrive'" icon="google" label="Выберите файл на Google диске">
         <d-auto-complete
           :value="getValueSource"
           :key="getValueSource"
@@ -22,7 +22,7 @@
         />
       </t-field>
       <t-field v-else icon="link" label="Загрузите по ссылке">
-        <d-input-text v-model="project.source_path.value" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+        <d-input-text v-model="project.source.value" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
       </t-field>
     </div>
     <div>
@@ -65,7 +65,7 @@ export default {
       },
     },
     getValueSource() {
-      const value = this.project.source_path.value;
+      const value = this.project.source.value;
       return this.getFilesSource.find(i => i.value === value)?.label || '';
     },
     getValueArchitectures() {
@@ -76,14 +76,15 @@ export default {
   methods: {
     ...mapActions('createDataset', ['getDatasetSources']),
     isActive(mode) {
-      return this.project.source_path.mode === mode;
+      return this.project.source.mode === mode;
     },
-    onSelect(data) {
-      this.project.source_path = data;
+    onSelect({ value, mode }) {
+      this.project.source.mode = mode;
+      this.project.source.value = value;
     },
     onTabs(mode) {
-      this.project.source_path.mode = mode;
-      this.project.source_path.value = '';
+      this.project.source.mode = mode;
+      this.project.source.value = '';
     },
     onArchitectures(value) {
       console.log(value);
