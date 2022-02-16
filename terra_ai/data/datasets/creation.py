@@ -371,22 +371,3 @@ class CreationData(AliasMixinData):
     @property
     def path(self) -> Path:
         return self._path
-
-    # @validator("inputs", "outputs")
-    # def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
-    #     if not len(value):
-    #         raise ListEmptyException(type(value))
-    #     return value
-    #
-    # @validator("outputs")
-    # def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
-    #     if not value:
-    #         return value
-    #     is_object_detection = False
-    #     for layer in value:
-    #         if layer.type == LayerOutputTypeChoice.ObjectDetection:
-    #             is_object_detection = True
-    #             break
-    #     if is_object_detection and len(value) > 1:
-    #         raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
-    #     return value

@@ -363,50 +363,6 @@ class LayerTypeProcessingChoice(str, Enum):
         return get_values(LayerTypeProcessingChoice)
 
 
-class LayerTypeProcessingClassificationChoice(str, Enum):
-    categorical = "По категориям"
-    ranges = "По диапазонам"
-
-    @staticmethod
-    def items_tuple() -> list:
-        return list(
-            map(
-                lambda item: (item.name, item.value),
-                LayerTypeProcessingClassificationChoice,
-            )
-        )
-
-
-class ColumnProcessingInputTypeChoice(str, Enum):
-    Image = "Изображения"
-    Text = "Текст"
-    Audio = "Аудио"
-    Video = "Видео"
-    Classification = "Уникальные"
-    Scaler = "Скейлер"
-
-    @staticmethod
-    def items_tuple() -> list:
-        return list(
-            map(lambda item: (item.name, item.value), ColumnProcessingInputTypeChoice)
-        )
-
-
-class ColumnProcessingOutputTypeChoice(str, Enum):
-    Classification = "Классификация"
-    Regression = "Регрессия"
-    Segmentation = "Сегментация"
-    Timeseries = "Временные ряды"
-    ImageGAN = "ImageGAN"
-    Transformer = "Трансформер"
-
-    @staticmethod
-    def items_tuple() -> list:
-        return list(
-            map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
-        )
-
-
 class DeployTypePageChoice(str, Enum):
     model = "Обучение"
     cascade = "Каскад"

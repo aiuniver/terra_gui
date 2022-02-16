@@ -33,7 +33,8 @@ class LayerSelectTypeChoice(str, Enum):
 class LayerTypeChoice(str, Enum):
     data = "data"
     handler = "handler"
-    layer = "layer"
+    input = "input"
+    output = "output"
 
     @staticmethod
     def values() -> list:
@@ -323,3 +324,35 @@ class LayerHandlerChoice(str, Enum):
     Tracker = "Tracker"
     Transformer = "Transformer"
     Video = "Video"
+
+    @staticmethod
+    def inputs() -> list:
+        return [
+            LayerHandlerChoice.Image,
+            LayerHandlerChoice.Audio,
+            LayerHandlerChoice.Classification,
+            LayerHandlerChoice.Noise,
+            LayerHandlerChoice.Scaler,
+            LayerHandlerChoice.Text,
+            LayerHandlerChoice.Video,
+        ]
+
+    @staticmethod
+    def outputs() -> list:
+        return [
+            LayerHandlerChoice.Classification,
+            LayerHandlerChoice.Discriminator,
+            LayerHandlerChoice.Generator,
+            LayerHandlerChoice.ImageCGAN,
+            LayerHandlerChoice.ImageGAN,
+            LayerHandlerChoice.ObjectDetection,
+            LayerHandlerChoice.Regression,
+            LayerHandlerChoice.Segmentation,
+            LayerHandlerChoice.Speech2Text,
+            LayerHandlerChoice.Text2Speech,
+            LayerHandlerChoice.TextSegmentation,
+            LayerHandlerChoice.TextToImageGAN,
+            LayerHandlerChoice.Timeseries,
+            LayerHandlerChoice.Tracker,
+            LayerHandlerChoice.Transformer,
+        ]

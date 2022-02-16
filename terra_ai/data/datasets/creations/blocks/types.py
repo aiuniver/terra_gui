@@ -36,5 +36,9 @@ class BlockHandlerParameters(BaseMixinData):
         return field.type_(**value or {})
 
 
-class BlockLayerParameters(BaseMixinData):
+class BlockInputParameters(BaseMixinData):
+    pass
+
+
+class BlockOutputParameters(BaseMixinData):
     pass

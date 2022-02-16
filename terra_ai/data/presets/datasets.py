@@ -2524,6 +2524,7 @@ DatasetCommonGroup = [
         "datasets": [],
     },
 ]
+
 DatasetCreationArchitecture = {
     ArchitectureChoice.ImageClassification: {
         LayerGroupChoice.inputs: [
@@ -2556,7 +2557,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2588,7 +2589,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2632,7 +2633,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2664,7 +2665,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2708,7 +2709,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2740,7 +2741,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2784,7 +2785,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2816,7 +2817,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2852,7 +2853,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2884,7 +2885,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2920,7 +2921,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2954,7 +2955,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -2994,7 +2995,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3026,7 +3027,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3070,7 +3071,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3105,7 +3106,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3141,7 +3142,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3181,7 +3182,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3226,7 +3227,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3258,7 +3259,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3299,7 +3300,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3334,7 +3335,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3374,7 +3375,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3409,7 +3410,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3453,7 +3454,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3485,7 +3486,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3529,7 +3530,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "input",
                 "name": "Вход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3561,7 +3562,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 3,
-                "type": "layer",
+                "type": "output",
                 "name": "Выход",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3615,7 +3616,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 4,
-                "type": "layer",
+                "type": "input",
                 "name": "Изображения",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3624,7 +3625,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 5,
-                "type": "layer",
+                "type": "input",
                 "name": "Шум",
                 "removable": False,
                 "bind": {"up": [3], "down": []},
@@ -3668,7 +3669,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 4,
-                "type": "layer",
+                "type": "output",
                 "name": "Генератор",
                 "removable": False,
                 "bind": {"up": [2], "down": []},
@@ -3677,7 +3678,7 @@ DatasetCreationArchitecture = {
             },
             {
                 "id": 5,
-                "type": "layer",
+                "type": "output",
                 "name": "Дискриминатор",
                 "removable": False,
                 "bind": {"up": [3], "down": []},

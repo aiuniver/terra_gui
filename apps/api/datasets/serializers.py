@@ -297,14 +297,6 @@ class CreateInfoSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
-class CreateColumnProcessingSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(
-        choices=frontend_choices.ColumnProcessingInputTypeChoice.items_tuple()
-        + frontend_choices.ColumnProcessingOutputTypeChoice.items_tuple()
-    )
-    parameters = serializers.DictField()
-
-
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
@@ -313,9 +305,6 @@ class CreateSerializer(serializers.Serializer):
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
     use_generator = serializers.BooleanField(default=False)
-    columns_processing = serializers.DictField(
-        child=CreateColumnProcessingSerializer(), default=dict
-    )
     inputs = serializers.ListSerializer(child=serializers.DictField())
     outputs = serializers.ListSerializer(child=serializers.DictField())
 

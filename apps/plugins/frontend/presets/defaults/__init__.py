@@ -4,9 +4,10 @@ from terra_ai.data.training.extra import ArchitectureChoice
 
 from apps.plugins.frontend.utils import prepare_pydantic_field
 from apps.plugins.frontend.presets.defaults.datasets import (
-    DatasetsColumnProcessing,
-    DatasetsInput,
-    DatasetsOutput,
+    BlockDataForm,
+    BlockHandlerForm,
+    BlockInputForm,
+    BlockOutputForm,
 )
 from apps.plugins.frontend.presets.defaults.modeling import (
     ModelingLayerForm,
@@ -24,10 +25,11 @@ from apps.plugins.frontend.presets.defaults.deploy import (
 
 Defaults = {
     "datasets": {
-        "creation": {
-            "column_processing": DatasetsColumnProcessing,
-            "input": DatasetsInput,
-            "output": DatasetsOutput,
+        "blocks": {
+            "data": BlockDataForm,
+            "handler": BlockHandlerForm,
+            "input": BlockInputForm,
+            "output": BlockOutputForm,
         },
         "architectures": [
             {"value": "ImageClassification", "label": "Классификация изображений"},
