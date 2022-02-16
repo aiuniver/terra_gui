@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple, Dict, Any, Union
 import networkx as nx
 import numpy as np
 import tensorflow
-from tensorflow.python.keras.backend import clear_session
+from tensorflow.keras.backend import clear_session
 
 from terra_ai.callbacks.utils import GAN_ARCHITECTURE
 from terra_ai.data.datasets.dataset import DatasetData

@@ -150,7 +150,6 @@ PROJECT_PATH = Path(env.str("PROJECT_PATH", default="./Project")).absolute()
 
 # User data
 
-USER_PORT = env.int("USER_PORT", default=9120)
 USER_KEEP_SESSION = env.bool("USER_KEEP_SESSION", default=False)
 USER_SESSION = env.str("USER_SESSION", default=None)
 USER = None

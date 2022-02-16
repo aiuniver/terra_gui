@@ -1,14 +1,4 @@
-from terra_ai.callbacks.classification_callbacks import ImageClassificationCallback, TextClassificationCallback, \
-     DataframeClassificationCallback, AudioClassificationCallback, VideoClassificationCallback, TimeseriesTrendCallback
-from terra_ai.callbacks.object_detection_callbacks import YoloV3Callback, YoloV4Callback
-from terra_ai.callbacks.regression_callbacks import DataframeRegressionCallback
-from terra_ai.callbacks.segmentation_callbacks import TextSegmentationCallback, ImageSegmentationCallback
-from terra_ai.callbacks.time_series_callbacks import TimeseriesCallback
-from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice, ArchitectureChoice
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1, resize_frame
-from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetData
-from terra_ai.settings import DEPLOY_PRESET_PERCENT, CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, \
-    CALLBACK_REGRESSION_TREASHOLD_VALUE
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, resize_frame
 from terra_ai.utils import autodetect_encoding
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerNetChoice, LayerVideoFillModeChoice, LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, \
@@ -23,20 +13,8 @@ import shutil
 import pymorphy2
 import random
 import librosa.feature as librosa_feature
-import moviepy.editor as moviepy_editor
 import imgaug
-import colorsys
-import copy
-import math
-import string
-import matplotlib
-from typing import Optional
-import tensorflow
-from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
-from matplotlib import pyplot as plt
-from pandas import DataFrame
-from tensorflow.keras.preprocessing import image
-from tensorflow.python.keras.utils.np_utils import to_categorical
+from PIL import UnidentifiedImageError
 from ast import literal_eval
 from pydub import AudioSegment
 from librosa import load as librosa_load
