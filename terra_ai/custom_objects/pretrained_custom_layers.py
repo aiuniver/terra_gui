@@ -5,9 +5,8 @@ import os
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.python.layers.base import Layer
 from tensorflow.keras import layers
-from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import BatchNormalization, Layer
 
 import terra_ai.settings
 from config.settings import PROJECT_PATH

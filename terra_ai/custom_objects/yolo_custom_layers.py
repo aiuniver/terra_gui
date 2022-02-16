@@ -1,8 +1,6 @@
 import tensorflow as tf
 import tensorflow
-from tensorflow.python.layers.base import Layer
-from tensorflow.keras.layers import BatchNormalization
-
+from tensorflow.keras.layers import BatchNormalization, Layer
 from terra_ai.custom_objects.normalization_custom_layers import Mish
 
 
