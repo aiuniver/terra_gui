@@ -24,7 +24,6 @@ class OptionsData(MinMaxScalerData):
 
     # Внутренние параметры
     deploy: Optional[bool] = False
-    put: Optional[PositiveInt]
 
     @validator("audio_mode")
     def _validate_audio_mode(cls, value: LayerAudioModeChoice) -> LayerAudioModeChoice:

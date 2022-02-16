@@ -105,6 +105,8 @@ class BaseClass(object):
                                         if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
                                             collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
                                                               in collected_data]
+                                        print(collected_data[:5])
+                                        print(handler.parameters.native())
                                         data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
                                         parameters_to_pass[put_idx].update(
                                             {f'{put_idx}_{column}': handler.parameters.native()})

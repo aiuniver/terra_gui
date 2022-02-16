@@ -20,7 +20,6 @@ class OptionsData(MinMaxScalerData):
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
     scaler: LayerScalerVideoChoice
-    put: Optional[PositiveInt]
 
     # Внутренние параметры
     deploy: Optional[bool] = False

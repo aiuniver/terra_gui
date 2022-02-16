@@ -13,6 +13,3 @@ class OptionsData(MinMaxScalerData):
     """
 
     scaler: LayerScalerDefaultChoice
-
-    # Внутренние параметры
-    put: Optional[PositiveInt]
