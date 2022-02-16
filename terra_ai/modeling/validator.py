@@ -1318,7 +1318,9 @@ class ModelCreator:
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
         # logger.debug(f"{self.name}, {self._keras_layer_init.__name__}")
+        # logger.debug(f"{self.layer_config.get(terra_layer[0]).module.value}")
         module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
+        # logger.debug(f"{module, terra_layer[1], terra_layer[2]}")
         if terra_layer[1] == LayerTypeChoice.Input:
             if self.architecture == ArchitectureChoice.ImageSRGAN and self.model_type == "Generator":
                 _input_shape = (None, None, self.input_shape.get(int(terra_layer[2].get("name")))[0][-1])
@@ -1330,8 +1332,7 @@ class ModelCreator:
             marker = None
             yolo_out_idx = None
             for idx, layer in enumerate(self.model_plan):
-                if terra_layer[0] in layer[4] and \
-                        layer[1] == LayerTypeChoice.PretrainedYOLO and \
+                if terra_layer[0] in layer[4] and  layer[1] == LayerTypeChoice.PretrainedYOLO and \
                         terra_layer[0] != layer[0]:
                     marker = LayerTypeChoice.PretrainedYOLO
                     yolo_out_idx = layer[4].index(terra_layer[0])
@@ -1345,6 +1346,7 @@ class ModelCreator:
                     input_tensors = []
                     for idx in terra_layer[3]:
                         input_tensors.append(self.tensors[idx])
+
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
 
     def _tf_layer_init(self, terra_layer):

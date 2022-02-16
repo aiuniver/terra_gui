@@ -31,10 +31,11 @@ import math
 import string
 import matplotlib
 from typing import Optional
+import tensorflow
 from PIL import Image, UnidentifiedImageError, ImageFont, ImageDraw
 from matplotlib import pyplot as plt
 from pandas import DataFrame
-from tensorflow.python.keras.preprocessing import image
+from tensorflow.keras.preprocessing import image
 from tensorflow.python.keras.utils.np_utils import to_categorical
 from ast import literal_eval
 from pydub import AudioSegment
