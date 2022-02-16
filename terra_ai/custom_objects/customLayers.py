@@ -1706,7 +1706,7 @@ class PretrainedYOLO(Layer):
         self.num_classes = num_classes
         self.version = version
         self.use_weights = use_weights
-        self.save_weights = save_weights
+        self.save_weights = str(save_weights)
         self.yolo = self.create_yolo(classes=self.num_classes)
         if use_weights:
             self.base_yolo = self.create_yolo()
