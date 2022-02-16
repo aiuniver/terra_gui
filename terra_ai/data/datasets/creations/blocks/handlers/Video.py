@@ -20,7 +20,6 @@ class OptionsData(VideoScalerData):
     step: Optional[PositiveInt]
 
     # Внутренние параметры
-    put: Optional[PositiveInt]
     deploy: Optional[bool] = False
 
     @validator("video_mode", allow_reuse=True)

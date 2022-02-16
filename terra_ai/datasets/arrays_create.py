@@ -16,8 +16,8 @@ from .arrays_classes.object_detection import ObjectDetectionArray
 from .arrays_classes.regression import RegressionArray
 from .arrays_classes.scaler import ScalerArray
 from .arrays_classes.segmentation import SegmentationArray
-# from .arrays_classes.speech_2_text import SpeechToTextArray
-# from .arrays_classes.text_2_speech import TextToSpeechArray
+from .arrays_classes.speech_2_text import Speech2TextArray
+from .arrays_classes.text_2_speech import Text2SpeechArray
 from .arrays_classes.text_segmentation import TextSegmentationArray
 from .arrays_classes.timeseries import TimeseriesArray
 from .arrays_classes.tracker import TrackerArray
@@ -40,8 +40,8 @@ class CreateArray(object):
         self.regression = RegressionArray()
         self.scaler = ScalerArray()
         self.segmentation = SegmentationArray()
-        # self.speech_2_text = SpeechToTextArray()
-        # self.text_2_speech = TextToSpeechArray()
+        self.speech_2_text = Speech2TextArray()
+        self.text_2_speech = Text2SpeechArray()
         self.text_segmentation = TextSegmentationArray()
         self.timeseries = TimeseriesArray()
         self.tracker = TrackerArray()
