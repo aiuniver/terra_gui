@@ -242,7 +242,12 @@ class DatasetCommonData(AliasMixinData):
 
     def dict(self, **kwargs) -> dict:
         data = super().dict(**kwargs)
-        data.update({"id": self.id})
+        data.update(
+            {
+                "id": self.id,
+                "group": self.group,
+            }
+        )
         return data
 
 
@@ -263,7 +268,7 @@ class DatasetCommonGroupList(UniqueListMixin):
         identifier = "alias"
 
     def __init__(self):
-        args = (list(map(lambda item: {**item}, DatasetCommonGroup)),)
+        args = (DatasetCommonGroup,)
         custom = []
         for item in TERRA_PATH.datasets.iterdir():
             if item.suffix[1:] != DATASET_EXT or not item.is_dir():
