@@ -616,9 +616,9 @@ class CreateVersion(object):
         inputs, outputs, service, size, columns, date
         """
         tags_list = []
-        for inp, tags in self.tags.items():
-            for col_name, value in tags.items():
-                tags_list.append({'alias': value, 'name': camelize(value)})
+        for inp, cols in self.tags.items():
+            for col_name, tag in cols.items():
+                tags_list.append(tag)
         size_bytes = 0
         for path, dirs, files in os.walk(self.version_paths_data.basepath):
             for file in files:

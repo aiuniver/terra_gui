@@ -92,7 +92,9 @@ class BaseClass(object):
                                                     collected_data.append(os.path.join(current_path, file_name))
                                     print(collected_data[:5])
                                     print(handler.parameters.native())
-                                    data_to_pass[put_idx].update({f'{put_idx}_{data.name}': collected_data})
+                                    data_to_pass[put_idx].update(
+                                        {f'{put_idx}_{data.name}': collected_data}
+                                    )
                                     parameters_to_pass[put_idx].update(
                                         {f'{put_idx}_{data.name}': handler.parameters.native()})
                                 elif data.parameters.type == LayerSelectTypeChoice.table:
@@ -235,15 +237,17 @@ class BaseClass(object):
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
                 else:
-                    # classes_names = sorted(
-                    #     [os.path.basename(x) for x in version_data.inputs.get(key).parameters.keys()])
-                    classes_names = ['asd']
+                    column = ' '.join(col_name.split('_')[1:])
+                    for block in version_data.inputs:
+                        if block.name == column or \
+                                block.type == LayerTypeChoice.data and column in block.parameters.data:
+                            classes_names = block.parameters.data
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': 'Вход',  # version_data.inputs.get(key).name,
+                                  'name': col_name,  # version_data.inputs.get(key).name,
                                   'task': camelize(data.parameters.get('put_type')),
                                   'classes_names': classes_names,
                                   'classes_colors': data.parameters.get('classes_colors'),
@@ -267,7 +271,7 @@ class BaseClass(object):
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': 'Вход',  # version_data.inputs.get(key).name,
+                              'name': f'Вход {key}',
                               'task': task_list[0] if len(set(task_list)) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
                               'classes_colors': classes_colors_list if classes_colors_list else None,
@@ -303,15 +307,17 @@ class BaseClass(object):
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
                 else:
-                    # classes_names = sorted(
-                    #     [os.path.basename(x) for x in version_data.outputs.get(key).parameters.keys()])
-                    classes_names = ['asd']
+                    column = ' '.join(col_name.split('_')[1:])
+                    for block in version_data.outputs:
+                        if block.name == column or \
+                                block.type == LayerTypeChoice.data and column in block.parameters.data:
+                            classes_names = block.parameters.data
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': 'Выход',  # version_data.outputs.get(key).name,
+                                  'name': col_name,
                                   'task': camelize(data.parameters.get('put_type')),
                                   'classes_names': classes_names,
                                   'classes_colors': data.parameters.get('classes_colors'),
@@ -335,7 +341,7 @@ class BaseClass(object):
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name':  'Выход',  # version_data.outputs.get(key).name,
+                              'name':  f'Выход {key}',
                               'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
                               'classes_colors': classes_colors_list if classes_colors_list else None,
@@ -507,10 +513,6 @@ class PreprocessingNumericClass(object):
                                         f'{camelize(data.parameters["put_type"])}Array')().create(
                             source=data_to_pass, **data.parameters)['instructions']
 
-                        # array = multithreading_array(
-                        #     [data_to_pass],
-                        #     [data.parameters]
-                        # )[0]
                         if data.parameters['scaler'] == LayerScalerImageChoice.terra_image_scaler:
                             preprocessing.preprocessing[key][col_name].fit(array)
                         else:

@@ -45,20 +45,19 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
 
         version_data = kwargs['version_data']
 
-        worker_keys = list(version_data.processing.keys())
-        for worker_name in worker_keys:
-            if version_data.processing[worker_name].type == 'Timeseries':
-                if version_data.processing[worker_name].parameters.trend:
-                    version_data.processing[worker_name].parameters.depth = 1
-                # В скейлер перекидываем инфу о length depth step
-                for w_name, w_params in version_data.processing.items():
-                    if version_data.processing[w_name].type in ['Classification', 'Scaler', 'Raw']:
-                        version_data.processing[w_name].parameters.length = \
-                            version_data.processing[worker_name].parameters.length
-                        version_data.processing[w_name].parameters.depth = \
-                            version_data.processing[worker_name].parameters.depth
-                        version_data.processing[w_name].parameters.step = \
-                            version_data.processing[worker_name].parameters.step
+        length, depth, step = 0, 0, 0
+        for out_data in version_data.outputs:
+            if out_data.type == 'handler' and out_data.parameters.type == 'Timeseries':
+                if out_data.parameters.options.trend:
+                    out_data.parameters.options.depth = 1
+                length = out_data.parameters.options.length
+                depth = out_data.parameters.options.depth
+                step = out_data.parameters.options.step
+        for inp_data in version_data.inputs:
+            if inp_data.type == 'handler' and inp_data.parameters.type in ['Classification', 'Scaler', 'Raw']:
+                inp_data.parameters.options.length = length
+                inp_data.parameters.options.depth = depth
+                inp_data.parameters.options.step = step
 
         return version_data
 
@@ -83,7 +82,7 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': version_data.inputs.get(key).name,
+                                  'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
                                   'classes_names': parameters_to_pass.get('classes_names'),
                                   'classes_colors': None,
@@ -95,7 +94,7 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
             out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': version_data.inputs.get(key).name,
+                              'name': f'Вход {key}',
                               'task': camelize(parameters_to_pass.get('put_type')),
                               'classes_names': parameters_to_pass.get('classes_names'),
                               'classes_colors': None,
@@ -127,7 +126,7 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': version_data.outputs.get(key).name,
+                                  'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
                                   'classes_names': None,
                                   'classes_colors': None,
@@ -139,7 +138,7 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
             out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': version_data.outputs.get(key).name,
+                              'name': f'Выход {key}',
                               'task': 'Timeseries',
                               'classes_names': None,
                               'classes_colors': None,
@@ -161,6 +160,7 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
             for key in put_data.keys():
                 data_to_pass = []
                 dict_to_pass = []
+                depth, length, step = 0, 0, 1
                 for col_name, data in put_data[key].items():
                     depth = data.parameters['depth'] if 'depth' in data.parameters.keys() and \
                                                         data.parameters['depth'] else 0

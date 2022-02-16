@@ -69,7 +69,7 @@ class AudioArray(Array):
         instructions = {'instructions': instructions_paths if instructions_paths else audio_arrays,
                         'parameters': {'duration': duration_,
                                        'audio_mode': options['audio_mode'],
-                                       'max_length': options['max_length'],
+                                       'max_seconds': options['max_seconds'],
                                        'length': options['length'],
                                        'step': options['step'],
                                        'sample_rate': options['sample_rate'],
