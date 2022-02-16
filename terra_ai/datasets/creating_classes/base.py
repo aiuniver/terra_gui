@@ -9,9 +9,9 @@ from math import ceil
 from pathlib import Path
 
 from terra_ai import progress
-from terra_ai.data.datasets.dataset import DatasetVersionPathsData, DatasetOutputsData, DatasetInputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerEncodingChoice, LayerPrepareMethodChoice, \
-    LayerScalerImageChoice
+from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetInputsData
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerPrepareMethodChoice, LayerScalerImageChoice, \
+    LayerSelectTypeChoice, LayerTypeChoice
 from terra_ai.datasets import arrays_classes
 from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
@@ -20,15 +20,15 @@ from terra_ai.logging import logger
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 
 
-def multithreading_instructions(one_path, params, dataset_folder, col_name, id):
+def multithreading_instructions(one_path, params, dataset_folder, col_name, idx):
 
     try:
         instruction = getattr(getattr(arrays_classes, decamelize(params["type"])),
                               f'{params["type"]}Array')().prepare(
             sources=[one_path],
             dataset_folder=dataset_folder,
-            **params['parameters'],
-            **{'cols_names': col_name, 'put': id}
+            **params['options'],
+            **{'cols_names': col_name, 'put': idx}
         )
 
     except Exception:
@@ -68,37 +68,46 @@ class BaseClass(object):
         return version_data
 
     @staticmethod
-    def collect_data_to_pass(put_data, processing, sources_temp_directory):
+    def collect_data_to_pass(put_data, sources_temp_directory, put_idx):
 
         data_to_pass = {}
         parameters_to_pass = {}
 
-        for idx in range(put_data[0].id, put_data[0].id + len(put_data)):
-            data_to_pass[idx] = {}
-            parameters_to_pass[idx] = {}
-            for path, val in put_data.get(idx).parameters.items():
-                for name, proc in val.items():
-                    collected_data = []
-                    parameters = processing[str(proc[0])].native()  # Аккуратно с [0]
-
-                    if Path(sources_temp_directory).joinpath(path.split(':')[0]).is_file():
-                        current_path = Path(sources_temp_directory).joinpath(path.split(':')[0])
-                        _, enc = autodetect_encoding(str(current_path), True)
-                        collected_data = pd.read_csv(current_path, sep=None, usecols=[name],
-                                                     engine='python', encoding=enc)[name].to_list()
-                        if decamelize(parameters['type']) in PATH_TYPE_LIST:
-                            collected_data = [str(Path(sources_temp_directory).joinpath(Path(x)))
-                                              for x in collected_data]
-                    elif Path(sources_temp_directory).joinpath(name.split(':')[0]).is_dir():
-                        for folder_name in name.split(':'):
-                            current_path = Path(sources_temp_directory).joinpath(folder_name)
-                            for direct, folder, files_name in os.walk(current_path):
-                                if files_name:
-                                    for file_name in sorted(files_name):
-                                        collected_data.append(os.path.join(current_path, file_name))
-
-                    data_to_pass[idx].update({f'{idx}_{name}': collected_data})
-                    parameters_to_pass[idx].update({f'{idx}_{name}': parameters})
+        for layer in put_data:
+            if layer.type == LayerTypeChoice.layer:
+                put_idx += 1
+                data_to_pass[put_idx] = {}
+                parameters_to_pass[put_idx] = {}
+                for handler in put_data:
+                    if handler.id in layer.bind.up:
+                        for data in put_data:
+                            if data.id in handler.bind.up:
+                                if data.parameters.type == LayerSelectTypeChoice.folder:
+                                    collected_data = []
+                                    for folder_name in data.parameters.data:
+                                        current_path = Path(sources_temp_directory).joinpath(folder_name)
+                                        for direct, folder, files_name in os.walk(current_path):
+                                            if files_name:
+                                                for file_name in sorted(files_name):
+                                                    collected_data.append(os.path.join(current_path, file_name))
+                                    print(collected_data[:5])
+                                    print(handler.parameters.native())
+                                    data_to_pass[put_idx].update({f'{put_idx}_{data.name}': collected_data})
+                                    parameters_to_pass[put_idx].update(
+                                        {f'{put_idx}_{data.name}': handler.parameters.native()})
+                                elif data.parameters.type == LayerSelectTypeChoice.table:
+                                    current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
+                                    _, enc = autodetect_encoding(str(current_path), True)
+                                    for column in data.parameters.data:
+                                        collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
+                                                                     engine='python', encoding=enc).loc[:, column] \
+                                            .to_list()
+                                        if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
+                                            collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
+                                                              in collected_data]
+                                        data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
+                                        parameters_to_pass[put_idx].update(
+                                            {f'{put_idx}_{column}': handler.parameters.native()})
 
         return data_to_pass, parameters_to_pass
 
@@ -152,8 +161,8 @@ class BaseClass(object):
 
         inp_data, inp_parameters = self.collect_data_to_pass(
             put_data=version_data.inputs,
-            processing=version_data.processing,
-            sources_temp_directory=sources_temp_directory
+            sources_temp_directory=sources_temp_directory,
+            put_idx=0
         )
 
         inputs, inp_tags = self.create_put_instructions(
@@ -164,8 +173,8 @@ class BaseClass(object):
 
         out_data, out_parameters = self.collect_data_to_pass(
             put_data=version_data.outputs,
-            processing=version_data.processing,
-            sources_temp_directory=sources_temp_directory
+            sources_temp_directory=sources_temp_directory,
+            put_idx=len(inp_data)
         )
 
         outputs, out_tags = self.create_put_instructions(
@@ -224,14 +233,15 @@ class BaseClass(object):
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
                 else:
-                    classes_names = sorted(
-                        [os.path.basename(x) for x in version_data.inputs.get(key).parameters.keys()])
+                    # classes_names = sorted(
+                    #     [os.path.basename(x) for x in version_data.inputs.get(key).parameters.keys()])
+                    classes_names = ['asd']
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': version_data.inputs.get(key).name,
+                                  'name': 'Вход',  # version_data.inputs.get(key).name,
                                   'task': camelize(data.parameters.get('put_type')),
                                   'classes_names': classes_names,
                                   'classes_colors': data.parameters.get('classes_colors'),
@@ -255,7 +265,7 @@ class BaseClass(object):
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': version_data.inputs.get(key).name,
+                              'name': 'Вход',  # version_data.inputs.get(key).name,
                               'task': task_list[0] if len(set(task_list)) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
                               'classes_colors': classes_colors_list if classes_colors_list else None,
@@ -291,14 +301,15 @@ class BaseClass(object):
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
                 else:
-                    classes_names = sorted(
-                        [os.path.basename(x) for x in version_data.outputs.get(key).parameters.keys()])
+                    # classes_names = sorted(
+                    #     [os.path.basename(x) for x in version_data.outputs.get(key).parameters.keys()])
+                    classes_names = ['asd']
 
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
                                   'shape': array.shape,
-                                  'name': version_data.outputs.get(key).name,
+                                  'name': 'Выход',  # version_data.outputs.get(key).name,
                                   'task': camelize(data.parameters.get('put_type')),
                                   'classes_names': classes_names,
                                   'classes_colors': data.parameters.get('classes_colors'),
@@ -322,7 +333,7 @@ class BaseClass(object):
             put_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
                               'dtype': str(put_array.dtype),
                               'shape': put_array.shape,
-                              'name': version_data.outputs.get(key).name,
+                              'name':  'Выход',  # version_data.outputs.get(key).name,
                               'task': task_list[0] if len(task_list) == 1 else 'Dataframe',
                               'classes_names': classes_names_list if classes_names_list else None,
                               'classes_colors': classes_colors_list if classes_colors_list else None,

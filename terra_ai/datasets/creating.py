@@ -1,19 +1,17 @@
 from terra_ai.utils import decamelize, camelize, get_tempdir
-from terra_ai.exceptions.tensor_flow import ResourceExhaustedError as Resource
 from terra_ai.datasets import creating_classes
 from terra_ai.datasets.preprocessing import CreatePreprocessing
-from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.datasets.creation import CreationData, CreationVersionData
-from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, DatasetVersionPathsData, VersionData
-from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
-    LayerPrepareMethodChoice, LayerScalerImageChoice
+from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, DatasetVersionPathsData, VersionData, \
+    DatasetCommonData
+from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG, \
     DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME
 from terra_ai import progress
+from terra_ai.settings import TERRA_PATH
 
 import os
 import random
-import numpy as np
 import pandas as pd
 import json
 import shutil
@@ -50,42 +48,38 @@ class CreateDataset(object):
         self.dataset_paths_data: DatasetCommonPathsData = DatasetCommonPathsData(
             basepath=self.temp_directory.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
         progress.pool(name=DATASET_PROGRESS_NAME, message='Копирование файлов', percent=10)
-        copy_tree(str(creation_data.source_path), str(self.dataset_paths_data.sources))
+        copy_tree(str(creation_data.source.path), str(self.dataset_paths_data.sources))
         zip_dataset(self.dataset_paths_data.sources, self.temp_directory.joinpath('sources'))
         shutil.move(str(self.temp_directory.joinpath('sources.zip')), self.dataset_paths_data.basepath)
         shutil.rmtree(self.dataset_paths_data.sources)
         dataset_data = self.write_dataset_configure(creation_data)
-        if creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])).is_dir():
+        if TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT])).is_dir():
             progress.pool(name=DATASET_PROGRESS_NAME,
                           message=f"Удаление существующего датасета "
-                                  f"{creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT]))}",
+                                  f"{TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT]))}",
                           percent=70)
-            shutil.rmtree(creation_data.datasets_path.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
-        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Копирование датасета в {creation_data.datasets_path}",
+            shutil.rmtree(TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
+        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Копирование датасета в {TERRA_PATH.datasets}",
                       percent=80)
-        shutil.move(str(self.dataset_paths_data.basepath), creation_data.datasets_path)
+        shutil.move(str(self.dataset_paths_data.basepath), TERRA_PATH.datasets)
         progress.pool(name=DATASET_PROGRESS_NAME, message=f"Удаление временной папки {self.temp_directory}", percent=95)
         shutil.rmtree(self.temp_directory)
         progress.pool(name=DATASET_PROGRESS_NAME, message='Формирование датасета завершено', data=dataset_data,
                       percent=100, finished=True)
         logger.info(f'Создан датасет {creation_data.name}.')
 
-        # if creation_data.version:  # Больше сделано для дебаггинга
-        # self.version = CreateVersion(version_data=creation_data.version)
+        self.version = CreateVersion(creation_data=creation_data)
 
     def write_dataset_configure(self, creation_data):
 
-        # tags_list = [{'alias': x, 'name': x.capitalize()} for x in decamelize(creation_data.task_type).split('_')]
-        # for tag in creation_data.tags:
-        #     tags_list.append(tag.native())
-        data = {'name': creation_data.name,
-                'alias': creation_data.alias,
-                'group': DatasetGroupChoice.custom,
-                # 'tags': tags_list,
-                'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
-                'architecture': creation_data.task_type,
-                }
-        dataset_data = DatasetData(**data) # DatasetCommonData???
+        dataset_data = DatasetCommonData(**{'name': creation_data.name,
+                                            'alias': creation_data.alias,
+                                            'group': DatasetGroupChoice.custom,
+                                            'tags': creation_data.tags,
+                                            'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
+                                            'architecture': creation_data.architecture
+                                            })
+
         with open(os.path.join(self.dataset_paths_data.basepath, DATASET_CONFIG), 'w') as fp:
             json.dump(dataset_data.native(), fp)
 
@@ -95,9 +89,10 @@ class CreateDataset(object):
 class CreateVersion(object):
 
     @progress.threading
-    def __init__(self, version_data: CreationVersionData):
+    def __init__(self, creation_data: CreationData):
 
         progress.pool.reset(name=VERSION_PROGRESS_NAME, message='Начало создания версии датасета', finished=False)
+        version_data = creation_data.version  # не согласен
 
         self.dataframe: dict = {}
         self.columns: dict = {}
@@ -110,7 +105,7 @@ class CreateVersion(object):
         self.sources_temp_directory: Path = get_tempdir()
         self.dataset_paths_data = DatasetCommonPathsData(basepath=self.temp_directory)
         self.parent_dataset_paths_data = DatasetCommonPathsData(
-            basepath=version_data.datasets_path.joinpath('.'.join([version_data.parent_alias, DATASET_EXT]))
+            basepath=TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT]))
         )
         progress.pool(name=VERSION_PROGRESS_NAME, message='Копирование исходного архива', percent=0)
         shutil.copyfile(
@@ -150,7 +145,6 @@ class CreateVersion(object):
                 instructions=self.instructions,
                 preprocessing=self.preprocessing
             )
-        print(self.preprocessing.preprocessing)
         for prep_type in ['numeric', 'text']:
             self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
                 put_data=self.instructions.inputs,
@@ -199,7 +193,8 @@ class CreateVersion(object):
         progress.pool(name=VERSION_PROGRESS_NAME, message='Сохранение', percent=100)
         self.write_instructions_to_files()
         zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
-        version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias, DATASET_VERSION_EXT]))
+        version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias,
+                                                                                 DATASET_VERSION_EXT]))
         if version_dir.is_dir():
             shutil.rmtree(version_dir)
         os.makedirs(version_dir)

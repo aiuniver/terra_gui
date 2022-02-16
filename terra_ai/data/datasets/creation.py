@@ -52,7 +52,12 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     value: Union[HttpUrl, str]
-    path: DirectoryPath
+
+    _path: Optional[DirectoryPath] = PrivateAttr()
+
+    def __init__(self, **data):
+        self._path = data.pop("path", None)
+        super().__init__(**data)
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
@@ -66,6 +71,10 @@ class SourceData(BaseMixinData):
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
         return value
+
+    @property
+    def path(self) -> DirectoryPath:
+        return self._path
 
 
 class CreationInfoPartData(BaseMixinData):
