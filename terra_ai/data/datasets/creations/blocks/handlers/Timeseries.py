@@ -9,7 +9,7 @@ class OptionsData(MinMaxScalerData):
     step: PositiveInt
     # trend: bool
     # trend_limit: Optional[str]
-    depth: Optional[PositiveInt]
+    depth: PositiveInt
 
     # @validator("trend")
     # def _validate_trend(cls, value: bool) -> bool:

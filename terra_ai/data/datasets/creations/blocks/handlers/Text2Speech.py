@@ -1,6 +1,3 @@
-from typing import Optional
-from pydantic.types import PositiveInt
-
 from terra_ai.data.mixins import BaseMixinData
 
 

@@ -12,6 +12,7 @@ from . import \
     dataframe_classification, \
     dataframe_regression, \
     timeseries, \
+    timeseries_trend, \
     text_2_speech, \
     speech_2_text, \
     yolo_v3, \

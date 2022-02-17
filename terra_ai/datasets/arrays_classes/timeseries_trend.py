@@ -36,10 +36,10 @@ class TimeseriesTrendArray(Array):
                 else:
                     tmp.append(2)
 
-        for i in set(tmp):
-            classes.append(trend_dict[i])
-        options['classes_names'] = classes
-        options['num_classes'] = len(classes)
+        # for i in set(tmp):
+        #     classes.append(trend_dict[i])
+        options['classes_names'] = ["Не изменился", "Вверх", "Вниз"]
+        options['num_classes'] = 3  # len(classes)
 
         instructions = {'instructions': sources,
                         'parameters': options}
