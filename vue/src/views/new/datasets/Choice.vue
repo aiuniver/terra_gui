@@ -10,19 +10,22 @@
       v-model="showModal"
       :showConfirmButton="false"
       :showCancelButton="false"
-      :width="400"
+      :width="450"
       title="Выбор версии"
       @on-cancel="onCancel"
     >
-      <ul class="page-choice__versions">
-        <li v-for="(item, idx) in versions" 
-        :key="idx" 
-        @click="selectedVersion = item"
-        :class="{ 'active': item.value === selectedVersion.value }"
-        >{{ item.label }}</li>
-      </ul>
+      <div v-for="(item, idx) in versions"
+      class="page-choice__versions"
+      :key="idx" 
+      @click="selectedVersion = item"
+      :class="{ 'active': item.alias === selectedVersion.alias }"
+      >
+        <span class="name">{{ item.name }}</span>
+        <span class="info">{{ getSize(item.size) }}</span>
+        <span class="info">{{ getDate(item.date) }}</span>
+      </div>
       <template v-slot:footer>
-        <d-button @click="setChoice" :disabled="!selectedVersion.value" style="flex-basis: 50%;">Выбрать</d-button>
+        <d-button @click="setChoice" :disabled="!selectedVersion.alias" style="flex-basis: 50%;">Выбрать</d-button>
       </template>
     </at-modal>
   </div>
@@ -48,6 +51,14 @@ export default {
     selectedVersion: {}
   }),
   methods: {
+    getDate(val) {
+      if (!val) return ''
+      return new Date(val).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+    },
+    getSize(size) {
+      if (size?.value) return `${size.short.toFixed(2)} ${size.unit}`
+      return ''
+    },
     onCancel() {
       this.versions = []
       this.selectedVersion = {}
@@ -56,10 +67,7 @@ export default {
       this.showModal = true
       const { data } = await this.$store.dispatch('axios', { url: '/datasets/versions/', data: { group, alias } })
       this.selectedSet = { group, alias }
-      this.versions = data.map(item => ({
-        label: item.name,
-        value: item.alias
-      }))
+      this.versions = data
     },
     async setChoice() {
       this.$store.dispatch('settings/setOverlay', true);
@@ -119,6 +127,7 @@ export default {
         })
       })
     })
+    this.$store.commit('datasets/SET_GROUPS', data.groups)
   }
 };
 </script>
@@ -146,14 +155,25 @@ export default {
     font-size: 14px;
     max-height: 400px;
     overflow-y: auto;
-    li {
-      cursor: pointer;
-      padding: 5px;
-      border-bottom: 2px solid #1E2734;
-      &:hover, &.active {
-        background: #1E2734;
-        color: #65B9F4;
-      }
+    cursor: pointer;
+    padding: 5px;
+    border-bottom: 2px solid #1E2734;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    .name {
+      flex-grow: 1;
+      word-wrap: anywhere;
+      overflow-wrap: anywhere;
+    }
+    .info {
+      font-size: 12px;
+      color: #A7BED3;
+      white-space: nowrap;
+    }
+    &:hover, &.active {
+      background: #1E2734;
+      color: #65B9F4;
     }
   }
 }

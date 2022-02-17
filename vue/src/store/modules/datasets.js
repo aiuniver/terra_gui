@@ -5,7 +5,7 @@ export default {
     inputData: [],
     errors: {},
     tableGroup: [],
-
+    groups: {},
     creation: {},
     datasets: [],
     filesSource: [],
@@ -57,6 +57,9 @@ export default {
     SET_SELECTED_INDEX (state, value) {
       state.selectedIndex = value;
     },
+    SET_GROUPS (state, value) {
+      state.groups = value
+    }
   },
   actions: {
     async createDataset ({ commit, dispatch, state: { inputData, sourcePath, filesSource }, rootState: { tables: { saveCols, handlers } } }, data) {
@@ -339,5 +342,8 @@ export default {
         return index.length === tagsFilter.length;
       });
     },
+    getGroups ({ groups }) {
+      return groups
+    }
   },
 };

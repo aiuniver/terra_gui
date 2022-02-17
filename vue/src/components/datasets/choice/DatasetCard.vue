@@ -4,10 +4,9 @@
     <div class="dataset-card-new__wrapper">
       <p class="dataset-card-new__title">{{ dataset.name }}</p>
       <div class="dataset-card-new__info">
-        <p>login_name_user</p>
+        <p>{{ dataset.architecture }}</p>
         <div class="dataset-card-new__info--size">
-          <i class="ci-icon ci-image" />
-          <span>{{ dataset.size ? dataset.size.short.toFixed(2) + ' ' + dataset.size.unit : 'Предустановленный' }}</span>
+          <span>{{ group }}</span>
         </div>
       </div>
     </div>
@@ -27,6 +26,12 @@ export default {
     isActive() {
       const { alias, group } = this.$store.getters['projects/getProject'].dataset || {}
       return `${group}_${alias}` === this.dataset.id
+    },
+    group() {
+      if (this.$store.getters['datasets/getGroups']) {
+        return this.$store.getters['datasets/getGroups'][this.dataset.group]
+      }
+      return ''
     }
   },
   methods: {
@@ -49,7 +54,7 @@ export default {
     background-color: #253848;
   }
   &__wrapper {
-    padding: 20px 15px 10px;
+    padding: 20px 12px 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -57,7 +62,7 @@ export default {
   }
   &__title {
     font-size: 14px;
-    line-height: 24px;
+    word-wrap: break-word;
   }
   &__info {
     color: #828282;
@@ -71,11 +76,11 @@ export default {
       margin-right: 9px;
     }
     &--size {
-      max-width: 100px;
+      max-width: 110px;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-      margin-top: 10px;
+      margin-top: 5px;
       * {
         vertical-align: middle;
       }

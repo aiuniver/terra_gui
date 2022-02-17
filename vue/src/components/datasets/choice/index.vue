@@ -1,9 +1,5 @@
 <template>
   <div class="datasets">
-    <p class="datasets-type flex align-center">
-      <span class="mr-4">{{ list[selectedType] }}</span>
-      <d-svg name="file-blank-outline" v-if="selectedType === 1" />
-    </p>
 
     <div class="datasets-filter">
       <t-field label="">
@@ -33,7 +29,12 @@
     <scrollbar style="justify-self: stretch">
       <div v-if="display" class="datasets-cards">
         <!-- <DatasetCard @click.native="selectDataset(item)" v-for="(item, idx) in sortedList" :key="idx" :dataset="item" @click="onChoice" /> -->
-        <DatasetCard v-for="(item, idx) in sortedList" :key="idx" :dataset="item" @click="$emit('choice', item)" />
+        <DatasetCard v-for="(item, idx) in sortedList" 
+        class="datasets-cards__item"
+        :key="idx" 
+        :dataset="item"
+        @click="$emit('choice', item)"
+        />
       </div>
       <Table v-else :selectedType="selectedType" />
       <div class="datasets__empty" v-if="!sortedList.length">Не найдено</div>
@@ -169,9 +170,10 @@ export default {
   gap: 30px;
   &-cards {
     display: flex;
-    gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    &__item {
+      margin: 0 20px 20px 0;
+    }
   }
   &-type {
     font-size: 14px;
@@ -186,6 +188,9 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  &-header span {
+    white-space: nowrap;
+  }
   &-dropdown {
     position: absolute;
     top: calc(100% + 10px);
