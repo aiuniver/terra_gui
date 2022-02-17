@@ -14,4 +14,5 @@ from . import \
     timeseries, \
     text_2_speech, \
     speech_2_text, \
+    yolo_v3, \
     yolo_v4

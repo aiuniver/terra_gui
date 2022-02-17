@@ -48,8 +48,8 @@ class TimeseriesClass(PreprocessingNumericClass, BaseClass):
         length, depth, step = 0, 0, 0
         for out_data in version_data.outputs:
             if out_data.type == 'handler' and out_data.parameters.type == 'Timeseries':
-                if out_data.parameters.options.trend:
-                    out_data.parameters.options.depth = 1
+                # if out_data.parameters.options.trend:
+                #     out_data.parameters.options.depth = 1
                 length = out_data.parameters.options.length
                 depth = out_data.parameters.options.depth
                 step = out_data.parameters.options.step

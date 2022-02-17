@@ -15,7 +15,7 @@ from pathlib import Path
 from sklearn.cluster import KMeans
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, LayerHandlerChoice
 from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
 from terra_ai.utils import decamelize
@@ -678,43 +678,38 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #     return real_boxes
 
 
-def get_od_names(version_data, source_path):
+def get_od_names(version_data, source_path, version_path_data):
 
     names_list = []
-    for worker_name, worker_params in version_data.processing.items():
-        if worker_params.type == LayerOutputTypeChoice.ObjectDetection:
-            for out in version_data.outputs:
-                if int(
-                    list(out.parameters[list(out.parameters.keys())[0]].values())[0][0]
-                ) == int(worker_name):
-                    ann_path = list(
-                        out.parameters[list(out.parameters.keys())[0]].keys()
-                    )[0]
-            if worker_params.parameters.model_type in [
+    for handler in version_data.outputs:
+        if handler.type == 'handler' and \
+                handler.parameters.type in [LayerHandlerChoice.YoloV3, LayerHandlerChoice.YoloV4]:
+            ann_path = version_data.outputs.get(handler.bind.up[0]).parameters.data[0]
+            if handler.parameters.options.model_type in [
                 LayerODDatasetTypeChoice.Yolov1,
                 LayerODDatasetTypeChoice.Yolo_terra,
             ]:
-                with open(source_path.joinpath("obj.names"), "r") as names:
+                with open(Path(source_path).joinpath("obj.names"), "r") as names:
                     names_list = names.read()
                 names_list = [elem for elem in names_list.split("\n") if elem]
 
-            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Coco:
+            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Coco:
                 for js_file in os.listdir(
-                    os.path.join(version_data.source_path, ann_path)
+                    os.path.join(version_data.version_path_data, ann_path)
                 ):
                     json_data = json.load(
-                        open(os.path.join(version_data.source_path, ann_path, js_file))
+                        open(os.path.join(version_data.version_path_data, ann_path, js_file))
                     )
 
                 names_list = [0 for i in json_data["categories"]]
                 for i in json_data["categories"]:
                     names_list[i["id"]] = i["name"]
 
-            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Voc:
+            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Voc:
                 (dir_path, dir_names, filenames) = next(
                     os.walk(
                         os.path.abspath(
-                            os.path.join(version_data.source_path, ann_path)
+                            os.path.join(version_data.version_path_data, ann_path)
                         )
                     )
                 )
@@ -728,11 +723,11 @@ def get_od_names(version_data, source_path):
                     xml.close()
                 names_list = sorted(set(names_list))
 
-            elif worker_params.parameters.model_type == LayerODDatasetTypeChoice.Kitti:
+            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Kitti:
                 (dir_path, dir_names, filenames) = next(
                     os.walk(
                         os.path.abspath(
-                            os.path.join(version_data.source_path, ann_path)
+                            os.path.join(version_data.version_path_data, ann_path)
                         )
                     )
                 )
@@ -744,13 +739,11 @@ def get_od_names(version_data, source_path):
                     txt.close()
                 names_list = sorted(set(names_list))
 
-            elif (
-                worker_params.parameters.model_type == LayerODDatasetTypeChoice.Udacity
-            ):
-                for i in os.listdir(version_data.source_path):
+            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Udacity:
+                for i in os.listdir(version_path_data):
                     if i.endswith(".csv"):
                         raw_f = open(
-                            os.path.join(version_data.source_path, i),
+                            os.path.join(version_data.version_path_data, i),
                             "r",
                             encoding="utf-8",
                         )
