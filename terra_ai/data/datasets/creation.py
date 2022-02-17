@@ -40,7 +40,6 @@ from terra_ai.data.datasets.extra import (
 )
 
 # from terra_ai.data.datasets.creations import column_processing
-from terra_ai.data.datasets.tags import TagsList
 from terra_ai.data.datasets import creations
 from terra_ai.data.training.extra import ArchitectureChoice
 
