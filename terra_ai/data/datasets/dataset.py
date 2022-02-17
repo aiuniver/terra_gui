@@ -85,7 +85,6 @@ class DatasetData(DatasetVersionData):
     tags: List[str] = []
     version: DatasetVersionExtData
     group: DatasetGroupChoice
-    use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}

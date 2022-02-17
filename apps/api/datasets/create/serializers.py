@@ -57,7 +57,6 @@ class CreateSerializer(serializers.Serializer):
     source_path = DirectoryPathField()
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=serializers.CharField(), default=[])
-    use_generator = serializers.BooleanField(default=False)
     inputs = serializers.ListSerializer(child=serializers.DictField())
     outputs = serializers.ListSerializer(child=serializers.DictField())
 
