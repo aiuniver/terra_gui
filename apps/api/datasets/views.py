@@ -12,9 +12,7 @@ class InfoAPIView(BaseAPIView):
         return BaseResponseSuccess(
             {
                 "datasets": datasets.native(),
-                "groups": list(
-                    map(lambda item: {"alias": item.alias, "name": item.name}, datasets)
-                ),
+                "groups": dict(map(lambda item: (item.alias, item.name), datasets)),
                 "tags": [
                     {
                         "name": "Tags",
