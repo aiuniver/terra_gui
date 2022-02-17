@@ -13,12 +13,7 @@ class InfoAPIView(BaseAPIView):
             {
                 "datasets": datasets.native(),
                 "groups": dict(map(lambda item: (item.alias, item.name), datasets)),
-                "tags": [
-                    {
-                        "name": "Tags",
-                        "items": datasets.tags,
-                    }
-                ],
+                "tags": datasets.tags.native(),
             }
         )
 
