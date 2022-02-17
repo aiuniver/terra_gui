@@ -53,7 +53,7 @@ export default {
   methods: {
     getDate(val) {
       if (!val) return ''
-      return new Date(val).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+      return new Date(val).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
     },
     getSize(size) {
       if (size?.value) return `${size.short.toFixed(2)} ${size.unit}`
