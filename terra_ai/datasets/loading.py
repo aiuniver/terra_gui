@@ -14,14 +14,12 @@ from terra_ai.data.datasets.dataset import (
     DatasetData,
     DatasetLoadData,
     DatasetCommonGroupList,
-    DatasetInfo,
     DatasetCommonPathsData,
 )
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.exceptions.datasets import (
     DatasetSourceLoadUndefinedMethodException,
     DatasetChoiceUndefinedMethodException,
-    DatasetNotFoundInGroupException,
 )
 from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import get_tempdir
@@ -152,9 +150,9 @@ def _choice_from_keras(
         )
         dataset_config.update(
             {
+                **version_config,
                 "path": destination,
                 "group": DatasetGroupChoice.keras,
-                **version_config,
             }
         )
         dataset = DatasetData(**dataset_config)
@@ -206,7 +204,7 @@ def _choice_from_terra(
         progress_utils.unpack(
             progress_name,
             DATASET_CHOICE_UNPACK_TITLE
-            % (DatasetGroupChoice.custom.value, name, version),
+            % (DatasetGroupChoice.terra.value, name, version),
             zip_filepath,
             zip_destination,
         )
@@ -228,9 +226,9 @@ def _choice_from_terra(
         )
         dataset_config.update(
             {
-                "path": destination,
-                "group": DatasetGroupChoice.custom,
                 **version_config,
+                "path": destination,
+                "group": DatasetGroupChoice.terra,
             }
         )
         dataset = DatasetData(**dataset_config)
@@ -296,9 +294,9 @@ def _choice_from_custom(
         )
         dataset_config.update(
             {
+                **version_config,
                 "path": destination,
                 "group": DatasetGroupChoice.custom,
-                **version_config,
             }
         )
         dataset = DatasetData(**dataset_config)

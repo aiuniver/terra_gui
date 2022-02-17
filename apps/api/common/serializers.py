@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
-from apps.api.datasets import serializers as datasets_serializers
 from apps.api.modeling import serializers as modeling_serializers
+from apps.api.datasets.choice import serializers as datasets_choice_serializers
 
 
 class ValidateDatasetModelSerializer(serializers.Serializer):
-    dataset = datasets_serializers.ChoiceSerializer(required=False)
+    dataset = datasets_choice_serializers.ChoiceSerializer(required=False)
     model = modeling_serializers.ModelGetSerializer(required=False)
 
     def validate(self, attrs):

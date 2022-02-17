@@ -1,9 +1,8 @@
 import os
 import re
 import json
-import itertools
+import collections
 
-from copy import deepcopy
 from pathlib import Path, PureWindowsPath
 from pandas import read_csv
 from datetime import datetime
@@ -11,12 +10,9 @@ from typing import Optional, Dict, List, Tuple, Any
 from pydantic import validator, DirectoryPath, PrivateAttr
 from pydantic.types import PositiveInt
 from pydantic.color import Color
-from dict_recursive_update import recursive_update
 
 from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from terra_ai.data.extra import FileSizeData
-from terra_ai.data.exceptions import TrdsConfigFileNotFoundException
-from terra_ai.data.datasets.tags import TagsList
 from terra_ai.data.datasets.extra import (
     DatasetGroupChoice,
     LayerInputTypeChoice,
@@ -30,16 +26,10 @@ from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.data.presets.models import EmptyModelDetailsData
 from terra_ai.data.presets.datasets import OutputLayersDefaults, DatasetCommonGroup
 
-from terra_ai.exceptions.datasets import (
-    DatasetUndefinedGroupException,
-    DatasetNotFoundInGroupException,
-    DatasetUndefinedConfigException,
-)
 from terra_ai.settings import (
     TERRA_PATH,
     DATASET_EXT,
     DATASET_CONFIG,
-    DATASETS_LOADED_DIR,
     DATASET_VERSION_EXT,
 )
 
@@ -85,7 +75,6 @@ class DatasetData(DatasetVersionData):
     tags: List[str] = []
     version: DatasetVersionExtData
     group: DatasetGroupChoice
-    use_generator: bool = False
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}
@@ -262,6 +251,17 @@ class DatasetCommonGroupData(AliasMixinData):
     datasets: DatasetCommonList = DatasetCommonList()
 
 
+class TagsGroupData(BaseMixinData):
+    name: ArchitectureChoice
+    items: List[str]
+
+
+class TagsGroupList(UniqueListMixin):
+    class Meta:
+        source = TagsGroupData
+        identifier = "name"
+
+
 class DatasetCommonGroupList(UniqueListMixin):
     class Meta:
         source = DatasetCommonGroupData
@@ -286,44 +286,27 @@ class DatasetCommonGroupList(UniqueListMixin):
         super().__init__(*args)
 
     @property
-    def tags(self) -> List[str]:
+    def tags(self) -> TagsGroupList:
         tags = []
+        groups = {}
         for group in self:
-            tags += list(
-                itertools.chain.from_iterable(
-                    list(map(lambda item: item.tags, group.datasets))
+            for dataset in group.datasets:
+                if groups.get(dataset.architecture, None) is None:
+                    groups[dataset.architecture] = []
+                groups[dataset.architecture] += dataset.tags
+        for architecture, group in groups.items():
+            group = list(set(group))
+            group.sort()
+            groups[architecture] = group
+        groups = collections.OrderedDict(sorted(groups.items()))
+        return TagsGroupList(
+            list(
+                map(
+                    lambda item: {"name": item[0], "items": item[1]},
+                    groups.items(),
                 )
             )
-        tags = list(set(tags))
-        tags.sort()
-        return tags
-
-
-# class CustomDatasetConfigData(BaseMixinData):
-#     """
-#     Загрузка конфигурации пользовательского датасета
-#     """
-#
-#     path: DirectoryPath
-#     config: Optional[dict] = {}
-#
-#     # @validator("path")
-#     # def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-#     #     if not str(value).endswith(f".{settings.DATASET_EXT}"):
-#     #         raise TrdsDirExtException(value.name)
-#     #     return value
-#
-#     @validator("config", always=True)
-#     def _validate_config(cls, value: dict, values) -> dict:
-#         config_path = Path(values.get("path"), DATASET_CONFIG)
-#         if not config_path.is_file():
-#             raise TrdsConfigFileNotFoundException(
-#                 values.get("path").name, config_path.name
-#             )
-#         with open(config_path, "r") as config_ref:
-#             value = json.load(config_ref)
-#         value.update({"group": DatasetGroupChoice.custom})
-#         return value
+        )
 
 
 class DatasetCommonPathsData(BaseMixinData):
@@ -356,184 +339,6 @@ class VersionData(AliasMixinData):
     pass
 
 
-# class VersionData(AliasMixinData):
-#     """
-#     Информация о версии
-#     """
-#
-#     name: str
-#     date: Optional[datetime]
-#     size: Optional[FileSizeData]
-#     inputs: Dict[PositiveInt, DatasetInputsData] = {}
-#     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-#     service: Dict[PositiveInt, DatasetOutputsData] = {}
-#     columns: Dict[PositiveInt, Dict[str, Any]] = {}
-#
-#     @property
-#     def model(self) -> ModelDetailsData:
-#         data = {**EmptyModelDetailsData}
-#         layers = []
-#         for _id, layer in self.inputs.items():
-#             _data = {
-#                 "id": _id,
-#                 "name": layer.name,
-#                 "type": LayerTypeChoice.Input,
-#                 "group": LayerGroupChoice.input,
-#                 "shape": {"input": [layer.shape]},
-#                 "task": layer.task,
-#             }
-#             if layer.num_classes:
-#                 _data.update(
-#                     {
-#                         "num_classes": layer.num_classes,
-#                     }
-#                 )
-#             layers.append(_data)
-#         for _id, layer in self.outputs.items():
-#             output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
-#                 layer.datatype, {}
-#             )
-#             activation = output_layer_defaults.get("activation", ActivationChoice.relu)
-#             units = layer.num_classes
-#             params = {
-#                 "activation": activation,
-#             }
-#             if units:
-#                 params.update(
-#                     {
-#                         "units": units,
-#                         "filters": units,
-#                     }
-#                 )
-#             _data = {
-#                 "id": _id,
-#                 "name": layer.name,
-#                 "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
-#                 "group": LayerGroupChoice.output,
-#                 "shape": {"output": [layer.shape]},
-#                 "task": layer.task,
-#                 "parameters": {
-#                     "main": params,
-#                     "extra": params,
-#                 },
-#             }
-#             if layer.num_classes:
-#                 _data.update(
-#                     {
-#                         "num_classes": layer.num_classes,
-#                     }
-#                 )
-#             layers.append(_data)
-#         data.update({"layers": layers})
-#         return ModelDetailsData(**data)
-#
-#
-# class DatasetData(AliasMixinData):
-#     """
-#     Информация о датасете
-#     """
-#
-#     name: str
-#     architecture: ArchitectureChoice = ArchitectureChoice.Basic
-#     group: Optional[DatasetGroupChoice]
-#     tags: Optional[TagsList] = TagsList()
-#     version: Optional[VersionData] = None
-#
-#     _path: Path = PrivateAttr()
-#
-#     def __init__(self, **data):
-#         super().__init__(**data)
-#         _path = data.get("path")
-#         if _path:
-#             self.set_path(_path)
-#
-#     @property
-#     def model(self) -> Optional[ModelDetailsData]:
-#         return self.version.model if self.version else None
-#
-#     @property
-#     def inputs(self) -> Dict[PositiveInt, DatasetInputsData]:
-#         return self.version.inputs if self.version else {}
-#
-#     @property
-#     def outputs(self) -> Dict[PositiveInt, DatasetOutputsData]:
-#         return self.version.outputs if self.version else {}
-#
-#     @property
-#     def path(self):
-#         return self._path
-#
-#     @property
-#     def training_available(self) -> bool:
-#         return self.architecture not in (
-#             ArchitectureChoice.VideoTracker,
-#             ArchitectureChoice.Speech2Text,
-#             ArchitectureChoice.Text2Speech,
-#         )
-#
-#     @property
-#     def sources(self) -> List[str]:
-#         out = []
-#         sources = read_csv(Path(self.path, "instructions", "tables", "val.csv"))
-#         for column in sources.columns:
-#             match = re.findall(r"^([\d]+_)(.+)$", column)
-#             if not match:
-#                 continue
-#             _title = match[0][1].title()
-#             if _title in ["Image", "Text", "Audio", "Video"]:
-#                 out = sources[column].to_list()
-#                 if _title != "Text":
-#                     out = list(
-#                         map(
-#                             lambda item: str(
-#                                 Path(self.path, PureWindowsPath(item).as_posix())
-#                             ),
-#                             out,
-#                         )
-#                     )
-#         return out
-#
-#     def dict(self, **kwargs):
-#         data = super().dict(**kwargs)
-#         data.update({"training_available": self.training_available})
-#         return data
-#
-#     def set_path(self, value):
-#         self._path = Path(value)
-
-
 class DatasetInfo(BaseMixinData):
     alias: str
     group: DatasetGroupChoice
-
-
-# class DatasetInfo(BaseMixinData):
-#     alias: str
-#     group: DatasetGroupChoice
-#
-#     __dataset__: Optional[DatasetData] = PrivateAttr()
-#
-#     def __init__(self, **data):
-#         self.__dataset__ = None
-#         super().__init__(**data)
-#
-#     @property
-#     def dataset(self) -> Optional[DatasetData]:
-#         if not self.__dataset__:
-#             config_path = Path(
-#                 DATASETS_LOADED_DIR,
-#                 self.group.name,
-#                 self.alias,
-#                 DATASET_CONFIG,
-#             )
-#             if config_path.is_file():
-#                 with open(config_path) as config_ref:
-#                     self.__dataset__ = DatasetData(
-#                         path=Path(
-#                             DATASETS_LOADED_DIR,
-#                             self.group.name,
-#                             self.alias,
-#                         ),
-#                         **json.load(config_ref),
-#                     )
-#         return self.__dataset__
