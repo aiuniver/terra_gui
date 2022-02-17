@@ -1,4 +1,5 @@
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, resize_frame
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes,  resize_frame, \
+    Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.utils import autodetect_encoding
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerNetChoice, LayerVideoFillModeChoice, LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, \
