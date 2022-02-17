@@ -2,6 +2,7 @@ from . import \
     base, \
     image_classification, \
     image_segmentation, \
+    image_autoencoder, \
     image_gan, \
     image_cgan, \
     text_classification, \

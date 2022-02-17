@@ -46,6 +46,7 @@ class ArchitectureChoice(str, Enum):
     Basic = "Basic"
     ImageClassification = "ImageClassification"
     ImageSegmentation = "ImageSegmentation"
+    ImageAutoencoder = "ImageAutoencoder"
     TextClassification = "TextClassification"
     TextSegmentation = "TextSegmentation"
     TextTransformer = "TextTransformer"
