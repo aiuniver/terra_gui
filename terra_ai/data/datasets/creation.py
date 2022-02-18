@@ -283,7 +283,7 @@ class CreationBlockList(UniqueListMixin):
 
 class CreationValidateBlocksData(BaseMixinData):
     type: LayerGroupChoice
-    items: List[CreationBlockData]
+    items: CreationBlockList
 
 
 class DatasetCreationArchitectureData(BaseMixinData):

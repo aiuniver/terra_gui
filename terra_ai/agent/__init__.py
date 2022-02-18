@@ -54,6 +54,7 @@ from terra_ai.data.presets.models import ModelsGroups
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
 from terra_ai.datasets.creating import CreateDataset
+from terra_ai.datasets.validation import DatasetCreationValidate
 from terra_ai.datasets.loading import (
     source as dataset_source,
     choice as dataset_choice,
@@ -198,11 +199,11 @@ class Exchange:
 
     def _call_dataset_create_validate(
         self, data: CreationValidateBlocksData
-    ) -> List[Optional[str]]:
+    ) -> Dict[int, Optional[str]]:
         """
         Валидация создания датасета
         """
-        return list(map(lambda item: None, data.items))
+        return DatasetCreationValidate(data).validate()
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
@@ -251,7 +252,7 @@ class Exchange:
 
     def _call_model_validate(
         self, model: ModelDetailsData, dataset_data: DatasetData
-    ) -> tuple:
+    ) -> Dict[int, Optional[str]]:
         """
         Валидация модели
         """
