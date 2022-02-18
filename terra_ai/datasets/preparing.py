@@ -8,7 +8,7 @@ import h5py
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
-from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
+from tensorflow.data import Dataset
 # from PIL import Image
 
 # from terra_ai.data.training.extra import ArchitectureChoice
