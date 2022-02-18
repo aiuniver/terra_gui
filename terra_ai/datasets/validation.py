@@ -21,4 +21,12 @@ class DatasetCreationValidate:
         logger.info(f"... Items: {self._blocks.json(ensure_ascii=False)}")
 
     def validate(self) -> Dict[int, Optional[str]]:
+        """
+        Запуск валидации блоков
+
+        :return:
+            Dict[int, Optional[str]]:
+                ключ - id блока
+                значение - либо строка ошибки, либо None, если ошибки нет
+        """
         return dict(map(lambda item: (item.id, None), self._blocks))
