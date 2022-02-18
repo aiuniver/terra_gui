@@ -31,7 +31,7 @@
           <i class="ci-icon ci-notification_outline" />
         </li>
         <li>
-          <i class="ci-icon ci-user_circle" @click="to('/new/profile')"/>
+          <i class="ci-icon ci-user_circle" @click="to('/profile')"/>
         </li>
       </ul>
     </div>

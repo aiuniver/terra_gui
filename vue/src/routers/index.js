@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import { newRouter } from './new'
 Vue.use(Router)
 
 const router = new Router({
@@ -15,98 +14,129 @@ const router = new Router({
       },
       redirect: '/datasets'
     },
+
     {
       path: '/datasets',
       name: 'Datasets',
       meta: {
-        title: 'Данные',
+        parent: 'data',
+        title: 'Датасеты',
         access: true,
         text: ''
       },
-      component: () => import('@/views/Datasets'),
+      component: () => import('@/views/new/datasets/Choice'),
+    },
+    {
+      path: '/create',
+      name: 'Create',
+      meta: {
+        parent: 'data',
+        title: 'Создание датасета',
+        access: true,
+        text: ''
+      },
+      component: () => import('@/views/new/datasets/Create'),
     },
     {
       path: '/marking',
       name: 'Marking',
       meta: {
-        title: process.env.NODE_ENV === 'development' ? 'Разметка' : null,
+        parent: 'data',
+        title: 'Разметка',
         access: true,
-        text: `Для перехода на страницу разметки необходимо загрузить датасет.`,
+        text: ``,
       },
       component: () => import('@/views/Marking'),
+    },
+    {
+      path: '/view',
+      name: 'View',
+      meta: {
+        parent: 'data',
+        title: 'Просмотр датасета',
+        access: true,
+        text: ''
+      },
+      component: () => import('@/views/new/datasets/View'),
     },
     {
       path: '/modeling',
       name: 'Modeling',
       meta: {
+        parent: 'modeling',
         title: 'Проектирование',
         access: true,
         text: ''
       },
-      component: () => import('@/views/Modeling'),
-    },
-    {
-      path: '/training',
-      name: 'Training',
-      meta: {
-        title: 'Обучение',
-        access: false,
-        text: `Для перехода на страницу обучения необходимо загрузить датасет.`,
-      },
-      component: () => import('@/views/Training'),
+      component: () => import('@/views/new/design/Modeling'),
     },
     {
       path: '/cascades',
       name: 'Cascades',
       meta: {
+        parent: 'modeling',
         title: 'Каскады', //process.env.NODE_ENV === 'development' ? 'Каскады' : null,
         access: true,
         text: `Для перехода на страницу каскадов необходимо загрузить датасет.`,
       },
-      component: () => import('@/views/Cascades'),
+      component: () => import('@/views/new/design/Cascades'),
+    },
+
+    {
+      path: '/training',
+      name: 'Training',
+      meta: {
+        parent: 'training',
+        title: 'Обучение',
+        access: false,
+        text: `Для перехода на страницу обучения необходимо загрузить датасет.`,
+      },
+      component: () => import('@/views/new/completion/Training'),
     },
     {
       path: '/deploy',
       name: 'Deploy',
       meta: {
+        parent: 'training',
         title: 'Деплой',
         access: true,
         text: `Для перехода на страницу деплоя необходимо загрузить датасет.`,
       },
-      component: () => import('@/views/Deploy'),
+      component: () => import('@/views/new/completion/Deploy'),
     },
     {
       path: '/servers',
       name: 'Servers',
       meta: {
-        // title: process.env.NODE_ENV === 'development' ? 'Серверы' : null,
+        parent: 'training',
         title: 'Серверы',
         access: true,
         text: '',
       },
-      component: () => import('@/views/Servers'),
+      component: () => import('@/views/new/completion/Servers'),
     },
     {
       path: '/profile',
       name: 'Profile',
       meta: {
-        title: null,
+        // parent: 'project',
+        title: 'Профиль',
         access: true,
         text: ``,
       },
-      component: () => import('@/views/Profile'),
+      component: () => import('@/views/new/Profile'),
     },
     {
-      path: '/test',
-      name: 'Test',
+      path: '/projects',
+      name: 'Projects',
       meta: {
-        title: process.env.NODE_ENV === 'development' ? 'Test' : null,
+        parent: 'project',
+        title: 'Проекты',
         access: true,
-        text: `Для перехода на страницу деплоя необходимо загрузить датасет.`,
+        text: ``,
       },
-      component: () => import('@/views/Test'),
+      component: () => import('@/views/new/project/Projects'),
     },
-    ...newRouter,
     {
       path: "*",
       name: '404',
