@@ -2,7 +2,6 @@ from typing import Optional
 from pydantic.types import PositiveInt
 
 from terra_ai.data.datasets.extra import (
-    LayerYoloChoice,
     LayerODDatasetTypeChoice,
     LayerObjectDetectionModelChoice,
     LayerImageFrameModeChoice,

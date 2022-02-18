@@ -2,10 +2,7 @@ from typing import Optional
 from pydantic import validator, PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.extra import (
-    LayerTextModeChoice,
-    LayerPrepareMethodChoice,
-)
+from terra_ai.data.datasets.extra import LayerTextModeChoice, LayerPrepareMethodChoice
 
 
 class OptionsData(BaseMixinData):

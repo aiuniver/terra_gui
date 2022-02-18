@@ -28,8 +28,10 @@ BlockHandlerParameters = {
     LayerHandlerChoice.ImageCGAN: [],
     LayerHandlerChoice.ImageGAN: [],
     LayerHandlerChoice.Noise: [],
-    LayerHandlerChoice.ObjectDetection: [
-        fields.YoloVersionField,
+    LayerHandlerChoice.YoloV3: [
+        fields.ODModelTypeField,
+    ],
+    LayerHandlerChoice.YoloV4: [
         fields.ODModelTypeField,
     ],
     LayerHandlerChoice.Regression: [
@@ -49,6 +51,7 @@ BlockHandlerParameters = {
         fields.TextPymorphyField,
         fields.TextFiltersField,
     ],
+    LayerHandlerChoice.TextTransformer: [],
     LayerHandlerChoice.Text2Speech: [],
     LayerHandlerChoice.TextSegmentation: [
         fields.TextOpenTagsField,
@@ -59,6 +62,12 @@ BlockHandlerParameters = {
         fields.TimeseriesLengthField,
         fields.TimeseriesStepField,
         fields.TimeseriesTrendField,
+    ],
+    LayerHandlerChoice.TimeseriesTrend: [
+        fields.TimeseriesLengthField,
+        fields.TimeseriesStepField,
+        fields.TimeseriesTrendLimitField,
+        fields.ScalerDefaultField,
     ],
     LayerHandlerChoice.Tracker: [],
     LayerHandlerChoice.Transformer: [],

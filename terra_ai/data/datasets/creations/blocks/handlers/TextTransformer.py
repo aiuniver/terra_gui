@@ -1,10 +1,8 @@
-from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.extra import (
-    LayerTextModeChoice,
-    LayerPrepareMethodChoice,
-)
 from typing import Optional
 from pydantic import PositiveInt
+
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.extra import LayerTextModeChoice, LayerPrepareMethodChoice
 
 
 class OptionsData(BaseMixinData):

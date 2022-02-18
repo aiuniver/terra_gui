@@ -9,7 +9,6 @@ from apps.plugins.frontend.choices import (
     LayerTypeProcessingChoice,
     LayerNetChoice,
     LayerImageModeChoice,
-    LayerYoloVersionChoice,
     LayerODDatasetTypeChoice,
     LayerDefineClassesChoice,
     LayerTextModeChoice,
@@ -218,15 +217,6 @@ ImageModeField = {
     "parse": "image_mode",
     "value": LayerImageModeChoice.stretch.name,
     "list": LayerImageModeChoice.values(),
-}
-
-YoloVersionField = {
-    "type": "select",
-    "label": "Версия Yolo",
-    "name": "yolo",
-    "parse": "yolo",
-    "value": LayerYoloVersionChoice.v4.name,
-    "list": LayerYoloVersionChoice.values(),
 }
 
 ODModelTypeField = {

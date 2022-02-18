@@ -343,7 +343,8 @@ class LayerHandlerChoice(str, Enum):
             LayerHandlerChoice.Generator,
             LayerHandlerChoice.ImageCGAN,
             LayerHandlerChoice.ImageGAN,
-            LayerHandlerChoice.ObjectDetection,
+            LayerHandlerChoice.YoloV3,
+            LayerHandlerChoice.YoloV4,
             LayerHandlerChoice.Regression,
             LayerHandlerChoice.Segmentation,
             LayerHandlerChoice.Speech2Text,
@@ -351,6 +352,8 @@ class LayerHandlerChoice(str, Enum):
             LayerHandlerChoice.TextSegmentation,
             LayerHandlerChoice.TextToImageGAN,
             LayerHandlerChoice.Timeseries,
+            LayerHandlerChoice.TimeseriesTrend,
             LayerHandlerChoice.Tracker,
             LayerHandlerChoice.Transformer,
+            LayerHandlerChoice.TextTransformer,
         ]
