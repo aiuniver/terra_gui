@@ -130,6 +130,7 @@ class VideoFrameInput(BaseInput):
         self.array_class = 'video'
         self.frame_mode = 'fit'
         self.video_mode = 'completely'
+        self.max_frames = 300
 
     def set_source(self, source):
         self.sources = source
@@ -144,7 +145,7 @@ class VideoFrameInput(BaseInput):
 
         array = CreateArray().execute_array(array_class=self.array_class,
                                             sources=self.sources, **params)
-        return array
+        return np.squeeze(array, axis=0)
         # cap = cv2.VideoCapture(self.sources[0])
         # out_arr = []
         # while True:

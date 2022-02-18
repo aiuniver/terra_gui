@@ -18,17 +18,14 @@ class TextArray(Array):
         txt_dict: dict = {}
         text: dict = {}
         open_tags, close_tags = options.get('open_tags'), options.get('close_tags')
-        open_symbol, close_symbol = None, None
         if options.get('open_tags'):
             open_tags, close_tags = options['open_tags'].split(' '), options['close_tags'].split(' ')
-            open_symbol = open_tags[0][0]
-            close_symbol = close_tags[0][-1]
         length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else \
             options['max_words']
 
         for idx, text_row in enumerate(sources):
             if os.path.isfile(str(text_row)):
-                text_file = self.read_text(file_path=text_row, op_symbol=open_symbol, cl_symbol=close_symbol)
+                text_file = self.read_text(file_path=text_row, op_tags=open_tags, cl_tags=close_tags)
                 if text_file:
                     txt_dict[text_row] = text_file
             else:
@@ -39,13 +36,17 @@ class TextArray(Array):
                 else:
                     txt_dict[idx] = text_row
 
-        if open_symbol:
-            for key in txt_dict.keys():
-                words = []
-                for word in txt_dict[key].split(' '):
-                    if word not in open_tags + close_tags:
-                        words.append(word)
-                txt_dict[key] = ' '.join(words)
+        if open_tags:
+            for key, value in txt_dict.items():
+                doc = value.split(' ')
+                for word in doc:
+                    if word in open_tags + close_tags:
+                        doc.pop(doc.index(word))
+                for word in doc:
+                    if open_tags[0][0] in word or close_tags[0][-1] in word and word in open_tags + close_tags:
+                        doc.pop(doc.index(word))
+
+                txt_dict[key] = ' '.join(doc)
 
         if options['pymorphy']:
             pymorphy = pymorphy2.MorphAnalyzer()
@@ -93,13 +94,13 @@ class TextArray(Array):
             text_list.append(text[elem])
 
         instructions = {'instructions': text_list,
+                        'data': text,
                         'parameters': {'prepare_method': options['prepare_method'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
-                                       'text_mode': options['text_mode'],
-                                       'length': options['length'],
+                                       'length': length,
                                        'max_words_count': options['max_words_count'],
-                                       'word_to_vec_size': options['word_to_vec_size'],
+                                       'word_to_vec_size': options.get('word_to_vec_size'),
                                        'filters': options['filters']
                                        }
                         }
@@ -116,41 +117,47 @@ class TextArray(Array):
     def preprocess(self, source: Any, **options):
 
         array = []
-        text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
+        # text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
         words_to_add = []
-
-        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
-            array = options['preprocess'].texts_to_sequences([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
-            array = options['preprocess'].texts_to_matrix([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-            for word in text:
-                try:
-                    array.append(options['preprocess'].wv[word])
-                except KeyError:
-                    array.append(np.zeros((options['length'],)))
-
-        if len(array) < options['length']:
-            if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
-                words_to_add = [0 for _ in range((options['length']) - len(array))]
+        if options['prepare_method'] != LayerPrepareMethodChoice.no_preparation:
+            text = text_to_word_sequence(source, filters=options['filters'], lower=False, split=' ')
+            if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
+                array = options['preprocess'].texts_to_sequences([text])[0]
+            elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
+                array = options['preprocess'].texts_to_matrix([text])[0]
             elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
-                                range((options['length']) - len(array))]
-            array += words_to_add
-        elif len(array) > options['length']:
-            array = array[:options['length']]
-
+                for word in text:
+                    try:
+                        array.append(options['preprocess'].wv[word])
+                    except KeyError:
+                        array.append(np.zeros((options['length'],)))
+            if len(array) < options['length'] and options['prepare_method'] != LayerPrepareMethodChoice.bag_of_words:
+                if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
+                    words_to_add = [0 for _ in range((options['length']) - len(array))]
+                elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                    words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
+                                    range((options['length']) - len(array))]
+                array += words_to_add
+            elif len(array) > options['length'] and options['prepare_method'] != LayerPrepareMethodChoice.bag_of_words:
+                array = array[:options['length']]
+        else:
+            array = [source]
         array = np.array(array)
+
         return array
 
     @staticmethod
-    def read_text(file_path, op_symbol=None, cl_symbol=None) -> str:
+    def read_text(file_path, op_tags=None, cl_tags=None) -> str:
 
         cur_text = autodetect_encoding(file_path)
 
-        if op_symbol:
+        if op_tags:
+            op_symbol = op_tags[0][0]
+            cl_symbol = cl_tags[0][-1]
             cur_text = re.sub(op_symbol, f" {op_symbol}", cur_text)
             cur_text = re.sub(cl_symbol, f"{cl_symbol} ", cur_text)
+            for elem in op_tags + cl_tags:
+                cur_text = cur_text.replace(elem, '')
 
         cur_text = ' '.join(text_to_word_sequence(
             cur_text, **{'lower': False, 'filters': '\r\t\n\ufeff\xa0', 'split': ' '})

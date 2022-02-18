@@ -27,7 +27,7 @@ class BlockClasses:
                 block_type = "VideoFrameInput"
         if group == BlockClasses.Model:
             block_object = group().get(type_=block_type, **block_config.get("parameters").get("main"))
-            block_object.set_path(model_path=model_path, save_path='')
+            block_object.set_path(model_path=model_path, save_path='', weight_path='')
             block_object.get_outputs()
             if 'yolo' in block_object.model_architecture:
                 block_type = 'yolo'
@@ -66,9 +66,7 @@ class BlockClasses:
 
         for idx, block in blocks_.items():
             if issubclass(block.__class__, (BaseModel, BaseService, PlotBboxes)):
-                block.set_path(model_path=model_path, save_path=save_path)
-            if issubclass(block.__class__, DeepSort):
-                block.set_path(weight_path)
+                block.set_path(model_path=model_path, save_path=save_path, weight_path=weight_path)
 
         return blocks_
 

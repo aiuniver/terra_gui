@@ -38,6 +38,20 @@ class ImageArrayOut(ArrayOut):
     data_type = 'image_array'
 
 
+class InputImageArrayOut(ImageArrayOut):
+    data_type = 'image_array'
+
+    def execute(self, **kwargs) -> np.ndarray:
+        return kwargs.get('image_array')
+
+
+class BboxesArrayOut(ArrayOut):
+    data_type = 'bboxes'
+
+    def execute(self, **kwargs) -> np.ndarray:
+        return kwargs.get('bboxes')
+
+
 class AudioArrayOut(ArrayOut):
     data_type = 'audio_array'
 
@@ -241,17 +255,14 @@ class SaveAudioOut(BaseBlock):
     data_type = 'initial_file'
 
     def execute(self, **kwargs):
-        model_predict = kwargs.get('model_predict')
+        source = kwargs.get('source').get('1').get('1_audio')[0]
         save_path = kwargs.get('save_path')
 
-        audio = BytesIO()
-        model_predict.write_to_fp(audio)
-        audio.seek(0)
-        result = AudioSegment.from_file(audio, format="mp3")
         path_ = save_path if is_terra_file(save_path) else os.path.join(
             save_path, f"result_{uuid.uuid4()}.{self.file_type}"
         )
-        result.export(path_, format=f"{self.file_type}")
+
+        AudioSegment.from_file(source).export(path_, format=f"{self.file_type}")
 
         return path_
 
@@ -279,12 +290,12 @@ class SaveImgOut(EmptyOut):
 
 class SaveVideoOut(EmptyOut):
     front_name = 'Файл видео'
-    file_type = 'webp'
+    file_type = 'webm'
     data_type = 'initial_file'
 
     def execute(self, **kwargs):
-        result = super().execute(**kwargs).get('1').get('1_video')[0]
         save_path = kwargs.get('save_path')
+        source = kwargs.get('source').get('1').get('1_video')[0]
 
         if not os.path.exists(save_path) and not is_terra_file(save_path):
             os.makedirs(save_path, exist_ok=True)
@@ -292,7 +303,7 @@ class SaveVideoOut(EmptyOut):
         path_ = save_path if is_terra_file(save_path) else os.path.join(
             save_path, f"initial_{uuid.uuid4()}.{self.file_type}"
         )
-        clip = moviepy_editor.VideoFileClip(result)
+        clip = moviepy_editor.VideoFileClip(source)
         clip.write_videofile(path_, preset='ultrafast', bitrate='3000k')
 
         return path_
@@ -365,24 +376,22 @@ class SaveImageSegmentOut(RGBMaskOut):
 class SaveBboxesImgOut(SaveImgOut):
 
     front_name = 'Файл изображения с наложенными BBoxes'
+    data_type = 'deploy_file'
 
     def execute(self, **kwargs):
         image = kwargs.get('array')
         save_path = kwargs.get('save_path')
+        if image:
+            if not os.path.exists(save_path) and not is_terra_file(save_path):
+                os.makedirs(save_path, exist_ok=True)
 
-        if not os.path.exists(save_path) and not is_terra_file(save_path):
-            os.makedirs(save_path, exist_ok=True)
-
-        path_ = save_path if is_terra_file(save_path) else os.path.join(
-            save_path, f"result_{uuid.uuid4()}.{self.file_type}"
-        )
-        try:
+            path_ = save_path if is_terra_file(save_path) else os.path.join(
+                save_path, f"result_{uuid.uuid4()}.{self.file_type}"
+            )
             image.save(path_, f"{self.file_type}")
-        except Exception as e:
-            print(e)
-            raise e
 
-        return path_
+            return path_
+        return
 
 
 class GetText(ClassificationOut):
@@ -411,7 +420,7 @@ class ModelOutput(CascadeBlock):
     ImageClassification = [EmptyOut, ImageArrayOut, NativeOut, ClassificationOut, SaveImgOut, GetText]
     ImageSegmentation = [EmptyOut, ImageArrayOut, SegmentationNativeOut, RGBMaskOut,
                          ImageSegmentationOut, SaveImgOut, SaveImageSegmentOut]
-    TextClassification = [EmptyOut, TextArrayOut, NativeOut, ClassificationOut, SaveTextOut]
+    TextClassification = [EmptyOut, TextArrayOut, NativeOut, ClassificationOut, SaveTextOut, GetText]
     TextSegmentation = [EmptyOut, TextArrayOut, TextSegmentationNativeOut,
                         TextSegmentationOut, SaveTextOut, SaveTextSegmentationOut]
     TextTransformer = [EmptyOut, TextArrayOut, NativeOut, SaveTextOut]
@@ -419,8 +428,8 @@ class ModelOutput(CascadeBlock):
     DataframeRegression = [EmptyOut, NativeOut,]
     Timeseries = [EmptyOut, NativeOut,]
     TimeseriesTrend = [EmptyOut, NativeOut,]
-    AudioClassification = [EmptyOut, AudioArrayOut, NativeOut, ClassificationOut, SaveAudioOut]
-    VideoClassification = [EmptyOut, VideoArrayOut, NativeOut, ClassificationOut]
+    AudioClassification = [EmptyOut, AudioArrayOut, NativeOut, ClassificationOut, SaveAudioOut, GetText]
+    VideoClassification = [EmptyOut, VideoArrayOut, NativeOut, ClassificationOut, SaveVideoOut, GetText]
     YoloV3 = [EmptyOut, ImageArrayOut, YoloNativeOut, SaveImgOut]
     YoloV4 = [EmptyOut, ImageArrayOut, YoloNativeOut, SaveImgOut]
     Tracker = [EmptyOut, NativeOut,]
@@ -430,4 +439,6 @@ class ModelOutput(CascadeBlock):
     ImageCGAN = [EmptyOut, NativeOut,]
     TextToImageGAN = [EmptyOut, NativeOut,]
     ImageToImageGAN = [EmptyOut, NativeOut,]
-    PlotBboxes = [ImageArrayOut, SaveBboxesImgOut]
+    PlotBboxes = [ImageArrayOut, SaveBboxesImgOut, BboxesArrayOut]
+    YoloV5 = [EmptyOut, SaveBboxesImgOut, BboxesArrayOut, InputImageArrayOut]
+    DeepSort = [InputImageArrayOut, BboxesArrayOut]

@@ -42,7 +42,7 @@ class BaseService(BaseBlock):
     def get_outputs(self):
         return list(self.outs.keys())
 
-    def set_path(self, model_path: str, save_path: str):
+    def set_path(self, model_path: str, save_path: str, weight_path: str):
         self.path = os.path.join(model_path, self.path, 'model')
         self.save_path = save_path
 
@@ -56,6 +56,7 @@ class Wav2Vec(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__()
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_=self.__class__.__name__)}
 
     def execute(self):
         source = list(self.inputs.values())[0].execute()
@@ -88,6 +89,7 @@ class TinkoffAPI(BaseService):
         self.stub = _SpeechToTextStub(grpc.secure_channel(self.endpoint, grpc.ssl_channel_credentials()))
         self.metadata = self._authorization_metadata(self.api_key, self.secret_key,
                                                      "tinkoff.cloud.stt", self.expiration_time)
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_=self.__class__.__name__)}
 
     def execute(self):
         source = list(self.inputs.values())[0].execute()
@@ -176,7 +178,7 @@ class GoogleTTS(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__()
-        self.outs = {out.front_name: out for out in ModelOutput().get(type_='Text2Speech')}
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_='Text2Speech')}
         self.language = kwargs.get("language", "ru")
 
     def execute(self):
@@ -196,7 +198,7 @@ class GoogleTTS(BaseService):
             'save_path': self.save_path
         }
 
-        return [out().execute(**data) for name, out in self.outs.items()]
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
 
 class YoloV5(BaseService):
@@ -208,7 +210,7 @@ class YoloV5(BaseService):
         self.pretrained: bool = kwargs.get("pretrained", True)
         self.force_reload: bool = kwargs.get("force_reload", True)
         self.model_url = kwargs.get("model_url", 'ultralytics/yolov5')
-
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_=self.__class__.__name__)}
         self.model = None
 
     def execute(self):
@@ -218,15 +220,23 @@ class YoloV5(BaseService):
 
         frame = list(self.inputs.values())[0].execute()
         out_source = ''
+        render_array = None
         if isinstance(frame, str):
             out_source = frame
             frame = Image.open(frame)
         frame = np.squeeze(frame)
         out = self.model(frame)
         if self.render_img:
-            return {'image_array': out.render()[0], 'source': out_source}
+            render_array = out.render()[0]
 
-        return {'bboxes': out.xyxy[0].cpu().numpy(), 'source': out_source}
+        data = {
+            'array': render_array,
+            'bboxes': out.xyxy[0].cpu().numpy(),
+            'source': out_source,
+            'image_array': frame
+        }
+
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
 
 class DeepSort(BaseService):
@@ -237,6 +247,7 @@ class DeepSort(BaseService):
         self.nms_max_overlap = kwargs.get("nms_max_overlap", 1.0)
         self.height, self.width = None, None
         self.path = ''
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_=self.__class__.__name__)}
         self.extractor = None
 
         max_cosine_distance = kwargs.get("max_dist", 0.2)
@@ -247,22 +258,19 @@ class DeepSort(BaseService):
         metric = _NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = _Tracker(metric, max_iou_distance=max_iou_distance, max_age=deep_max_age, n_init=n_init)
 
-    def set_path(self, model_path: str):
-        self.path = model_path
+    def set_path(self, model_path: str, save_path: str, weight_path: str):
+        self.path = weight_path
         print(self.path)
         self.extractor = _Extractor(self.path)
         print(self.extractor)
 
     def execute(self):
-        bbox_xyxy, ori_img = None, None
-
-        for input_type in self.inputs.keys():
-            if input_type in Input.__dict__.keys():
-                ori_img = self.inputs.get(input_type).execute()
-            else:
-                bbox_xyxy = self.inputs.get(input_type).execute()
-                if not len(bbox_xyxy):
-                    return np.zeros((1, 5))
+        result = list(self.inputs.values())[0].execute()
+        source = result.get('source')
+        ori_img = result.get('image_array')
+        bbox_xyxy = result.get('bboxes')
+        if not len(bbox_xyxy):
+            return {'bboxes': np.zeros((0, 6)), 'image_array': ori_img}
 
         confidences = bbox_xyxy[:, 4]
         bbox_xyxy = bbox_xyxy[:, :4].astype(int)
@@ -292,12 +300,13 @@ class DeepSort(BaseService):
             box = track.to_tlwh()
             x1, y1, x2, y2 = self._tlwh_to_xyxy(box)
             track_id = track.track_id
-            outputs.append(np.array([x1, y1, x2, y2, track_id], dtype=np.int))
+            outputs.append(np.array([x1, y1, x2, y2, 1, track_id], dtype=np.int))
         if len(outputs) > 0:
             outputs = np.stack(outputs, axis=0)
         else:
-            outputs = np.zeros((1, 5))
-        return outputs
+            outputs = np.zeros((0, 6))
+        data = {'bboxes': outputs, 'source': source, 'image_array': ori_img}
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
     """
     TODO:

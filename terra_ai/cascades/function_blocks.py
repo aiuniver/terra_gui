@@ -250,7 +250,7 @@ class PlotBboxes(BaseFunction):
     def get_outputs(self):
         return list(self.outs.keys())
 
-    def set_path(self, model_path: str, save_path: str):
+    def set_path(self, model_path: str, save_path: str, weight_path: str):
         self.save_path = save_path
 
     @staticmethod
@@ -310,13 +310,15 @@ class PlotBboxes(BaseFunction):
         result = list(self.inputs.values())[0].execute()
         self.__set_classes_and_colors(result)
 
+        img_array = result.get('image_array')
         img_path = result.get('source')
         pred_bb = result.get('bboxes')
+        print(len(pred_bb))
+        image = Image.open(img_path) if img_path else Image.fromarray(img_array)
 
-        image = Image.open(img_path)
         real_size = image.size
-        scale_w = real_size[0] / self.image_size[0]
-        scale_h = real_size[1] / self.image_size[1]
+        scale_w = real_size[0] / self.image_size[0] if img_path else 1
+        scale_h = real_size[1] / self.image_size[1] if img_path else 1
 
         if len(pred_bb) > 0:
             pred_bb = self.__resize_bb(pred_bb, scale_w, scale_h)
@@ -328,8 +330,8 @@ class PlotBboxes(BaseFunction):
             classes = pred_bb[:, 5].astype('int')
             for i, box in enumerate(pred_bb[:, :4]):
                 draw = ImageDraw.Draw(image_pred)
-                predicted_class = self.classes[classes[i]]
                 score = pred_bb[:, 4][i]  # pred_bb[:, 5:][i][classes[i]]
+                predicted_class = self.classes[classes[i]] if isinstance(score, float) else classes[i]
                 label = ' {} {:.2f} '.format(predicted_class, score)
                 label_size = draw.textsize(label, font)
                 draw = self.__draw_box(image_pred, font, draw, box, self.colors[classes[i]], thickness,
@@ -356,12 +358,16 @@ class FilterClasses(BaseFunction):
     def execute(self, **kwargs):
         result = list(self.inputs.values())[0].execute()
         bboxes = result.get('bboxes')
-        filtered_bboxes = bboxes[bboxes[:, -1] == self.filter_classes[0]]
+        if bboxes.shape[0]:
+            filtered_bboxes = bboxes[bboxes[:, -1] == self.filter_classes[0]]
 
-        for i in self.filter_classes[1:]:
-            filtered_bboxes = np.concatenate((filtered_bboxes, bboxes[bboxes[:, -1] == i]))
+            for i in self.filter_classes[1:]:
+                filtered_bboxes = np.concatenate((filtered_bboxes, bboxes[bboxes[:, -1] == i]))
+        else:
+            filtered_bboxes = bboxes
 
-        return {'bboxes': filtered_bboxes, 'source': result.get('source')}
+        return {'bboxes': filtered_bboxes, 'source': result.get('initial_file'),
+                'image_array': result.get('image_array')}
 
 
 class Function(CascadeBlock):

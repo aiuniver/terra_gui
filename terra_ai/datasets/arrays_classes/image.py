@@ -56,6 +56,7 @@ class ImageArray(Array):
         return instructions
 
     def preprocess(self, array: np.ndarray, **options):
+
         augm_data = None
         if options.get('augmentation') and options.get('augm_data'):
             array, augm_data = self.augmentation_image(image_array=array,

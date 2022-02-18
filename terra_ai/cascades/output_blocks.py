@@ -143,7 +143,8 @@ class VideoFrameOutput(BaseOutput):
 
         for source in sources:
             self.cascade_input.set_source(source)
-            frame = list(self.inputs.values())[0].execute()
+            frame = np.asarray(list(self.inputs.values())[0].execute().get('image_array'))
+
             if len(frame.shape) == 4:
                 for i in frame:
                     writer.write(frame(i))

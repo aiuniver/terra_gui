@@ -279,7 +279,7 @@ class BlocksBindChoice(Enum):
              BlockServiceTypeChoice.FilterClasses,
              BlockServiceTypeChoice.YoloV5,
              ),
-            BlockGroupChoice.InputData,),
+        ),
         (LayerInputTypeChoice.Image,),
     )
     YoloV5 = ("YoloV5", (BlockGroupChoice.InputData,), (LayerInputTypeChoice.Image,))

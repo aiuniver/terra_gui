@@ -34,7 +34,7 @@ class BaseModel(BaseBlock):
         self.model_architecture = None
         self.outs = {}
 
-    def set_path(self, model_path: str, save_path: str):
+    def set_path(self, model_path: str, save_path: str, weight_path: str):
         self.path = os.path.join(model_path, self.path, 'model')
         self.save_path = save_path
 
@@ -133,48 +133,57 @@ class BaseModel(BaseBlock):
     def __get_sources(self):
         source = {}
         step = 1
-        for type_, input_ in self.inputs.items():
-            if type_.lower() == 'cropimage':
-                type_ = 'image'
-            result = input_.execute()
-            source.update({
-                str(step): {
-                    f"{step}_{type_.lower()}": [result] if isinstance(result, str) else result
-                }
-            })
-            step += 1
+        if 'Audio' in self.inputs.keys():
+            for i in range(1, 4):
+                source.update({
+                    str(i): {
+                        f'{i}_audio': [list(self.inputs.values())[0].execute()]
+                    }
+                })
+        else:
+            for type_, input_ in self.inputs.items():
+                if type_.lower() == 'cropimage':
+                    type_ = 'image'
+                result = input_.execute()
+                source.update({
+                    str(step): {
+                        f"{step}_{type_.lower()}": [result] if isinstance(result, str) else result
+                    }
+                })
+                step += 1
         return source
 
     def execute(self):
         source = self.__get_sources()
-        print(source)
         if not self.model:
             self.__set_model()
         array_class = [param_.get('task').lower() for param_ in self.config.get('columns').get('1').values()][0]
 
         array = CreateArray().execute(array_class=array_class, dataset_path=self.path,
-                                      sources=source).get("1")  # [np.newaxis, :]
-        print(array.shape[0])
-        if array.shape[0] == 1:
+                                      sources=source)  # [np.newaxis, :]
+        if array_class == 'audio':
             result = self.model.predict(x=array)
         else:
-            result = []
-            for array_ in array:
-                print(array_.shape)
-                result.append(self.model.predict(x=array_[np.newaxis, :]))
+            if array.get("1").shape[0] == 1:
+                result = self.model.predict(x=array.get("1"))
+            else:
+                result = []
+                for array_ in array.get("1"):
+                    result.append(self.model.predict(x=array_[np.newaxis, :]))
 
         for block, params in self.config.get('outputs', {}).items():
             if params.get('task', '').lower() == 'classification':
                 classes = params.get('classes_names')
 
         data = {
+            'array': array,
             'source': source,
             'model_predict': result,
             'options': self.config,
             'save_path': self.save_path
         }
 
-        return [out().execute(**data) for name, out in self.outs.items()]
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
 
 class YoloModel(BaseModel):
