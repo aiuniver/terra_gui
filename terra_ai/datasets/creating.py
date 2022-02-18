@@ -127,6 +127,7 @@ class CreateVersion(object):
 
         version_data = architecture_class.preprocess_version_data(
             version_data=version_data,
+            source_path=creation_data.source.path,
             version_path_data=self.sources_temp_directory
         )
         logger.debug(version_data)

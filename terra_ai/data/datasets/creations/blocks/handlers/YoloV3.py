@@ -11,7 +11,7 @@ from terra_ai.data.mixins import BaseMixinData
 
 
 class OptionsData(BaseMixinData):
-    yolo: LayerYoloChoice = LayerYoloChoice.v4
+    # yolo: LayerYoloChoice = LayerYoloChoice.v4
     model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
 
     # Внутренние параметры

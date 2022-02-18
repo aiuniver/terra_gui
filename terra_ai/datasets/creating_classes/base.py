@@ -15,7 +15,7 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerPrepareMeth
 from terra_ai.datasets import arrays_classes
 from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST
+from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
 from terra_ai.logging import logger
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 
@@ -58,6 +58,33 @@ def multithreading_array(row, instructions):
     return full_array
 
 
+def postprocess_timeseries(full_array):
+    try:
+        new_array = np.array(full_array).transpose()
+    except:
+        new_array = []
+        array = []
+        for el in full_array:
+            if type(el[0]) == np.ndarray:
+                tmp = []
+                for j in range(len(el)):
+                    tmp.append(list(el[j]))
+                array.append(tmp)
+            else:
+                array.append(el.tolist())
+        array = np.array(array).transpose().tolist()
+        for i in array:
+            tmp = []
+            for j in i:
+                if type(j) == list:
+                    tmp.extend(j)
+                else:
+                    tmp.append(j)
+            new_array.append(tmp)
+        new_array = np.array(new_array)
+    return new_array
+
+
 class BaseClass(object):
 
     @staticmethod
@@ -74,7 +101,7 @@ class BaseClass(object):
         parameters_to_pass = {}
 
         for layer in put_data:
-            if layer.type == LayerTypeChoice.layer:
+            if layer.type in [LayerTypeChoice.input, LayerTypeChoice.output]:
                 put_idx += 1
                 data_to_pass[put_idx] = {}
                 parameters_to_pass[put_idx] = {}
@@ -484,6 +511,286 @@ class ClassificationClass(object):
         return put_instructions, tags
 
 
+class YoloClass(object):
+
+    @staticmethod
+    def preprocess_version_data(**kwargs):
+        version_data = kwargs['version_data']
+        source_path = kwargs['source_path']
+        version_path_data = kwargs['version_path_data']
+
+        image_mode = ''
+        for inp_data in version_data.inputs:
+            if inp_data.type == 'handler' and inp_data.parameters.type == 'Image':
+                image_mode = inp_data.parameters.options.image_mode
+        for out_data in version_data.outputs:
+            if out_data.type == 'handler' and out_data.parameters.type in ['YoloV3', 'YoloV4']:
+                out_data.parameters.options.frame_mode = image_mode
+                classes_names = get_od_names(version_data, source_path, version_path_data)
+                out_data.parameters.options.num_classes = len(classes_names)
+                out_data.parameters.options.classes_names = classes_names
+
+        return version_data
+
+    @staticmethod
+    def create_output_parameters(output_instr, version_data, preprocessing, version_paths_data):
+
+        outputs = {}
+        columns = {}
+        for key in output_instr.keys():
+            columns[key] = {}
+            for col_name, data in output_instr[key].items():
+                data_to_pass = data.instructions[0]
+                options_to_pass = data.parameters.copy()
+                options_to_pass.update([('orig_x', 100), ('orig_y', 100)])
+                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                classes_names = options_to_pass.get('classes_names')
+                for i in range(3):
+                    col_parameters = {'datatype': DataType.get(len(array[i].shape), 'DIM'),
+                                      'dtype': str(array[i].dtype),
+                                      'shape': array[i].shape,
+                                      'name': version_data.outputs.get(key).name,
+                                      'task': camelize(options_to_pass.get('put_type')),
+                                      'classes_names': classes_names,
+                                      'classes_colors': None,
+                                      'num_classes': len(classes_names) if classes_names else 0,
+                                      'encoding': options_to_pass.get('encoding', 'none')}
+                    current_column = DatasetOutputsData(**col_parameters)
+                    columns[key + i] = {col_name: current_column.native()}
+                    outputs[key + i] = current_column.native()
+
+        return outputs, columns
+
+    @staticmethod
+    def create_service_parameters(output_instr, version_data, preprocessing, version_paths_data):
+
+        service = {}
+        for key in output_instr.keys():
+            for col_name, data in output_instr[key].items():
+                data_to_pass = data.instructions[0]
+                options_to_pass = data.parameters.copy()
+                options_to_pass.update([('orig_x', 100), ('orig_y', 100)])
+                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                classes_names = options_to_pass.get('classes_names')
+                for i in range(3, 6):
+                    put_parameters = {
+                        'datatype': DataType.get(len(array[i].shape), 'DIM'),
+                        'dtype': str(array[i].dtype),
+                        'shape': array[i].shape,
+                        'name': version_data.outputs.get(key).name,
+                        'task': camelize(options_to_pass.get('put_type')),
+                        'classes_names': classes_names,
+                        'classes_colors': None,
+                        'num_classes': len(classes_names) if classes_names else 0,
+                        'encoding': options_to_pass.get('encoding', 'none')
+                    }
+                    service[key + i - 3] = DatasetOutputsData(**put_parameters)
+
+        return service
+
+    @staticmethod
+    def create_put_arrays(put_data, version_paths_data, dataframe, preprocessing):
+
+        for split in ['train', 'val']:
+            open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
+            hdf = h5py.File(version_paths_data.arrays.joinpath('dataset.h5'), open_mode)
+            if split not in list(hdf.keys()):
+                hdf.create_group(split)
+            for key in put_data.keys():
+                data_to_pass = []
+                dict_to_pass = []
+                parameters_to_pass = {}
+                for i in range(0, len(dataframe[split])):
+                    tmp_data = []
+                    tmp_parameter_data = []
+                    for col_name, data in put_data[key].items():
+                        parameters_to_pass = data.parameters.copy()
+                        if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                            prep = preprocessing.preprocessing.get(key).get(col_name)
+                            parameters_to_pass.update([('preprocess', prep)])
+                        if parameters_to_pass['put_type'] in PATH_TYPE_LIST:
+                            tmp_data.append(os.path.join(version_paths_data.sources, dataframe[split].loc[i, col_name]))
+                        elif parameters_to_pass['put_type'] in [decamelize(LayerOutputTypeChoice.YoloV3),
+                                                                decamelize(LayerOutputTypeChoice.YoloV4)]:
+                            tmp_data.append(dataframe[split].loc[i, col_name])
+                            height, width = dataframe[split].iloc[i, 0].split(';')[1].split(',')
+                            parameters_to_pass.update([('orig_x', int(width)), ('orig_y', int(height))])
+                        tmp_parameter_data.append(parameters_to_pass)
+                    data_to_pass.append(tmp_data)
+                    dict_to_pass.append(tmp_parameter_data)
+
+                progress.pool(VERSION_PROGRESS_NAME,
+                              message=f'Формирование массивов {split.title()} выборки. ID: {key}.', percent=0)
+                if parameters_to_pass['put_type'] in [decamelize(LayerOutputTypeChoice.YoloV3),
+                                                      decamelize(LayerOutputTypeChoice.YoloV4)]:
+                    for n in range(3):
+                        current_group = f'id_{key + n}'
+                        current_serv_group = f'id_{key + n}_service'
+                        if current_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_group)
+                        if current_serv_group not in list(hdf[split].keys()):
+                            hdf[split].create_group(current_serv_group)
+                else:
+                    hdf[split].create_group(f'id_{key}')
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
+                    for i, result in enumerate(results):
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
+                        if parameters_to_pass['put_type'] not in [decamelize(LayerOutputTypeChoice.YoloV3),
+                                                                  decamelize(LayerOutputTypeChoice.YoloV4)]:
+                            hdf[f'{split}/id_{key}'].create_dataset(str(i), data=result[0])
+                        else:
+                            for n in range(3):
+                                hdf[f'{split}/id_{key + n}'].create_dataset(str(i), data=result[0][n])
+                                hdf[f'{split}/id_{key + n}_service'].create_dataset(str(i), data=result[0][n + 3])
+                        del result
+            hdf.close()
+
+
+class MainTimeseriesClass(object):
+
+    @staticmethod
+    def create_input_parameters(input_instr, version_data, preprocessing, version_paths_data):
+
+        inputs = {}
+        columns = {}
+        for key in input_instr.keys():
+            columns[key] = {}
+            put_array = []
+            parameters_to_pass = {}
+            for col_name, data in input_instr[key].items():
+                data_to_pass = data.instructions[:data.parameters['length']]
+                parameters_to_pass = data.parameters.copy()
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    parameters_to_pass.update([('preprocess',
+                                                preprocessing.preprocessing.get(key).get(col_name))])
+                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                array = postprocess_timeseries(array)
+                put_array.append(array)
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.flatten().shape,
+                                  'name': col_name,
+                                  'task': camelize(parameters_to_pass.get('put_type')),
+                                  'classes_names': parameters_to_pass.get('classes_names'),
+                                  'classes_colors': None,
+                                  'num_classes': parameters_to_pass.get('num_classes'),
+                                  'encoding': parameters_to_pass.get('encoding', 'none')}
+                current_column = DatasetInputsData(**col_parameters)
+                columns[key].update({col_name: current_column.native()})
+            put_array = np.concatenate(put_array, axis=1)
+            out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': f'Вход {key}',
+                              'task': camelize(parameters_to_pass.get('put_type')),
+                              'classes_names': parameters_to_pass.get('classes_names'),
+                              'classes_colors': None,
+                              'num_classes': parameters_to_pass.get('num_classes'),
+                              'encoding': parameters_to_pass.get('encoding', 'none')}
+            current_out = DatasetInputsData(**out_parameters)
+            inputs[key] = current_out.native()
+
+        return inputs, columns
+
+    @staticmethod
+    def create_output_parameters(output_instr, version_data, preprocessing, version_paths_data):
+
+        outputs = {}
+        columns = {}
+        for key in output_instr.keys():
+            columns[key] = {}
+            put_array = []
+            parameters_to_pass = {}
+            for col_name, data in output_instr[key].items():
+                data_to_pass = data.instructions[:data.parameters['length']]
+                parameters_to_pass = data.parameters.copy()
+                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                    parameters_to_pass.update([('preprocess',
+                                                preprocessing.preprocessing.get(key).get(col_name))])
+                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                array = postprocess_timeseries(array)
+                put_array.append(array)
+                col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
+                                  'dtype': str(array.dtype),
+                                  'shape': array.flatten().shape,
+                                  'name': col_name,
+                                  'task': camelize(parameters_to_pass.get('put_type')),
+                                  'classes_names': parameters_to_pass.get('classes_names'),
+                                  'classes_colors': parameters_to_pass.get('classes_colors'),
+                                  'num_classes': parameters_to_pass.get('num_classes'),
+                                  'encoding': parameters_to_pass.get('encoding', 'none')}
+                current_column = DatasetOutputsData(**col_parameters)
+                columns[key].update({col_name: current_column.native()})
+            put_array = np.concatenate(put_array, axis=1)
+            out_parameters = {'datatype': DataType.get(len(put_array.shape), 'DIM'),
+                              'dtype': str(put_array.dtype),
+                              'shape': put_array.shape,
+                              'name': f'Выход {key}',
+                              'task': camelize(parameters_to_pass.get('put_type')),
+                              'classes_names': parameters_to_pass.get('classes_names'),
+                              'classes_colors': parameters_to_pass.get('classes_colors'),
+                              'num_classes': parameters_to_pass.get('num_classes'),
+                              'encoding': parameters_to_pass.get('encoding', 'none')}
+            current_out = DatasetOutputsData(**out_parameters)
+            outputs[key] = current_out.native()
+
+        return outputs, columns
+
+    @staticmethod
+    def create_put_arrays(put_data, version_paths_data, dataframe, preprocessing):
+
+        for split in ['train', 'val']:
+            open_mode = 'w' if not version_paths_data.arrays.joinpath('dataset.h5') else 'a'
+            hdf = h5py.File(version_paths_data.arrays.joinpath('dataset.h5'), open_mode)
+            if split not in list(hdf.keys()):
+                hdf.create_group(split)
+            for key in put_data.keys():
+                data_to_pass = []
+                dict_to_pass = []
+                depth, length, step = 0, 0, 0
+                for col_name, data in put_data[key].items():
+                    depth = data.parameters['depth']
+                    length = data.parameters['length']
+                    step = data.parameters['step']
+                for i in range(0, len(dataframe[split]) - length - depth, step):
+                    tmp_data = []
+                    tmp_parameter_data = []
+                    for col_name, data in put_data[key].items():
+                        parameters_to_pass = data.parameters.copy()
+                        if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                            parameters_to_pass.update([('preprocess',
+                                                        preprocessing.preprocessing.get(key).get(col_name))])
+                        if data.parameters['put_type'] == 'timeseries_trend':
+                            tmp_data.append([dataframe[split].loc[i, col_name],
+                                             dataframe[split].loc[i + length, col_name]])
+                        else:
+                            tmp_data.append(dataframe[split].loc[
+                                            i:i + length + depth - 1, col_name
+                                            ])
+                        tmp_parameter_data.append(parameters_to_pass)
+                    data_to_pass.append(tmp_data)
+                    dict_to_pass.append(tmp_parameter_data)
+
+                progress.pool(
+                    VERSION_PROGRESS_NAME,
+                    message=f'Формирование массивов {split.title()} выборки. ID: {key}.',
+                    percent=0
+                )
+
+                hdf[split].create_group(f'id_{key}')
+
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
+                    for i, result in enumerate(results):
+                        progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
+                        array = postprocess_timeseries(result)
+                        hdf[f'{split}/id_{key}'].create_dataset(str(i), data=array)
+                        del result
+            hdf.close()
+
+
 class PreprocessingNumericClass(object):
 
     @staticmethod
@@ -528,11 +835,10 @@ class PreprocessingTextClass(object):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
-                if data.parameters.get('prepare_method') and data.parameters['prepare_method'] in \
-                        [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                         LayerPrepareMethodChoice.bag_of_words]:
                     preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                elif data.parameters.get('prepare_method') and data.parameters['prepare_method'] ==\
-                        LayerPrepareMethodChoice.word_to_vec:
+                elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                     preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
 
         return preprocessing

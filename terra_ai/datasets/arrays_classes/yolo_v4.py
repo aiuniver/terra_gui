@@ -11,7 +11,7 @@ from terra_ai.data.datasets.extra import LayerODDatasetTypeChoice
 from .base import Array
 
 
-class ObjectDetectionArray(Array):
+class YoloV4Array(Array):
 
     def prepare(self, sources, dataset_folder=None, **options):
         bounding_boxes = []
@@ -31,8 +31,7 @@ class ObjectDetectionArray(Array):
                 bounding_boxes.append(data[key])
 
         instructions = {'instructions': bounding_boxes,
-                        'parameters': {'yolo': options['yolo'],
-                                       'num_classes': options['num_classes'],
+                        'parameters': {'num_classes': options['num_classes'],
                                        'classes_names': options['classes_names'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
@@ -71,16 +70,7 @@ class ObjectDetectionArray(Array):
         train_input_sizes = 416
         anchor_per_scale = 3
 
-        yolo_anchors = get_yolo_anchors(options['yolo'])
-
-        # if options['yolo'] == 'v3':
-        #     yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-        #                     [[30, 61], [62, 45], [59, 119]],
-        #                     [[116, 90], [156, 198], [373, 326]]]
-        # elif options['yolo'] == 'v4':
-        #     yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-        #                     [[36, 75], [76, 55], [72, 146]],
-        #                     [[142, 110], [192, 243], [459, 401]]]
+        yolo_anchors = get_yolo_anchors('v4')
 
         anchors = (np.array(yolo_anchors).T / strides).T
         max_bbox_per_scale = 100

@@ -3115,6 +3115,84 @@ DatasetCreationArchitecture = {
             },
         ],
     },
+    ArchitectureChoice.ImageAutoencoder: {
+        LayerGroupChoice.inputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Данные",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Изображения",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Image",
+                    "options": {
+                        "width": 0,
+                        "height": 0,
+                        "image_mode": "stretch",
+                        "net": "convolutional",
+                        "scaler": "no_scaler",
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "type": "input",
+                "name": "Вход",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+                "parameters": {},
+            },
+        ],
+        LayerGroupChoice.outputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Данные",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Изображения",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Image",
+                    "options": {
+                        "width": 0,
+                        "height": 0,
+                        "image_mode": "stretch",
+                        "net": "convolutional",
+                        "scaler": "no_scaler",
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "type": "output",
+                "name": "Выход",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+                "parameters": {},
+            },
+        ],
+    },
     ArchitectureChoice.Timeseries: {
         LayerGroupChoice.inputs: [
             {

@@ -12,7 +12,6 @@ from .arrays_classes.video import VideoArray
 from .arrays_classes.discriminator import DiscriminatorArray
 from .arrays_classes.generator import GeneratorArray
 from .arrays_classes.noise import NoiseArray
-from .arrays_classes.object_detection import ObjectDetectionArray
 from .arrays_classes.regression import RegressionArray
 from .arrays_classes.scaler import ScalerArray
 from .arrays_classes.segmentation import SegmentationArray
@@ -20,7 +19,10 @@ from .arrays_classes.speech_2_text import Speech2TextArray
 from .arrays_classes.text_2_speech import Text2SpeechArray
 from .arrays_classes.text_segmentation import TextSegmentationArray
 from .arrays_classes.timeseries import TimeseriesArray
+from .arrays_classes.timeseries_trend import TimeseriesTrendArray
 from .arrays_classes.tracker import TrackerArray
+from .arrays_classes.yolo_v3 import YoloV3Array
+from .arrays_classes.yolo_v4 import YoloV4Array
 from .arrays_classes.raw import RawArray
 from .preprocessing import CreatePreprocessing
 
@@ -36,7 +38,8 @@ class CreateArray(object):
         self.discriminator = DiscriminatorArray()
         self.generator = GeneratorArray()
         self.noise = NoiseArray()
-        self.object_detection = ObjectDetectionArray()
+        self.yolo_v3 = YoloV3Array()
+        self.yolo_v4 = YoloV4Array()
         self.regression = RegressionArray()
         self.scaler = ScalerArray()
         self.segmentation = SegmentationArray()
@@ -44,6 +47,7 @@ class CreateArray(object):
         self.text_2_speech = Text2SpeechArray()
         self.text_segmentation = TextSegmentationArray()
         self.timeseries = TimeseriesArray()
+        self.timeseries_trend = TimeseriesTrendArray()
         self.tracker = TrackerArray()
         self.raw = RawArray()
 
