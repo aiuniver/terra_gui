@@ -8,9 +8,10 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(dataset, idx) in datasets" :key="'table_dataset_tr' + idx">
+      <tr v-for="(dataset, idx) in datasets" :key="'table_dataset_tr' + idx" @click="$emit('choice', dataset)">
         <td v-for="({ value }, idx) in headers" :key="'table_dataset_td' + idx">
-          <span>{{ dataset[value] }}</span>
+          <span v-if="value !== 'group'">{{ dataset[value] }}</span>
+          <span v-else>{{ $store.getters['datasets/getGroups'][dataset[value]] }}</span>
         </td>
       </tr>
     </tbody>
@@ -95,7 +96,7 @@ export default {
 <style lang="scss" scoped>
 @import "@/assets/scss/variables/default.scss";
 @mixin cell {
-  width: 25%;
+  // width: 25%;
   height: 35px;
   cursor: pointer;
   padding: 0 10px;
@@ -106,7 +107,7 @@ export default {
   text-overflow: ellipsis;
   max-width: 100px;
   &:nth-child(2) {
-    text-align: right;
+    // text-align: right;
   }
   @content;
 }
@@ -117,16 +118,23 @@ table {
 }
 
 thead {
-  background-color: $color-dark;
+  background-color: #0e1621;
   color: $color-gray;
   position: sticky;
   top: 0;
+  th:not(:first-child) {
+    width: 15%;
+  }
+  th:last-child {
+    width: 20%;
+  }
 }
 
 tbody {
   tr {
     &:hover {
-      background: $color-black;
+      background: #1E2734;
+      color: #65B9F4;
     }
   }
 }

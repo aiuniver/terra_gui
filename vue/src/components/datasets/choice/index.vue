@@ -36,7 +36,7 @@
         @click="$emit('choice', item)"
         />
       </div>
-      <Table v-else :selectedType="selectedType" />
+      <Table v-else :selectedType="selectedType" :data="sortedList" @choice="$emit('choice', $event)" />
       <div class="datasets__empty" v-if="!sortedList.length">Не найдено</div>
     </scrollbar>
   </div>
@@ -227,6 +227,10 @@ export default {
 .ci-tile {
   display: inline-block;
   border-radius: 4px;
+  cursor: pointer;
+  ::v-deep svg {
+    margin-bottom: 1.5px;
+  }
   &--selected {
     border: 1px solid $color-light-blue;
     &::v-deep svg {
