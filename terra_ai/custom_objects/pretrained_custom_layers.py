@@ -384,10 +384,10 @@ class PretrainedModel(Layer):
         self.model_path = model_path
         if self.model_path:
             self.system_path = os.path.join(PROJECT_PATH, 'training', self.model_path, "model")
-            logger.debug(f"self.system_path {self.system_path}")
-            self.custom_obj_json = "model_custom_obj_json.trm"
-            self.model_json = "model_json.trm"
-            self.model_weights = "model_weights"
+            # logger.debug(f"self.system_path {self.system_path}")
+            self.custom_obj_json = "trained_model_custom_obj_json.trm"
+            self.model_json = "trained_model_json.trm"
+            self.model_weights = "trained_model_weights"
             with os.scandir(self.system_path) as files:
                 for f in files:
                     if 'generator_json' in f.name:

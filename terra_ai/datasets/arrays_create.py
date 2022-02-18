@@ -1,4 +1,5 @@
-from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes, Yolo_terra, resize_frame
+from terra_ai.datasets.utils import get_yolo_anchors, resize_bboxes,  resize_frame, \
+    Yolo_terra, Voc, Coco, Udacity, Kitti, Yolov1
 from terra_ai.utils import autodetect_encoding
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice, \
     LayerNetChoice, LayerVideoFillModeChoice, LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, \
@@ -1411,14 +1412,14 @@ class CreateArray(object):
                         array.append(options['preprocess'].wv[word])
                     except KeyError:
                         array.append(np.zeros((options['length'],)))
-            if len(array) < options['length']:
-                if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+            if len(array) < options['length'] and options['prepare_method'] != LayerPrepareMethodChoice.bag_of_words:
+                if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
                     words_to_add = [0 for _ in range((options['length']) - len(array))]
                 elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                     words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
                                     range((options['length']) - len(array))]
                 array += words_to_add
-            elif len(array) > options['length']:
+            elif len(array) > options['length'] and options['prepare_method'] != LayerPrepareMethodChoice.bag_of_words:
                 array = array[:options['length']]
         else:
             array = [text]
