@@ -17,7 +17,6 @@
 <script>
 import { mapActions, mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
-import StateTwo from './StateTwo';
 import StateThree from './settings/';
 import StateOne from './StateOne';
 import StateFour from './StateFour';
@@ -25,7 +24,6 @@ import Pagination from './Pagination';
 export default {
   components: {
     StateOne,
-    StateTwo,
     StateThree,
     Pagination,
     StateFour,
@@ -34,10 +32,9 @@ export default {
     debounce: null,
     list: [
       { id: 1, title: 'Данные', component: 'state-one' },
-      { id: 2, title: 'Предпросмотр', component: 'state-two' },
-      { id: 3, title: 'Input', component: 'state-three' },
-      { id: 4, title: 'Output', component: 'state-three' },
-      { id: 5, title: 'Завершение', component: 'state-four' },
+      { id: 2, title: 'Input', component: 'state-three' },
+      { id: 3, title: 'Output', component: 'state-three' },
+      { id: 4, title: 'Завершение', component: 'state-four' },
     ],
   }),
   computed: {
