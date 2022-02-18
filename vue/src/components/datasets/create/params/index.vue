@@ -4,7 +4,7 @@
       <div class="params__header mb-2">{{ getComp.title }}</div>
       <scrollbar>
         <div class="params__inner">
-          <component :is="getComp.component" />
+          <component :is="getComp.component" :state="value"/>
         </div>
       </scrollbar>
     </div>

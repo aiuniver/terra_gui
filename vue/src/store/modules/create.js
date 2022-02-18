@@ -12,7 +12,8 @@ export default {
     blocks: [],
     links: [],
     key: {},
-    creation: {},
+    // creation: {},
+    // default: {}
   }),
   mutations: {
     SET_INPUT_AND_OUTPUT (state, { inputs, outputs }) {
@@ -29,9 +30,9 @@ export default {
     SET_KEY_EVENT (state, value) {
       state.key = value;
     },
-    SET_CREATION (state, value) {
-      state.creation = value;
-    },
+    // SET_DEFAULT (state, value) {
+    //   state.default = value;
+    // },
     SET_OUTPUT (state, value) {
       state.outputs = value;
     },
@@ -213,7 +214,7 @@ export default {
     },
   },
   getters: {
-    getDefault: ({ creation }) => (key) => creation[key] || [],
+    // getDefault: ({ creation }) => (key) => creation[key] || [],
     getBlocks: ({ blocks }) => blocks,
     getKeyEvent: ({ key }) => key,
     getLinks: ({ blocks }) => getLinks(blocks),

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <template v-for="(data, index) of formsHandler">
+    <template v-for="(data, index) of forms">
       <t-auto-field-handler v-bind="data" :parameters="parameters" :key="id + index" :idKey="'key_' + index" root @change="onChange" />
     </template>
     {{ selected }}
@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapActions } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 export default {
   components: {},
@@ -17,14 +17,15 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    forms: {
+      type: Array,
+      default: () => [],
+    },
   },
   data: () => ({
     debounce: null,
   }),
   computed: {
-    ...mapGetters({
-      formsHandler: 'datasets/getFormsHandler',
-    }),
     parameters() {
       return this?.selected?.parameters || {};
     },
@@ -38,8 +39,8 @@ export default {
     }),
     onChange(data) {
       console.log(data);
-      const parameters = { ...this.parameters, [data.name]: data.value }
-      this.setParameters({id: this.id, parameters});
+      const parameters = { ...this.parameters, [data.name]: data.value };
+      this.setParameters({ id: this.id, parameters });
     },
   },
   created() {

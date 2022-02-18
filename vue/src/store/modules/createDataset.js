@@ -5,7 +5,7 @@ export default {
   state: () => ({
     filesSource: [],
     file_manager: [],
-    architectures: [],
+    configDefault: {},
     source_path: '',
     pagination: 1,
     project: {
@@ -26,8 +26,8 @@ export default {
     outputs: []
   }),
   mutations: {
-    SET_ARCHITECTURES (state, value) {
-      state.architectures = value;
+    SET_DEFAULT (state, value) {
+      state.configDefault = value;
     },
     SET_PROJECT (state, value) {
       state.project = value;
@@ -74,7 +74,7 @@ export default {
       return success
     },
     async getDatasetSources ({ commit, dispatch }) {
-      const { data } = await dispatch('axios', { url: '/datasets/sources/' }, { root: true });
+      const { data } = await dispatch('axios', { url: '/datasets/source/' }, { root: true });
       commit('SET_FILES_SOURCE', data || [])
       return data
     },
@@ -85,7 +85,8 @@ export default {
     getFileManager: ({ file_manager }) => file_manager,
     getProject: ({ project }) => project,
     getPagination: ({ pagination }) => pagination,
-    getArchitectures: ({ architectures }) => architectures,
+    getArchitectures: ({ configDefault }) => configDefault?.architectures || [],
+    getHandler: ({ configDefault }) => configDefault?.blocks?.handler || {},
 
   },
 };
