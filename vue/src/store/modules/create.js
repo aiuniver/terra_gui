@@ -44,25 +44,25 @@ export default {
     // BLOCKS____________________________________________________
 
     main ({ commit, state: { blocks, inputs, outputs } }, { value, old }) {
-      if (value === 3 && old === 2) {
+      if (value === 2 && old === 1) {
         commit('SET_BLOCKS', [...inputs]);
       }
-      if (value === 4 && old === 3) {
+      if (value === 3 && old === 2) {
         commit('SET_INTPUT', [...blocks]);
         commit('SET_BLOCKS', [...outputs]);
       }
-      if (value === 5 && old === 4) {
+      if (value === 4 && old === 3) {
         commit('SET_OUTPUT', [...blocks]);
         commit('SET_BLOCKS', []);
       }
-      if (value === 4 && old === 5) {
+      if (value === 3 && old === 4) {
         commit('SET_BLOCKS', [...outputs]);
       }
-      if (value === 3 && old === 4) {
+      if (value === 2 && old === 3) {
         commit('SET_OUTPUT', [...blocks]);
         commit('SET_BLOCKS', [...inputs]);
       }
-      if (value === 2 && old === 3) {
+      if (value === 1 && old === 2) {
         commit('SET_INTPUT', [...blocks]);
         commit('SET_BLOCKS', []);
       }

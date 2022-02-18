@@ -66,7 +66,7 @@ export default {
       pagination: 'createDataset/getPagination',
     }),
     isActive() {
-      return Boolean([3, 4].includes(this.pagination));
+      return Boolean([2, 3].includes(this.pagination));
     },
     keyEvent: {
       set(value) {

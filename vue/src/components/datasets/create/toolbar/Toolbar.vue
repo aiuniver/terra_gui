@@ -32,8 +32,8 @@ export default {
   data: () => ({
     types: types,
     toolbar: [
-      { id: 3, filter: ['data', 'handler', 'input'] },
-      { id: 4, filter: ['data', 'handler', 'output'] },
+      { id: 2, filter: ['data', 'handler', 'input'] },
+      { id: 3, filter: ['data', 'handler', 'output'] },
     ],
   }),
   computed: {
@@ -41,7 +41,7 @@ export default {
       getPagination: 'createDataset/getPagination',
     }),
     isActive() {
-      return Boolean([3, 4].includes(this.getPagination));
+      return Boolean([2, 3].includes(this.getPagination));
     },
     filter() {
       const filter = this.toolbar.find(i => i.id === this.getPagination)?.filter || [];

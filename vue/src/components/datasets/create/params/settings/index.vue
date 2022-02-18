@@ -38,7 +38,7 @@ export default {
       getHandler: 'createDataset/getHandler',
     }),
     forms() {
-      const type = this.state === 3 ? 'inputs' : 'outputs';
+      const type = this.state === 2 ? 'inputs' : 'outputs';
       return this.getHandler?.[type] || [];
     },
     selected() {
