@@ -32,10 +32,10 @@ class BaseTerraModel:
     def __init__(self, model, model_name: str, model_path: Path):
 
         self.model_name = model_name
-        self.model_json = f"{model_name}_json.trm"
-        self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
-        self.model_weights = f"{model_name}_weights"
-        self.model_best_weights = f"{model_name}_best_weights"
+        self.model_json = "trained_model_json.trm"
+        self.custom_obj_json = "trained_model_custom_obj_json.trm"
+        self.model_weights = "trained_model_weights"
+        self.model_best_weights = "trained_model_best_weights"
 
         self.saving_path = model_path
         self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
