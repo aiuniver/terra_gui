@@ -1,8 +1,9 @@
-from terra_ai.datasets.creating_classes.base import BaseClass, PreprocessingTextClass
+from terra_ai.data.datasets.extra import LayerPrepareMethodChoice
+from terra_ai.datasets.creating_classes.base import BaseClass
 from terra_ai.datasets.data import DatasetInstructionsData, InstructionsData
 
 
-class TextTransformerClass(PreprocessingTextClass, BaseClass):
+class TextTransformerClass(BaseClass):
 
     @staticmethod
     def preprocess_version_data(**kwargs):
@@ -61,6 +62,7 @@ class TextTransformerClass(PreprocessingTextClass, BaseClass):
                     instructions=output_instructions,
                     parameters=output_parameters)}}
                 )
+                inp_tags[raw_id] = {f"{raw_id}_{raw_col_name}_copy": output_parameters['put_type']}
 
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
         tags = {}
@@ -68,3 +70,24 @@ class TextTransformerClass(PreprocessingTextClass, BaseClass):
         tags.update(out_tags)
 
         return instructions, tags
+
+    @staticmethod
+    def create_text_preprocessing(instructions, preprocessing):
+
+        # Обучаем токенайзер только на двух входных данных.
+        # Токенайзер для выхода (3) будет такой же, что и для входа (2).
+        for put in list(instructions.inputs.values()):
+            for col_name, data in put.items():
+                if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                         LayerPrepareMethodChoice.bag_of_words]:
+                    preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+                elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                    preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                if data.parameters['put'] == 2:
+                    prep = preprocessing.preprocessing[data.parameters['put']][col_name]
+
+        for put in list(instructions.outputs.values()):
+            for col_name, data in put.items():
+                preprocessing.preprocessing[3] = {col_name: prep}
+
+        return preprocessing
