@@ -835,11 +835,10 @@ class PreprocessingTextClass(object):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
-                if data.parameters.get('prepare_method') and data.parameters['prepare_method'] in \
-                        [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                         LayerPrepareMethodChoice.bag_of_words]:
                     preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                elif data.parameters.get('prepare_method') and data.parameters['prepare_method'] ==\
-                        LayerPrepareMethodChoice.word_to_vec:
+                elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
                     preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
 
         return preprocessing

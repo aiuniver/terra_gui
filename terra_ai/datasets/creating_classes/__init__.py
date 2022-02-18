@@ -7,6 +7,7 @@ from . import \
     image_cgan, \
     text_classification, \
     text_segmentation, \
+    text_transformer, \
     audio_classification, \
     video_classification, \
     video_tracker, \

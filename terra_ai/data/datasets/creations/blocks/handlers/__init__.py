@@ -16,6 +16,7 @@ from . import (
     Text,
     Text2Speech,
     TextSegmentation,
+    TextTransformer,
     TextToImageGAN,
     Timeseries,
     TimeseriesTrend,

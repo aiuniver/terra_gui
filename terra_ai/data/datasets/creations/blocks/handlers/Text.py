@@ -5,7 +5,6 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import (
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
-    LayerTransformerMethodChoice,
 )
 
 
@@ -21,7 +20,6 @@ class OptionsData(BaseMixinData):
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
 
     # Внутренние параметры
-    transformer: LayerTransformerMethodChoice = LayerTransformerMethodChoice.none
     deploy: Optional[bool] = False
     open_tags: Optional[str]
     close_tags: Optional[str]
