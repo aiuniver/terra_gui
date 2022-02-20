@@ -1,7 +1,7 @@
 <template>
   <div>
     <t-field>
-      <d-input-text :value="value" @change="onChange"></d-input-text>
+      <d-input-text :value="name" @change="onChange"></d-input-text>
     </t-field>
   </div>
 </template>
@@ -24,7 +24,7 @@ export default {
     parameters() {
       return this?.selected?.parameters || {};
     },
-    value() {
+    name() {
       return this.selected?.name || '';
     },
   },
