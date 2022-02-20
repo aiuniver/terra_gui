@@ -1,7 +1,7 @@
 <template>
   <div class="d-multi-select" :class="{ 'd-multi-select--active': show }" v-outside="onOutside">
     <div class="">
-      <d-input-text :value="getValue" :placeholder="placeholder" @click="show = true"></d-input-text>
+      <d-input-text :value="getValue" :placeholder="placeholder" @click="show = true" @clear="onClear"></d-input-text>
     </div>
     <div v-show="show" class="d-multi-select__content">
       <slot>
@@ -53,6 +53,10 @@ export default {
     onSelect(e) {
       this.$emit('change', e);
     },
+    onClear(e) {
+      this.show = !false;
+      this.$emit('clear', e);
+    }
   },
 };
 </script>

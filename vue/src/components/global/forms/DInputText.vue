@@ -49,9 +49,10 @@ export default {
   }),
   computed: {},
   methods: {
-    clear() {
+    clear(e) {
       this.input = '';
       this.send('');
+      this.$emit('clear', e);
     },
     focus(e) {
       this.$emit('focus', e);
