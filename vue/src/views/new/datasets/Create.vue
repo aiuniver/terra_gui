@@ -4,15 +4,16 @@
       <Toolbar @action="onToolbar" />
     </div>
     <div class="page-create__main">
-      <Blocks />
+      <Blocks :pagination="getPagination" />
     </div>
     <div class="page-create__params">
-      <Params v-model="state" />
+      <Params :pagination="getPagination" />
     </div>
   </div>
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import Toolbar from '@/components/datasets/create/toolbar/Toolbar';
 import Blocks from '@/components/datasets/create/main';
 import Params from '@/components/datasets/create/params';
@@ -23,9 +24,12 @@ export default {
     Blocks,
     Params,
   },
-  data: () => ({
-    state: 1
-  }),
+  data: () => ({}),
+  computed: {
+    ...mapGetters({
+      getPagination: 'createDataset/getPagination',
+    }),
+  },
   methods: {
     onToolbar(action) {
       console.log(action);

@@ -9,8 +9,8 @@
     <div class="block__line-right" :style="setColor"></div>
     <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
       <div class="block__header">
-        <div class="block__title text--bold">{{ name || ' ' }}</div>
-        <div class="block__subtitle text--bold">{{ type }} {{ id }}</div>
+        <div class="block__title text--bold">{{ id }}) {{ name || '' }}</div>
+        <div class="block__subtitle text--bold">{{ textSubtitle }}</div>
       </div>
       <div v-if="showTop" class="block__inputs">
         <div
@@ -68,6 +68,10 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    parameters: {
+      type: Object,
+      default: () => ({}),
+    },
     error: {
       type: String,
       default: '',
@@ -95,6 +99,13 @@ export default {
         zIndex: this.selected || this.hover ? 10 : 1,
         boxShadow: `0px 0px 4px ${this.color}75`,
       };
+    },
+    textSubtitle() {
+      let test = '';
+      if (['data'].includes(this.type)) test = this?.parameters?.data?.join(' ,') || '';
+      if (['input', 'output'].includes(this.type)) test = '';
+      if (['handler'].includes(this.type)) test = this?.parameters?.type || '';
+      return test;
     },
     isError() {
       return Boolean(this.error);
@@ -246,9 +257,14 @@ $borderBlock: 2px;
   }
 
   &__title {
+    text-align: center;
+    height: 18px;
     font-size: 12px;
   }
   &__subtitle {
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 10px;
     color: #6c7883;
   }
