@@ -17,7 +17,9 @@ export default {
   }),
   mutations: {
     SET_INPUT_AND_OUTPUT (state, { inputs, outputs }) {
-      state.inputs = preloadBlock(inputs, 'input');
+      const input = preloadBlock(inputs, 'input');
+      state.blocks = [...input]
+      state.inputs = [...input];
       state.outputs = preloadBlock(outputs, 'output');
     },
     SET_BLOCKS (state, value) {

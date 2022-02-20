@@ -4,7 +4,7 @@
       <div class="params__header mb-2">{{ getComp.title }}</div>
       <scrollbar>
         <div class="params__inner">
-          <component :is="getComp.component" :state="value"/>
+          <component :is="getComp.component" :state="value" />
         </div>
       </scrollbar>
     </div>
@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
+import { mapActions } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 import StateThree from './settings/';
 import StateOne from './StateOne';
@@ -28,6 +28,12 @@ export default {
     Pagination,
     StateFour,
   },
+  props: {
+    pagination: {
+      type: Number,
+      default: 1,
+    },
+  },
   data: () => ({
     debounce: null,
     list: [
@@ -38,9 +44,6 @@ export default {
     ],
   }),
   computed: {
-    ...mapGetters({
-      getPagination: 'createDataset/getPagination',
-    }),
     getComp() {
       return this.list.find(i => i.id === this.value);
     },
@@ -49,7 +52,7 @@ export default {
         this.setPagination(value);
       },
       get() {
-        return this.getPagination;
+        return this.pagination;
       },
     },
   },
@@ -70,8 +73,8 @@ export default {
       if (this.value > 1) this.value = this.value - 1;
     },
     onCreate() {
-      console.log('create')
-      this.create()
+      console.log('create');
+      this.create();
     },
     async onProgress() {
       const res = await this.sourceLoadProgress();
