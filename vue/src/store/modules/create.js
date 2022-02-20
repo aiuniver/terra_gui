@@ -52,7 +52,7 @@ export default {
       if (value === 3 && old === 2) {
         commit('SET_INTPUT', [...blocks]);
         const data = blocks.filter(i => i.type === 'data').map(i => {
-          return { ...i, bind: {up:[], down:[]}, selected: false}
+          return { ...i, bind: { up: [], down: [] }, selected: false }
         })
         console.log(data)
         const newOutputs = outputs.filter(i => i.created !== 'input')
@@ -125,10 +125,11 @@ export default {
 
     cloneAll ({ dispatch, state: { blocks } }) {
       const all = blocks.filter(b => b.selected)
+      dispatch('deselect');
       all.forEach(b => {
         dispatch('clone', b);
       })
-      dispatch('deselect');
+
     },
 
     select ({ commit, state: { blocks, key: { ctrlKey } } }, { id }) {

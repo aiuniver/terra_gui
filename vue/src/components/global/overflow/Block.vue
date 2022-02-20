@@ -8,7 +8,7 @@
     <div v-if="error" v-show="hover || selected" class="block__error">
       {{ error }}
     </div>
-    <div v-show="hover || selected" class="block__hover">
+    <div v-show="hover" class="block__hover">
       <template v-for="(item, i) of iconsFilter">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
