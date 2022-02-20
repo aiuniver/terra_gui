@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <scrollbar style="justify-self: stretch">
+    <scrollbar style="justify-self: stretch" :ops="{ rail: { gutterOfSide: '0px' } }">
       <div v-if="display" class="datasets-cards">
         <!-- <DatasetCard @click.native="selectDataset(item)" v-for="(item, idx) in sortedList" :key="idx" :dataset="item" @click="onChoice" /> -->
         <DatasetCard v-for="(item, idx) in sortedList" 
@@ -57,7 +57,6 @@ export default {
     list: ['Недавние датасеты', 'Проектные датасеты', 'Датасеты Terra'],
     search: '',
     display: true,
-    sortIdx: 4,
     show: false,
     selectedSort: {
       title: 'По алфавиту от А до Я',
@@ -102,11 +101,16 @@ export default {
       project: 'projects/getProject',
     }),
     sortedList() {
-      const sortDatasets = this.datasets || [];
-      const search = this.search;
-      return sortDatasets
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .filter(i => {
+      const datasets = this.datasets || [];
+      const search = this.search.trim();
+      let sortedList = []
+      if (this.selectedSort.idx === 0) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 1) sortedList = datasets.sort((a, b) => b.name.localeCompare(a.name))
+      if (this.selectedSort.idx === 2) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 3) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 4) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 5) sortedList = datasets
+      return sortedList.filter(i => {
           return search ? i.name.toLowerCase().includes(search.toLowerCase()) : true;
         });
     },

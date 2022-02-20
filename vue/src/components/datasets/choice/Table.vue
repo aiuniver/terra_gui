@@ -8,7 +8,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(dataset, idx) in datasets" :key="'table_dataset_tr' + idx" @click="$emit('choice', dataset)">
+      <tr v-for="(dataset, idx) in data" :key="'table_dataset_tr' + idx" @click="$emit('choice', dataset)">
         <td v-for="({ value }, idx) in headers" :key="'table_dataset_td' + idx">
           <span v-if="value !== 'group'">{{ dataset[value] }}</span>
           <span v-else>{{ $store.getters['datasets/getGroups'][dataset[value]] }}</span>
@@ -73,14 +73,14 @@ export default {
     },
   },
   computed: {
-    datasets() {
-      const items = this.data;
-      if (this.sortId === 0)
-        return this.sortReverse
-          ? items.sort((a, b) => b.name.localeCompare(a.name))
-          : items.sort((a, b) => a.name.localeCompare(b.name));
-      return items;
-    },
+    // datasets() {
+    //   const items = this.data;
+    //   if (this.sortId === 0)
+    //     return this.sortReverse
+    //       ? items.sort((a, b) => b.name.localeCompare(a.name))
+    //       : items.sort((a, b) => a.name.localeCompare(b.name));
+    //   return items;
+    // },
     headers() {
       const arr = [...this.list];
       if (this.selectedType === 1) {
