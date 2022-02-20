@@ -45,13 +45,19 @@ export default {
   actions: {
     // BLOCKS____________________________________________________
 
-    main ({ commit, state: { blocks, inputs, outputs } }, { value, old }) {
+    main ({ commit, dispatch, state: { blocks, inputs, outputs } }, { value, old }) {
       if (value === 2 && old === 1) {
         commit('SET_BLOCKS', [...inputs]);
       }
       if (value === 3 && old === 2) {
         commit('SET_INTPUT', [...blocks]);
-        commit('SET_BLOCKS', [...outputs]);
+        const data = blocks.filter(i => i.type === 'data')
+        console.log(data)
+        const newOutputs = outputs.filter(i => i.created !== 'input')
+        commit('SET_BLOCKS', [...newOutputs]);
+        data.forEach(b => {
+          dispatch('clone', b);
+        })
       }
       if (value === 4 && old === 3) {
         commit('SET_OUTPUT', [...blocks]);
@@ -88,9 +94,11 @@ export default {
       commit('SET_BLOCKS', [...newBlocks]);
     },
 
-    add ({ commit, state: { blocks } }, { type, position }) {
+    add ({ commit, state: { blocks }, rootState: { createDataset: { pagination } } }, { type, position }) {
+      const created = pagination === 2 ? 'input' : 'output'
+      console.log(created)
       const id = Math.max(0, ...blocks.map(o => o.id)) + 1;
-      const block = createBlock({ id, type, position, selected: true })
+      const block = createBlock({ id, type, position, selected: true, created })
       commit('SET_BLOCKS', [...blocks, block]);
     },
 

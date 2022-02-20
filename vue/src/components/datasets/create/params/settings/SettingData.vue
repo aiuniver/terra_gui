@@ -1,5 +1,6 @@
 <template>
   <div class="panel-input">
+    <div v-if="isShow" class="panel-input__overlay">Нельзя изменить</div>
     <div class="panel-input__view mb-10">
       <t-field label="Предпросмотр"></t-field>
       <Cards>
@@ -20,7 +21,7 @@
       <t-field v-if="isTable" label="Таблица">
         <d-multi-select :value="getCollumData" placeholder="Колонки" :list="getCollums" @change="onCollum" @clear="onClearCollum" />
       </t-field>
-      {{ getParametrs }}
+      {{ selected }}
     </div>
   </div>
 </template>
@@ -41,6 +42,10 @@ export default {
       type: Object,
       default: () => ({}),
     },
+    state: {
+      type: Number,
+      default: 1,
+    },
   },
   data: () => ({}),
   computed: {
@@ -51,8 +56,11 @@ export default {
     name() {
       return this.selected?.name || '';
     },
+    isShow() {
+      const { type, created } = this.selected
+      return type === 'data' && created === 'input' && this.state === 3
+    },
     listFiles() {
-      console.log(this.getFileManager);
       let arr = this.getFileManager
         .map(({ value, title, type, path, data }) => ({ label: title, value, type, path, data }))
         .filter(i => i.type === this.type || !this.type);
@@ -154,12 +162,25 @@ export default {
 
 <style lang="scss">
 .panel-input {
+  position: relative;
   &__view {
     position: relative;
     margin-bottom: 20px;
     height: 170px;
   }
   &__forms {
+  }
+  &__overlay {
+    z-index: 2;
+    background-color: #0e162170;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 </style>

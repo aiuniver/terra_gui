@@ -16,6 +16,7 @@ const Block = class {
     position = [0, 0],
     selected = false,
     color = '#6c7883',
+    created = 'input',
     removable = true,
     typeBlock = 'middle',
     bind = { up: [], down: [] }
@@ -26,6 +27,7 @@ const Block = class {
     this.color = color
     this.typeBlock = typeBlock
     this.position = position
+    this.created = created
     this.removable = removable
     this.selected = selected
     this.bind = bind
@@ -41,6 +43,7 @@ const createBlock = (opt) => {
 
 const preloadBlock = (arr, type) => {
   return arr.map(i => {
+    i.created = type
     if (i.type === 'layer') i.type = type
     return createBlock(i)
   })

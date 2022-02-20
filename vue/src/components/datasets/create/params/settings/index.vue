@@ -1,6 +1,6 @@
 <template>
   <div class="panel-settings">
-    <SettingData v-if="type === 'data'" :selected="selected" />
+    <SettingData v-if="type === 'data'" :selected="selected" :state="state"/>
     <SettingHandler v-if="type === 'handler'" :selected="selected" :forms="forms" />
     <SettingOutput v-if="['output', 'input'].includes(type)" :selected="selected" />
     <SettingEmpty v-if="!type" />

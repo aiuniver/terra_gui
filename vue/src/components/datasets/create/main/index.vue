@@ -36,7 +36,12 @@ export default {
     // Net,
     // Menu,
   },
-  props: {},
+  props: {
+    pagination: {
+      type: Number,
+      default: 1,
+    },
+  },
   data: () => ({
     key: 1,
     save: [],
@@ -63,7 +68,6 @@ export default {
       blocks: 'create/getBlocks',
       links: 'create/getLinks',
       getSelected: 'create/getSelected',
-      pagination: 'createDataset/getPagination',
     }),
     isActive() {
       return Boolean([2, 3].includes(this.pagination));
@@ -156,11 +160,20 @@ export default {
       'updateLink',
       'removeLink',
     ]),
+    onRemove() {
+      if (this.pagination === 3) {
+        if (!this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input').length) {
+          this.remove()
+          // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
+        }
+      } else {
+        this.remove();      }
+    },
     event(value) {
       this.menu = {};
       console.log(value);
       if (value === 'add') this.add({});
-      if (value === 'delete') this.remove();
+      if (value === 'delete') this.onRemove();
       if (value === 'clone') this.cloneAll();
       if (value === 'left') this.align('ArrowLeft');
       if (value === 'right') this.align('ArrowRight');
@@ -186,7 +199,7 @@ export default {
       const mouseIsOver = this.mouseIsOver;
       if (event.type === 'keyup') {
         if (mouseIsOver && code === 'Delete') {
-          this.remove();
+          this.onRemove();
         }
         if (mouseIsOver && code === 'KeyA' && ctrlKey) {
           this.deselect(true);
@@ -206,7 +219,7 @@ export default {
         if (mouseIsOver && code === 'KeyX' && ctrlKey) {
           this.save = JSON.parse(JSON.stringify(this.blocks.filter(block => block.selected)));
           console.log(this.save);
-          this.remove();
+          this.onRemove();
         }
         if (mouseIsOver && code === 'KeyV' && ctrlKey) {
           this.deselect();
