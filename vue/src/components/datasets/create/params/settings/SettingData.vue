@@ -1,19 +1,24 @@
 <template>
   <div class="panel-input">
-    <div class="panel-input__view">
+    <div class="panel-input__view mb-10">
+      <t-field label="Предпросмотр"></t-field>
       <Cards>
         <template v-for="(file, i) of getFile">
           <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
           <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
         </template>
+        <div v-if="!getFile.length" class="panel-input__empty">Нет данных</div>
       </Cards>
     </div>
     <div class="panel-input__forms">
+      <t-field label="Название">
+        <d-input-text :value="name" placeholder="Название блока" @change="onChange"></d-input-text>
+      </t-field>
       <t-field label="Входные данные">
         <d-multi-select :value="getValueData" placeholder="Данные" :list="listFiles" @change="onFile" @clear="onClearFile" />
       </t-field>
-      <t-field v-if="isTable" label="Входные данные">
-        <d-multi-select :value="getCollumData" placeholder="" :list="getCollums" @change="onCollum" @clear="onClearCollum" />
+      <t-field v-if="isTable" label="Таблица">
+        <d-multi-select :value="getCollumData" placeholder="Колонки" :list="getCollums" @change="onCollum" @clear="onClearCollum" />
       </t-field>
       {{ getParametrs }}
     </div>
@@ -42,8 +47,10 @@ export default {
     ...mapGetters({
       getFiles: 'createDataset/getFiles',
       getFileManager: 'createDataset/getFileManager',
-      editBlock: 'create/editBlock',
     }),
+    name() {
+      return this.selected?.name || '';
+    },
     listFiles() {
       console.log(this.getFileManager);
       let arr = this.getFileManager
@@ -89,7 +96,13 @@ export default {
   methods: {
     ...mapActions({
       setParameters: 'create/setParameters',
+      editBlock: 'create/editBlock',
     }),
+    onChange({ value }) {
+      const block = { ...this.selected };
+      block.name = value;
+      this.editBlock(block);
+    },
     onFile({ label, type }) {
       let data = this.data;
       let file = '';

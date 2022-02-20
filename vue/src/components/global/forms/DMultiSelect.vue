@@ -67,14 +67,15 @@ export default {
     min-width: 100%;
     position: absolute;
     left: 0;
-    top: calc(100% + 1rem);
+    top: calc(100%);
     z-index: 1000;
     width: auto;
     box-shadow: 0 0.3rem 3rem 0 #36363633;
     border: none;
     border-radius: 0;
-    overflow: hidden;
+    overflow: auto;
     min-height: 4rem;
+    max-height: 200px;
   }
   &__square {
     display: block;
