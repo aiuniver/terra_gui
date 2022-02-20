@@ -209,7 +209,7 @@ export default {
 <style lang="scss">
 @import '@/assets/scss/variables/default.scss';
 $ioFontSize: 14px;
-$circleSize: 10px;
+$circleSize: 15px;
 $circleNewColor: #00ff003b;
 $circleConnectedColor: #569dcf;
 $containCircle: 9px;
