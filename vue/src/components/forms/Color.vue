@@ -9,8 +9,8 @@
         <div v-if="pickerShow" class="t-field__color-picker">
           <ColorPicker
             v-model="input"
-            :width="100"
-            :height="100"
+            :width="size.x"
+            :height="size.y"
             :disabled="false"
             startColor="#ff0000"
             @color-change="$emit('change', $event)"
@@ -60,6 +60,10 @@ export default {
     small: Boolean,
     error: String,
     degree: Number, // for serialize
+    size: {
+      type: Object,
+      default: () => ({ x: 100, y: 100 })
+    }
   },
   data: () => ({
     isChange: false,

@@ -33,6 +33,7 @@
           :parse="'classes_colors[]'"
           inline
           @change="change"
+          :size="ColorPickerSize"
         />
         <hr v-if="+qty === i + 1" class="t-segmentation-manual__hr" :key="'hr_' + i" />
       </template>
@@ -62,6 +63,7 @@ export default {
     inline: Boolean,
     disabled: Boolean,
     small: Boolean,
+    ColorPickerSize: Object
     // error: String,
   },
   data: () => ({

@@ -14,6 +14,7 @@
         v-for="({ label, value }, key) in items"
         :key="'item_' + key"
         :value="value"
+        :title="label"
       >
         {{ label }}
       </at-option>
@@ -106,7 +107,6 @@ export default {
   margin-bottom: 10px;
   align-items: center;
   &__label {
-    width: 150px;
     padding: 0 10px 0 10px;
     text-align: left;
     color: #a7bed3;
