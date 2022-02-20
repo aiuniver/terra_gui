@@ -3,6 +3,7 @@
     <t-field>
       <d-input-text :value="name" @change="onChange"></d-input-text>
     </t-field>
+    {{ selected }}
   </div>
 </template>
 

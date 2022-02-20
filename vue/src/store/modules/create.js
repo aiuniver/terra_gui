@@ -51,7 +51,9 @@ export default {
       }
       if (value === 3 && old === 2) {
         commit('SET_INTPUT', [...blocks]);
-        const data = blocks.filter(i => i.type === 'data')
+        const data = blocks.filter(i => i.type === 'data').map(i => {
+          return { ...i, bind: {up:[], down:[]}, selected: false}
+        })
         console.log(data)
         const newOutputs = outputs.filter(i => i.created !== 'input')
         commit('SET_BLOCKS', [...newOutputs]);

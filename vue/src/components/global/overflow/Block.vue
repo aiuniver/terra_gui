@@ -5,6 +5,14 @@
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
   >
+    <div v-if="error" v-show="hover || selected" class="block__error">
+      {{ error }}
+    </div>
+    <div v-show="hover || selected" class="block__hover">
+      <template v-for="(item, i) of iconsFilter">
+        <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
+      </template>
+    </div>
     <div class="block__line-left" :style="setColor"></div>
     <div class="block__line-right" :style="setColor"></div>
     <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
@@ -76,6 +84,11 @@ export default {
       type: String,
       default: '',
     },
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {},
+    },
   },
   data: () => ({
     hover: false,
@@ -99,6 +112,9 @@ export default {
         zIndex: this.selected || this.hover ? 10 : 1,
         boxShadow: `0px 0px 4px ${this.color}75`,
       };
+    },
+    iconsFilter() {
+      return this.icons // .filter(item => this.filter[this.type].includes(item.event));
     },
     textSubtitle() {
       let test = '';
@@ -437,6 +453,22 @@ $borderBlock: 2px;
     }
     .block__title {
       color: #ca5035;
+    }
+  }
+  &__hover {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background-color: #161f2c;
+    border-radius: 10px;
+    padding: 0 10px;
+    cursor: default;
+    i {
+      margin-left: 10px;
+      cursor: pointer;
     }
   }
 }

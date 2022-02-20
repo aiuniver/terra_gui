@@ -10,9 +10,12 @@
       v-bind="block"
       :options="optionsForChild"
       :linkingCheck="tempLink"
+      :icons="icons"
+      :filter="filter"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
+      @clickIcons="onEventIcons(block, $event)"
       @select="blockSelect(block)"
       @position="position($event)"
     />
@@ -61,6 +64,11 @@ export default {
     linking: false,
     linkStart: null,
     inputSlotClassName: 'inputSlot',
+    icons: [
+      { icon: 'icon-modeling-copy-white', event: 'clone' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
   }),
   computed: {
     ...mapGetters({
@@ -69,6 +77,14 @@ export default {
       links: 'create/getLinks',
       getSelected: 'create/getSelected',
     }),
+    filter() {
+      return {
+        data: ['clone', 'link', 'remove'],
+        middle: ['clone', 'link', 'remove'],
+        input: ['clone', 'link', 'remove'],
+        output: ['clone', 'link', 'remove'],
+      };
+    },
     isActive() {
       return Boolean([2, 3].includes(this.pagination));
     },
@@ -152,6 +168,7 @@ export default {
       'remove',
       'clone',
       'select',
+      'editBlock',
       'setKeyEvent',
       'deselect',
       'position',
@@ -160,14 +177,24 @@ export default {
       'updateLink',
       'removeLink',
     ]),
+    onEventIcons(block, { event }) {
+      if (event === 'remove') this.onRemove();
+      if (event === 'clone') this.clone(block);
+      if (event === 'link') this.removeBlockLink(block);
+      console.log(event);
+    },
     onRemove() {
       if (this.pagination === 3) {
         if (!this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input').length) {
-          this.remove()
+          this.remove();
           // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
         }
       } else {
-        this.remove();      }
+        this.remove();
+      }
+    },
+    removeBlockLink(block) {
+      this.editBlock({ ...block, bind: { up: [], down: [] } });
     },
     event(value) {
       this.menu = {};
