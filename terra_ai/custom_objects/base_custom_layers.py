@@ -1,5 +1,5 @@
 import numpy as np
-from tensorflow.python.layers.base import Layer
+from tensorflow.keras.layers import Layer
 from tensorflow import cast
 from tensorflow.keras import layers
 

@@ -11,7 +11,7 @@ import tensorflow as tf
 from PIL import Image
 from tensorflow import keras
 from tensorflow.keras.applications.vgg19 import preprocess_input, VGG19
-from tensorflow.python.keras.models import Model
+from tensorflow.keras.models import Model
 
 from terra_ai.callbacks import interactive
 from terra_ai.callbacks.gan_callback import CGANCallback
@@ -33,10 +33,10 @@ class BaseTerraModel:
     def __init__(self, model, model_name: str, model_path: Path):
 
         self.model_name = model_name
-        self.model_json = f"{model_name}_json.trm"
-        self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
-        self.model_weights = f"{model_name}_weights"
-        self.model_best_weights = f"{model_name}_best_weights"
+        self.model_json = "trained_model_json.trm"
+        self.custom_obj_json = "trained_model_custom_obj_json.trm"
+        self.model_weights = "trained_model_weights"
+        self.model_best_weights = "trained_model_best_weights"
 
         self.saving_path = model_path
         self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
@@ -114,6 +114,7 @@ class BaseTerraModel:
             except:
                 continue
         return custom_object
+
 
     def __get_json_data(self):
         with open(self.file_path_model_json) as json_file:
@@ -610,7 +611,7 @@ class GANTerraModel:
     def __init__(self, model: dict, model_name: str, model_path: Path, **options):
         self.saving_path = model_path
         self.model_name = model_name
-        self.custom_obj_json = f"{model_name}_custom_obj_json.trm"
+        self.custom_obj_json = f"model_custom_obj_json.trm"
         self.file_path_gen_json = os.path.join(self.saving_path, "generator_json.trm")
         self.file_path_disc_json = os.path.join(self.saving_path, "discriminator_json.trm")
         self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)

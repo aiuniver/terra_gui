@@ -6,7 +6,7 @@ import matplotlib
 import numpy as np
 from PIL import Image
 from pandas import DataFrame
-from tensorflow.python.keras.utils.np_utils import to_categorical
+from tensorflow.keras.utils import to_categorical
 
 from terra_ai.callbacks.utils import dice_coef, sort_dict, get_y_true, get_image_class_colormap, get_confusion_matrix, \
     fill_heatmap_front_structure, get_classification_report, fill_table_front_structure, fill_graph_front_structure, \

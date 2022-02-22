@@ -1,12 +1,16 @@
+import importlib
 import json
 import os
 
 import numpy as np
 import tensorflow as tf
 import tensorflow
-from tensorflow.python.layers.base import Layer
 from tensorflow.keras import layers
-from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import BatchNormalization, Layer
+
+import terra_ai.settings
+from config.settings import PROJECT_PATH
+from terra_ai.logging import logger
 
 
 class PretrainedYOLO(Layer):
@@ -17,7 +21,8 @@ class PretrainedYOLO(Layer):
         self.num_classes = num_classes
         self.version = version
         self.use_weights = use_weights
-        self.save_weights = save_weights
+        self.save_weights = str(save_weights)
+        logger.debug(f"self.save_weights {self.save_weights}")
         self.yolo = self.create_yolo(classes=self.num_classes)
         if use_weights:
             self.base_yolo = self.create_yolo()
@@ -376,26 +381,31 @@ class PretrainedModel(Layer):
         self.model = None
         self.input_shapes = []
         self.output_shapes = []
-        if model_path:
-            self.model_json = f"model_json.trm"
-            self.custom_obj_json = f"model_custom_obj_json.trm"
-            self.model_weights = f"model_weights"
+        self.model_path = model_path
+        if self.model_path:
+            self.system_path = os.path.join(PROJECT_PATH, 'training', self.model_path, "model")
+            # logger.debug(f"self.system_path {self.system_path}")
+            self.custom_obj_json = "trained_model_custom_obj_json.trm"
+            self.model_json = "trained_model_json.trm"
+            self.model_weights = "trained_model_weights"
+            with os.scandir(self.system_path) as files:
+                for f in files:
+                    if 'generator_json' in f.name:
+                        self.model_json = "generator_json.trm"
+                    if 'generator_weights' in f.name:
+                        self.model_weights = "generator_weights.trm"
 
-            self.saving_path = model_path
-            self.file_path_model_json = os.path.join(self.saving_path, self.model_json)
-            self.file_path_custom_obj_json = os.path.join(self.saving_path, self.custom_obj_json)
-            self.file_path_model_weights = os.path.join(self.saving_path, self.model_weights)
+            self.file_path_model_json = os.path.join(self.system_path, self.model_json)
+            self.file_path_custom_obj_json = os.path.join(self.system_path, self.custom_obj_json)
+            self.file_path_model_weights = os.path.join(self.system_path, self.model_weights)
 
             self.load()
             for inp in self.model.inputs:
-                self.input_shapes.append(inp.shape)
-            if len(self.input_shapes) == 1:
-                self.input_shapes = self.input_shapes[0]
+                self.input_shapes.append(tuple(inp.shape))
             for outp in self.model.outputs:
-                self.output_shapes.append(outp.shape)
-            if len(self.output_shapes) == 1:
-                self.output_shapes = self.output_shapes[0]
-
+                self.output_shapes.append(tuple(outp.shape))
+            # logger.debug(f"self.input_shapes - {self.input_shapes}")
+            # logger.debug(f"self.model.outputs - {self.output_shapes}")
             if self.load_weights:
                 self.load_model_weights()
             if self.froze_model:
@@ -413,6 +423,16 @@ class PretrainedModel(Layer):
             custom_dict = json.load(json_file)
 
         return data, custom_dict
+
+    @staticmethod
+    def __set_custom_objects(custom_dict):
+        custom_object = {}
+        for k, v in custom_dict.items():
+            try:
+                custom_object[k] = getattr(importlib.import_module(f".{v}", package="terra_ai.custom_objects"), k)
+            except:
+                continue
+        return custom_object
 
     def load(self) -> None:
         model_data, custom_dict = self.__get_json_data()

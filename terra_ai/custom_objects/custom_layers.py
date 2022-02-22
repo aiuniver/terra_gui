@@ -11,11 +11,11 @@ terra_custom_layers = {
     "UNETBlock1D": "base_custom_layers",
     "UNETBlock3D": "base_custom_layers",
     "PSPBlock1D": "base_custom_layers",
-    "PretrainedYOLO": "yolo_custom_layers",
+    "PretrainedYOLO": "pretrained_custom_layers",
     "ConditionalMergeLayer": "gan_custom_layers",
     "ResnetBlock2D": "base_custom_layers",
     "RGBNormalization": "normalization_custom_layers",
     "VAEDiscriminatorBlock": "gan_custom_layers",
-    "PretrainedModel": "yolo_custom_layers",
+    "PretrainedModel": "pretrained_custom_layers",
 }
 
