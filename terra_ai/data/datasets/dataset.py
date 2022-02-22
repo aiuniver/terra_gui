@@ -68,6 +68,10 @@ class DatasetVersionData(AliasMixinData):
 
 class DatasetVersionExtData(AliasMixinData):
     name: str
+    inputs: Dict[PositiveInt, DatasetInputsData] = {}
+    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
+    service: Dict[PositiveInt, DatasetOutputsData] = {}
+    columns: Dict[PositiveInt, Dict[str, Any]] = {}
 
 
 class DatasetData(DatasetVersionData):
@@ -75,16 +79,20 @@ class DatasetData(DatasetVersionData):
     tags: List[str] = []
     version: DatasetVersionExtData
     group: DatasetGroupChoice
-    inputs: Dict[PositiveInt, DatasetInputsData] = {}
-    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    service: Dict[PositiveInt, DatasetOutputsData] = {}
-    columns: Dict[PositiveInt, Dict[str, Any]] = {}
 
     _path: Path = PrivateAttr()
 
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def inputs(self) -> Dict[PositiveInt, DatasetInputsData]:
+        return self.version.inputs
+
+    @property
+    def outputs(self) -> Dict[PositiveInt, DatasetOutputsData]:
+        return self.version.outputs
 
     @property
     def model(self) -> ModelDetailsData:
@@ -333,10 +341,6 @@ class DatasetVersionPathsData(BaseMixinData):
         path = Path(values.get("basepath"), field.name)
         os.makedirs(path, exist_ok=True)
         return path
-
-
-class VersionData(AliasMixinData):
-    pass
 
 
 class DatasetInfo(BaseMixinData):

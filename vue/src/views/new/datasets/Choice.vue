@@ -87,7 +87,8 @@ export default {
     async setChoice() {
       this.$store.dispatch('settings/setOverlay', true);
       const { group, alias } = this.selectedSet
-      const { success } = await this.$store.dispatch('datasets/choice', { group, alias, version: this.selectedVersion.value })
+      console.log(this.selectedVersion)
+      const { success } = await this.$store.dispatch('datasets/choice', { group, alias, version: this.selectedVersion.alias })
 
       if (success) {
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет` });
