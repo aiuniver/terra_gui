@@ -36,7 +36,8 @@ export default {
     },
   },
   data: () => ({
-    debounce: null,
+    debounceSource: null,
+    debounceCreate: null,
     list: [
       { id: 1, title: 'Данные', component: 'state-one' },
       { id: 2, title: 'Input', component: 'state-three' },
@@ -61,6 +62,7 @@ export default {
     ...mapActions({
       setSourceLoad: 'createDataset/setSourceLoad',
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
+      createLoadProgress: 'createDataset/createLoadProgress',
       setPagination: 'createDataset/setPagination',
       create: 'createDataset/create',
       datasetValidate: 'createDataset/datasetValidate',
@@ -85,14 +87,26 @@ export default {
     onPrev() {
       if (this.value > 1) this.value = this.value - 1;
     },
-    onCreate() {
-      console.log('create');
-      this.create();
-    },
-    async onProgress() {
+    async onSourceProgress() {
       const res = await this.sourceLoadProgress();
       if (!res?.data?.finished) {
-        this.debounce(true);
+        this.debounceSource(true);
+      } else {
+        this.setOverlay(false);
+      }
+    },
+    async onCreateProgress() {
+      const res = await this.createLoadProgress();
+      if (!res?.data?.finished) {
+        this.debounceSource(true);
+      } else {
+        this.setOverlay(false);
+      }
+    },
+    async onCreate() {
+      const res = await this.create();
+      if (!res?.data?.finished) {
+        this.debounceCreate(true);
       } else {
         this.setOverlay(false);
       }
@@ -101,19 +115,25 @@ export default {
       const success = await this.setSourceLoad();
       if (success) {
         this.setOverlay(true);
-        this.debounce(true);
+        this.debounceSource(true);
       }
     },
   },
   created() {
-    this.debounce = debounce(status => {
+    this.debounceSource = debounce(status => {
       if (status) {
-        this.onProgress();
+        this.onSourceProgress();
+      }
+    }, 1000);
+    this.debounceCreate = debounce(status => {
+      if (status) {
+        this.onCreateProgress();
       }
     }, 1000);
   },
   beforeDestroy() {
-    this.debounce(false);
+    this.debounceSource(false);
+    this.debounceCreate(false);
   },
   watch: {
     value(value, old) {

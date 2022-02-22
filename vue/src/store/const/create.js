@@ -39,7 +39,8 @@ const isError = (errors) => {
   return false;
 }
 
-const chnageType = (arr) => {
+const chnageType = (data) => {
+  const arr  = JSON.parse(JSON.stringify(data))
   return arr.map(i => {
     // if (['input', 'output'].includes(i.type)) i.type = 'layer'
     if (i.type === 'handler') i.parameters = { ...chengeParametrs(i.parameters) }

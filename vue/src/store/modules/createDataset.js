@@ -72,6 +72,17 @@ export default {
       }
       return res
     },
+    async createLoadProgress ({ dispatch }) {
+      const res = await dispatch('axios', { url: '/datasets/create/progress/', data: {} }, { root: true });
+      console.log(res)
+      if (res?.data?.finished) {
+        // const { data: { file_manager, source_path, blocks } } = res.data;
+        // commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
+        // commit('SET_FILE_MANAGER', file_manager);
+        // commit('SET_SOURCE_PATH', source_path);
+      }
+      return res
+    },
     async setSourceLoad ({ dispatch, state: { project } }) {
       const { source: { mode, value }, architecture } = project
       const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { mode, value, architecture } }, { root: true });
