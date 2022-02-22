@@ -45,21 +45,26 @@ export default {
   actions: {
     // BLOCKS____________________________________________________
 
-    main ({ commit, dispatch, state: { blocks, inputs, outputs } }, { value, old }) {
+    main ({ commit, state: { blocks, inputs, outputs } }, { value, old }) {
       if (value === 2 && old === 1) {
         commit('SET_BLOCKS', [...inputs]);
       }
       if (value === 3 && old === 2) {
+
+        // commit('SET_INTPUT', [...blocks]);
+        // const data = blocks.filter(i => i.type === 'data').map(i => {
+        //   return { ...i, bind: { up: [], down: [] }, selected: false }
+        // })
+        // console.log(data)
+        // const newOutputs = outputs.filter(i => i.created !== 'input')
+        // commit('SET_BLOCKS', [...newOutputs]);
+        // data.forEach(b => {
+        //   dispatch('clone', b);
+        // })
+
+
         commit('SET_INTPUT', [...blocks]);
-        const data = blocks.filter(i => i.type === 'data').map(i => {
-          return { ...i, bind: { up: [], down: [] }, selected: false }
-        })
-        console.log(data)
-        const newOutputs = outputs.filter(i => i.created !== 'input')
-        commit('SET_BLOCKS', [...newOutputs]);
-        data.forEach(b => {
-          dispatch('clone', b);
-        })
+        commit('SET_BLOCKS', [...outputs]);
       }
       if (value === 4 && old === 3) {
         commit('SET_OUTPUT', [...blocks]);

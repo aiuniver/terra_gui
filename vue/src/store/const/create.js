@@ -23,9 +23,19 @@ const getFiles = (arr) => {
   });
 }
 
+const chengeParametrs = (data) => {
+  const options = { ...data }
+  delete options.type
+  return {
+    type: data.type,
+    options
+  }
+}
+
 const chnageType = (arr) => {
   return arr.map(i => {
-    if (['input', 'output'].includes(i.type)) i.type = 'layer'
+    // if (['input', 'output'].includes(i.type)) i.type = 'layer'
+    if (i.type === 'handler') i.parameters = { ...chengeParametrs(i.parameters) }
     return i
   })
 }

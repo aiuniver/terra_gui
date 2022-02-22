@@ -184,14 +184,14 @@ export default {
       console.log(event);
     },
     onRemove() {
-      if (this.pagination === 3) {
-        if (!this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input').length) {
-          this.remove();
-          // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
-        }
-      } else {
+      // if (this.pagination === 3) {
+      //   if (!this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input').length) {
+      //     this.remove();
+      //     // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
+      //   }
+      // } else {
         this.remove();
-      }
+      // }
     },
     removeBlockLink(block) {
       this.editBlock({ ...block, bind: { up: [], down: [] } });

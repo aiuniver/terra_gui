@@ -41,10 +41,16 @@ const createBlock = (opt) => {
   return new Block({ ...opt, ...type })
 }
 
+const chengeParametrs = ({ type = '', options = {} }) => {
+  return { ...options, type }
+}
+
 const preloadBlock = (arr, type) => {
   return arr.map(i => {
     i.created = type
-    if (i.type === 'layer') i.type = type
+    // if (i.type === 'layer') i.type = type
+
+    if (i.type === 'handler') i.parameters = chengeParametrs(i.parameters)
     return createBlock(i)
   })
 }
