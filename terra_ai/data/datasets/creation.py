@@ -283,6 +283,7 @@ class CreationBlockList(UniqueListMixin):
 
 class CreationValidateBlocksData(BaseMixinData):
     type: LayerGroupChoice
+    architecture: ArchitectureChoice
     items: CreationBlockList
 
 

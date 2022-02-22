@@ -203,7 +203,9 @@ class Exchange:
         """
         Валидация создания датасета
         """
-        return DatasetCreationValidate(data.type, data.items).validate()
+        return DatasetCreationValidate(
+            data.type, data.architecture, data.items
+        ).validate()
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """

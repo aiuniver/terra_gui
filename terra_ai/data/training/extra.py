@@ -67,6 +67,10 @@ class ArchitectureChoice(str, Enum):
     ImageToImageGAN = "ImageToImageGAN"
     ImageSRGAN = "ImageSRGAN"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ArchitectureChoice))
+
 
 class CheckpointIndicatorChoice(str, Enum):
     Val = "Val"

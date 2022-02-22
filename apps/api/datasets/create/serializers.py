@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from terra_ai.settings import TERRA_PATH
 from terra_ai.data.datasets.extra import LayerTypeChoice, LayerGroupChoice
+from terra_ai.data.training.extra import ArchitectureChoice
 
 from apps.api.fields import DirectoryPathField
 from apps.plugins.frontend.choices import LayerInputTypeChoice, LayerOutputTypeChoice
@@ -129,4 +130,5 @@ class ValidateBlockSerializer(serializers.Serializer):
 
 class ValidateSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=tuple(LayerGroupChoice.values()))
+    architecture = serializers.ChoiceField(choices=tuple(ArchitectureChoice.values()))
     items = ValidateBlockSerializer(many=True)
