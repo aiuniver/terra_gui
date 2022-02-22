@@ -15,7 +15,7 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerPrepareMeth
 from terra_ai.datasets import arrays_classes
 from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
-from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names
+from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names, get_image_size
 from terra_ai.logging import logger
 from terra_ai.utils import decamelize, camelize, autodetect_encoding
 
@@ -515,6 +515,7 @@ class YoloClass(object):
 
     @staticmethod
     def preprocess_version_data(**kwargs):
+
         version_data = kwargs['version_data']
         source_path = kwargs['source_path']
         version_path_data = kwargs['version_path_data']
@@ -613,7 +614,10 @@ class YoloClass(object):
                         elif parameters_to_pass['put_type'] in [decamelize(LayerOutputTypeChoice.YoloV3),
                                                                 decamelize(LayerOutputTypeChoice.YoloV4)]:
                             tmp_data.append(dataframe[split].loc[i, col_name])
-                            height, width = dataframe[split].iloc[i, 0].split(';')[1].split(',')
+                            height, width = get_image_size(
+                                version_paths_data.sources.joinpath(dataframe[split].iloc[i, 0])
+                            )
+                            # height, width = dataframe[split].iloc[i, 0].split(';')[1].split(',')
                             parameters_to_pass.update([('orig_x', int(width)), ('orig_y', int(height))])
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
