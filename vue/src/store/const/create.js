@@ -32,6 +32,13 @@ const chengeParametrs = (data) => {
   }
 }
 
+const isError = (errors) => {
+  for (const key in errors) {
+    if (errors[key]) return true;
+  }
+  return false;
+}
+
 const chnageType = (arr) => {
   return arr.map(i => {
     // if (['input', 'output'].includes(i.type)) i.type = 'layer'
@@ -64,4 +71,4 @@ const createObj = (data) => {
 }
 
 
-export { getFiles, createObj }
+export { getFiles, createObj, chnageType, isError }

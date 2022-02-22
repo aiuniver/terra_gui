@@ -5,7 +5,7 @@
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
   >
-    <div v-if="error" v-show="hover || selected" class="block__error">
+    <div v-if="error" v-show="hover" class="block__error">
       {{ error }}
     </div>
     <div v-show="hover" class="block__hover">
@@ -13,8 +13,8 @@
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
     </div>
-    <div class="block__line-left" :style="setColor"></div>
-    <div class="block__line-right" :style="setColor"></div>
+    <div class="block__line-left" :style="setColorLine"></div>
+    <div class="block__line-right" :style="setColorLine"></div>
     <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
       <div class="block__header">
         <div class="block__title text--bold">{{ id }}) {{ name || '' }}</div>
@@ -114,7 +114,7 @@ export default {
       };
     },
     iconsFilter() {
-      return this.icons // .filter(item => this.filter[this.type].includes(item.event));
+      return this.icons; // .filter(item => this.filter[this.type].includes(item.event));
     },
     textSubtitle() {
       let test = '';
@@ -128,6 +128,9 @@ export default {
     },
     setColor() {
       return { backgroundColor: this.color };
+    },
+    setColorLine() {
+      return { backgroundColor: this.error ? '#ca5035' : this.color };
     },
     showTop() {
       return ['output', 'middle'].includes(this.typeBlock);
@@ -470,6 +473,21 @@ $borderBlock: 2px;
       margin-left: 10px;
       cursor: pointer;
     }
+  }
+  &__error {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 5px);
+    min-height: 100%;
+    width: 200px;
+    display: flex;
+    align-items: center;
+    background-color: #161f2c;
+    border-radius: 4px;
+    border: 1px solid #ca5035;
+    font-size: 12px;
+    padding: 0 10px;
+    cursor: default;
   }
 }
 </style>

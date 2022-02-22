@@ -1,4 +1,4 @@
-import { getFiles, createObj } from "../const/create";
+import { getFiles, createObj, chnageType } from "../const/create";
 
 export default {
   namespaced: true,
@@ -8,6 +8,7 @@ export default {
     configDefault: {},
     source_path: '',
     pagination: 1,
+    errorsBlock: {},
     project: {
       active: 0,
       name: 'Самолеты',
@@ -26,6 +27,9 @@ export default {
     outputs: []
   }),
   mutations: {
+    SER_ERRORS_BLOCK (state, value) {
+      state.errorsBlock = value;
+    },
     SET_DEFAULT (state, value) {
       state.configDefault = value;
     },
@@ -78,6 +82,17 @@ export default {
       commit('SET_FILES_SOURCE', data || [])
       return data
     },
+    async datasetValidate ({ commit, dispatch, state: { project }, rootState: { create } }, type) {
+      const struct = {
+        type,
+        architecture: project.architecture,
+        items: chnageType(create[type])
+      }
+      const { data } = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
+      commit('SER_ERRORS_BLOCK', data || {})
+      console.log(data)
+      return data
+    },
   },
   getters: {
     getFiles: ({ file_manager }) => getFiles(file_manager),
@@ -87,6 +102,7 @@ export default {
     getPagination: ({ pagination }) => pagination,
     getArchitectures: ({ configDefault }) => configDefault?.architectures || [],
     getHandler: ({ configDefault }) => configDefault?.blocks?.handler || {},
+    getErrorsBlock: ({ errorsBlock }) => errorsBlock || {},
 
   },
 };

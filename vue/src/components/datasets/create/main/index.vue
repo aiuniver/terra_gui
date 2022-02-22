@@ -12,6 +12,7 @@
       :linkingCheck="tempLink"
       :icons="icons"
       :filter="filter"
+      :error="getError(block.id)"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -76,6 +77,7 @@ export default {
       blocks: 'create/getBlocks',
       links: 'create/getLinks',
       getSelected: 'create/getSelected',
+      errors: 'createDataset/getErrorsBlock',
     }),
     filter() {
       return {
@@ -177,6 +179,9 @@ export default {
       'updateLink',
       'removeLink',
     ]),
+    getError(id) {
+      return this.errors?.[id] || '';
+    },
     onEventIcons(block, { event }) {
       if (event === 'remove') this.onRemove();
       if (event === 'clone') this.clone(block);
@@ -190,7 +195,7 @@ export default {
       //     // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
       //   }
       // } else {
-        this.remove();
+      this.remove();
       // }
     },
     removeBlockLink(block) {

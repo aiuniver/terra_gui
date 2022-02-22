@@ -19,7 +19,8 @@ const Block = class {
     created = 'input',
     removable = true,
     typeBlock = 'middle',
-    bind = { up: [], down: [] }
+    bind = { up: [], down: [] },
+    parameters = {}
   }) {
     this.id = id
     this.name = name
@@ -31,7 +32,7 @@ const Block = class {
     this.removable = removable
     this.selected = selected
     this.bind = bind
-    this.parameters = {}
+    this.parameters = parameters
   }
 };
 
@@ -51,6 +52,7 @@ const preloadBlock = (arr, type) => {
     // if (i.type === 'layer') i.type = type
 
     if (i.type === 'handler') i.parameters = chengeParametrs(i.parameters)
+    console.log(i.parameters)
     return createBlock(i)
   })
 }

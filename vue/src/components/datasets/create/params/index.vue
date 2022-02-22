@@ -15,6 +15,7 @@
 </template>
 
 <script>
+import { isError } from '@/store/const/create';
 import { mapActions } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 import StateThree from './settings/';
@@ -62,12 +63,24 @@ export default {
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
       setPagination: 'createDataset/setPagination',
       create: 'createDataset/create',
+      datasetValidate: 'createDataset/datasetValidate',
       setOverlay: 'settings/setOverlay',
       blockSelect: 'create/main',
     }),
-    onNext() {
-      if (this.value === 1) this.onDownload();
-      if (this.value < this.list.length) this.value = this.value + 1;
+    async onValidate(type) {
+      return await this.datasetValidate(type);
+    },
+    async onNext() {
+      let errors = {};
+      if (this.value === 1) await this.onDownload();
+
+      if (this.value === 2) {
+        errors = await this.onValidate('inputs') ;
+      }
+      if (this.value === 3) {
+        errors = await this.onValidate('outputs');
+      }
+      if (!isError(errors) && this.value < this.list.length) this.value = this.value + 1;
     },
     onPrev() {
       if (this.value > 1) this.value = this.value - 1;
