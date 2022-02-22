@@ -24,8 +24,7 @@ except ImportError:
 
 # General settings
 ASSETS_PATH = Path(Path(__file__).parent, "assets")
-# TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
-TMP_DIR = Path('C:\\Users\\Arthur\\Usage')
+TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
 os.makedirs(TMP_DIR, exist_ok=True)
 
 GOOGLE_STORAGE_URL = "https://storage.googleapis.com/terra_ai/"
