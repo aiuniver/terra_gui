@@ -98,14 +98,6 @@ export default {
     async onCreateProgress() {
       const res = await this.createLoadProgress();
       if (!res?.data?.finished) {
-        this.debounceSource(true);
-      } else {
-        this.setOverlay(false);
-      }
-    },
-    async onCreate() {
-      const res = await this.create();
-      if (!res?.data?.finished) {
         this.debounceCreate(true);
       } else {
         this.setOverlay(false);
@@ -116,6 +108,13 @@ export default {
       if (success) {
         this.setOverlay(true);
         this.debounceSource(true);
+      }
+    },
+    async onCreate() {
+      const success = await this.create();
+      if (success) {
+        this.setOverlay(true);
+        this.debounceCreate(true);
       }
     },
   },
