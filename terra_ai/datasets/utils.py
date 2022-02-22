@@ -677,6 +677,12 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #
 #     return real_boxes
 
+def get_image_size(path):
+
+    img = Image.open(path)
+
+    return img.height, img.width
+
 
 def get_od_names(version_data, source_path, version_path_data):
 

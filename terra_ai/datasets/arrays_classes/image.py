@@ -17,12 +17,10 @@ class ImageArray(Array):
         p_list = []
         for elem in sources:
             try:
-                img = load_img(elem)
-                p_list.append(';'.join([elem, f'{img.height},{img.width}']))
+                load_img(elem)
+                p_list.append(elem)
             except (UnidentifiedImageError, IOError):
                 pass
-
-        image_mode = 'stretch' if not options.get('image_mode') else options['image_mode']
 
         if dataset_folder is not None:
             p_list = self.save(p_list, target=dataset_folder)
@@ -31,8 +29,7 @@ class ImageArray(Array):
                         'parameters': {'height': options['height'],
                                        'width': options['width'],
                                        'net': options['net'],
-                                       'image_mode': image_mode,
-                                       # 'object_detection': options['object_detection'],
+                                       'image_mode': options.get('image_mode', 'stretch'),
                                        'scaler': options['scaler'],
                                        'max_scaler': options['max_scaler'],
                                        'min_scaler': options['min_scaler'],
@@ -45,8 +42,7 @@ class ImageArray(Array):
         return instructions
 
     def create(self, source: str, **options):
-        if ';' in source:
-            source = source.split(';')[0]
+
         img = load_img(source)
         array = np.array(img)
 
@@ -60,8 +56,8 @@ class ImageArray(Array):
         augm_data = None
         if options.get('augmentation') and options.get('augm_data'):
             array, augm_data = self.augmentation_image(image_array=array,
-                                                  coords=options['augm_data'],
-                                                  augmentation_dict=options['augmentation'])
+                                                       coords=options['augm_data'],
+                                                       augmentation_dict=options['augmentation'])
 
         frame_mode = options['image_mode'] if 'image_mode' in options.keys() else 'stretch'  # Временное решение
 
