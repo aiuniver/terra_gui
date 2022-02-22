@@ -64,11 +64,14 @@ export default {
     },
     async sourceLoadProgress ({ dispatch, commit }) {
       const res = await dispatch('axios', { url: '/datasets/source/load/progress/', data: {} }, { root: true });
+      dispatch('messages/setProgressMessage', res.data.message, { root: true });
+      dispatch('messages/setProgress', res.data.percent, { root: true });
       if (res?.data?.finished) {
         const { data: { file_manager, source_path, blocks } } = res.data;
         commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
         commit('SET_FILE_MANAGER', file_manager);
         commit('SET_SOURCE_PATH', source_path);
+        dispatch('messages/resetProgress', '', { root: true });
       }
       return res
     },
