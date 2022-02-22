@@ -143,14 +143,9 @@ def _choice_from_keras(
         shutil.rmtree(str(destination), ignore_errors=True)
         os.makedirs(str(destination), exist_ok=True)
         dataset_config = dataset_config.native()
-        version_alias = version_config.pop("alias", "")
-        version_name = version_config.pop("name", "")
-        version_config.update(
-            {"version": {"alias": version_alias, "name": version_name}}
-        )
         dataset_config.update(
             {
-                **version_config,
+                "version": version_config,
                 "path": destination,
                 "group": DatasetGroupChoice.keras,
             }
@@ -219,14 +214,9 @@ def _choice_from_terra(
             version_config = json.load(version_ref)
         os.remove(str(version_path))
         shutil.rmtree(str(source), ignore_errors=True)
-        version_alias = version_config.pop("alias", "")
-        version_name = version_config.pop("name", "")
-        version_config.update(
-            {"version": {"alias": version_alias, "name": version_name}}
-        )
         dataset_config.update(
             {
-                **version_config,
+                "version": version_config,
                 "path": destination,
                 "group": DatasetGroupChoice.terra,
             }
@@ -287,14 +277,9 @@ def _choice_from_custom(
         with open(version_path) as version_ref:
             version_config = json.load(version_ref)
         os.remove(str(version_path))
-        version_alias = version_config.pop("alias", "")
-        version_name = version_config.pop("name", "")
-        version_config.update(
-            {"version": {"alias": version_alias, "name": version_name}}
-        )
         dataset_config.update(
             {
-                **version_config,
+                "version": version_config,
                 "path": destination,
                 "group": DatasetGroupChoice.custom,
             }

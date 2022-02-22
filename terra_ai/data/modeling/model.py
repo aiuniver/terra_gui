@@ -174,6 +174,7 @@ class ModelBaseDetailsData(AliasMixinData):
             self.switch_index(self.outputs[_index].id, _dataset_layer.id)
 
     def update_layers(self, dataset, exclude_type=False):
+        print(dataset)
         dataset_model = dataset.model
 
         for index, layer in enumerate(self.inputs):
