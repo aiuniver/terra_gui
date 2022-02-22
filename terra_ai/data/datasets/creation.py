@@ -368,7 +368,6 @@ class CreationData(AliasMixinData):
         )
         os.makedirs(self._path, exist_ok=True)
         data.get("version").update({"path": self._path})
-        data.get("source").update({"path": self._path})
         super().__init__(**data)
 
     @property

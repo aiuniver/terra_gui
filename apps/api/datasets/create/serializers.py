@@ -58,6 +58,7 @@ class CreateInfoSerializer(serializers.Serializer):
 class CreateSourceSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=SourceModeChoice.values())
     value = serializers.CharField()
+    path = serializers.CharField()
 
 
 class CreateVersionSerializer(serializers.Serializer):
