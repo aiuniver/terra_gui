@@ -1,10 +1,14 @@
 <template>
   <div class="page-choice">
     <div class="page-choice__menu">
-      <ChoiceMenu @select="selectedType = $event" :selectedType="selectedType"/>
+      <ChoiceMenu @select="selectedType = $event" 
+      :selectedType="selectedType" 
+      :tags="tags" 
+      :selectedTag="selectedTag"
+      @tagClick="handleTag"/>
     </div>
     <div class="page-choice__main">
-      <Datasets :datasets="datasets" :selectedType="selectedType" @choice="getVersions" />
+      <Datasets :datasets="filteredList" :selectedType="selectedType" @choice="getVersions" />
     </div>
     <at-modal
       v-model="showModal"
@@ -48,8 +52,19 @@ export default {
     versions: [],
     tID: null,
     selectedSet: {},
-    selectedVersion: {}
+    selectedVersion: {},
+    selectedTag: {},
+    tags: []
   }),
+  computed: {
+    filteredList() {
+      if (!this.selectedTag.type) return this.datasets
+      return this.datasets.filter(item => {
+        if (this.selectedTag.type === 'group') return this.selectedTag.name === item.architecture
+        return item.tags.includes(this.selectedTag.name) && this.selectedTag.group === item.architecture
+      })
+    }
+  },
   methods: {
     getDate(val) {
       if (!val) return ''
@@ -115,6 +130,10 @@ export default {
           this.$store.dispatch('settings/setOverlay', false);
         }
       }, 1000);
+    },
+    handleTag(e) {
+      if (e.type === this.selectedTag.type && e.name === this.selectedTag.name) return this.selectedTag = {};
+      this.selectedTag = e;
     }
   },
   async created() {
@@ -128,6 +147,7 @@ export default {
       })
     })
     this.$store.commit('datasets/SET_GROUPS', data.groups)
+    this.tags = data.tags
   }
 };
 </script>
@@ -139,7 +159,7 @@ export default {
   display: flex;
   height: 100%;
   &__menu {
-    width: 175px;
+    width: 250px;
     border-right: 1px solid $color-black;
     padding-top: 18px;
     hr {

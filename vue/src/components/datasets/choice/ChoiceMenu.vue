@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="menu">
     <div class="menu-list">
       <div @click="$emit('select', 0)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 0 }]">
         <d-svg name="clock" />
@@ -15,41 +15,38 @@
       </div>
     </div>
     <hr />
-    <div class="menu-categories">
-      <ul class="menu-categories__item">
-        <li>Изображения</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
+    <scrollbar :ops="{ rail: { gutterOfSide: '0px' } }">
+      <ul class="menu-categories" v-for="tag in tags" :key="tag.name">
+        <p 
+        :class="{ 'menu-categories--selected': selectedTag.name === tag.name }"
+        @click="$emit('tagClick', { type: 'group', name: tag.name })">{{ tag.name }}</p>
+        <li
+        v-for="item in tag.items" :key="item"
+        :class="{ 'menu-categories--selected': selectedTag.name === item && selectedTag.group === tag.name }"
+        @click="$emit('tagClick', { type: 'tag', name: item, group: tag.name })"
+        class="menu-categories__item"
+        >{{ item }}</li>
       </ul>
-      <ul class="menu-categories__item">
-        <li>Видео</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
-      </ul>
-      <ul class="menu-categories__item">
-        <li>Текст</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
-      </ul>
-    </div>
+    </scrollbar>
   </div>
 </template>
 
 <script>
 export default {
   name: 'choice-menu',
-  props: ['selectedType']
+  props: ['selectedType', 'tags', 'selectedTag']
 };
 </script>
 
 <style lang="scss">
 @import "@/assets/scss/variables/default.scss";
+
+.menu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .menu-list {
   &__item {
     display: flex;
@@ -85,19 +82,24 @@ export default {
 
 .menu-categories {
   font-size: 14px;
-  padding-left: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 15px;
+  &--selected, & > *:hover {
+    background: #1E2734;
+    color: #65B9F4 !important;
+  }
+  p {
+    font-weight: bold;
+    cursor: pointer;
+    padding-left: 20px;
+    font-size: 14px;
+  }
   &__item {
-    margin-bottom: 10px;
-    li {
-      &:first-child {
-        padding-bottom: 5px;
-        color: $color-white;
-        cursor: default;
-      }
-      color: $color-gray;
-      padding-top: 5px;
-      cursor: pointer;
-    }
+    padding-left: 20px;
+    color: $color-gray;
+    margin-top: 5px;
+    cursor: pointer;
   }
 }
 </style>

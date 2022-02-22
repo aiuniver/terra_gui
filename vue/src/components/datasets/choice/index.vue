@@ -46,6 +46,8 @@
 import DatasetCard from '@/components/datasets/choice/DatasetCard';
 import Table from '@/components/datasets/choice/Table';
 import { mapActions, mapGetters } from 'vuex';
+import options from './sortOptions';
+
 export default {
   name: 'Datasets',
   props: ['datasets', 'selectedType'],
@@ -58,43 +60,8 @@ export default {
     search: '',
     display: true,
     show: false,
-    selectedSort: {
-      title: 'По алфавиту от А до Я',
-      value: 'alphabet',
-      idx: 0,
-    },
-    options: [
-      {
-        title: 'По алфавиту от А до Я',
-        value: 'alphabet',
-        idx: 0,
-      },
-      {
-        title: 'По алфавиту от Я до А',
-        value: 'alphabet_reverse',
-        idx: 1,
-      },
-      {
-        title: 'Последние созданные',
-        value: 'last_created',
-        idx: 2,
-      },
-      {
-        title: 'Последние использованные',
-        value: 'last_used',
-        idx: 3,
-      },
-      {
-        title: 'Популярные',
-        value: 'popular',
-        idx: 4,
-      },
-      {
-        title: 'Последние добавленные',
-        value: 'last_added',
-        idx: 5,
-      },
-    ],
+    selectedSort: options[0],
+    options,
   }),
   computed: {
     ...mapGetters({
