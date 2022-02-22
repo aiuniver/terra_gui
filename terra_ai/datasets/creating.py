@@ -64,8 +64,8 @@ class CreateDataset(object):
         shutil.move(str(self.dataset_paths_data.basepath), TERRA_PATH.datasets)
         progress.pool(name=DATASET_PROGRESS_NAME, message=f"Удаление временной папки {self.temp_directory}", percent=95)
         shutil.rmtree(self.temp_directory)
-        progress.pool(name=DATASET_PROGRESS_NAME, message='Формирование датасета завершено', data=dataset_data,
-                      percent=100, finished=True)
+        progress.pool(name=DATASET_PROGRESS_NAME, message='Формирование датасета завершено',
+                      data=dataset_data, percent=100)
         logger.info(f'Создан датасет {creation_data.name}.')
 
         self.version = CreateVersion(creation_data=creation_data)
