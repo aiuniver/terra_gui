@@ -29,7 +29,10 @@ class OptionsData(BaseMixinData):
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:
         if value == LayerTextModeChoice.completely:
             cls.__fields__["max_words"].required = True
+            cls.__fields__["length"].required = False
+            cls.__fields__["step"].required = False
         elif value == LayerTextModeChoice.length_and_step:
+            cls.__fields__["max_words"].required = False
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value
@@ -43,6 +46,8 @@ class OptionsData(BaseMixinData):
             LayerPrepareMethodChoice.bag_of_words,
         ]:
             cls.__fields__["max_words_count"].required = True
+            cls.__fields__["word_to_vec_size"].required = False
         elif value == LayerPrepareMethodChoice.word_to_vec:
+            cls.__fields__["max_words_count"].required = False
             cls.__fields__["word_to_vec_size"].required = True
         return value

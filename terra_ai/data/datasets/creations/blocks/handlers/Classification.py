@@ -26,4 +26,6 @@ class OptionsData(BaseMixinData):
     ) -> LayerTypeProcessingChoice:
         if value == LayerTypeProcessingChoice.ranges:
             cls.__fields__["ranges"].required = True
+        else:
+            cls.__fields__["ranges"].required = False
         return value
