@@ -21,6 +21,9 @@ class MinMaxScalerData(BaseMixinData):
         if value == LayerScalerDefaultChoice.min_max_scaler:
             cls.__fields__["min_scaler"].required = True
             cls.__fields__["max_scaler"].required = True
+        else:
+            cls.__fields__["min_scaler"].required = False
+            cls.__fields__["max_scaler"].required = False
         return value
 
 
@@ -37,6 +40,9 @@ class ImageScalerData(BaseMixinData):
         ):
             cls.__fields__["min_scaler"].required = True
             cls.__fields__["max_scaler"].required = True
+        else:
+            cls.__fields__["min_scaler"].required = False
+            cls.__fields__["max_scaler"].required = False
         return value
 
 
@@ -50,4 +56,7 @@ class VideoScalerData(BaseMixinData):
         if value == LayerScalerVideoChoice.min_max_scaler:
             cls.__fields__["min_scaler"].required = True
             cls.__fields__["max_scaler"].required = True
+        else:
+            cls.__fields__["min_scaler"].required = False
+            cls.__fields__["max_scaler"].required = False
         return value

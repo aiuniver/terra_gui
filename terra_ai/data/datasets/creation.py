@@ -255,7 +255,7 @@ class CreationBlockData(IDMixinData):
     parameters: Any
 
     def __init__(self, **data):
-        data.update({"parameters": data.get("parameters", {})})
+        data.update({"parameters": {**data.get("parameters", {})}})
         super().__init__(**data)
 
     @validator("type", pre=True)
