@@ -36,6 +36,4 @@ class DatasetCreationValidate:
                 значение - либо строка ошибки, либо None, если ошибки нет
         """
         errors = dict(map(lambda item: (item.id, None), self._blocks))
-        if self._group == LayerGroupChoice.outputs:
-            errors[1] = "Ошибка валидации данных: Data validation error"
         return errors

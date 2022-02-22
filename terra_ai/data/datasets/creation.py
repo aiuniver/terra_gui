@@ -1,3 +1,4 @@
+import os
 import re
 
 from math import fsum
@@ -365,7 +366,9 @@ class CreationData(AliasMixinData):
             terra_ai_settings.TERRA_PATH.datasets,
             f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
         )
+        os.makedirs(self._path, exist_ok=True)
         data.get("version").update({"path": self._path})
+        data.get("source").update({"path": self._path})
         super().__init__(**data)
 
     @property
