@@ -15,6 +15,10 @@ class SourceModeChoice(str, Enum):
     URL = "URL"
     "Использовать ссылку на архив"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, SourceModeChoice))
+
 
 class LayerGroupChoice(str, Enum):
     inputs = "inputs"

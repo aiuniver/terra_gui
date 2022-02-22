@@ -5,7 +5,11 @@ from transliterate import slugify
 from rest_framework import serializers
 
 from terra_ai.settings import TERRA_PATH
-from terra_ai.data.datasets.extra import LayerTypeChoice, LayerGroupChoice
+from terra_ai.data.datasets.extra import (
+    LayerTypeChoice,
+    LayerGroupChoice,
+    SourceModeChoice,
+)
 from terra_ai.data.training.extra import ArchitectureChoice
 
 from apps.api.fields import DirectoryPathField
@@ -51,15 +55,29 @@ class CreateInfoSerializer(serializers.Serializer):
         return super().validate(attrs)
 
 
+class CreateSourceSerializer(serializers.Serializer):
+    mode = serializers.ChoiceField(choices=SourceModeChoice.values())
+    value = serializers.CharField()
+
+
+class CreateVersionSerializer(serializers.Serializer):
+    alias = serializers.SerializerMethodField()
+    name = serializers.CharField()
+    info = CreateInfoSerializer()
+    inputs = serializers.ListSerializer(child=serializers.DictField())
+    outputs = serializers.ListSerializer(child=serializers.DictField())
+
+    def get_alias(self, data):
+        return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
+
+
 class CreateSerializer(serializers.Serializer):
     alias = serializers.SerializerMethodField()
     name = serializers.CharField()
-    datasets_path = DirectoryPathField(default=str(TERRA_PATH.datasets.absolute()))
-    source_path = DirectoryPathField()
-    info = CreateInfoSerializer()
+    source = CreateSourceSerializer()
+    architecture = serializers.ChoiceField(choices=ArchitectureChoice.values())
     tags = serializers.ListSerializer(child=serializers.CharField(), default=[])
-    inputs = serializers.ListSerializer(child=serializers.DictField())
-    outputs = serializers.ListSerializer(child=serializers.DictField())
+    version = CreateVersionSerializer()
 
     def get_alias(self, data):
         return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
