@@ -43,7 +43,7 @@ from terra_ai.data.modeling.model import (
 )
 from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
+from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.cascades.cascade import (
     CascadeDetailsData,
     CascadesList,
@@ -188,6 +188,17 @@ class Exchange:
         Получение классов для сегментации при создании датасета с использованием файла аннотации
         """
         return datasets_utils.get_classes_annotation(path).native()
+
+    def _call_dataset_create_version(
+        self, group: str, alias: str, version: Optional[str] = None
+    ):
+        """
+        Создание версии датасета
+        """
+        # print(group)
+        # print(alias)
+        # print(version)
+        return {}
 
     def _call_dataset_create(self, creation_data: CreationData):
         """
