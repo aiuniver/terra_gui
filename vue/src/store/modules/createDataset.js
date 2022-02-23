@@ -56,18 +56,19 @@ export default {
     setPagination ({ commit }, value) {
       commit('SET_PAGINATION', value)
     },
-    parseDataset ({ commit }, { source, name, architecture, tags, version, stage, first_creation }) {
+    parseDataset ({ commit }, data) {
+      const { source, name, architecture, tags, version, stage, first_creation } = data || {}
       const project = {
         name: name || '',
         architecture: architecture || '',
         firstCreation: first_creation || true,
         source: {
-          mode: source.mode || 'GoogleDrive',
-          path: source.path || '',
-          value: source.value || '',
+          mode: source?.mode || 'GoogleDrive',
+          path: source?.path || '',
+          value: source?.value || '',
         },
         tags: tags || [],
-        verName: version.name || '',
+        verName: version?.name || '',
         train: version?.info?.path?.train || 0.7,
         shuffle: version?.info?.shuffle || true
       }
