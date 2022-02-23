@@ -16,11 +16,14 @@ export default {
     // default: {}
   }),
   mutations: {
-    SET_INPUT_AND_OUTPUT (state, { inputs, outputs }) {
+    SET_INPUT_AND_OUTPUT (state, { inputs, outputs, stage }) {
       const input = preloadBlock(inputs, 'input');
-      state.blocks = [...input]
-      state.inputs = [...input];
-      state.outputs = preloadBlock(outputs, 'output');
+      const output = preloadBlock(outputs, 'output');
+      if ([2, 3].includes(stage)) {
+        state.blocks = stage === 2 ? [...input] : [...output]
+      }
+      state.inputs = input;
+      state.outputs = output;
     },
     SET_BLOCKS (state, value) {
       state.blocks = value;

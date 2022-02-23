@@ -10,9 +10,9 @@ export default {
     pagination: 1,
     errorsBlock: {},
     project: {
-      active: 0,
       name: '',
       architecture: "",
+      firstCreation: true,
       source: {
         mode: 'GoogleDrive',
         value: '',
@@ -50,25 +50,48 @@ export default {
     },
   },
   actions: {
-
-    async create ({ dispatch, state: { project }, rootState: { create: { inputs, outputs } } }) {
-      const data = createObj({ project, inputs, outputs })
-      return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
-    },
-
     setProject ({ commit }, value) {
       commit('SET_PROJECT', value)
     },
     setPagination ({ commit }, value) {
       commit('SET_PAGINATION', value)
     },
+    parseDataset ({ commit }, { source, name, architecture, tags, version, stage, first_creation }) {
+      const project = {
+        name: name || '',
+        architecture: architecture || '',
+        firstCreation: first_creation || true,
+        source: {
+          mode: source.mode || 'GoogleDrive',
+          path: source.path || '',
+          value: source.value || '',
+        },
+        tags: tags || [],
+        verName: version.name || '',
+        train: version?.info?.path?.train || 0.7,
+        shuffle: version?.info?.shuffle || true
+      }
+      const blocks = {
+        inputs: version?.inputs || [],
+        outputs: version?.outputs || [],
+        stage: stage || 1
+      }
+      commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
+      commit('SET_PAGINATION', stage || 1)
+      commit('SET_PROJECT', project)
+    },
+
+    async create ({ dispatch, state: { project }, rootState: { create: { inputs, outputs } } }) {
+      const data = createObj({ project, inputs, outputs })
+      return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
+    },
+
     async sourceLoadProgress ({ dispatch, commit }) {
       const res = await dispatch('axios', { url: '/datasets/source/load/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
-        const { data: { file_manager, source_path, blocks } } = res.data;
-        commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
-        commit('SET_FILE_MANAGER', file_manager);
-        commit('SET_SOURCE_PATH', source_path);
+        const { data } = res.data;
+        commit('SET_FILE_MANAGER', data);
+        await dispatch('projects/get', {}, { root: true })
       }
       return res
     },
@@ -76,9 +99,7 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/create/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
         // const { data: { file_manager, source_path, blocks } } = res.data;
-        // commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
-        // commit('SET_FILE_MANAGER', file_manager);
-        // commit('SET_SOURCE_PATH', source_path);
+
       }
       return res
     },
