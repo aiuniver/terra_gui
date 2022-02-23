@@ -38,9 +38,7 @@ for item in list(DatasetGroupChoice):
     os.makedirs(Path(settings.DATASETS_LOADED_DIR, item.name), exist_ok=True)
 
 
-def __load_from_url(
-    progress_name: str, folder: Path, url: HttpUrl, architecture: ArchitectureChoice
-):
+def __load_from_url(progress_name: str, folder: Path, url: HttpUrl, extra: dict):
     folder_name = base64.b64encode(url.encode("UTF-8")).decode("UTF-8")
     dataset_path = Path(folder, folder_name)
 
@@ -56,10 +54,11 @@ def __load_from_url(
         )
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
+        extra.get("source").update({"path": dataset_path.absolute()})
         progress.pool(
             progress_name,
             finished=True,
-            data={"path": dataset_path.absolute(), "architecture": architecture},
+            data={"path": dataset_path.absolute(), "extra": extra},
         )
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
@@ -69,7 +68,7 @@ def __load_from_googledrive(
     progress_name: str,
     folder: Path,
     folder_name: str,
-    architecture: ArchitectureChoice,
+    extra: dict,
 ):
     zipfile_path = Path(settings.TERRA_PATH.sources, f"{folder_name}.zip")
     dataset_path = Path(folder, folder_name)
@@ -82,17 +81,19 @@ def __load_from_googledrive(
             progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
         )
         shutil.move(zip_destination, dataset_path)
+        extra.get("source").update({"path": dataset_path.absolute()})
         progress.pool(
             progress_name,
             finished=True,
-            data={"path": dataset_path.absolute(), "architecture": architecture},
+            data={"path": dataset_path.absolute(), "extra": extra},
         )
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
 
 
 @progress.threading
-def source(strict_object: SourceData, architecture: ArchitectureChoice):
+def source(strict_object: SourceData, extra: dict):
+    extra.update({"source": strict_object.dict()})
     progress_name = "dataset_source_load"
     progress.pool.reset(progress_name, message=DOWNLOAD_SOURCE_TITLE)
     try:
@@ -101,12 +102,7 @@ def source(strict_object: SourceData, architecture: ArchitectureChoice):
         if __method:
             mode_folder = Path(settings.DATASETS_SOURCE_DIR, strict_object.mode.lower())
             os.makedirs(mode_folder, exist_ok=True)
-            __method(
-                progress_name,
-                mode_folder,
-                strict_object.value,
-                architecture,
-            )
+            __method(progress_name, mode_folder, strict_object.value, extra)
         else:
             progress.pool(
                 progress_name,

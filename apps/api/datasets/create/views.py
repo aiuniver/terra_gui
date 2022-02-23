@@ -23,9 +23,8 @@ class ProgressAPIView(BaseAPIView):
 class ValidateAPIView(BaseAPIView):
     @decorators.serialize_data(serializers.ValidateSerializer)
     def post(self, request, serializer, **kwargs):
-        return BaseResponseSuccess(
-            self.terra_exchange(
-                "dataset_create_validate",
-                data=CreationValidateBlocksData(**serializer.validated_data),
-            )
+        errors = self.terra_exchange(
+            "dataset_create_validate",
+            data=CreationValidateBlocksData(**serializer.validated_data),
         )
+        return BaseResponseSuccess(errors)
