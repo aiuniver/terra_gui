@@ -8,8 +8,12 @@ from . import serializers
 
 
 class VersionAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        return BaseResponseSuccess()
+    @decorators.serialize_data(serializers.VersionSerializer)
+    def post(self, request, serializer, **kwargs):
+        data = self.terra_exchange(
+            "dataset_create_version", **serializer.validated_data
+        )
+        return BaseResponseSuccess(data)
 
 
 class CreateAPIView(BaseAPIView):

@@ -27,12 +27,13 @@ class ProgressAPIView(BaseAPIView):
             source_path = Path(progress.data.get("path")).absolute()
             file_manager = FileManagerItem(path=source_path).native().get("children")
             extra = progress.data.get("extra")
-            progress.data = {
-                "file_manager": file_manager,
-                "source_path": source_path,
-                "blocks": DatasetCreationArchitectureData(
-                    **DatasetCreationArchitecture.get(extra.get("architecture"))
-                ).native(),
-            }
+            progress.data = {"file_manager": file_manager, "source_path": source_path}
+            extra.update(
+                {
+                    "version": DatasetCreationArchitectureData(
+                        **DatasetCreationArchitecture.get(extra.get("architecture"))
+                    ).native()
+                }
+            )
             request.project.set_dataset_creation(CreationData(stage=2, **extra))
         return BaseResponseSuccess(progress.native())

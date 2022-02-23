@@ -1,38 +1,21 @@
 import re
-import sys
 
 from transliterate import slugify
 from rest_framework import serializers
 
-from terra_ai.settings import TERRA_PATH
 from terra_ai.data.datasets.extra import (
     LayerTypeChoice,
     LayerGroupChoice,
+    DatasetGroupChoice,
     SourceModeChoice,
 )
 from terra_ai.data.training.extra import ArchitectureChoice
 
-from apps.api.fields import DirectoryPathField
-from apps.plugins.frontend.choices import LayerInputTypeChoice, LayerOutputTypeChoice
 
-
-class CreateLayerSerializer(serializers.Serializer):
-    id = serializers.IntegerField(min_value=1)
-    name = serializers.CharField()
-    parameters = serializers.DictField(required=False)
-
-
-class CreateLayerInputSerializer(CreateLayerSerializer):
-    type = serializers.ChoiceField(choices=LayerInputTypeChoice.items_tuple())
-
-
-class CreateLayerOutputSerializer(CreateLayerSerializer):
-    type = serializers.ChoiceField(choices=LayerOutputTypeChoice.items_tuple())
-
-    def __init__(self, *args, **kwargs):
-        if kwargs.get("data", {}).get("type") == "TrackerImages":
-            kwargs["data"]["type"] = "Tracker"
-        super().__init__(*args, **kwargs)
+class VersionSerializer(serializers.Serializer):
+    group = serializers.ChoiceField(choices=DatasetGroupChoice.values())
+    alias = serializers.CharField()
+    version = serializers.CharField(required=False, allow_blank=True)
 
 
 class CreateInfoPartSerializer(serializers.Serializer):
@@ -82,54 +65,6 @@ class CreateSerializer(serializers.Serializer):
 
     def get_alias(self, data):
         return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
-
-    # def _validate_layer(self, create_class, value) -> dict:
-    #     _errors = {}
-    #     _serializer = create_class(data=value)
-    #     if not _serializer.is_valid():
-    #         _errors.update(**_serializer.errors)
-    #     _id = value.get("id", 0)
-    #     _type = value.get("type")
-    #     if _id and _type:
-    #         _classname = f"LayerParameters{_type}Serializer"
-    #         _serializer_class = getattr(
-    #             sys.modules.get(__name__, None),
-    #             f"LayerParameters{_type}Serializer",
-    #             None,
-    #         )
-    #         if _serializer_class:
-    #             _serializer_parameters = _serializer_class(
-    #                 data=value.get("parameters", {})
-    #             )
-    #             if not _serializer_parameters.is_valid():
-    #                 _errors.update({"parameters": _serializer_parameters.errors})
-    #         else:
-    #             _errors.update({"parameters": ["Нет класса для обработки параметров"]})
-    #     return _errors
-    #
-    # def validate_inputs(self, value: list) -> list:
-    #     _errors = {}
-    #     if not len(value):
-    #         raise serializers.ValidationError("Этот список не может быть пустым.")
-    #     for item in value:
-    #         _error = self._validate_layer(CreateLayerInputSerializer, item)
-    #         if len(_error.keys()):
-    #             _errors.update({item.get("id", 0): _error})
-    #     if _errors:
-    #         raise serializers.ValidationError(_errors)
-    #     return value
-    #
-    # def validate_outputs(self, value: list) -> list:
-    #     _errors = {}
-    #     if not len(value):
-    #         raise serializers.ValidationError("Этот список не может быть пустым.")
-    #     for item in value:
-    #         _error = self._validate_layer(CreateLayerOutputSerializer, item)
-    #         if len(_error.keys()):
-    #             _errors.update({item.get("id", 0): _error})
-    #     if _errors:
-    #         raise serializers.ValidationError(_errors)
-    #     return value
 
 
 class LayerBindSerializer(serializers.Serializer):
