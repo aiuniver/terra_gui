@@ -1,12 +1,12 @@
-from terra_ai.utils import decamelize, camelize, get_tempdir
+from terra_ai.utils import decamelize, get_tempdir
 from terra_ai.datasets import creating_classes
 from terra_ai.datasets.preprocessing import CreatePreprocessing
-from terra_ai.data.datasets.creation import CreationData, CreationVersionData
-from terra_ai.data.datasets.dataset import DatasetData, DatasetCommonPathsData, DatasetVersionPathsData, DatasetVersionExtData, \
-    DatasetCommonData
+from terra_ai.data.datasets.creation import CreationData, CreationVersionData, DatasetCreationArchitectureData
+from terra_ai.data.datasets.dataset import DatasetCommonPathsData, DatasetVersionPathsData,\
+    DatasetVersionExtData, DatasetCommonData
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG, \
-    DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME
+    DATASET_PROGRESS_NAME, VERSION_PROGRESS_NAME, DATASET_VERSION_CREATION_DATA
 from terra_ai import progress
 from terra_ai.settings import TERRA_PATH
 
@@ -639,3 +639,12 @@ class CreateVersion(object):
         with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
                       .joinpath(DATASET_VERSION_CONFIG), 'w') as fp:
             json.dump(DatasetVersionExtData(**data).native(), fp)
+
+        creation_data = DatasetCreationArchitectureData(
+            inputs=version_data.inputs.native(),
+            outputs=version_data.outputs.native()
+        )
+
+        with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
+                      .joinpath(DATASET_VERSION_CREATION_DATA), 'w') as fp:
+            json.dump(creation_data.native(), fp)
