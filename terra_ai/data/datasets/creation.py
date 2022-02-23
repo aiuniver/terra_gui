@@ -76,6 +76,12 @@ class SourceData(BaseMixinData):
     def path(self) -> DirectoryPath:
         return self._path
 
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update({"path": str(self.path.absolute())})
+        return data
+
 
 class CreationInfoPartData(BaseMixinData):
     """
@@ -312,6 +318,8 @@ class CreationVersionData(AliasMixinData, DatasetCreationArchitectureData):
     _path: Path = PrivateAttr()
 
     def __init__(self, **data):
+        if not data:
+            data = {}
         data.update(
             {
                 "alias": data.get(
@@ -345,6 +353,7 @@ class CreationData(AliasMixinData):
     source: SourceData
     architecture: ArchitectureChoice
     tags: List[str]
+    stage: PositiveInt = 1
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 
     _path: Path = PrivateAttr()
@@ -367,9 +376,16 @@ class CreationData(AliasMixinData):
             f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
         )
         os.makedirs(self._path, exist_ok=True)
-        data.get("version").update({"path": self._path})
+        if data.get("version"):
+            data.get("version").update({"path": self._path})
         super().__init__(**data)
 
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update({"source": self.source.frontend})
+        return data

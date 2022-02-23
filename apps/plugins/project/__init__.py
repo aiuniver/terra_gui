@@ -17,6 +17,7 @@ from terra_ai.data.path import ProjectPathData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.creation import CreationData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
@@ -32,6 +33,7 @@ UNKNOWN_NAME = "NoName"
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
+    dataset_creation: Optional[CreationData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
@@ -78,6 +80,8 @@ class Project(BaseMixinData):
             self.name = kwargs.get("name")
         if "dataset" in kwargs_keys:
             self.dataset = kwargs.get("dataset")
+        if "dataset_creation" in kwargs_keys:
+            self.dataset_creation = kwargs.get("dataset_creation")
         if "model" in kwargs_keys:
             self.model = kwargs.get("model")
         if "training" in kwargs_keys:
@@ -249,10 +253,16 @@ class Project(BaseMixinData):
                 "deploy": self.deploy.presets if self.deploy else None,
             }
         )
+        if self.dataset_creation:
+            _data.update({"dataset_creation": self.dataset_creation.frontend})
         return json.dumps(_data)
 
     def set_name(self, name: str):
         self._set_data(name=name)
+        self.save_config()
+
+    def set_dataset_creation(self, data: CreationData):
+        self._set_data(dataset_creation=data)
         self.save_config()
 
     def set_dataset(self, dataset: DatasetData, reset_model: bool = False):

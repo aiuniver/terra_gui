@@ -2,7 +2,10 @@ from pathlib import Path
 
 from terra_ai.data.extra import FileManagerItem
 from terra_ai.data.presets.datasets import DatasetCreationArchitecture
-from terra_ai.data.datasets.creation import DatasetCreationArchitectureData
+from terra_ai.data.datasets.creation import (
+    CreationData,
+    DatasetCreationArchitectureData,
+)
 
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
@@ -23,11 +26,13 @@ class ProgressAPIView(BaseAPIView):
         if progress.finished and progress.data:
             source_path = Path(progress.data.get("path")).absolute()
             file_manager = FileManagerItem(path=source_path).native().get("children")
+            extra = progress.data.get("extra")
             progress.data = {
                 "file_manager": file_manager,
                 "source_path": source_path,
                 "blocks": DatasetCreationArchitectureData(
-                    **DatasetCreationArchitecture.get(progress.data.get("architecture"))
+                    **DatasetCreationArchitecture.get(extra.get("architecture"))
                 ).native(),
             }
+            request.project.set_dataset_creation(CreationData(stage=1, **extra))
         return BaseResponseSuccess(progress.native())
