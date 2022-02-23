@@ -11,8 +11,10 @@ from terra_ai import exceptions as terra_ai_exceptions
 from terra_ai import progress as terra_ai_progress
 from terra_ai.settings import (
     TERRA_PATH,
+    DATASET_CONFIG,
     DATASET_EXT,
     DATASET_VERSION_EXT,
+    DATASET_VERSION_CREATION_DATA,
     ASSETS_PATH,
     MODEL_EXT,
     PROJECT_PATH,
@@ -34,6 +36,7 @@ from terra_ai.data.datasets.creation import (
     CreationData,
     CreationValidateBlocksData,
     SourceData,
+    DatasetCreationArchitectureData,
 )
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.modeling.model import (
@@ -52,6 +55,7 @@ from terra_ai.data.cascades.cascade import (
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.deploy.tasks import DeployPageData
 from terra_ai.data.presets.models import ModelsGroups
+from terra_ai.data.presets.datasets import DatasetCreationArchitecture
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
 from terra_ai.datasets.creating import CreateDataset
@@ -191,14 +195,44 @@ class Exchange:
 
     def _call_dataset_create_version(
         self, group: str, alias: str, version: Optional[str] = None
-    ):
+    ) -> CreationData:
         """
         Создание версии датасета
         """
-        # print(group)
-        # print(alias)
-        # print(version)
-        return {}
+        if group != DatasetGroupChoice.custom:
+            raise Exception(
+                "Невозможно создать версию датасета на основе Keras или Terra"
+            )
+        dataset_path = Path(
+            TERRA_PATH.datasets, f"{alias}.{DATASET_EXT}", DATASET_CONFIG
+        )
+        if not dataset_path.is_file():
+            raise Exception("Датасет не найден")
+        with open(dataset_path) as dataset_path_ref:
+            dataset_config = json.load(dataset_path_ref)
+        if version:
+            version_path = Path(
+                dataset_path.parent,
+                "versions",
+                f"{version}.{DATASET_VERSION_EXT}",
+                DATASET_VERSION_CREATION_DATA,
+            )
+            if not version_path.is_file():
+                raise Exception("Версия датасета не найдена")
+            with open(version_path) as version_path_ref:
+                version_config = json.load(version_path_ref)
+        else:
+            version_config = DatasetCreationArchitectureData(
+                **DatasetCreationArchitecture.get(dataset_config.get("architecture"))
+            ).native()
+        dataset_config.update(
+            {
+                "first_creation": False,
+                "stage": 2,
+                "version": version_config,
+            }
+        )
+        return CreationData(**dataset_config)
 
     def _call_dataset_create(self, creation_data: CreationData):
         """

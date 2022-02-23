@@ -13,7 +13,8 @@ class VersionAPIView(BaseAPIView):
         data = self.terra_exchange(
             "dataset_create_version", **serializer.validated_data
         )
-        return BaseResponseSuccess(data)
+        request.project.set_dataset_creation(data)
+        return BaseResponseSuccess()
 
 
 class CreateAPIView(BaseAPIView):
