@@ -1,8 +1,9 @@
 from terra_ai.data.modeling.layers import Layer, types as layers_types
 from terra_ai.data.modeling.extra import LayerTypeChoice
-from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.training.extra import ArchitectureChoice as ArchitectureChoiceData
 
 from apps.plugins.frontend.utils import prepare_pydantic_field
+from apps.plugins.frontend.choices import ArchitectureChoice
 from apps.plugins.frontend.presets.defaults.datasets import (
     BlockDataForm,
     BlockHandlerForm,
@@ -31,44 +32,13 @@ Defaults = {
             "input": BlockInputForm,
             "output": BlockOutputForm,
         },
-        "architectures": [
-            {"value": "ImageClassification", "label": "Классификация изображений"},
-            {"value": "TextClassification", "label": "Классификация текстов"},
-            {"value": "AudioClassification", "label": "Классификация аудио"},
-            {"value": "VideoClassification", "label": "Классификация видео"},
-            {
-                "value": "DataframeClassification",
-                "label": "Классификация табличных данных",
-            },
-            {"value": "DataframeRegression", "label": "Регрессия табличных данных"},
-            {"value": "ImageSegmentation", "label": "Сегментация изображений"},
-            {"value": "TextSegmentation", "label": "Сегментация текстов"},
-            {"value": "Timeseries", "label": "Временные ряды"},
-            {"value": "TimeseriesTrend", "label": "Тренд временного ряда"},
-            {"value": "VideoTracker", "label": "Трекер для видео"},
-            {"value": "TextTransformer", "label": "Текстовый трансформер"},
-            {"value": "YoloV3", "label": "YoloV3"},
-            {"value": "YoloV4", "label": "YoloV4"},
-            {"value": "Text2Speech", "label": "Синтез речи (Text-to-Speech)"},
-            {"value": "Speech2Text", "label": "Озвучка текста (Speech-to-Text)"},
-            {
-                "value": "ImageGAN",
-                "label": "Генеративно-состязательные НС на изображениях",
-            },
-            {
-                "value": "ImageCGAN",
-                "label": "Генеративно-состязательные НС с условием на изображениях",
-            },
-            # {"value":"TextToImageGAN", "label": "TextToImageGAN"},
-            # {"value":"ImageToImageGAN", "label": "ImageToImageGAN"},
-            # {"value":"ImageSRGAN", "label": "ImageSRGAN"},
-        ],
+        "architectures": ArchitectureChoice.values(),
     },
     "modeling": {
         "layer_form": ModelingLayerForm,
         "layers_types": ModelingLayersTypes,
     },
-    "training": {"architecture": ArchitectureChoice.Basic},
+    "training": {"architecture": ArchitectureChoiceData.Basic},
     "cascades": {
         "block_form": CascadesBlockForm,
         "blocks_types": CascadesBlocksTypes,

@@ -4,10 +4,7 @@ from datetime import datetime
 from terra_ai.data.datasets.extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
-    LayerEncodingChoice,
     LayerGroupChoice,
-    LayerTypeChoice,
-    LayerHandlerChoice,
 )
 from terra_ai.data.modeling import extra as modeling_extra
 from terra_ai.data.modeling.layers.extra import ActivationChoice

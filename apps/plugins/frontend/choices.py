@@ -398,3 +398,32 @@ class BlockFunctionTypeChoice(str, Enum):
     PostprocessBoxes = "Постобработка Yolo"
     PlotBboxes = "Наложение BBox на изображение"
     FilterClasses = "Фильтрация классов Service YoloV5"
+
+
+class ArchitectureChoice(str, Enum):
+    ImageClassification = "Классификация изображений"
+    ImageSegmentation = "Сегментация изображений"
+    ImageAutoencoder = "Автокодировщик изображений"
+    TextClassification = "Классификация текстов"
+    TextSegmentation = "Сегментация текстов"
+    TextTransformer = "Текстовый трансформер"
+    DataframeClassification = "Классификация табличных данных"
+    DataframeRegression = "Регрессия табличных данных"
+    Timeseries = "Временные ряды"
+    TimeseriesTrend = "Тренд временного ряда"
+    AudioClassification = "Классификация аудио"
+    VideoClassification = "Классификация видео"
+    VideoTracker = "Трекер для видео"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
+    Speech2Text = "Озвучка текста (Speech-to-Text)"
+    Text2Speech = "Синтез речи (Text-to-Speech)"
+    ImageGAN = "Генеративно-состязательные НС на изображениях"
+    ImageCGAN = "Генеративно-состязательные НС с условием на изображениях"
+    # TextToImageGAN = "TextToImageGAN"
+    # ImageToImageGAN = "ImageToImageGAN"
+    # ImageSRGAN = "ImageSRGAN"
+
+    @staticmethod
+    def values() -> list:
+        return get_values(ArchitectureChoice)
