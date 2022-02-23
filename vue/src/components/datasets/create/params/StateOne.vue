@@ -30,7 +30,8 @@
         <d-input-text v-model="project.name" />
       </t-field>
       <t-field label="Тип архитектуры">
-        <d-auto-complete :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" />
+        <!-- <d-auto-complete :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" /> -->
+        <d-select :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" />
       </t-field>
       <div class="mb-2">
         <DTags v-model="project.tags" />

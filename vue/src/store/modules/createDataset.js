@@ -98,8 +98,7 @@ export default {
     async createLoadProgress ({ dispatch }) {
       const res = await dispatch('axios', { url: '/datasets/create/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
-        // const { data: { file_manager, source_path, blocks } } = res.data;
-
+        await dispatch('projects/get', {}, { root: true })
       }
       return res
     },
