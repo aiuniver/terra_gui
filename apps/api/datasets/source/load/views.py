@@ -24,10 +24,12 @@ class ProgressAPIView(BaseAPIView):
     @decorators.progress_error("dataset_source_load")
     def post(self, request, progress, **kwargs):
         if progress.finished and progress.data:
-            source_path = Path(progress.data.get("path")).absolute()
-            file_manager = FileManagerItem(path=source_path).native().get("children")
-            extra = progress.data.get("extra")
-            progress.data = {"file_manager": file_manager, "source_path": source_path}
+            extra = {**progress.data}
+            progress.data = (
+                FileManagerItem(path=progress.data.get("source").get("path"))
+                .native()
+                .get("children")
+            )
             extra.update(
                 {
                     "version": DatasetCreationArchitectureData(

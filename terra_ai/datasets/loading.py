@@ -55,11 +55,7 @@ def __load_from_url(progress_name: str, folder: Path, url: HttpUrl, extra: dict)
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
         extra.get("source").update({"path": dataset_path.absolute()})
-        progress.pool(
-            progress_name,
-            finished=True,
-            data={"path": dataset_path.absolute(), "extra": extra},
-        )
+        progress.pool(progress_name, finished=True, data=extra)
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
 
@@ -82,11 +78,7 @@ def __load_from_googledrive(
         )
         shutil.move(zip_destination, dataset_path)
         extra.get("source").update({"path": dataset_path.absolute()})
-        progress.pool(
-            progress_name,
-            finished=True,
-            data={"path": dataset_path.absolute(), "extra": extra},
-        )
+        progress.pool(progress_name, finished=True, data=extra)
     except Exception as error:
         progress.pool(progress_name, finished=True, error=error)
 
