@@ -176,34 +176,49 @@ export default {
     async validateDatasetOrModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/common/validate-dataset-model/', data }, { root: true });
     },
-    async get ({ dispatch, commit, rootState }) {
-      const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
-      if (!data) {
-        return;
-      }
-      let datasets = [];
-      let tags = [];
-      const selectDataset = rootState.projects.project.dataset?.alias;
+    // async get ({ dispatch, commit, rootState }) {
+    //   const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
+    //   if (!data) {
+    //     return;
+    //   }
+    //   let datasets = [];
+    //   let tags = [];
+    //   const selectDataset = rootState.projects.project.dataset?.alias;
 
-      data.forEach(function ({ datasets: preDataset, tags: preTags, alias }) {
-        const tempDataset = preDataset.map(dataset => {
-          return { ...dataset, group: alias, active: dataset.alias === selectDataset };
-        });
-        datasets = [...datasets, ...tempDataset];
-        const tempTags = preTags.filter(tag => {
-          const isTrue = tags.filter(({ alias }) => {
-            return alias === tag.alias;
-          });
-          return !isTrue.length;
-        });
-        tags = [...tags, ...tempTags];
-      });
+    //   data.forEach(function ({ datasets: preDataset, tags: preTags, alias }) {
+    //     const tempDataset = preDataset.map(dataset => {
+    //       return { ...dataset, group: alias, active: dataset.alias === selectDataset };
+    //     });
+    //     datasets = [...datasets, ...tempDataset];
+    //     const tempTags = preTags.filter(tag => {
+    //       const isTrue = tags.filter(({ alias }) => {
+    //         return alias === tag.alias;
+    //       });
+    //       return !isTrue.length;
+    //     });
+    //     tags = [...tags, ...tempTags];
+    //   });
 
-      tags = tags.map(tag => {
-        return { active: false, ...tag };
-      });
+    //   tags = tags.map(tag => {
+    //     return { active: false, ...tag };
+    //   });
+    //   commit('SET_DATASETS', datasets);
+    //   commit('SET_TAGS', tags);
+    // },
+    async get({ dispatch, commit }) {
+      const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true })
+      const datasets = []
+      data.datasets.forEach(item => {
+        item.datasets.forEach(dataset => {
+          datasets.push({
+            ...dataset,
+            group: item.alias
+          })
+        })
+      })
       commit('SET_DATASETS', datasets);
-      commit('SET_TAGS', tags);
+      commit('SET_GROUPS', data.groups)
+      commit('SET_TAGS', data.tags);
     },
     setSelect ({ commit, state: { datasets } }, dataset) {
       const data = datasets.map(item => {
@@ -331,16 +346,19 @@ export default {
     getTagsFilter ({ tagsFilter }) {
       return tagsFilter;
     },
-    getDatasets ({ datasets, tagsFilter }) {
-      if (!tagsFilter.length) {
-        return datasets;
-      }
-      return datasets.filter(({ tags }) => {
-        const index = tags.filter(({ alias }) => {
-          return tagsFilter.indexOf(alias) !== -1;
-        });
-        return index.length === tagsFilter.length;
-      });
+    // getDatasets ({ datasets, tagsFilter }) {
+    //   if (!tagsFilter.length) {
+    //     return datasets;
+    //   }
+    //   return datasets.filter(({ tags }) => {
+    //     const index = tags.filter(({ alias }) => {
+    //       return tagsFilter.indexOf(alias) !== -1;
+    //     });
+    //     return index.length === tagsFilter.length;
+    //   });
+    // },
+    getDatasets ({ datasets }) {
+      return datasets
     },
     getGroups ({ groups }) {
       return groups

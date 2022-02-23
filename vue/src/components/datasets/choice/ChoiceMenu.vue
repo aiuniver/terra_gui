@@ -1,15 +1,18 @@
 <template>
   <div class="menu">
     <div class="menu-list">
-      <div @click="$emit('select', 0)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 0 }]">
+      <div @click="select(1)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
         <d-svg name="clock" />
         <span>Недавние</span>
       </div>
-      <div @click="$emit('select', 1)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
+      <div @click="select(2)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
         <d-svg name="file-outline" />
         <span>Проектные</span>
       </div>
-      <div @click="$emit('select', 2)" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
+      <div @click="select(3)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 3 }]">
         <d-svg name="world" />
         <span>Terra</span>
       </div>
@@ -32,9 +35,22 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
   name: 'choice-menu',
-  props: ['selectedType', 'tags', 'selectedTag']
+  props: ['selectedType', 'selectedTag'],
+  computed: {
+    ...mapGetters({
+      tags: 'datasets/getTags'
+    })
+  },
+  methods: {
+    select(val) {
+      if (this.selectedType === val) return this.$emit('select', 0)
+      this.$emit('select', val)
+    }
+  }
 };
 </script>
 
@@ -62,11 +78,13 @@ export default {
     }
 
     &--selected {
-      background-color: $color-black;
+      background-color: #1E2734;
+      color: #65b9f4;
     }
 
     &:hover {
       color: #65b9f4;
+      background-color: #1E2734;
       .ci-world {
         background-color: #65b9f4;
       }

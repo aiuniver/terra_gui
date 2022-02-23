@@ -10,6 +10,7 @@
         </div>
       </div>
     </div>
+    <i v-if="dataset.group === 'custom'" @click.stop="deleteDataset" class="t-icon icon-modeling-remove"></i>
   </div>
 </template>
 
@@ -38,6 +39,25 @@ export default {
     onClick() {
       this.$emit('click', this.dataset)
     },
+    deleteDataset() {
+      this.$Modal.confirm({
+        title: 'Внимание!',
+        content: 'Уверены, что хотите удалить этот датасет?',
+        width: 300,
+        callback: async action => {
+          if (action === 'confirm') {
+            this.$store.dispatch('settings/setOverlay', true)
+            await this.$store.dispatch('axios', { url: '/datasets/delete/', data: { 
+              group: this.dataset.group,
+              alias: this.dataset.alias
+             } })
+            await this.$store.dispatch('projects/get')
+            await this.$store.dispatch('datasets/get')
+            this.$store.dispatch('settings/setOverlay', false)
+          }
+        }
+      })
+    }
   },
 };
 </script>
@@ -52,6 +72,11 @@ export default {
   mask-image: url("data:image/svg+xml;base64,PHN2ZyBjbGFzcz0ic3ZnLWJvcmRlciIgd2lkdGg9IjE4MSIgaGVpZ2h0PSIxNDEiIHZpZXdCb3g9IjAgMCAxODEgMTQxIiBmaWxsPSIjMUIyOTM1IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICA8cGF0aCBkPSJNMTI2LjUgMTE3LjVIMTI2LjMwOEwxMjYuMTY1IDExNy42MjlMMTAxLjgwNyAxMzkuNTk5QzEwMS4xNjQgMTQwLjE3OSAxMDAuMzI5IDE0MC41IDk5LjQ2MjYgMTQwLjVIMjlINEMyLjA2NyAxNDAuNSAwLjUgMTM4LjkzMyAwLjUgMTM3VjRDMC41IDIuMDY3IDIuMDY3IDAuNSA0IDAuNUgxNTguOTMxQzE1OS44MTQgMC41IDE2MC42NjMgMC44MzMyMzMgMTYxLjMxMSAxLjQzMjk5TDE3OS4zNzkgMTguMTc5NUMxODAuMDk0IDE4Ljg0MTkgMTgwLjUgMTkuNzcyMSAxODAuNSAyMC43NDY1VjExNy41SDEyNi41WiIgc3Ryb2tlPSIjMUIyOTM1Ii8+CiAgICA8c3ZnIHg9IjExOCIgeT0iMTI1IiB3aWR0aD0iNjMiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDYzIDkiIGZpbGw9IiMxQjI5MzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgICAgICAgPHBhdGggZD0iTTEwLjY4NSAwLjVINjIuNVY1QzYyLjUgNi45MzMgNjAuOTMzIDguNSA1OSA4LjVIMS4zNTE2M0wxMC42ODUgMC41WiIgc3Ryb2tlPSIjMUIyOTM1Ii8+CiAgICA8L3N2Zz4KPC9zdmc+Cg==");
   &:hover {
     background-color: #253848;
+  }
+  .t-icon {
+    position: absolute;
+    right: 0;
+    bottom: 26px;
   }
   &__wrapper {
     padding: 20px 12px 10px;
