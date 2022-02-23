@@ -11,7 +11,6 @@ from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings as terra_ai_settings
-from terra_ai.data.datasets.extra import DatasetTaskTypeChoice
 from terra_ai.data.mixins import (
     BaseMixinData,
     UniqueListMixin,
@@ -19,29 +18,18 @@ from terra_ai.data.mixins import (
     IDMixinData,
 )
 from terra_ai.data.types import (
-    confilepath,
-    confilename,
     AliasType,
-    FilePathType,
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
 )
-from terra_ai.data.exceptions import (
-    ValueTypeException,
-    PartTotalException,
-    ListEmptyException,
-    ObjectDetectionQuantityLayersException,
-)
+from terra_ai.data.exceptions import ValueTypeException, PartTotalException
 from terra_ai.data.datasets.extra import (
     SourceModeChoice,
     LayerTypeChoice,
     LayerGroupChoice,
-    LayerInputTypeChoice,
-    LayerOutputTypeChoice,
     ColumnProcessingTypeChoice,
 )
 
-# from terra_ai.data.datasets.creations import column_processing
 from terra_ai.data.datasets import creations
 from terra_ai.data.training.extra import ArchitectureChoice
 
@@ -51,8 +39,8 @@ class SourceData(BaseMixinData):
     Информация для загрузки исходников датасета
     """
 
-    mode: SourceModeChoice
-    value: Union[HttpUrl, str]
+    mode: Optional[SourceModeChoice]
+    value: Optional[Union[HttpUrl, str]]
     path: Optional[DirectoryPath]
 
     @validator("value", allow_reuse=True)
@@ -337,10 +325,10 @@ class CreationData(AliasMixinData):
     Полная информация о создании датасета
     """
 
-    name: str
+    name: Optional[str]
     source: SourceData
-    architecture: ArchitectureChoice
-    tags: List[str]
+    architecture: Optional[ArchitectureChoice]
+    tags: List[str] = []
     first_creation: bool = True
     stage: PositiveInt = 1
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
@@ -348,18 +336,19 @@ class CreationData(AliasMixinData):
     _path: Path = PrivateAttr()
 
     def __init__(self, **data):
-        data.update(
-            {
-                "alias": data.get(
-                    "alias",
-                    re.sub(
-                        r"([\-]+)",
-                        "_",
-                        slugify(data.get("name", ""), language_code="ru"),
-                    ),
-                )
-            }
-        )
+        if data.get("name"):
+            data.update(
+                {
+                    "alias": data.get(
+                        "alias",
+                        re.sub(
+                            r"([\-]+)",
+                            "_",
+                            slugify(data.get("name", ""), language_code="ru"),
+                        ),
+                    )
+                }
+            )
         self._path = Path(
             terra_ai_settings.TERRA_PATH.datasets,
             f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
