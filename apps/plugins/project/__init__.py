@@ -33,7 +33,7 @@ UNKNOWN_NAME = "NoName"
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     dataset: Optional[DatasetData]
-    dataset_creation: Optional[CreationData]
+    dataset_creation: CreationData = CreationData()
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)

@@ -308,11 +308,12 @@ class CreationVersionData(DatasetCreationArchitectureData):
                     )
                 }
             )
-        self._path = Path(
-            data.get("path"),
-            "versions",
-            f'{data.get("alias")}.{terra_ai_settings.DATASET_VERSION_EXT}',
-        )
+        if data.get("path") and data.get("alias"):
+            self._path = Path(
+                data.get("path"),
+                "versions",
+                f'{data.get("alias")}.{terra_ai_settings.DATASET_VERSION_EXT}',
+            )
         super().__init__(**data)
 
     @property
@@ -320,13 +321,14 @@ class CreationVersionData(DatasetCreationArchitectureData):
         return self._path
 
 
-class CreationData(AliasMixinData):
+class CreationData(BaseMixinData):
     """
     Полная информация о создании датасета
     """
 
+    alias: Optional[AliasType]
     name: Optional[str]
-    source: SourceData
+    source: SourceData = SourceData()
     architecture: Optional[ArchitectureChoice]
     tags: List[str] = []
     first_creation: bool = True
@@ -349,13 +351,14 @@ class CreationData(AliasMixinData):
                     )
                 }
             )
-        self._path = Path(
-            terra_ai_settings.TERRA_PATH.datasets,
-            f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
-        )
-        os.makedirs(self._path, exist_ok=True)
-        if data.get("version"):
-            data.get("version").update({"path": self._path})
+        if data.get("alias"):
+            self._path = Path(
+                terra_ai_settings.TERRA_PATH.datasets,
+                f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
+            )
+            os.makedirs(self._path, exist_ok=True)
+            if data.get("version"):
+                data.get("version").update({"path": self._path})
         super().__init__(**data)
 
     @property

@@ -28,7 +28,7 @@ class ProgressAPIView(BaseAPIView):
     @decorators.progress_error("create_dataset")
     def post(self, request, progress, **kwargs):
         if progress.finished and int(progress.percent) == 100:
-            request.project.set_dataset_creation()
+            request.project.set_dataset_creation(CreationData())
         return BaseResponseSuccess(progress.native())
 
 
