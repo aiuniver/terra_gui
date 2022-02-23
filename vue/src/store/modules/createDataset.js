@@ -117,7 +117,8 @@ export default {
         type,
         architecture: project.architecture,
         items: {
-          [type]: chnageType(create[type])
+          inputs: chnageType(create.inputs),
+          outputs: chnageType(create.outputs)
         }
       }
       const { data } = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });

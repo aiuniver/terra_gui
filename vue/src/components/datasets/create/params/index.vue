@@ -77,7 +77,7 @@ export default {
       if (this.value === 1) await this.onDownload();
 
       if (this.value === 2) {
-        errors = await this.onValidate('inputs') ;
+        errors = await this.onValidate('inputs');
       }
       if (this.value === 3) {
         errors = await this.onValidate('outputs');
@@ -100,6 +100,7 @@ export default {
       if (!res?.data?.finished) {
         this.debounceCreate(true);
       } else {
+        this.$routers.push('/datasets');
         this.setOverlay(false);
       }
     },
