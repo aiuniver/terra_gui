@@ -253,8 +253,6 @@ class Project(BaseMixinData):
                 "deploy": self.deploy.presets if self.deploy else None,
             }
         )
-        if self.dataset_creation:
-            _data.update({"dataset_creation": self.dataset_creation.frontend})
         return json.dumps(_data)
 
     def set_name(self, name: str):

@@ -52,12 +52,7 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     value: Union[HttpUrl, str]
-
-    _path: Optional[DirectoryPath] = PrivateAttr()
-
-    def __init__(self, **data):
-        self._path = data.pop("path", None)
-        super().__init__(**data)
+    path: Optional[DirectoryPath]
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
@@ -71,16 +66,6 @@ class SourceData(BaseMixinData):
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
         return value
-
-    @property
-    def path(self) -> DirectoryPath:
-        return self._path
-
-    @property
-    def frontend(self) -> dict:
-        data = self.native()
-        data.update({"path": str(self.path.absolute())})
-        return data
 
 
 class CreationInfoPartData(BaseMixinData):
@@ -383,9 +368,3 @@ class CreationData(AliasMixinData):
     @property
     def path(self) -> Path:
         return self._path
-
-    @property
-    def frontend(self) -> dict:
-        data = self.native()
-        data.update({"source": self.source.frontend})
-        return data
