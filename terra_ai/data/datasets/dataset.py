@@ -66,15 +66,15 @@ class DatasetVersionData(AliasMixinData):
     size: Optional[FileSizeData]
 
 
-class DatasetVersionExtData(AliasMixinData):
-    name: str
+class DatasetVersionExtData(DatasetVersionData):
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     service: Dict[PositiveInt, DatasetOutputsData] = {}
     columns: Dict[PositiveInt, Dict[str, Any]] = {}
 
 
-class DatasetData(DatasetVersionData):
+class DatasetData(AliasMixinData):
+    name: str
     architecture: ArchitectureChoice
     tags: List[str] = []
     version: DatasetVersionExtData
