@@ -19,14 +19,14 @@
     </div>
     <hr />
     <scrollbar :ops="{ rail: { gutterOfSide: '0px' } }">
-      <ul class="menu-categories" v-for="tag in tags" :key="tag.name">
+      <ul class="menu-categories" v-for="tag in tags" :key="tag.alias">
         <p 
-        :class="{ 'menu-categories--selected': selectedTag.name === tag.name }"
-        @click="$emit('tagClick', { type: 'group', name: tag.name })">{{ tag.name }}</p>
+        :class="{ 'menu-categories--selected': selectedTag.alias === tag.alias && selectedTag.group === tag.group }"
+        @click="$emit('tagClick', { type: 'group', alias: tag.alias, name: tag.name })">{{ tag.name }}</p>
         <li
         v-for="item in tag.items" :key="item"
-        :class="{ 'menu-categories--selected': selectedTag.name === item && selectedTag.group === tag.name }"
-        @click="$emit('tagClick', { type: 'tag', name: item, group: tag.name })"
+        :class="{ 'menu-categories--selected': selectedTag.alias === item && selectedTag.group === tag.alias }"
+        @click="$emit('tagClick', { type: 'tag', alias: item, group: tag.alias })"
         class="menu-categories__item"
         >{{ item }}</li>
       </ul>

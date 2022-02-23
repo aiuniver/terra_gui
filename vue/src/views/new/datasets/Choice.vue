@@ -73,8 +73,8 @@ export default {
       }
       if (!this.selectedTag.type) return datasets
       return datasets.filter(item => {
-        if (this.selectedTag.type === 'group') return this.selectedTag.name === item.architecture
-        return item.tags.includes(this.selectedTag.name) && this.selectedTag.group === item.architecture
+        if (this.selectedTag.type === 'group') return this.selectedTag.alias === item.architecture
+        return item.tags.includes(this.selectedTag.alias) && this.selectedTag.group === item.architecture
       })
     }
   },
@@ -146,7 +146,7 @@ export default {
       }, 1000);
     },
     handleTag(e) {
-      if (e.type === this.selectedTag.type && e.name === this.selectedTag.name) return this.selectedTag = {};
+      if (e.type === this.selectedTag.type && e.alias === this.selectedTag.alias) return this.selectedTag = {};
       this.selectedTag = e;
     },
     deleteVersion(item) {

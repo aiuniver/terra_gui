@@ -28,7 +28,6 @@
 
     <scrollbar style="justify-self: stretch" :ops="{ rail: { gutterOfSide: '0px' } }">
       <div v-if="display" class="datasets-cards">
-        <!-- <DatasetCard @click.native="selectDataset(item)" v-for="(item, idx) in sortedList" :key="idx" :dataset="item" @click="onChoice" /> -->
         <DatasetCard v-for="(item, idx) in sortedList" 
         class="datasets-cards__item"
         :key="idx" 
