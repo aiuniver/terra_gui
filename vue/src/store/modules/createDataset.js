@@ -76,6 +76,7 @@ export default {
         outputs: version?.outputs || [],
         stage: stage || 1
       }
+      commit('SET_FILE_MANAGER', source?.manager || []);
       commit('create/SET_INPUT_AND_OUTPUT', blocks, { root: true });
       commit('SET_PAGINATION', stage || 1)
       commit('SET_PROJECT', project)
@@ -86,11 +87,9 @@ export default {
       return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
     },
 
-    async sourceLoadProgress ({ dispatch, commit }) {
+    async sourceLoadProgress ({ dispatch }) {
       const res = await dispatch('axios', { url: '/datasets/source/load/progress/', data: {} }, { root: true });
       if (res?.data?.finished) {
-        const { data } = res.data;
-        commit('SET_FILE_MANAGER', data);
         await dispatch('projects/get', {}, { root: true })
       }
       return res
