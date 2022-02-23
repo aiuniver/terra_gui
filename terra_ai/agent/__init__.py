@@ -12,6 +12,7 @@ from terra_ai import progress as terra_ai_progress
 from terra_ai.settings import (
     TERRA_PATH,
     DATASET_EXT,
+    DATASET_VERSION_EXT,
     ASSETS_PATH,
     MODEL_EXT,
     PROJECT_PATH,
@@ -207,12 +208,33 @@ class Exchange:
             data.type, data.architecture, data.items
         ).validate()
 
-    def _call_dataset_delete(self, path: str, group: str, alias: str):
+    def _call_dataset_delete(self, group: str, alias: str):
         """
         Удаление датасета
         """
         if group == DatasetGroupChoice.custom:
-            shutil.rmtree(Path(path, f"{alias}.{DATASET_EXT}"), ignore_errors=True)
+            shutil.rmtree(
+                Path(TERRA_PATH.datasets, f"{alias}.{DATASET_EXT}"), ignore_errors=True
+            )
+        else:
+            raise terra_ai_exceptions.datasets.DatasetCanNotBeDeletedException(
+                alias, group
+            )
+
+    def _call_dataset_delete_version(self, group: str, alias: str, version: str):
+        """
+        Удаление датасета
+        """
+        if group == DatasetGroupChoice.custom:
+            shutil.rmtree(
+                Path(
+                    TERRA_PATH.datasets,
+                    f"{alias}.{DATASET_EXT}",
+                    "versions",
+                    f"{version}.{DATASET_VERSION_EXT}",
+                ),
+                ignore_errors=True,
+            )
         else:
             raise terra_ai_exceptions.datasets.DatasetCanNotBeDeletedException(
                 alias, group

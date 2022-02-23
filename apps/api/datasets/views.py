@@ -1,5 +1,3 @@
-from terra_ai.settings import TERRA_PATH
-
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 
@@ -26,15 +24,3 @@ class VersionsAPIView(BaseAPIView):
                 "datasets_versions", **serializer.validated_data
             ).native()
         )
-
-
-class DeleteAPIView(BaseAPIView):
-    @decorators.serialize_data(serializers.DeleteSerializer)
-    def post(self, request, serializer, **kwargs):
-        data = serializer.validated_data
-        self.terra_exchange("dataset_delete", path=str(TERRA_PATH.datasets), **data)
-        if request.project.dataset and (
-            request.project.dataset.alias == data.get("alias")
-        ):
-            request.project.clear_dataset()
-        return BaseResponseSuccess()

@@ -301,7 +301,7 @@ class Project(BaseMixinData):
         self.save_config()
 
     def clear_dataset(self):
-        self._set_data(dataset_info=None)
+        self._set_data(dataset=None)
         shutil.rmtree(terra_ai_settings.PROJECT_PATH.datasets, ignore_errors=True)
         os.makedirs(terra_ai_settings.PROJECT_PATH.datasets, exist_ok=True)
         defaults_data.modeling.set_layer_datatype(self.dataset)
