@@ -39,12 +39,17 @@ class ValidateAPIView(BaseAPIView):
         errors = self.terra_exchange("dataset_create_validate", data=data)
         if not list(filter(None, errors.values())):
             creation_data = request.project.dataset_creation.native()
-            if data.type == LayerGroupChoice.inputs:
-                creation_data.update({"stage": 3})
-            elif data.type == LayerGroupChoice.outputs:
-                creation_data.update({"stage": 4})
             if not creation_data.get("version"):
                 creation_data.update({"version": {}})
-            creation_data.get("version").update(**data.items.native())
+            if data.type == LayerGroupChoice.inputs:
+                creation_data.update({"stage": 3})
+                creation_data.get("version").update(
+                    {"inputs": data.items.inputs.native()}
+                )
+            elif data.type == LayerGroupChoice.outputs:
+                creation_data.update({"stage": 4})
+                creation_data.get("version").update(
+                    {"outputs": data.items.outputs.native()}
+                )
             request.project.set_dataset_creation(CreationData(**creation_data))
         return BaseResponseSuccess(errors)
