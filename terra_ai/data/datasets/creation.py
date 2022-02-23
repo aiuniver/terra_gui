@@ -300,7 +300,7 @@ class CreationVersionData(DatasetCreationArchitectureData):
 
     alias: Optional[AliasType]
     name: Optional[str]
-    info: Optional[CreationInfoData]  # Train/Val split, shuffle
+    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
 
     _path: Path = PrivateAttr()
 
