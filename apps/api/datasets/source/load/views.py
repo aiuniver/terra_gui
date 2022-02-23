@@ -34,5 +34,5 @@ class ProgressAPIView(BaseAPIView):
                     **DatasetCreationArchitecture.get(extra.get("architecture"))
                 ).native(),
             }
-            request.project.set_dataset_creation(CreationData(stage=1, **extra))
+            request.project.set_dataset_creation(CreationData(stage=2, **extra))
         return BaseResponseSuccess(progress.native())

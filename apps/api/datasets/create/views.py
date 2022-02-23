@@ -12,6 +12,8 @@ class CreateAPIView(BaseAPIView):
     def post(self, request, serializer, **kwargs):
         data = CreationData(**serializer.data)
         self.terra_exchange("dataset_create", creation_data=data)
+        data.stage = 1
+        request.project.set_dataset_creation(data)
         return BaseResponseSuccess()
 
 
@@ -29,9 +31,9 @@ class ValidateAPIView(BaseAPIView):
         if not list(filter(None, errors.values())):
             creation_data = request.project.dataset_creation.native()
             if data.type == LayerGroupChoice.inputs:
-                creation_data.update({"stage": 2})
-            elif data.type == LayerGroupChoice.outputs:
                 creation_data.update({"stage": 3})
+            elif data.type == LayerGroupChoice.outputs:
+                creation_data.update({"stage": 4})
             if not creation_data.get("version"):
                 creation_data.update({"version": {}})
             creation_data.get("version").update(**data.items.native())
