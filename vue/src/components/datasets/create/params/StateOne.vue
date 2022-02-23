@@ -22,7 +22,7 @@
         />
       </t-field>
       <t-field v-else icon="link" label="Загрузите по ссылке">
-        <d-input-text v-model="project.source.value" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+        <d-input-text v-model="project.source.value" placeholder="URL" :error="sdsdsd" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
       </t-field>
     </div>
     <div>
