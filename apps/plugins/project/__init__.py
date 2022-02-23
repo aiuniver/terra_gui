@@ -251,6 +251,7 @@ class Project(BaseMixinData):
         _data.update(
             {
                 "deploy": self.deploy.presets if self.deploy else None,
+                "dataset_creation": self.dataset_creation.frontend,
             }
         )
         return json.dumps(_data)

@@ -1,5 +1,3 @@
-from terra_ai.settings import TERRA_PATH
-
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.common.serializers import ValidateDatasetModelSerializer

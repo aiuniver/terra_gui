@@ -1,4 +1,3 @@
-from terra_ai.data.extra import FileManagerItem
 from terra_ai.data.presets.datasets import DatasetCreationArchitecture
 from terra_ai.data.datasets.creation import (
     CreationData,
@@ -23,11 +22,6 @@ class ProgressAPIView(BaseAPIView):
     def post(self, request, progress, **kwargs):
         if progress.finished and progress.data:
             extra = {**progress.data}
-            progress.data = (
-                FileManagerItem(path=progress.data.get("source").get("path"))
-                .native()
-                .get("children")
-            )
             extra.update(
                 {
                     "version": DatasetCreationArchitectureData(
@@ -36,4 +30,5 @@ class ProgressAPIView(BaseAPIView):
                 }
             )
             request.project.set_dataset_creation(CreationData(stage=2, **extra))
+            progress.data = None
         return BaseResponseSuccess(progress.native())

@@ -11,12 +11,8 @@ from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
 from terra_ai import settings as terra_ai_settings
-from terra_ai.data.mixins import (
-    BaseMixinData,
-    UniqueListMixin,
-    AliasMixinData,
-    IDMixinData,
-)
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
+from terra_ai.data.extra import FileManagerItem
 from terra_ai.data.types import (
     AliasType,
     ConstrainedFloatValueGe0Le1,
@@ -42,6 +38,28 @@ class SourceData(BaseMixinData):
     mode: Optional[SourceModeChoice]
     value: Optional[Union[HttpUrl, str]]
     path: Optional[DirectoryPath]
+
+    _manager: FileManagerItem = PrivateAttr()
+
+    def __init__(self, **data):
+        _path = data.get("path")
+        if _path:
+            self._manager = FileManagerItem(path=_path)
+        else:
+            self._manager = None
+        super().__init__(**data)
+
+    @property
+    def manager(self) -> Optional[FileManagerItem]:
+        return self._manager
+
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update(
+            {"manager": self.manager.native().get("children") if self.manager else None}
+        )
+        return data
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
@@ -364,3 +382,9 @@ class CreationData(BaseMixinData):
     @property
     def path(self) -> Path:
         return self._path
+
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update({"source": self.source.frontend})
+        return data
