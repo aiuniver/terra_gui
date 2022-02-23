@@ -58,7 +58,7 @@ from terra_ai.data.presets.models import ModelsGroups
 from terra_ai.data.presets.datasets import DatasetCreationArchitecture
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
-from terra_ai.datasets.creating import CreateDataset
+from terra_ai.datasets.creating import CreateDataset, CreateVersion
 from terra_ai.datasets.validation import DatasetCreationValidate
 from terra_ai.datasets.loading import (
     source as dataset_source,
@@ -238,7 +238,11 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        CreateDataset(creation_data)
+        if creation_data.first_creation:
+            creation_class = CreateDataset
+        else:
+            creation_class = CreateVersion
+        creation_class(creation_data)
 
     def _call_dataset_create_validate(
         self, data: CreationValidateBlocksData
