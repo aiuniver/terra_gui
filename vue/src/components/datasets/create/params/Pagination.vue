@@ -39,6 +39,7 @@ export default {
     },
     isStatus() {
       if (this.value === 1 && (!this?.project?.source.value || !this?.project?.name || !this?.project?.architecture)) return true;
+      if (this.value === 4 && !this?.project?.verName) return true;
       return false;
     },
     getTitle() {

@@ -22,7 +22,7 @@
         />
       </t-field>
       <t-field v-else icon="link" label="Загрузите по ссылке">
-        <d-input-text v-model="project.source.value" placeholder="URL" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
+        <d-input-text v-model="project.source.value" placeholder="URL" :error="sdsdsd" @blur="onSelect({ mode: 'URL', value: $event.target.value })" />
       </t-field>
     </div>
     <div>
@@ -30,7 +30,8 @@
         <d-input-text v-model="project.name" />
       </t-field>
       <t-field label="Тип архитектуры">
-        <d-auto-complete :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" />
+        <!-- <d-auto-complete :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" /> -->
+        <d-select :value="getValueArchitectures" placeholder="Архитектуры" :list="getArchitectures" @change="onArchitectures" />
       </t-field>
       <div class="mb-2">
         <DTags v-model="project.tags" />
