@@ -21,6 +21,7 @@ from terra_ai.data.mixins import (
 from terra_ai.data.types import (
     confilepath,
     confilename,
+    AliasType,
     FilePathType,
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
@@ -273,18 +274,18 @@ class CreationBlockList(UniqueListMixin):
         identifier = "id"
 
 
-class CreationValidateBlocksData(BaseMixinData):
-    type: LayerGroupChoice
-    architecture: ArchitectureChoice
-    items: CreationBlockList
-
-
 class DatasetCreationArchitectureData(BaseMixinData):
     inputs: CreationBlockList = CreationBlockList()
     outputs: CreationBlockList = CreationBlockList()
 
 
-class CreationVersionData(AliasMixinData, DatasetCreationArchitectureData):
+class CreationValidateBlocksData(BaseMixinData):
+    type: LayerGroupChoice
+    architecture: ArchitectureChoice
+    items: DatasetCreationArchitectureData
+
+
+class CreationVersionData(DatasetCreationArchitectureData):
     """
     Полная информация о создании версии датасета
     Inputs:
@@ -297,26 +298,28 @@ class CreationVersionData(AliasMixinData, DatasetCreationArchitectureData):
         outputs: CreationOutputsList - выходные слои
     """
 
-    name: str
-    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
+    alias: Optional[AliasType]
+    name: Optional[str]
+    info: Optional[CreationInfoData]  # Train/Val split, shuffle
 
     _path: Path = PrivateAttr()
 
     def __init__(self, **data):
         if not data:
             data = {}
-        data.update(
-            {
-                "alias": data.get(
-                    "alias",
-                    re.sub(
-                        r"([\-]+)",
-                        "_",
-                        slugify(data.get("name", ""), language_code="ru"),
-                    ),
-                )
-            }
-        )
+        if data.get("name"):
+            data.update(
+                {
+                    "alias": data.get(
+                        "alias",
+                        re.sub(
+                            r"([\-]+)",
+                            "_",
+                            slugify(data.get("name", ""), language_code="ru"),
+                        ),
+                    )
+                }
+            )
         self._path = Path(
             data.get("path"),
             "versions",

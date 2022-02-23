@@ -23,8 +23,13 @@ class ProgressAPIView(BaseAPIView):
 class ValidateAPIView(BaseAPIView):
     @decorators.serialize_data(serializers.ValidateSerializer)
     def post(self, request, serializer, **kwargs):
-        errors = self.terra_exchange(
-            "dataset_create_validate",
-            data=CreationValidateBlocksData(**serializer.validated_data),
-        )
+        data = CreationValidateBlocksData(**serializer.validated_data)
+        errors = self.terra_exchange("dataset_create_validate", data=data)
+        if not list(filter(None, errors.values())):
+            creation_data = request.project.dataset_creation.native()
+            creation_data.update({"stage": 2})
+            if not creation_data.get("version"):
+                creation_data.update({"version": {}})
+            creation_data.get("version").update(**data.items.native())
+            request.project.set_dataset_creation(CreationData(**creation_data))
         return BaseResponseSuccess(errors)

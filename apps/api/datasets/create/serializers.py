@@ -147,7 +147,12 @@ class ValidateBlockSerializer(serializers.Serializer):
     parameters = serializers.DictField()
 
 
+class ValidateGroupsSerializer(serializers.Serializer):
+    inputs = ValidateBlockSerializer(many=True, default=[])
+    outputs = ValidateBlockSerializer(many=True, default=[])
+
+
 class ValidateSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=tuple(LayerGroupChoice.values()))
     architecture = serializers.ChoiceField(choices=tuple(ArchitectureChoice.values()))
-    items = ValidateBlockSerializer(many=True)
+    items = ValidateGroupsSerializer()
