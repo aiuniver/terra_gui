@@ -35,7 +35,6 @@
       <div class="mb-2">
         <DTags v-model="project.tags" />
       </div>
-
     </div>
   </div>
 </template>
@@ -86,8 +85,9 @@ export default {
       this.project.source.mode = mode;
       this.project.source.value = '';
     },
-    onArchitectures(value) {
+    onArchitectures({ value }) {
       console.log(value);
+      this.project.architecture = value;
     },
   },
   created() {

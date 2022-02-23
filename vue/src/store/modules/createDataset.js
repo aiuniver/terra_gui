@@ -11,15 +11,15 @@ export default {
     errorsBlock: {},
     project: {
       active: 0,
-      name: 'Самолеты',
-      architecture: "ImageClassification",
+      name: '',
+      architecture: "",
       source: {
         mode: 'GoogleDrive',
-        value: '/home/bondrogeen/github/terra_gui/TerraAI/datasets/sources/Seasons.zip',
+        value: '',
         path: ''
       },
-      tags: ["проверка"],
-      verName: "самолеты другая",
+      tags: [],
+      verName: "",
       train: 0.7,
       shuffle: true
     },
@@ -83,8 +83,8 @@ export default {
       return res
     },
     async setSourceLoad ({ dispatch, state: { project } }) {
-      const { source: { mode, value }, architecture } = project
-      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { mode, value, architecture } }, { root: true });
+      const { source: { mode, value }, architecture, name, tags } = project
+      const { success } = await dispatch('axios', { url: '/datasets/source/load/', data: { mode, value, architecture, name, tags } }, { root: true });
       return success
     },
     async getDatasetSources ({ commit, dispatch }) {
@@ -96,7 +96,9 @@ export default {
       const struct = {
         type,
         architecture: project.architecture,
-        items: chnageType(create[type])
+        items: {
+          [type]: chnageType(create[type])
+        }
       }
       const { data } = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
       commit('SER_ERRORS_BLOCK', data || {})
