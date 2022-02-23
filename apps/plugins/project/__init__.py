@@ -259,7 +259,7 @@ class Project(BaseMixinData):
         self._set_data(name=name)
         self.save_config()
 
-    def set_dataset_creation(self, data: CreationData):
+    def set_dataset_creation(self, data: Optional[CreationData] = None):
         self._set_data(dataset_creation=data)
         self.save_config()
 

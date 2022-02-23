@@ -341,6 +341,7 @@ class CreationData(AliasMixinData):
     source: SourceData
     architecture: ArchitectureChoice
     tags: List[str]
+    first_creation: bool = True
     stage: PositiveInt = 1
     version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
 

@@ -7,19 +7,24 @@ from apps.api.base import BaseAPIView, BaseResponseSuccess
 from . import serializers
 
 
+class VersionAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
+
+
 class CreateAPIView(BaseAPIView):
     @decorators.serialize_data(serializers.CreateSerializer)
     def post(self, request, serializer, **kwargs):
         data = CreationData(**serializer.data)
         self.terra_exchange("dataset_create", creation_data=data)
-        data.stage = 1
-        request.project.set_dataset_creation(data)
         return BaseResponseSuccess()
 
 
 class ProgressAPIView(BaseAPIView):
     @decorators.progress_error("create_dataset")
     def post(self, request, progress, **kwargs):
+        if progress.finished and int(progress.percent) == 100:
+            request.project.set_dataset_creation()
         return BaseResponseSuccess(progress.native())
 
 
