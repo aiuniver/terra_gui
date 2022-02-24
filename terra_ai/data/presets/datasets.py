@@ -2984,8 +2984,8 @@ DatasetCreationArchitecture = {
                 "parameters": {
                     "type": "Image",
                     "options": {
-                        "width": 0,
-                        "height": 0,
+                        "width": 160,
+                        "height": 128,
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
@@ -3135,8 +3135,8 @@ DatasetCreationArchitecture = {
                 "parameters": {
                     "type": "Image",
                     "options": {
-                        "width": 0,
-                        "height": 0,
+                        "width": 160,
+                        "height": 128,
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
@@ -3173,8 +3173,8 @@ DatasetCreationArchitecture = {
                 "parameters": {
                     "type": "Image",
                     "options": {
-                        "width": 0,
-                        "height": 0,
+                        "width": 160,
+                        "height": 128,
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
@@ -3669,8 +3669,8 @@ DatasetCreationArchitecture = {
                 "parameters": {
                     "type": "Image",
                     "options": {
-                        "width": 0,
-                        "height": 0,
+                        "width": 160,
+                        "height": 128,
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
