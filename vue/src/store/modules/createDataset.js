@@ -116,10 +116,7 @@ export default {
       const struct = {
         type,
         architecture: project.architecture,
-        items: {
-          inputs: chnageType(create.inputs),
-          outputs: chnageType(create.outputs)
-        }
+        items: chnageType(create[type])
       }
       const { data } = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
       commit('SER_ERRORS_BLOCK', data || {})
