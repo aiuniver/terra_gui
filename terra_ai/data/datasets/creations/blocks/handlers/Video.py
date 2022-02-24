@@ -12,8 +12,8 @@ from terra_ai.data.datasets.creations.blocks.extra import VideoScalerData
 class OptionsData(VideoScalerData):
     width: PositiveInt
     height: PositiveInt
-    fill_mode: LayerVideoFillModeChoice = LayerVideoFillModeChoice.average_value
-    frame_mode: LayerVideoFrameModeChoice = LayerVideoFrameModeChoice.fit
+    fill_mode: LayerVideoFillModeChoice
+    frame_mode: LayerVideoFrameModeChoice
     video_mode: LayerVideoModeChoice
     max_frames: Optional[PositiveInt]
     length: Optional[PositiveInt]
@@ -23,13 +23,10 @@ class OptionsData(VideoScalerData):
     deploy: Optional[bool] = False
 
     @validator("video_mode", allow_reuse=True)
-    def _validate_video_mode(cls, value: LayerVideoModeChoice) -> LayerVideoModeChoice:
+    def _validate_video_mode(cls, value):
         if value == LayerVideoModeChoice.completely:
             cls.__fields__["max_frames"].required = True
-            cls.__fields__["length"].required = False
-            cls.__fields__["step"].required = False
         elif value == LayerVideoModeChoice.length_and_step:
-            cls.__fields__["max_frames"].required = False
             cls.__fields__["length"].required = True
             cls.__fields__["step"].required = True
         return value

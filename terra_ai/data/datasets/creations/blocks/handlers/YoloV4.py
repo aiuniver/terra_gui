@@ -6,11 +6,11 @@ from terra_ai.data.datasets.extra import (
     LayerObjectDetectionModelChoice,
     LayerImageFrameModeChoice,
 )
-from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 
 
-class OptionsData(BaseMixinData):
-    model_type: LayerODDatasetTypeChoice = LayerODDatasetTypeChoice.Yolo_terra
+class OptionsData(BaseOptionsData):
+    model_type: LayerODDatasetTypeChoice
 
     # Внутренние параметры
     model: LayerObjectDetectionModelChoice = LayerObjectDetectionModelChoice.yolo

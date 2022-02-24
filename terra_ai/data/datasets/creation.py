@@ -288,7 +288,7 @@ class DatasetCreationArchitectureData(BaseMixinData):
 class CreationValidateBlocksData(BaseMixinData):
     type: LayerGroupChoice
     architecture: ArchitectureChoice
-    items: DatasetCreationArchitectureData
+    items: CreationBlockList
 
 
 class CreationVersionData(DatasetCreationArchitectureData):

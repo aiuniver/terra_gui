@@ -8,4 +8,4 @@ class OptionsData(ImageScalerData):
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice
-    image_mode: LayerImageFrameModeChoice = LayerImageFrameModeChoice.stretch
+    image_mode: LayerImageFrameModeChoice

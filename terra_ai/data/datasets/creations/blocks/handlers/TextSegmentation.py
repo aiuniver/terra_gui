@@ -1,11 +1,11 @@
 from typing import Optional
 from pydantic import PositiveInt
 
-from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.datasets.extra import LayerTextModeChoice
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 
 
-class OptionsData(BaseMixinData):
+class OptionsData(BaseOptionsData):
     open_tags: Optional[str]
     close_tags: Optional[str]
 

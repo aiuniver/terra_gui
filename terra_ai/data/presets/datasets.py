@@ -2581,7 +2581,9 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Classification",
-                    "options": {},
+                    "options": {
+                        "type_processing": "categorical",
+                    },
                 },
             },
             {

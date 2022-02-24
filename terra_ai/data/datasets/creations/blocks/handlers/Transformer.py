@@ -1,5 +1,5 @@
-from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 
 
-class OptionsData(BaseMixinData):
+class OptionsData(BaseOptionsData):
     pass
