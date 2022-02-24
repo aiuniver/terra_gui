@@ -32,7 +32,9 @@ const chengeParametrs = (data) => {
   }
 }
 
-const isError = (errors) => {
+const isError = (res) => {
+  if (!res.success) return true;
+  const errors = res?.data || {}
   for (const key in errors) {
     if (errors[key]) return true;
   }
@@ -40,7 +42,7 @@ const isError = (errors) => {
 }
 
 const chnageType = (data) => {
-  const arr  = JSON.parse(JSON.stringify(data))
+  const arr = JSON.parse(JSON.stringify(data))
   return arr.map(i => {
     // if (['input', 'output'].includes(i.type)) i.type = 'layer'
     if (i.type === 'handler') i.parameters = { ...chengeParametrs(i.parameters) }

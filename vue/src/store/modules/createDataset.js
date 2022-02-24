@@ -118,10 +118,9 @@ export default {
         architecture: project.architecture,
         items: chnageType(create[type])
       }
-      const { data } = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
-      commit('SER_ERRORS_BLOCK', data || {})
-      console.log(data)
-      return data
+      const res = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
+      commit('SER_ERRORS_BLOCK', res?.data || {})
+      return res
     },
   },
   getters: {
