@@ -15,6 +15,7 @@
       :autocomplete="'off'"
       @blur="change"
       @focus="focus"
+      @input="debounce"
       @mouseover="hover = true"
       @mouseleave="hover = false"
     />
@@ -25,6 +26,7 @@
 </template>
 
 <script>
+import { debounce } from '@/utils/core/utils';
 export default {
   name: 't-input',
   props: {
@@ -51,6 +53,7 @@ export default {
   data: () => ({
     isChange: false,
     hover: false,
+    debounce: null
   }),
   computed: {
     input: {
@@ -75,9 +78,9 @@ export default {
     change(e) {
       // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       let value = e.target.value;
-      if (this.isChange && value !== '') {
+      if (this.isChange) {
         // console.log(e);
-        value = this.type === 'number' ? +value : value;
+        value = this.type === 'number' ? value ? +value : '' : value;
         this.$emit('change', { name: this.name, value });
         this.$emit('parse', { name: this.name, parse: this.parse, value });
       }
@@ -86,6 +89,12 @@ export default {
   },
   created() {
     this.input = this.value;
+    this.debounce = debounce((e) => {
+      this.change(e);
+    }, 500);
+  },
+  beforeDestroy() {
+    // this.debounce();
   },
   watch: {
     update(obj) {
