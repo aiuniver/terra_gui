@@ -100,7 +100,7 @@ export default {
       if (!res?.data?.finished) {
         this.debounceCreate(true);
       } else {
-        this.$routers.push('/datasets');
+        this.$router.push('/datasets');
         this.setOverlay(false);
       }
     },

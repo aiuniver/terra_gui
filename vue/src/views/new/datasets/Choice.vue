@@ -20,7 +20,7 @@
       <div v-for="(item, idx) in versions"
       class="page-choice__versions"
       :key="idx" 
-      @click="selectedVersion = item"
+      @click="setVersion(item)"
       :class="{ 'active': item.alias === selectedVersion.alias }"
       >
         <span class="name">{{ item.name }}</span>
@@ -29,8 +29,16 @@
         <i v-if="selectedSet.group === 'custom'" @click.stop="deleteVersion(item)" class="t-icon icon-modeling-remove"></i>
       </div>
       <template v-slot:footer>
-        <d-button @click="setChoice" :disabled="!selectedVersion.alias" style="flex-basis: 50%;">Выбрать</d-button>
-        <d-button v-if="selectedSet.group === 'custom'" color="secondary" direction="left" style="flex-basis: 50%;">Создать версию</d-button>
+        <d-button
+          @click="setChoice" 
+          :disabled="!selectedVersion.alias" 
+          style="flex-basis: 50%;">Выбрать</d-button>
+        <d-button 
+          @click="createVersion" 
+          v-if="selectedSet.group === 'custom'" 
+          color="secondary" 
+          direction="left" 
+          style="flex-basis: 50%;">Создать версию</d-button>
       </template>
     </at-modal>
   </div>
@@ -63,6 +71,9 @@ export default {
     filteredList() {
       let datasets = this.datasets
       if (this.selectedType !== 0) {
+        if (this.selectedType === 1) {
+          datasets = datasets.filter(item => this.$store.getters['datasets/getRecent'].includes(item.id))
+        }
         if (this.selectedType === 2) {
           const projectSet = this.$store.getters['projects/getProject'].dataset || {}
           datasets = datasets.filter(item => item.id === `${projectSet.group}_${projectSet.alias}`)
@@ -79,6 +90,23 @@ export default {
     }
   },
   methods: {
+    setVersion(item) {
+      if (this.selectedVersion.alias === item.alias) return this.selectedVersion = {}
+      this.selectedVersion = item
+    },
+    async createVersion() {
+      if (this.selectedVersion.alias) {
+        return await this.$store.dispatch('axios', { url: '/datasets/create/version/', data: {
+          alias: this.selectedSet.alias,
+          group: this.selectedSet.group,
+          version: this.selectedVersion.alias
+        } })
+      }
+      await this.$store.dispatch('axios', { url: '/datasets/create/version/', data: {
+        alias: this.selectedSet.alias,
+        group: this.selectedSet.group
+      } })
+    },
     getDate(val) {
       if (!val) return ''
       return new Date(val).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })

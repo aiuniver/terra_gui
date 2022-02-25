@@ -16,6 +16,7 @@ export default {
     tags: [],
     tagsFilter: [],
     full: false,
+    recent: []
   }),
   mutations: {
     SET_TABLE_GROUP (state, value) {
@@ -59,6 +60,9 @@ export default {
     },
     SET_GROUPS (state, value) {
       state.groups = value
+    },
+    SET_RECENT (state, value) {
+      state.recent = value
     }
   },
   actions: {
@@ -138,11 +142,16 @@ export default {
       }
       return res
     },
-    async choice ({ dispatch }, dataset) {
-      // console.log(dataset)
+    async choice ({ dispatch, commit }, dataset) {
       await dispatch('trainings/resetAllTraining', {}, { root: true });
       dispatch('modeling/resetAll', {}, { root: true });
-      return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      const res = await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      if (res.success) {
+        const recent = localStorage.getItem('recent') || ''
+        localStorage.setItem('recent', recent + `${dataset.group}_${dataset.alias}, `)
+        commit('SET_RECENT', localStorage.getItem('recent'))
+      }
+      return res
     },
     async deleteDataset ({ dispatch }, dataset) {
       const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
@@ -362,6 +371,9 @@ export default {
     },
     getGroups ({ groups }) {
       return groups
+    },
+    getRecent ({ recent }) {
+      return recent
     }
   },
 };

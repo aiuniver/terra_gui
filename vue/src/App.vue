@@ -82,6 +82,7 @@ export default {
         }
       }
     }
+    this.$store.commit('datasets/SET_RECENT', localStorage.getItem('recent') || '')
     window.addEventListener('resize', this.myEventHandler);
     // window.addEventListener('beforeunload', event => {
     //   this.handlerClose();

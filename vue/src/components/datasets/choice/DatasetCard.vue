@@ -10,7 +10,11 @@
         </div>
       </div>
     </div>
-    <i v-if="dataset.group === 'custom'" @click.stop="deleteDataset" class="t-icon icon-modeling-remove"></i>
+    <i 
+    v-if="dataset.group === 'custom'" 
+    class="t-icon icon-modeling-remove" 
+    @click.stop="deleteDataset" 
+    title="Удалить датасет"/>
   </div>
 </template>
 
@@ -75,8 +79,14 @@ export default {
   }
   .t-icon {
     position: absolute;
-    right: 0;
-    bottom: 26px;
+    right: 6px;
+    bottom: 30px;
+    width: 20px;
+    height: 20px;
+    filter: invert(.5);
+    &:hover {
+      filter: none;
+    }
   }
   &__wrapper {
     padding: 20px 12px 10px;

@@ -70,8 +70,8 @@ export default {
       const datasets = this.datasets || [];
       const search = this.search.trim();
       let sortedList = []
-      if (this.selectedSort.idx === 0) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
-      if (this.selectedSort.idx === 1) sortedList = datasets.sort((a, b) => b.name.localeCompare(a.name))
+      if (this.selectedSort.idx === 0) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name)) // от а до я
+      if (this.selectedSort.idx === 1) sortedList = datasets.sort((a, b) => b.name.localeCompare(a.name)) // от я до а
       if (this.selectedSort.idx === 2) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
       if (this.selectedSort.idx === 3) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
       if (this.selectedSort.idx === 4) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
@@ -86,7 +86,6 @@ export default {
       choice: 'datasets/choice',
     }),
     isLoaded(dataset) {
-      // console.log(this.project?.dataset?.alias)
       return this.project?.dataset?.alias === dataset.alias;
     },
     selectDataset(item) {
