@@ -51,7 +51,7 @@ export default {
   },
   actions: {
     setProject ({ commit }, value) {
-      commit('SET_PROJECT', value)
+      commit('SET_PROJECT', { ...value })
     },
     setPagination ({ commit }, value) {
       commit('SET_PAGINATION', value)
@@ -83,7 +83,8 @@ export default {
       commit('SET_PROJECT', project)
     },
 
-    async create ({ dispatch, state: { project }, rootState: { create: { inputs, outputs } } }) {
+    async create ({ dispatch, state: { project }, rootState: { create } }) {
+      const { inputs, outputs } = JSON.parse(JSON.stringify(create))
       const data = createObj({ project, inputs, outputs })
       return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
     },
@@ -113,10 +114,11 @@ export default {
       return data
     },
     async datasetValidate ({ commit, dispatch, state: { project }, rootState: { create } }, type) {
+      const blocks = JSON.parse(JSON.stringify(create.blocks))
       const struct = {
         type,
         architecture: project.architecture,
-        items: chnageType(create[type])
+        items: chnageType(blocks)
       }
       const res = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
       commit('SER_ERRORS_BLOCK', res?.data || {})
