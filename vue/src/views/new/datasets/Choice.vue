@@ -45,8 +45,8 @@
 </template>
 
 <script>
-import Datasets from '@/components/datasets/choice/';
-import ChoiceMenu from '@/components/datasets/choice/ChoiceMenu';
+import Datasets from '@/components/datasets/choice/'
+import ChoiceMenu from '@/components/datasets/choice/ChoiceMenu'
 import { mapGetters } from 'vuex'
 
 export default {
@@ -95,17 +95,18 @@ export default {
       this.selectedVersion = item
     },
     async createVersion() {
-      if (this.selectedVersion.alias) {
-        return await this.$store.dispatch('axios', { url: '/datasets/create/version/', data: {
-          alias: this.selectedSet.alias,
-          group: this.selectedSet.group,
-          version: this.selectedVersion.alias
-        } })
-      }
-      await this.$store.dispatch('axios', { url: '/datasets/create/version/', data: {
+      let res
+      res = await this.$store.dispatch('axios', { url: '/datasets/create/version/', data: {
         alias: this.selectedSet.alias,
-        group: this.selectedSet.group
+        group: this.selectedSet.group,
+        ...(this.selectedVersion.alias && { version: this.selectedVersion.alias })
       } })
+      if (res.success) {
+        this.$store.dispatch('settings/setOverlay', true)
+        await this.$store.dispatch('projects/get')
+        this.$router.push('/create')
+        this.$store.dispatch('settings/setOverlay', false)
+      }
     },
     getDate(val) {
       if (!val) return ''
