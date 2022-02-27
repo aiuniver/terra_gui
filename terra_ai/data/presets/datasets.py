@@ -2624,7 +2624,7 @@ DatasetCreationArchitecture = {
                         "length": 100,
                         "step": 50,
                         "pymorphy": False,
-                        "prepare_method": "Embedding",
+                        "prepare_method": "embedding",
                         "max_words_count": 20000,
                         "word_to_vec_size": 100,
                     },
@@ -2735,7 +2735,9 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Classification",
-                    "options": {},
+                    "options": {
+                        "type_processing": "categorical"
+                    },
                 },
             },
             {
@@ -2811,7 +2813,9 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Classification",
-                    "options": {},
+                    "options": {
+                        "type_processing": "categorical"
+                    },
                 },
             },
             {
@@ -2847,6 +2851,8 @@ DatasetCreationArchitecture = {
                     "type": "Scaler",
                     "options": {
                         "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -2915,6 +2921,8 @@ DatasetCreationArchitecture = {
                     "type": "Scaler",
                     "options": {
                         "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -3021,7 +3029,11 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Segmentation",
-                    "options": {},
+                    "options": {
+                        "mask_range": 1,
+                        "classes_colors": [[0, 0, 0]],
+                        "classes_names": ["Название класса"]
+                    },
                 },
             },
             {
@@ -3062,7 +3074,7 @@ DatasetCreationArchitecture = {
                         "length": 100,
                         "step": 50,
                         "pymorphy": False,
-                        "prepare_method": "Embedding",
+                        "prepare_method": "embedding",
                         "max_words_count": 20000,
                         "word_to_vec_size": 100,
                     },
@@ -3214,6 +3226,8 @@ DatasetCreationArchitecture = {
                     "type": "Scaler",
                     "options": {
                         "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -3251,9 +3265,8 @@ DatasetCreationArchitecture = {
                         "max_scaler": 1,
                         "length": 100,
                         "step": 30,
-                        "trend": False,
                         "depth": 1,
-                        "scaler": "no_scaler",
+                        "scaler": "no_scaler"
                     },
                 },
             },
@@ -3268,7 +3281,83 @@ DatasetCreationArchitecture = {
             },
         ],
     },
-    ArchitectureChoice.TimeseriesTrend: {},
+    ArchitectureChoice.TimeseriesTrend: {
+        LayerGroupChoice.inputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Данные",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Скейлер",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Scaler",
+                    "options": {
+                        "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "type": "input",
+                "name": "Вход",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+                "parameters": {},
+            },
+        ],
+        LayerGroupChoice.outputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Данные",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Временные ряды",
+                "removable": False,
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "TimeseriesTrend",
+                    "options": {
+                        "min_scaler": 0,
+                        "max_scaler": 1,
+                        "length": 100,
+                        "step": 30,
+                        "trend_limit": "1.8%",
+                        "scaler": "no_scaler"
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "type": "output",
+                "name": "Выход",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+                "parameters": {},
+            },
+        ],
+    },
     ArchitectureChoice.VideoTracker: {
         LayerGroupChoice.inputs: [
             {
@@ -3345,7 +3434,74 @@ DatasetCreationArchitecture = {
             },
         ],
     },
-    ArchitectureChoice.TextTransformer: {},
+    ArchitectureChoice.TextTransformer: {
+        LayerGroupChoice.inputs: [
+{
+                "id": 1,
+                "name": "Данные",
+                "type": "data",
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "name": "Обработчик 1",
+                "type": "handler",
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Text",
+                    "options": {
+                        'text_mode': "completely",
+                        'max_words_count': 20000,
+                        'length': 100,
+                        'step': 50,
+                        'max_words': 20,
+                        'filters': '–—!"#$%&()*+,-.:;=?@[\\]</>^«»№_`{|}~\t\n\xa0–\ufeff\r',
+                        'prepare_method': "embedding",
+                        'word_to_vec_size': 100,
+                        'pymorphy': False,
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "name": "Вход",
+                "type": "input",
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+            }
+        ],
+        LayerGroupChoice.outputs: [
+            {
+                "id": 1,
+                "name": "Данные",
+                "type": "data",
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "name": "Обработчик 1",
+                "type": "handler",
+                "bind": {"up": [1], "down": [3]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "TextTransformer",
+                    "options": {},
+                },
+            },
+            {
+                "id": 3,
+                "name": "Выход",
+                "type": "output",
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+            }
+        ]
+    },
     ArchitectureChoice.YoloV3: {
         LayerGroupChoice.inputs: [
             {
@@ -3372,6 +3528,8 @@ DatasetCreationArchitecture = {
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -3403,9 +3561,9 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [-75, -30],
                 "parameters": {
-                    "type": "ObjectDetection",
+                    "type": "YoloV3",
                     "options": {
-                        "yolo": "v3",
+                        "model": "yolo",
                         "model_type": "Yolo_terra",
                     },
                 },
@@ -3447,6 +3605,8 @@ DatasetCreationArchitecture = {
                         "image_mode": "stretch",
                         "net": "convolutional",
                         "scaler": "no_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -3478,9 +3638,9 @@ DatasetCreationArchitecture = {
                 "bind": {"up": [1], "down": [3]},
                 "position": [-75, -30],
                 "parameters": {
-                    "type": "ObjectDetection",
+                    "type": "YoloV4",
                     "options": {
-                        "yolo": "v4",
+                        "model": "yolo",
                         "model_type": "Yolo_terra",
                     },
                 },
@@ -3523,7 +3683,7 @@ DatasetCreationArchitecture = {
                         "length": 100,
                         "step": 50,
                         "pymorphy": False,
-                        "prepare_method": "Embedding",
+                        "prepare_method": "embedding",
                         "max_words_count": 20000,
                         "word_to_vec_size": 100,
                     },
@@ -3683,7 +3843,7 @@ DatasetCreationArchitecture = {
                 "name": "Шум",
                 "removable": False,
                 "bind": {"up": [1], "down": [5]},
-                "position": [-75, -30],
+                "position": [110, -30],
                 "parameters": {
                     "type": "Noise",
                     "options": {
@@ -3706,7 +3866,7 @@ DatasetCreationArchitecture = {
                 "name": "Шум",
                 "removable": False,
                 "bind": {"up": [3], "down": []},
-                "position": [-75, 60],
+                "position": [110, 60],
                 "parameters": {},
             },
         ],
@@ -3738,7 +3898,7 @@ DatasetCreationArchitecture = {
                 "name": "Дискриминатор",
                 "removable": False,
                 "bind": {"up": [1], "down": [5]},
-                "position": [-75, -30],
+                "position": [110, -30],
                 "parameters": {
                     "type": "Discriminator",
                     "options": {},
@@ -3759,12 +3919,142 @@ DatasetCreationArchitecture = {
                 "name": "Дискриминатор",
                 "removable": False,
                 "bind": {"up": [3], "down": []},
-                "position": [-75, 60],
+                "position": [110, 60],
                 "parameters": {},
             },
         ],
     },
-    ArchitectureChoice.ImageCGAN: {},
+    ArchitectureChoice.ImageCGAN: {
+        LayerGroupChoice.inputs: [
+            {
+                "id": 1,
+                "name": "Данные",
+                "type": "data",
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "name": "Изображения",
+                "type": "handler",
+                "bind": {"up": [1], "down": [5]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Image",
+                    "options": {
+                        "width": 28,
+                        "height": 28,
+                        "image_mode": "stretch",
+                        "net": "convolutional",
+                        "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
+                    },
+                },
+            },
+            {
+                "id": 3,
+                "name": "Метки классов",
+                "type": "handler",
+                "bind": {"up": [1], "down": [6]},
+                "position": [110, -30],
+                "parameters": {
+                    "type": "Classification",
+                    "options": {
+                        "type_processing": "categorical"
+                    },
+                },
+            },
+            {
+                "id": 4,
+                "name": "Шум",
+                "type": "handler",
+                "bind": {"up": [1], "down": [7]},
+                "position": [295, -30],
+                "parameters": {
+                    "type": "Noise",
+                    "options": {
+                        "shape": (100, )
+                    },
+                },
+            },
+            {
+                "id": 5,
+                "name": "Вход 1",
+                "type": "input",
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+            },
+            {
+                "id": 6,
+                "name": "Вход 2",
+                "type": "input",
+                "bind": {"up": [3], "down": []},
+                "position": [110, 60],
+            },
+            {
+                "id": 7,
+                "name": "Вход 3",
+                "type": "input",
+                "bind": {"up": [4], "down": []},
+                "position": [295, 60],
+            },
+        ],
+        LayerGroupChoice.outputs: [
+            {
+                "id": 1,
+                "type": "data",
+                "name": "Данные",
+                "removable": False,
+                "bind": {"up": [], "down": [2]},
+                "position": [-75, -120],
+                "parameters": {},
+            },
+            {
+                "id": 2,
+                "type": "handler",
+                "name": "Генератор",
+                "removable": False,
+                "bind": {"up": [1], "down": [4]},
+                "position": [-75, -30],
+                "parameters": {
+                    "type": "Generator",
+                    "options": {},
+                },
+            },
+            {
+                "id": 3,
+                "type": "handler",
+                "name": "Дискриминатор",
+                "removable": False,
+                "bind": {"up": [1], "down": [5]},
+                "position": [110, -30],
+                "parameters": {
+                    "type": "Discriminator",
+                    "options": {},
+                },
+            },
+            {
+                "id": 4,
+                "type": "output",
+                "name": "Генератор",
+                "removable": False,
+                "bind": {"up": [2], "down": []},
+                "position": [-75, 60],
+                "parameters": {},
+            },
+            {
+                "id": 5,
+                "type": "output",
+                "name": "Дискриминатор",
+                "removable": False,
+                "bind": {"up": [3], "down": []},
+                "position": [110, 60],
+                "parameters": {},
+            },
+        ],
+    },
 }
 
 
