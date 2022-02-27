@@ -279,6 +279,10 @@ $borderBlock: 2px;
     text-align: center;
     height: 18px;
     font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 120px;
+    overflow: hidden;
   }
   &__subtitle {
     text-align: center;

@@ -83,7 +83,7 @@ export default {
     },
   },
   created() {
-    this.input = this.list[0]?.label;
+    // this.input = this.list[0]?.label;
   },
 };
 </script>
