@@ -4,7 +4,7 @@ import json
 import shutil
 import base64
 
-from pathlib import Path
+from pathlib import Path, WindowsPath
 from typing import List, Callable
 from pydantic.networks import HttpUrl
 
@@ -257,7 +257,8 @@ def _choice_from_custom(
         )
         os.remove(str(zip_filepath))  # Удаление архива version.zip
         shutil.rmtree(str(destination), ignore_errors=True)
-        # os.makedirs(str(destination), exist_ok=True)
+        if not isinstance(destination, WindowsPath):
+            os.makedirs(str(destination), exist_ok=True)
         os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
