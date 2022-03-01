@@ -1,5 +1,6 @@
 import colorsys
 import os
+import re
 from typing import Optional
 
 import matplotlib
@@ -18,6 +19,7 @@ from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedC
 from terra_ai.logging import logger
 from terra_ai.settings import CALLBACK_CLASSIFICATION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
 import terra_ai.exceptions.callbacks as exception
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
 
 
 class BaseSegmentationCallback:
@@ -624,6 +626,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                 text = text.split(" ")
                 labels = reformat_tags(label_array, tag_list)
                 colored_text = []
+                # print(len(text), text)
+                # print(len(labels), labels)
                 for w, word in enumerate(text):
                     colored_text.append(add_tags_to_word(word, labels[w]))
                 return ' '.join(colored_text)
@@ -650,8 +654,14 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     colors[name] = gen_colors[i]
                     classes_names[name] = options.classes_names[i]
 
+            text_for_preparation = dataframe.iat[example_id, 0]
+            initial_text = re.sub(r'[</>]', r'', text_for_preparation)
+            initial_text = re.sub(r'\s([#$%&)}*+,-.:;=?@^_"`|~](?:\s|$))', r'\1', initial_text)
+            initial_text = re.sub(r'^[#$%&)}*+,-.:;=?@^_"`|~]\s', r'', initial_text)
+            # initial_text = text_to_word_sequence(text_for_preparation)
+
             if return_mode == 'deploy':
-                initial_text = dataframe.iat[example_id, 0]
+                # initial_text = dataframe.iat[example_id, 0]
                 text_segmentation = text_colorization(
                     text=initial_text, label_array=pred_array, tag_list=dataset_tags
                 )
@@ -664,9 +674,13 @@ class TextSegmentationCallback(BaseSegmentationCallback):
 
             if return_mode == 'callback':
                 data = {"y_true": {}, "y_pred": {}, "tags_color": {}, "stat": {}}
-                text_for_preparation = dataframe.iat[example_id, 0]
+                # text_for_preparation = dataframe.iat[example_id, 0]
+                # split_text = re.sub(r'[</>]', r'', text_for_preparation)
+                # split_text = re.sub(r'\s([#$%&)}*+,-.:;=?@^_"`|~](?:\s|$))', r'\1', split_text)  #  #$%&()*+,-./:;<=>?@[\\]^_`{|}~
+                # print('\nsplit_text\n', len(initial_text.split(" ")), '\n', initial_text, '\n', initial_text.split(" "))
+                # print('lbl', dataframe.iat[example_id, 1])
                 true_text_segmentation = text_colorization(
-                    text=text_for_preparation, label_array=true_array, tag_list=dataset_tags,
+                    text=initial_text, label_array=true_array, tag_list=dataset_tags,
                 )
 
                 data["y_true"] = {
@@ -674,7 +688,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     "data": [{"title": "Текст", "value": true_text_segmentation, "color_mark": None}]
                 }
                 pred_text_segmentation = text_colorization(
-                    text=text_for_preparation, label_array=pred_array, tag_list=dataset_tags,
+                    text=initial_text, label_array=pred_array, tag_list=dataset_tags,
                 )
                 data["y_pred"] = {
                     "type": "segmented_text",
@@ -723,6 +737,8 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                     data["stat"]["data"].insert(
                         0, {'title': 'Средняя точность', 'value': mean_stat, 'color_mark': mean_color_mark}
                     )
+                # print()
+                # print(data)
                 return data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -874,6 +890,7 @@ class TextSegmentationCallback(BaseSegmentationCallback):
                             return_data[f"{idx + 1}"]['statistic_values'][f"Выходной слой «{out}»"] = data.get('stat')
                         else:
                             return_data[f"{idx + 1}"]['statistic_values'] = {}
+            # print(return_data)
             return return_data
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
