@@ -17,10 +17,8 @@ from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.datasets.dataset import DatasetData, DatasetVersionPathsData
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
-from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG
+from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG, TERRA_PATH
 from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroups
-
-TERRA_PATH = Path('G:\\Мой диск\\TerraAI\\datasets')
 
 
 class PrepareDataset(object):
@@ -75,7 +73,7 @@ class PrepareDataset(object):
 
         if category == 'custom':
             build_table = {'alias': [], 'Название': [], 'Задача': [], 'Дата создания': []}
-            for d_path in Path(TERRA_PATH).glob('*.' + DATASET_EXT):  # В БУДУЩЕМ СДЕЛАТЬ TERRA_PATH.datasets
+            for d_path in TERRA_PATH.datasets.glob('*.' + DATASET_EXT):
                 with open(d_path.joinpath(DATASET_CONFIG), 'r') as config:
                     d_config = json.load(config)
                 build_table['alias'].append('.'.join([d_config.get('alias'), DATASET_EXT])
@@ -129,16 +127,16 @@ class PrepareDataset(object):
         dataset.list_versions()
         """
 
-        if not alias and not self.dataset_data:
+        if not alias and not self.data:
             raise ValueError('Укажите alias датасета или выберите датасет.')
-        elif not alias and self.dataset_data:
-            alias = self.dataset_data.alias
+        elif not alias and self.data:
+            alias = self.data.version.alias
             # alias = '.'.join([self.dataset_data.alias, self.dataset_data.group])
 
         build_table = {'alias': [], 'Название': [], 'Входы': [], 'Выходы': []}
-        if self.dataset_data.group == 'trds':
+        if self.data.group == 'trds':
             build_table.update({'Размер': [], 'Генератор': [], 'Дата создания': []})
-            for d_path in Path(TERRA_PATH).joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + DATASET_VERSION_EXT):
+            for d_path in TERRA_PATH.datasets.joinpath('.'.join([alias, DATASET_EXT]), 'versions').glob('*.' + DATASET_VERSION_EXT):
                 with open(d_path.joinpath(DATASET_VERSION_CONFIG), 'r') as config:
                     d_config = json.load(config)
                 build_table['alias'].append(d_config.get('alias') if d_config.get('alias') else '')
@@ -156,14 +154,14 @@ class PrepareDataset(object):
                 for put in build_table:
                     while not len(build_table[put]) == max_len:
                         build_table[put].append('')
-        elif self.dataset_data.group == 'keras':
+        elif self.data.group == 'keras':
             for ver in VersionsGroups[0]['datasets'][0][alias]:
                 build_table['alias'].append(ver.get('alias') if ver.get('alias') else '')
                 build_table['Название'].append(ver['name'])
                 for put in [['inputs', 'Входы'], ['outputs', 'Выходы']]:
                     for idx, elem in enumerate(ver[put[0]].values()):
                         build_table[put[1]].append(f"{put[1][:-1]} {idx + 1}: {elem['shape']}")
-        elif self.dataset_data.group == 'terra':
+        elif self.data.group == 'terra':
             pass
 
         dataframe = pd.DataFrame().from_dict(build_table)
@@ -178,7 +176,7 @@ class PrepareDataset(object):
                 inp_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in inputs[i]}
                 out_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in outputs[i]}
 
-                if self.data.service:
+                if self.data.version.service:
                     srv_dict = {elem.split('/')[1].split('_')[1]: hdf[elem][()] for elem in service[i]}
                     yield inp_dict, out_dict, srv_dict
                 else:
@@ -236,26 +234,26 @@ class PrepareDataset(object):
                     index_col=0
                 )
 
-            self.preprocessing.load_preprocesses(self.data.columns)
+            self.preprocessing.load_preprocesses(self.data.version.columns)
 
             with h5py.File(self.dataset_version_paths_data.arrays.joinpath('dataset.h5'), 'r') as hdf:
                 out_signature = [{}, {}]
 
-                for key in self.data.inputs:
+                for key in self.data.version.inputs:
                     if f"train/id_{key}/1" in hdf:
-                        out_signature[0].update({str(key): tf.TensorSpec(shape=self.data.inputs[key].shape,
-                                                                         dtype=self.data.inputs[key].dtype)})
-                for key in self.data.outputs:
+                        out_signature[0].update({str(key): tf.TensorSpec(shape=self.data.version.inputs[key].shape,
+                                                                         dtype=self.data.version.inputs[key].dtype)})
+                for key in self.data.version.outputs:
                     if f"train/id_{key}/0" in hdf:
-                        out_signature[1].update({str(key): tf.TensorSpec(shape=self.data.outputs[key].shape,
-                                                                         dtype=self.data.outputs[key].dtype)})
+                        out_signature[1].update({str(key): tf.TensorSpec(shape=self.data.version.outputs[key].shape,
+                                                                         dtype=self.data.version.outputs[key].dtype)})
 
-                if self.data.service:
+                if self.data.version.service:
                     out_signature.append({})
-                    for key in self.data.service:
+                    for key in self.data.version.service:
                         if f"train/id_{key}_service/0" in hdf:
-                            out_signature[2].update({str(key): tf.TensorSpec(shape=self.data.service[key].shape,
-                                                                             dtype=self.data.service[key].dtype)})
+                            out_signature[2].update({str(key): tf.TensorSpec(shape=self.data.version.service[key].shape,
+                                                                             dtype=self.data.version.service[key].dtype)})
 
                 for split_g in ['train', 'val']:
                     globals()[f'{split_g}_files_x'] = []
@@ -264,23 +262,23 @@ class PrepareDataset(object):
 
                     for idx in range(len(self.dataframe[split_g])):
                         globals()[f'{split_g}_files_x'].append(
-                            [f"{split_g}/id_{key}/{idx}" for key in self.data.inputs if
+                            [f"{split_g}/id_{key}/{idx}" for key in self.data.version.inputs if
                              f"{split_g}/id_{key}/{idx}" in hdf])
                         globals()[f'{split_g}_files_y'].append(
-                            [f"{split_g}/id_{key}/{idx}" for key in self.data.outputs if
+                            [f"{split_g}/id_{key}/{idx}" for key in self.data.version.outputs if
                              f"{split_g}/id_{key}/{idx}" in hdf])
                         globals()[f'{split_g}_files_s'].append(
-                            [f"{split_g}/id_{key}_service/{idx}" for key in self.data.service
-                             if self.data.service and f"{split_g}/id_{key}/{idx}" in hdf])
+                            [f"{split_g}/id_{key}_service/{idx}" for key in self.data.version.service
+                             if self.data.version.service and f"{split_g}/id_{key}/{idx}" in hdf])
 
                         globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
                                                               'outputs': globals()[f'{split_g}_files_y']}
-                        if self.data.service:
+                        if self.data.version.service:
                             globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])\
 
                     globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
                                                           'outputs': globals()[f'{split_g}_files_y']}
-                    if self.data.service:
+                    if self.data.version.service:
                         globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])
 
             self.dataset['train'] = Dataset.from_generator(lambda: self.generator(**globals()[f"train_parameters"]),
