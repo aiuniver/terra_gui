@@ -115,7 +115,6 @@ class BaseTerraModel:
                 continue
         return custom_object
 
-
     def __get_json_data(self):
         with open(self.file_path_model_json) as json_file:
             data = json.load(json_file)
@@ -653,7 +652,6 @@ class GANTerraModel:
                 break
         return vae
 
-
     def save(self) -> None:
         method_name = 'save'
         try:
@@ -860,8 +858,7 @@ class GANTerraModel:
                     loss_func=self.discriminator_loss_func, real_output=real_output, fake_output=fake_output)
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
-        self.generator_optimizer.apply_gradients(
-            zip(gradients_of_generator, self.generator.trainable_variables))
+        self.generator_optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
         self.discriminator_optimizer.apply_gradients(
             zip(gradients_of_discriminator, self.discriminator.trainable_variables))
         return gen_loss, disc_loss, disc_real_loss, disc_fake_loss, new_beta
@@ -1786,7 +1783,7 @@ class ImageSRGANTerraModel(GANTerraModel):
                 current_logs["epochs"] = epoch + 1
                 # current_logs = {"epochs": epoch + 1, 'loss': {}, "metrics": {}}
                 cur_step, perception_loss, content_loss, gen_loss, \
-                    disc_loss, disc_real_loss, disc_fake_loss, pretrain_loss = 0, 0, 0, 0, 0, 0, 0, 0
+                disc_loss, disc_real_loss, disc_fake_loss, pretrain_loss = 0, 0, 0, 0, 0, 0, 0, 0
                 cur_position = 0
                 random_idx = np.random.choice(len(self.full_lr_image_list), 10).tolist()
                 y_random_array = {}
