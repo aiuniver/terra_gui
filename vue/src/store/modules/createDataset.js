@@ -61,7 +61,7 @@ export default {
       const project = {
         name: name || '',
         architecture: architecture || '',
-        firstCreation: first_creation || true,
+        firstCreation: first_creation,
         source: {
           mode: source?.mode || 'GoogleDrive',
           path: source?.path || '',

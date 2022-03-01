@@ -35,7 +35,7 @@ export default {
       project: 'createDataset/getProject',
     }),
     isDisabled() {
-      return this.value === 1;
+      return this.value === 1 || this.value === 2 && !this.project.firstCreation;
     },
     isStatus() {
       if (this.value === 1 && (!this?.project?.source.value || !this?.project?.name || !this?.project?.architecture)) return true;
@@ -47,7 +47,7 @@ export default {
     },
     getTextBtn() {
       return this.value === this.list.length ? 'Создать' : 'Далее';
-    },
+    }
   },
   methods: {
     isActive(value) {
