@@ -568,7 +568,12 @@ def get_segmentation_confusion_matrix(y_true, y_pred, num_classes: int, get_perc
 def get_classification_report(y_true, y_pred, labels):
     method_name = 'get_classification_report'
     try:
-        cr = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
+        if len(labels) == 1:
+            update_labels = ['null', labels[0]]
+        else:
+            update_labels = labels
+        cr = classification_report(y_true, y_pred, target_names=update_labels, output_dict=True)
+        print(cr)
         return_stat = []
         for lbl in labels:
             return_stat.append(
@@ -581,15 +586,16 @@ def get_classification_report(y_true, y_pred, labels):
                 }
             )
         for i in ['macro avg', 'micro avg', 'samples avg', 'weighted avg']:
-            return_stat.append(
-                {
-                    'Класс': i,
-                    "Точность": round(float(cr.get(i).get('precision')) * 100, 2),
-                    "Чувствительность": round(float(cr.get(i).get('recall')) * 100, 2),
-                    "F1-мера": round(float(cr.get(i).get('f1-score')) * 100, 2),
-                    "Количество": int(cr.get(i).get('support'))
-                }
-            )
+            if cr.get(i):
+                return_stat.append(
+                    {
+                        'Класс': i,
+                        "Точность": round(float(cr.get(i).get('precision')) * 100, 2),
+                        "Чувствительность": round(float(cr.get(i).get('recall')) * 100, 2),
+                        "F1-мера": round(float(cr.get(i).get('f1-score')) * 100, 2),
+                        "Количество": int(cr.get(i).get('support'))
+                    }
+                )
         return return_stat
     except Exception as error:
         raise exception.ErrorInModuleInMethodException(
