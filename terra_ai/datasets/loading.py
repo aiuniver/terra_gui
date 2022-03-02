@@ -209,7 +209,7 @@ def _choice_from_terra(
             }
         )
         dataset_config_path = Path(destination, settings.DATASET_CONFIG)
-        dataset = DatasetData(path=dataset_config_path.parent, **dataset_config)
+        dataset = DatasetData(**dataset_config)
         with open(dataset_config_path, "w") as dataset_config_path_ref:
             json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
@@ -273,7 +273,7 @@ def _choice_from_custom(
             }
         )
         dataset_config_path = Path(destination, settings.DATASET_CONFIG)
-        dataset = DatasetData(path=dataset_config_path.parent, **dataset_config)
+        dataset = DatasetData(**dataset_config)
         with open(dataset_config_path, "w") as dataset_config_path_ref:
             json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
