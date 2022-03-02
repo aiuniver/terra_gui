@@ -47,13 +47,13 @@ class BaseSegmentationCallback:
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
-                    if not options.data.use_generator:
-                        y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
-                    else:
-                        y_true[data_type][f"{out}"] = []
-                        for _, y_val in options.dataset[data_type].batch(1):
-                            y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                        y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                    # if not options.data.use_generator:
+                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                    # else:
+                    #     y_true[data_type][f"{out}"] = []
+                    #     for _, y_val in options.dataset[data_type].batch(1):
+                    #         y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                    #     y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
             return y_true, inverse_y_true
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
