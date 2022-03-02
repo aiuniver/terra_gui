@@ -208,8 +208,8 @@ def _choice_from_terra(
                 "group": DatasetGroupChoice.terra,
             }
         )
-        dataset = DatasetData(**dataset_config)
         dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        dataset = DatasetData(path=dataset_config_path.parent, **dataset_config)
         with open(dataset_config_path, "w") as dataset_config_path_ref:
             json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
@@ -272,8 +272,8 @@ def _choice_from_custom(
                 "group": DatasetGroupChoice.custom,
             }
         )
-        dataset = DatasetData(**dataset_config)
         dataset_config_path = Path(destination, settings.DATASET_CONFIG)
+        dataset = DatasetData(path=dataset_config_path.parent, **dataset_config)
         with open(dataset_config_path, "w") as dataset_config_path_ref:
             json.dump(dataset.native(), dataset_config_path_ref)
         progress.pool(
@@ -304,7 +304,7 @@ def _run_choice_method(
     if config_path.is_file():
         with open(config_path) as config_path_ref:
             config = json.load(config_path_ref)
-        dataset = DatasetData(**config)
+        dataset = DatasetData(path=config_path.parent, **config)
         progress.pool(
             progress_name,
             percent=100,

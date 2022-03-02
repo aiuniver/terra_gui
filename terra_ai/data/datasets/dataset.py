@@ -82,6 +82,10 @@ class DatasetData(AliasMixinData):
 
     _path: Path = PrivateAttr()
 
+    def __init__(self, **data):
+        self._path = Path(data.get("path", ""))
+        super().__init__(**data)
+
     @property
     def path(self) -> Path:
         return self._path
