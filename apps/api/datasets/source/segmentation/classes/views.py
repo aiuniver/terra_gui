@@ -10,7 +10,7 @@ class AutosearchAPIView(BaseAPIView):
         return BaseResponseSuccess(
             self.terra_exchange(
                 "dataset_source_segmentation_classes_auto_search",
-                path=request.data.get("path"),
+                source=request.project.dataset_creation.source.path,
                 **serializer.validated_data,
             )
         )
@@ -21,6 +21,6 @@ class AnnotationAPIView(BaseAPIView):
         return BaseResponseSuccess(
             self.terra_exchange(
                 "dataset_source_segmentation_classes_annotation",
-                path=request.data.get("path"),
+                path=request.project.dataset_creation.source.path,
             )
         )
