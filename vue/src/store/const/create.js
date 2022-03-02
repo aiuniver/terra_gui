@@ -52,12 +52,13 @@ const chnageType = (data) => {
 
 const createObj = (data) => {
   const { project, inputs, outputs } = JSON.parse(JSON.stringify(data))
-  const { name, architecture, tags, verName, train, shuffle, source } = project
+  const { name, architecture, tags, verName, train, shuffle, source, firstCreation } = project
   return {
     name,
     source,
     architecture,
     tags,
+    firstCreation,
     version: {
       name: verName,
       info: {

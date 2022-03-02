@@ -83,10 +83,10 @@ export default {
       commit('SET_PROJECT', project)
     },
 
-    async create ({ dispatch, state: { project }, rootState: { create } }) {
+    async create ({ dispatch, state: { project, pagination }, rootState: { create } }) {
       const { inputs, outputs } = JSON.parse(JSON.stringify(create))
       const data = createObj({ project, inputs, outputs })
-      return await dispatch('axios', { url: '/datasets/create/', data }, { root: true });
+      return await dispatch('axios', { url: '/datasets/create/', data: { ...data, stage: pagination } }, { root: true });
     },
 
     async sourceLoadProgress ({ dispatch }) {
