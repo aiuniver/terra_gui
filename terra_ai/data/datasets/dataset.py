@@ -12,7 +12,7 @@ from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 from terra_ai.data.mixins import AliasMixinData, UniqueListMixin, BaseMixinData
-from terra_ai.data.extra import FileSizeData
+from terra_ai.data.extra import FileSizeData, FileLengthData
 from terra_ai.data.datasets.extra import (
     DatasetGroupChoice,
     LayerInputTypeChoice,
@@ -45,6 +45,7 @@ class DatasetLayerData(BaseMixinData):
     name: str
     datatype: str
     dtype: str
+    col_type: Optional[Any]
     shape: Tuple[PositiveInt, ...]
     num_classes: Optional[PositiveInt]
     classes_names: Optional[List[str]]
@@ -64,6 +65,7 @@ class DatasetVersionData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
+    length: Optional[FileLengthData]
 
 
 class DatasetVersionExtData(DatasetVersionData):

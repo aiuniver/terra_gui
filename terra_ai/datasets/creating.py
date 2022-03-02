@@ -16,6 +16,7 @@ import pandas as pd
 import json
 import shutil
 import zipfile
+import h5py
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from datetime import datetime
@@ -630,11 +631,18 @@ class CreateVersion(object):
                 'tags': tags_list,
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'size': {'value': size_bytes},
+                'length': {'train': None,
+                           'val': None},
                 'inputs': self.inputs,
                 'outputs': self.outputs,
                 'service': self.service,
                 'columns': self.columns
                 }
+
+        with h5py.File(self.version_paths_data.arrays.joinpath('dataset.h5'), 'r') as hdf:
+            for part in hdf.keys():
+                for idx in hdf[part].keys():
+                    data['length'][part] = len(hdf[part][idx])
 
         with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
                       .joinpath(DATASET_VERSION_CONFIG), 'w') as fp:

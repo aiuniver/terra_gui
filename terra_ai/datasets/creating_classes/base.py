@@ -273,6 +273,7 @@ class BaseClass(object):
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
+                                  'col_type': type(data_to_pass).__name__,
                                   'shape': array.shape,
                                   'name': col_name,  # version_data.inputs.get(key).name,
                                   'task': camelize(data.parameters.get('put_type')),
@@ -343,6 +344,7 @@ class BaseClass(object):
                 # Прописываем параметры для колонки
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
+                                  'col_type': type(data_to_pass).__name__,
                                   'shape': array.shape,
                                   'name': col_name,
                                   'task': camelize(data.parameters.get('put_type')),
@@ -549,6 +551,7 @@ class YoloClass(object):
                 for i in range(3):
                     col_parameters = {'datatype': DataType.get(len(array[i].shape), 'DIM'),
                                       'dtype': str(array[i].dtype),
+                                      'col_type': type(data_to_pass).__name__,
                                       'shape': array[i].shape,
                                       'name': version_data.outputs.get(key).name,
                                       'task': camelize(options_to_pass.get('put_type')),
@@ -674,6 +677,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
+                                  'col_type': type(data_to_pass).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
@@ -718,6 +722,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
+                                  'col_type': type(data_to_pass).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
