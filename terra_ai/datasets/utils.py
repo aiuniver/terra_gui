@@ -62,6 +62,9 @@ def get_classes_autosearch(
     for dirname in sorted(os.listdir(source)):
         dirpath = Path(source, dirname)
 
+        if not dirpath.is_dir():
+            continue
+
         for filename in sorted(os.listdir(dirpath)):
             if len(annotations) >= num_classes:
                 break
