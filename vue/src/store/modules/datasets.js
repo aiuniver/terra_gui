@@ -170,8 +170,8 @@ export default {
     },
 
     async classesAnnotation ({ dispatch, state: { sourcePath } }) {
-      const data = { path: sourcePath }
-      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
+      const data = { path: sourcePath } // eslint-disable-line
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/' }, { root: true });
     },
     async classesAutosearch ({ dispatch }, data) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });

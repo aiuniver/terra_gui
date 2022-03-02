@@ -92,8 +92,8 @@ export default {
       transform: translate(-50%, -50%);
       display: block;
       position: absolute;
-      width: 9px;
-      height: 9px;
+      width: 8px;
+      height: 8px;
       border-radius: 2px;
     }
     &--active {

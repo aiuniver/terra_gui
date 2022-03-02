@@ -5,7 +5,7 @@
         <d-input-text :value="name" @change="onChangeBlock"></d-input-text>
       </t-field>
       <template v-for="(data, index) of forms">
-        <t-auto-field-handler v-bind="data" :parameters="parameters" :key="id + index" :idKey="'key_' + index" root @change="onChange" />
+        <t-auto-field-handler v-bind="data" :parameters="parameters" :id="id" :key="id + index" :idKey="'key_' + index" root @change="onChange" />
       </template>
     </div>
     {{ selected }}
