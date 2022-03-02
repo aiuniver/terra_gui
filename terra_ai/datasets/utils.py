@@ -59,7 +59,7 @@ def get_classes_autosearch(
 
     annotations = AnnotationClassesList()
 
-    for dirname in sorted(os.listdir()):
+    for dirname in sorted(os.listdir(source)):
         dirpath = Path(source, dirname)
 
         for filename in sorted(os.listdir(dirpath)):
