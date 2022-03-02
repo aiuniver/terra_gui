@@ -179,13 +179,13 @@ class Exchange:
         dataset_source(SourceData(mode=mode, value=value), kwargs)
 
     def _call_dataset_source_segmentation_classes_auto_search(
-        self, path: Path, num_classes: int, mask_range: int
+        self, source: Path, path: List[str], num_classes: int, mask_range: int
     ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
         """
         return datasets_utils.get_classes_autosearch(
-            path, num_classes, mask_range
+            source, path, num_classes, mask_range
         ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:

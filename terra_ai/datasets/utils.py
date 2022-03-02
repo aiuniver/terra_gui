@@ -10,12 +10,17 @@ import xml.etree.ElementTree as Et
 
 from PIL import Image
 from ast import literal_eval
-from itertools import product
+from typing import List
 from pathlib import Path
+from itertools import product
 from sklearn.cluster import KMeans
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, LayerHandlerChoice
+from terra_ai.data.datasets.extra import (
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
+    LayerHandlerChoice,
+)
 from terra_ai.settings import DATASET_ANNOTATION
 from terra_ai.datasets.data import AnnotationClassesList
 from terra_ai.utils import decamelize
@@ -44,7 +49,7 @@ def _get_annotation_class(name: str, color: str):
 
 
 def get_classes_autosearch(
-    path: Path, num_classes: int, mask_range: int
+    source: Path, path: List[str], num_classes: int, mask_range: int
 ) -> AnnotationClassesList:
     def _rgb_in_range(rgb: tuple, target: tuple) -> bool:
         _range0 = range(target[0] - mask_range, target[0] + mask_range)
@@ -54,40 +59,43 @@ def get_classes_autosearch(
 
     annotations = AnnotationClassesList()
 
-    for filename in sorted(os.listdir(path)):
-        if len(annotations) >= num_classes:
-            break
+    for dirname in sorted(os.listdir()):
+        dirpath = Path(source, dirname)
 
-        filepath = Path(path, filename)
+        for filename in sorted(os.listdir(dirpath)):
+            if len(annotations) >= num_classes:
+                break
 
-        try:
-            image = load_img(filepath)
-        except Exception:
-            continue
+            filepath = Path(dirpath, filename)
 
-        array = img_to_array(image).astype("uint8")
-        np_data = array.reshape(-1, 3)
-        km = KMeans(n_clusters=num_classes)
-        km.fit(np_data)
-
-        cluster_centers = (
-            np.round(km.cluster_centers_)
-            .astype("uint8")[: max(km.labels_) + 1]
-            .tolist()
-        )
-
-        for index, rgb in enumerate(cluster_centers, 1):
-            if tuple(rgb) in annotations.colors_as_rgb_list:
+            try:
+                image = load_img(filepath)
+            except Exception:
                 continue
 
-            add_condition = True
-            for rgb_target in annotations.colors_as_rgb_list:
-                if _rgb_in_range(tuple(rgb), rgb_target):
-                    add_condition = False
-                    break
+            array = img_to_array(image).astype("uint8")
+            np_data = array.reshape(-1, 3)
+            km = KMeans(n_clusters=num_classes)
+            km.fit(np_data)
 
-            if add_condition:
-                annotations.append(_get_annotation_class(index, rgb))
+            cluster_centers = (
+                np.round(km.cluster_centers_)
+                .astype("uint8")[: max(km.labels_) + 1]
+                .tolist()
+            )
+
+            for index, rgb in enumerate(cluster_centers, 1):
+                if tuple(rgb) in annotations.colors_as_rgb_list:
+                    continue
+
+                add_condition = True
+                for rgb_target in annotations.colors_as_rgb_list:
+                    if _rgb_in_range(tuple(rgb), rgb_target):
+                        add_condition = False
+                        break
+
+                if add_condition:
+                    annotations.append(_get_annotation_class(index, rgb))
 
     return annotations
 
@@ -677,6 +685,7 @@ def resize_bboxes(frame_mode, coords, orig_x, orig_y, target_x=416, target_y=416
 #
 #     return real_boxes
 
+
 def get_image_size(path):
 
     img = Image.open(path)
@@ -688,8 +697,10 @@ def get_od_names(version_data, source_path, version_path_data):
 
     names_list = []
     for handler in version_data.outputs:
-        if handler.type == 'handler' and \
-                handler.parameters.type in [LayerHandlerChoice.YoloV3, LayerHandlerChoice.YoloV4]:
+        if handler.type == "handler" and handler.parameters.type in [
+            LayerHandlerChoice.YoloV3,
+            LayerHandlerChoice.YoloV4,
+        ]:
             ann_path = version_data.outputs.get(handler.bind.up[0]).parameters.data[0]
             if handler.parameters.options.model_type in [
                 LayerODDatasetTypeChoice.Yolov1,
@@ -704,7 +715,11 @@ def get_od_names(version_data, source_path, version_path_data):
                     os.path.join(version_data.version_path_data, ann_path)
                 ):
                     json_data = json.load(
-                        open(os.path.join(version_data.version_path_data, ann_path, js_file))
+                        open(
+                            os.path.join(
+                                version_data.version_path_data, ann_path, js_file
+                            )
+                        )
                     )
 
                 names_list = [0 for i in json_data["categories"]]
@@ -729,7 +744,9 @@ def get_od_names(version_data, source_path, version_path_data):
                     xml.close()
                 names_list = sorted(set(names_list))
 
-            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Kitti:
+            elif (
+                handler.parameters.options.model_type == LayerODDatasetTypeChoice.Kitti
+            ):
                 (dir_path, dir_names, filenames) = next(
                     os.walk(
                         os.path.abspath(
@@ -745,7 +762,10 @@ def get_od_names(version_data, source_path, version_path_data):
                     txt.close()
                 names_list = sorted(set(names_list))
 
-            elif handler.parameters.options.model_type == LayerODDatasetTypeChoice.Udacity:
+            elif (
+                handler.parameters.options.model_type
+                == LayerODDatasetTypeChoice.Udacity
+            ):
                 for i in os.listdir(version_path_data):
                     if i.endswith(".csv"):
                         raw_f = open(
