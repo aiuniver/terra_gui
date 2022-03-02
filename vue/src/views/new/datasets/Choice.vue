@@ -62,7 +62,8 @@ export default {
     tID: null,
     selectedSet: {},
     selectedVersion: {},
-    selectedTag: {}
+    selectedTag: {},
+    versionTID: null
   }),
   computed: {
     ...mapGetters({
@@ -103,10 +104,19 @@ export default {
       } })
       if (res.success) {
         this.$store.dispatch('settings/setOverlay', true)
-        await this.$store.dispatch('projects/get')
-        this.$router.push('/create')
-        this.$store.dispatch('settings/setOverlay', false)
+        this.versionProgress()
       }
+    },
+    versionProgress() {
+      this.versionTID = setInterval(async () => {
+        const res = await this.$store.dispatch('datasets/versionProgress')
+        if (res.data?.finished) {
+          clearInterval(this.versionTID)
+          await this.$store.dispatch('projects/get')
+          this.$router.push('/create')
+          this.$store.dispatch('settings/setOverlay', false)
+        }
+      }, 1000)
     },
     getDate(val) {
       if (!val) return ''

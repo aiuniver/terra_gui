@@ -165,6 +165,9 @@ export default {
       dispatch('resetDatasets', {});
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
+    async versionProgress ({ dispatch }) {
+      return await dispatch('axios', { url: '/datasets/create/version/progress/' }, { root: true });
+    },
 
     async classesAnnotation ({ dispatch, state: { sourcePath } }) {
       const data = { path: sourcePath }
@@ -185,35 +188,6 @@ export default {
     async validateDatasetOrModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/common/validate-dataset-model/', data }, { root: true });
     },
-    // async get ({ dispatch, commit, rootState }) {
-    //   const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
-    //   if (!data) {
-    //     return;
-    //   }
-    //   let datasets = [];
-    //   let tags = [];
-    //   const selectDataset = rootState.projects.project.dataset?.alias;
-
-    //   data.forEach(function ({ datasets: preDataset, tags: preTags, alias }) {
-    //     const tempDataset = preDataset.map(dataset => {
-    //       return { ...dataset, group: alias, active: dataset.alias === selectDataset };
-    //     });
-    //     datasets = [...datasets, ...tempDataset];
-    //     const tempTags = preTags.filter(tag => {
-    //       const isTrue = tags.filter(({ alias }) => {
-    //         return alias === tag.alias;
-    //       });
-    //       return !isTrue.length;
-    //     });
-    //     tags = [...tags, ...tempTags];
-    //   });
-
-    //   tags = tags.map(tag => {
-    //     return { active: false, ...tag };
-    //   });
-    //   commit('SET_DATASETS', datasets);
-    //   commit('SET_TAGS', tags);
-    // },
     async get({ dispatch, commit }) {
       const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true })
       const datasets = []

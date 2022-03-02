@@ -112,7 +112,6 @@ export default {
         })
         .then(res => {
           if (res) {
-            console.log(dataset);
             if (!dataset.training_available) return;
             if (!this.isLoaded(dataset)) {
               this.choice(dataset);

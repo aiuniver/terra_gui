@@ -70,7 +70,10 @@ export default {
       blockSelect: 'create/main',
     }),
     async onValidate(type) {
-      return await this.datasetValidate(type);
+      this.$store.dispatch('settings/setOverlay', true)
+      const errors = await this.datasetValidate(type)
+      this.$store.dispatch('settings/setOverlay', false)
+      return errors
     },
     async onNext() {
       let errors = {};
