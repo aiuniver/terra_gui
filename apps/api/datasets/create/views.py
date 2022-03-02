@@ -7,16 +7,6 @@ from apps.api.base import BaseAPIView, BaseResponseSuccess
 from . import serializers
 
 
-class VersionAPIView(BaseAPIView):
-    @decorators.serialize_data(serializers.VersionSerializer)
-    def post(self, request, serializer, **kwargs):
-        data = self.terra_exchange(
-            "dataset_create_version", **serializer.validated_data
-        )
-        request.project.set_dataset_creation(data)
-        return BaseResponseSuccess()
-
-
 class CreateAPIView(BaseAPIView):
     @decorators.serialize_data(serializers.CreateSerializer)
     def post(self, request, serializer, **kwargs):

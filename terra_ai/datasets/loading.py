@@ -21,7 +21,6 @@ from terra_ai.exceptions.datasets import (
     DatasetSourceLoadUndefinedMethodException,
     DatasetChoiceUndefinedMethodException,
 )
-from terra_ai.data.training.extra import ArchitectureChoice
 from terra_ai.utils import get_tempdir
 from terra_ai.progress import utils as progress_utils
 
@@ -403,3 +402,26 @@ def multiload_no_thread(
 @progress.threading
 def multiload(progress_name: str, datasets_load_data: List[DatasetLoadData], **kwargs):
     multiload_no_thread(progress_name, datasets_load_data, **kwargs)
+
+
+@progress.threading
+def create_version(alias: str, extra: dict):
+    progress_name = "create_version"
+    progress.pool.reset(progress_name, message=DOWNLOAD_SOURCE_TITLE)
+    zipfile_path = Path(
+        settings.TERRA_PATH.datasets, f"{alias}.{settings.DATASET_EXT}", "sources.zip"
+    )
+    try:
+        zip_destination = progress_utils.unpack(
+            progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
+        )
+        mode_folder = Path(settings.DATASETS_SOURCE_DIR, "dataset", alias)
+        os.makedirs(mode_folder, exist_ok=True)
+        shutil.rmtree(mode_folder, ignore_errors=True)
+        shutil.move(zip_destination, mode_folder)
+        extra.update(
+            {"source": {"mode": "Dataset", "value": alias, "path": mode_folder}}
+        )
+        progress.pool(progress_name, finished=True, data=extra)
+    except Exception as error:
+        progress.pool(progress_name, finished=True, error=error)

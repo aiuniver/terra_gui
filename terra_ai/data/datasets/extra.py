@@ -14,6 +14,8 @@ class SourceModeChoice(str, Enum):
     "Использовать путь к архиву в папке Google-диска"
     URL = "URL"
     "Использовать ссылку на архив"
+    Dataset = "Dataset"
+    "Из загруженного датасета"
 
     @staticmethod
     def values() -> list:

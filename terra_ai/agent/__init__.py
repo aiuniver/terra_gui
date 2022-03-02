@@ -61,6 +61,7 @@ from terra_ai.datasets import utils as datasets_utils
 from terra_ai.datasets.creating import CreateDataset, CreateVersion
 from terra_ai.datasets.validation import DatasetCreationValidate
 from terra_ai.datasets.loading import (
+    create_version,
     source as dataset_source,
     choice as dataset_choice,
     multiload as dataset_multiload,
@@ -195,7 +196,7 @@ class Exchange:
 
     def _call_dataset_create_version(
         self, group: str, alias: str, version: Optional[str] = None
-    ) -> CreationData:
+    ):
         """
         Создание версии датасета
         """
@@ -232,7 +233,7 @@ class Exchange:
                 "version": version_config,
             }
         )
-        return CreationData(**dataset_config)
+        create_version(alias, dataset_config)
 
     def _call_dataset_create(self, creation_data: CreationData):
         """

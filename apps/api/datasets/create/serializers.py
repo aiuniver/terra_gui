@@ -6,16 +6,9 @@ from rest_framework import serializers
 from terra_ai.data.datasets.extra import (
     LayerTypeChoice,
     LayerGroupChoice,
-    DatasetGroupChoice,
     SourceModeChoice,
 )
 from terra_ai.data.training.extra import ArchitectureChoice
-
-
-class VersionSerializer(serializers.Serializer):
-    group = serializers.ChoiceField(choices=DatasetGroupChoice.values())
-    alias = serializers.CharField()
-    version = serializers.CharField(required=False, allow_blank=True)
 
 
 class CreateInfoPartSerializer(serializers.Serializer):
