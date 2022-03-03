@@ -1,10 +1,5 @@
 <template>
   <div>
-<<<<<<< HEAD
-    <template v-for="(data, index) of formsHandler">
-      <TAutoFieldHandler v-bind="data" :parameters="{}" :key="index" :idKey="'key_' + index" root @change="change" />
-    </template>
-=======
     <div class="panel-input__forms">
       <t-field label="Название">
         <d-input-text :value="name" @change="onChangeBlock"></d-input-text>
@@ -14,20 +9,10 @@
       </template>
     </div>
     {{ selected }}
->>>>>>> dev_dataset
   </div>
 </template>
 
 <script>
-<<<<<<< HEAD
-import { mapGetters } from 'vuex';
-import TAutoFieldHandler from '@/components/new/blocks/TAutoFieldHandler';
-
-export default {
-  components: {
-    TAutoFieldHandler
-  },
-=======
 import { mapActions } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 export default {
@@ -45,7 +30,6 @@ export default {
   data: () => ({
     debounce: null,
   }),
->>>>>>> dev_dataset
   computed: {
     parameters() {
       return this?.selected?.parameters || {};

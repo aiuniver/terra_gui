@@ -1,10 +1,6 @@
 {
   "name": "vue_neural",
-<<<<<<< HEAD
-  "version": "0.10.145",
-=======
-  "version": "0.10.188",
->>>>>>> dev_dataset
+  "version": "0.10.189",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
