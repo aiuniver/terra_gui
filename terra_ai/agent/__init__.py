@@ -244,7 +244,6 @@ class Exchange:
             creation_class = CreateDataset
         else:
             creation_class = CreateVersion
-        logger.info(f"Create dataset with class: {creation_class}")
         creation_class(creation_data)
 
     def _call_dataset_create_validate(
