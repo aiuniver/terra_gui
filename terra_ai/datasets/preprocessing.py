@@ -153,15 +153,13 @@ class CreatePreprocessing(object):
             Объект Токенайзер.
 
         """
-        tokenizer = None
-        if options.get('put_type') == 'text':
-            tokenizer = Tokenizer(**{'num_words': options['max_words_count'],
-                                     'filters': options['filters'],
-                                     'lower': False,
-                                     'split': ' ',
-                                     'char_level': False,
-                                     'oov_token': '<UNK>'})
-            tokenizer.fit_on_texts(text_list)
+        tokenizer = Tokenizer(**{'num_words': options['max_words_count'],
+                                 'filters': options['filters'],
+                                 'lower': False,
+                                 'split': ' ',
+                                 'char_level': False,
+                                 'oov_token': '<UNK>'})
+        tokenizer.fit_on_texts(text_list)
 
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}
