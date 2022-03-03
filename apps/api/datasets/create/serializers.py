@@ -54,6 +54,8 @@ class CreateSerializer(serializers.Serializer):
     source = CreateSourceSerializer()
     architecture = serializers.ChoiceField(choices=ArchitectureChoice.values())
     tags = serializers.ListSerializer(child=serializers.CharField(), default=[])
+    first_creation = serializers.BooleanField(default=True)
+    stage = serializers.IntegerField(min_value=1)
     version = CreateVersionSerializer()
 
     def get_alias(self, data):
