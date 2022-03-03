@@ -6,8 +6,9 @@ from PIL import UnidentifiedImageError
 from pydantic.color import Color
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Any
-
 from .base import Array
+
+from terra_ai.datasets.utils import resize_frame
 
 
 class SegmentationArray(Array):
@@ -34,6 +35,7 @@ class SegmentationArray(Array):
         instructions = {'instructions': paths_list if paths_list else image_list,
                         'parameters': {'mask_range': options['mask_range'],
                                        'num_classes': len(options['classes_names']),
+                                       'image_mode': options['image_mode'],
                                        'height': options['height'],
                                        'width': options['width'],
                                        'classes_colors': [Color(color).as_rgb_tuple() for color in
@@ -48,9 +50,8 @@ class SegmentationArray(Array):
 
     def create(self, source: Any, **options):
 
-        img = load_img(path=source, target_size=(options['height'], options['width']))
+        img = load_img(source)  # , target_size=(options['height'], options['width']))
         array = np.array(img)
-        array = self.image_to_ohe(array, **options)
 
         instructions = {'instructions': array,
                         'parameters': options}
@@ -58,6 +59,12 @@ class SegmentationArray(Array):
         return instructions
 
     def preprocess(self, array: np.ndarray, **options):
+
+        array = resize_frame(image_array=array,
+                             target_shape=(options['height'], options['width']),
+                             frame_mode=options['image_mode'])
+
+        array = self.image_to_ohe(array, **options)
 
         return array
 
