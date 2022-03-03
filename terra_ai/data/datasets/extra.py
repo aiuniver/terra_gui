@@ -371,4 +371,5 @@ class LayerHandlerChoice(str, Enum):
             LayerHandlerChoice.Tracker,
             LayerHandlerChoice.Transformer,
             LayerHandlerChoice.TextTransformer,
+            LayerHandlerChoice.Image,
         ]
