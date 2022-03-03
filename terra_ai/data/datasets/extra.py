@@ -220,6 +220,12 @@ class LayerEncodingChoice(str, Enum):
     multi = "multi"
 
 
+class LayerColTypeChoice(str, Enum):
+    str = "str"
+    int = "int"
+    float = "float"
+
+
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"

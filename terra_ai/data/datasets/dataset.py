@@ -18,6 +18,7 @@ from terra_ai.data.datasets.extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
     LayerEncodingChoice,
+    LayerColTypeChoice,
 )
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.extra import LayerTypeChoice, LayerGroupChoice
@@ -45,7 +46,7 @@ class DatasetLayerData(BaseMixinData):
     name: str
     datatype: str
     dtype: str
-    col_type: Optional[Any]
+    col_type: Optional[LayerColTypeChoice]
     shape: Tuple[PositiveInt, ...]
     num_classes: Optional[PositiveInt]
     classes_names: Optional[List[str]]
