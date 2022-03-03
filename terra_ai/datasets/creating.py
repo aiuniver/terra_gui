@@ -639,10 +639,8 @@ class CreateVersion(object):
                 'columns': self.columns
                 }
 
-        with h5py.File(self.version_paths_data.arrays.joinpath('dataset.h5'), 'r') as hdf:
-            for part in hdf.keys():
-                for idx in hdf[part].keys():
-                    data['length'][part] = len(hdf[part][idx])
+        for part in self.dataframe.keys():
+            data['length'][part] = len(self.dataframe[part])
 
         with open(self.parent_dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
                       .joinpath(DATASET_VERSION_CONFIG), 'w') as fp:

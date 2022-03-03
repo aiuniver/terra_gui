@@ -2659,7 +2659,9 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Classification",
-                    "options": {},
+                    "options": {
+                        "type_processing": "categorical"
+                    },
                 },
             },
             {
@@ -2885,7 +2887,9 @@ DatasetCreationArchitecture = {
                 "position": [-75, -30],
                 "parameters": {
                     "type": "Classification",
-                    "options": {},
+                    "options": {
+                        "type_processing": "categorical"
+                    },
                 },
             },
             {
@@ -2957,6 +2961,8 @@ DatasetCreationArchitecture = {
                     "type": "Regression",
                     "options": {
                         "scaler": "min_max_scaler",
+                        "min_scaler": 0,
+                        "max_scaler": 1
                     },
                 },
             },
@@ -3030,7 +3036,7 @@ DatasetCreationArchitecture = {
                 "parameters": {
                     "type": "Segmentation",
                     "options": {
-                        "mask_range": 1,
+                        "mask_range": 10,
                         "classes_colors": [[0, 0, 0]],
                         "classes_names": ["Название класса"]
                     },

@@ -224,6 +224,9 @@ class LayerColTypeChoice(str, Enum):
     str = "str"
     int = "int"
     float = "float"
+    list = "list"
+    tuple = "tuple"
+    NoneType = "NoneType"
 
 
 class DatasetGroupChoice(str, Enum):
