@@ -67,7 +67,6 @@ export default {
     },
     create() {
       const el = this.$el.getElementsByClassName('d-tags__add--input')?.[0];
-      console.log(el.value);
       if (el.value && el.value.length >= 3 && this.tags.length <= 3) {
         this.tags.push(el.value);
         this.tags = [...this.tags];
@@ -76,7 +75,6 @@ export default {
     },
     change(e) {
       const index = e.target.dataset.index;
-      console.log(index);
       if (e.target.value.length >= 3) {
         this.tags[+index].name = e.target.value;
       }
@@ -154,14 +152,15 @@ export default {
       position: absolute;
       height: 12px;
       width: 12px;
-      top: 40%;
+      top: 50%;
       right: 5px;
       cursor: pointer;
-      transform: rotate(45deg);
+      transform: translateY(-50%) rotate(45deg);
     }
   }
   &__input {
     padding: 0 10px 0 5px;
+    height: 100%;
   }
   &__item {
     position: relative;
@@ -187,13 +186,15 @@ export default {
     width: 90px;
     padding: 2px 4px;
     box-shadow: none;
-    border-color: #6c7883;
     color: #a7bed3;
     display: flex;
     align-items: center;
     &--icon {
       height: 16px;
       width: 16px;
+    }
+    &:hover {
+      border-color: #65B9F4;
     }
     &--input {
       height: 40px;
@@ -221,6 +222,13 @@ export default {
       font-weight: normal;
       line-height: 24px;
     }
+  }
+}
+
+input {
+  border-color: #65B9F4;
+  &:hover, &:focus {
+    border-color: #65B9F4;
   }
 }
 </style>

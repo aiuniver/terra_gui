@@ -236,6 +236,7 @@ export default {
     width: 250px;
     border-right: 1px solid $color-black;
     padding-top: 18px;
+    flex-shrink: 0;
     hr {
       border: none;
       border-bottom: 1px solid $color-dark-gray;
