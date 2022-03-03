@@ -1,9 +1,9 @@
 
 const types = [
-  { type: 'data', color: '#ffda60', typeBlock: 'input' },
-  { type: 'handler', color: '#45CF81', typeBlock: 'middle' },
-  { type: 'input', color: '#FFAC60', typeBlock: 'output' },
-  { type: 'output', color: '#7984D7', typeBlock: 'output' },
+  { type: 'data', color: '#ffda60', typeBlock: 'input', name: 'Данные' },
+  { type: 'handler', color: '#45CF81', typeBlock: 'middle', name: 'Обработчик' },
+  { type: 'input', color: '#FFAC60', typeBlock: 'output', name: 'Вход' },
+  { type: 'output', color: '#7984D7', typeBlock: 'output', name: 'Выход' },
 ]
 
 
