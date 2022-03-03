@@ -58,7 +58,7 @@ const createObj = (data) => {
     source,
     architecture,
     tags,
-    firstCreation,
+    first_creation: firstCreation,
     version: {
       name: verName,
       info: {
