@@ -37,8 +37,9 @@ class CascadeRunner:
         logger.info("Запуск сборки каскада", extra={"type": "info"})
         weight_path = self._add_deepsort_weight_path(cascade_data=cascade_data)
         save_path = os.path.join(str(DEPLOY_PATH), 'deploy_presets')
-        cascade = Cascade(**cascade_data.native(), model_path=training_path,
-                          weight_path=weight_path, save_path=save_path)
+
+        with open(os.path.join(str(DEPLOY_PATH), 'config.cascade'), 'w', encoding='utf-8') as config:
+            json.dump(cascade_data.native(), config)
 
         progress.pool.reset("cascade_start", message="Начало работы каскада...", percent=0, finished=False)
 
@@ -55,6 +56,9 @@ class CascadeRunner:
                                           f"Будет обработано {len(sources)} примеров."
                            })
             example_count = len(sources)
+
+        cascade = Cascade(**cascade_data.native(), model_path=training_path,
+                          weight_path=weight_path, save_path=save_path, examples=example_count)
         # method_name = "start cascade"
         # logger.info("Запуск сборки каскада", extra={"type": "info"})
         # config = CascadeCreator()
@@ -100,16 +104,23 @@ class CascadeRunner:
                 res = cascade.execute([
                     source],
                     f"F:\\test_result\\test_{i}")
+                # print(res)
+                # print('CASCADE_DATA ', list(res.values())[0])
                 out_data.append(res)
-                i += 1
+                # out_data.append({
+                #         "source": source,
+                #         "actual": None,
+                #         "data": list(res.values())[0][0].get('classes_list')[0]
+                #     })
+                # i += 1
 
             # print(out_data)
-            # out_data = dict([
-            #     ("path_deploy", str(DEPLOY_PATH)),
-            #     ("type", type_),
-            #     ("data", presets_data)
-            # ])
-            #
+            out_data = dict([
+                ("path_deploy", str(DEPLOY_PATH)),
+                ("type", type_),
+                ("data", out_data)
+            ])
+            presets_path = os.path.join(DEPLOY_PATH, "deploy_presets")
             # with open(os.path.join(presets_path, "presets_config.json"), "w", encoding="utf-8") as config:
             #     json.dump(out_data, config)
 

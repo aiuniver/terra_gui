@@ -313,7 +313,7 @@ class PlotBboxes(BaseFunction):
         img_array = result.get('image_array')
         img_path = result.get('source')
         pred_bb = result.get('bboxes')
-        print(len(pred_bb))
+
         image = Image.open(img_path) if img_path else Image.fromarray(img_array)
 
         real_size = image.size
@@ -340,7 +340,7 @@ class PlotBboxes(BaseFunction):
                 del draw
 
         data = {
-            'array': image_pred if image_pred else image,
+            'model_predict': image_pred if image_pred else image,
             'save_path': self.save_path
         }
 

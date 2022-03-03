@@ -1,5 +1,6 @@
 import colorsys
 import os.path
+import random
 import uuid
 
 import numpy as np
@@ -255,8 +256,11 @@ class SaveAudioOut(BaseBlock):
     data_type = 'initial_file'
 
     def execute(self, **kwargs):
-        source = kwargs.get('source').get('1').get('1_audio')[0]
+        source = kwargs.get('initial').get('1').get('1_audio')[0]
         save_path = kwargs.get('save_path')
+
+        if not os.path.exists(save_path) and not is_terra_file(save_path):
+            os.makedirs(save_path, exist_ok=True)
 
         path_ = save_path if is_terra_file(save_path) else os.path.join(
             save_path, f"result_{uuid.uuid4()}.{self.file_type}"
@@ -373,25 +377,41 @@ class SaveImageSegmentOut(RGBMaskOut):
         return path_
 
 
-class SaveBboxesImgOut(SaveImgOut):
+class SaveImgFromArrayOut(SaveImgOut):
 
-    front_name = 'Файл изображения с наложенными BBoxes'
+    front_name = 'Файл изображения из массива'
     data_type = 'deploy_file'
 
     def execute(self, **kwargs):
-        image = kwargs.get('array')
+        image = kwargs.get('model_predict')
         save_path = kwargs.get('save_path')
-        if image:
+        examples = kwargs.get('examples')
+        if image.any():
             if not os.path.exists(save_path) and not is_terra_file(save_path):
                 os.makedirs(save_path, exist_ok=True)
 
             path_ = save_path if is_terra_file(save_path) else os.path.join(
                 save_path, f"result_{uuid.uuid4()}.{self.file_type}"
             )
-            image.save(path_, f"{self.file_type}")
-
-            return path_
+            if examples:
+                try:
+                    print(image[random.randint(0, examples)].shape, '\n', image[random.randint(0, examples)])
+                    image_ = (image[random.randint(0, examples)] * 255).astype(dtype=np.uint8)
+                    image_ = Image.fromarray(image_)
+                    image_.save(path_, f"{self.file_type}")
+                    return path_
+                except Exception as e:
+                    print(e)
+                    raise e
         return
+
+
+class TinkoffOnceResult(SaveTextOut):
+    front_name = 'Первый результат из TinkoffAPI'
+    data_type = 'source'
+
+    def execute(self, **kwargs):
+        return kwargs.get('tinkoff_first')
 
 
 class GetText(ClassificationOut):
@@ -416,11 +436,42 @@ class GetText(ClassificationOut):
         return output
 
 
+class SaveClassificationText(ClassificationOut):
+
+    front_name = 'Файл результатов классификации'
+    file_type = 'txt'
+    data_type = 'save_classification'
+
+    def execute(self, **kwargs):
+        result = super().execute(**kwargs)
+        save_path = kwargs.get('save_path')
+
+        output = []
+        if isinstance(result, list):
+            for result_ in result:
+                while len(result_) == 1:
+                    result_ = result_[0]
+                output_ = ', '.join([f"{elem[0]} - {elem[1]} %" for elem in result_])
+                output.append(output_)
+        else:
+            output = ', '.join([f"{elem[0]} - {elem[1]} %" for elem in result])
+        print(output)
+        if not os.path.exists(save_path) and not is_terra_file(save_path):
+            os.makedirs(save_path, exist_ok=True)
+
+        path_ = save_path if is_terra_file(save_path) else os.path.join(
+            save_path, f"predict.{self.file_type}"
+        )
+        with open(path_, 'a', encoding='utf-8') as text:
+            text.write(f'{str([list(result_) for result_ in result[0]])}\n')
+        return path_
+
+
 class ModelOutput(CascadeBlock):
     ImageClassification = [EmptyOut, ImageArrayOut, NativeOut, ClassificationOut, SaveImgOut, GetText]
     ImageSegmentation = [EmptyOut, ImageArrayOut, SegmentationNativeOut, RGBMaskOut,
                          ImageSegmentationOut, SaveImgOut, SaveImageSegmentOut]
-    TextClassification = [EmptyOut, TextArrayOut, NativeOut, ClassificationOut, SaveTextOut, GetText]
+    TextClassification = [EmptyOut, TextArrayOut, NativeOut, ClassificationOut, SaveTextOut, SaveClassificationText]
     TextSegmentation = [EmptyOut, TextArrayOut, TextSegmentationNativeOut,
                         TextSegmentationOut, SaveTextOut, SaveTextSegmentationOut]
     TextTransformer = [EmptyOut, TextArrayOut, NativeOut, SaveTextOut]
@@ -435,10 +486,11 @@ class ModelOutput(CascadeBlock):
     Tracker = [EmptyOut, NativeOut,]
     Speech2Text = [EmptyOut, NativeOut, SaveAudioOut]
     Text2Speech = [EmptyOut, NativeOut, SaveAudioOut, SaveTextOut]
-    ImageGAN = [EmptyOut, NativeOut,]
+    TinkoffAPI = [EmptyOut, NativeOut, SaveAudioOut, TinkoffOnceResult]
+    ImageGAN = [EmptyOut, ImageArrayOut, SaveImgFromArrayOut]
     ImageCGAN = [EmptyOut, NativeOut,]
-    TextToImageGAN = [EmptyOut, NativeOut,]
+    TextToImageGAN = [EmptyOut, ImageArrayOut, SaveImgFromArrayOut]
     ImageToImageGAN = [EmptyOut, NativeOut,]
-    PlotBboxes = [ImageArrayOut, SaveBboxesImgOut, BboxesArrayOut]
-    YoloV5 = [EmptyOut, SaveBboxesImgOut, BboxesArrayOut, InputImageArrayOut]
+    PlotBboxes = [ImageArrayOut, SaveImgFromArrayOut, BboxesArrayOut]
+    YoloV5 = [EmptyOut, SaveImgFromArrayOut, BboxesArrayOut, InputImageArrayOut]
     DeepSort = [InputImageArrayOut, BboxesArrayOut]

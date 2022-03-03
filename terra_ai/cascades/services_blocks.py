@@ -19,7 +19,7 @@ from gtts import gTTS
 from scipy.spatial.distance import cosine
 from PIL import Image
 
-from .common import _associate_detections_to_trackers, _non_max_suppression
+from .common import _associate_detections_to_trackers, _non_max_suppression, get_sources
 from .advansed_services import _SpeechToTextStub, _KalmanBoxTracker
 from .function_blocks import ChangeSize
 from .input_blocks import Input, BaseInput
@@ -110,7 +110,17 @@ class TinkoffAPI(BaseService):
             for alternative in result.alternatives:
                 tinkoff_res += '\n' + ch + alternative.transcript
 
-        return tinkoff_res
+        data = {
+            'source': get_sources(self.inputs) if issubclass(list(self.inputs.values())[0].__class__,
+                                                         BaseInput) else source,
+            'initial': get_sources(self.inputs) if issubclass(list(self.inputs.values())[0].__class__,
+                                                          BaseInput) else source,
+            'model_predict': tinkoff_res,
+            'tinkoff_first': response.results[0].alternatives[0].transcript,
+            'save_path': self.save_path
+        }
+
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
     @staticmethod
     def _build_request(path: str, max_alternatives: int, do_not_perform_vad: bool, profanity_filter: bool,
@@ -230,7 +240,7 @@ class YoloV5(BaseService):
             render_array = out.render()[0]
 
         data = {
-            'array': render_array,
+            'model_predict': render_array,
             'bboxes': out.xyxy[0].cpu().numpy(),
             'source': out_source,
             'image_array': frame
@@ -260,9 +270,7 @@ class DeepSort(BaseService):
 
     def set_path(self, model_path: str, save_path: str, weight_path: str):
         self.path = weight_path
-        print(self.path)
         self.extractor = _Extractor(self.path)
-        print(self.extractor)
 
     def execute(self):
         result = list(self.inputs.values())[0].execute()

@@ -617,3 +617,36 @@ def _cosine_distance(a, b, data_is_normalized=False):
         a = np.asarray(a) / np.linalg.norm(a, axis=1, keepdims=True)
         b = np.asarray(b) / np.linalg.norm(b, axis=1, keepdims=True)
     return 1. - np.dot(a, b.T)
+
+
+def get_sources(inputs):
+    source = {}
+    step = 1
+    if 'Audio' in inputs.keys():
+        for i in range(1, 4):
+            source.update({
+                str(i): {
+                    f'{i}_audio': [list(inputs.values())[0].execute()]
+                }
+            })
+    else:
+        for type_, input_ in inputs.items():
+            if type_ == 'TinkoffAPI':
+                type_ = 'text'
+                result = input_.execute().get('source')
+                source = {
+                    str(step): {
+                        f"{step}_{type_.lower()}": [result] if isinstance(result, str) else result
+                    }
+                }
+                break
+            if type_.lower() == 'cropimage':
+                type_ = 'image'
+            result = input_.execute()
+            source.update({
+                str(step): {
+                    f"{step}_{type_.lower()}": [result] if isinstance(result, str) else result
+                }
+            })
+            step += 1
+    return source

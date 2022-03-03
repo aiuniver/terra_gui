@@ -27,10 +27,12 @@ class BlockClasses:
                 block_type = "VideoFrameInput"
         if group == BlockClasses.Model:
             block_object = group().get(type_=block_type, **block_config.get("parameters").get("main"))
-            block_object.set_path(model_path=model_path, save_path='', weight_path='')
+            block_object.set_path(model_path=model_path, save_path='', weight_path='', examples=0)
             block_object.get_outputs()
             if 'yolo' in block_object.model_architecture:
                 block_type = 'yolo'
+            if block_object.model_architecture == 'imagegan':
+                block_type = 'imagegan'
             del block_object
         block_object = group().get(type_=block_type, **block_config.get("parameters").get("main"))
         return block_object
@@ -43,7 +45,7 @@ class BlockClasses:
         return None
 
     @staticmethod
-    def get(cascade_config: dict, model_path=None, save_path=None, weight_path=None):
+    def get(cascade_config: dict, model_path=None, save_path=None, weight_path=None, examples=1):
         cascade_blocks = cascade_config.get("blocks", [])
         blocks_ = {"output": []}
 
@@ -66,15 +68,15 @@ class BlockClasses:
 
         for idx, block in blocks_.items():
             if issubclass(block.__class__, (BaseModel, BaseService, PlotBboxes)):
-                block.set_path(model_path=model_path, save_path=save_path, weight_path=weight_path)
+                block.set_path(model_path=model_path, save_path=save_path, weight_path=weight_path, examples=examples)
 
         return blocks_
 
 
 class Cascade:
-    def __init__(self, model_path=None, save_path=None, weight_path=None, **config):
+    def __init__(self, model_path=None, save_path=None, weight_path=None, examples=1, **config):
         self.blocks = BlockClasses.get(cascade_config=config, model_path=model_path,
-                                       save_path=save_path, weight_path=weight_path)
+                                       save_path=save_path, weight_path=weight_path, examples=examples)
         self.input_block = self.blocks.get(self.blocks["input"])
         self.output_block = {output: self.blocks.get(output) for output in self.blocks.get("output")}
 

@@ -68,25 +68,27 @@ class CascadeValidator:
                 #                                       dataset_data_type, block.parameters.main.type
                 #                                   )))
                 if block.parameters.main.type != model_data_type:
-                    if block.parameters.main.type == LayerInputTypeChoice.Video and \
-                            block.parameters.main.switch_on_frame and model_data_type == LayerInputTypeChoice.Image:
-                        pass
-                    else:
-                        bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                      error=str(exceptions.InputDataDoesNotMatchModelDataException(
-                                                          block.parameters.main.type.value, model_data_type
-                                                      )))
+                    pass
+                    # if block.parameters.main.type == LayerInputTypeChoice.Video and \
+                    #         block.parameters.main.switch_on_frame and model_data_type == LayerInputTypeChoice.Image:
+                    #     pass
+                    # else:
+                    #     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                    #                                   error=str(exceptions.InputDataDoesNotMatchModelDataException(
+                    #                                       block.parameters.main.type.value, model_data_type
+                    #                                   )))
             elif block.group == BlockGroupChoice.OutputData:
                 if not block.bind.up or block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
                                                   error=str(exceptions.BlockNotConnectedToMainPartException()))
                 if block.parameters.main.type != model_data_type:
-                    if block.parameters.main.type == LayerInputTypeChoice.Video and \
-                            not video_by_frame and model_data_type == LayerInputTypeChoice.Image:
-                        bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                      error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
-                                                          block.parameters.main.type.value, model_data_type
-                                                      )))
+                    pass
+                    # if block.parameters.main.type == LayerInputTypeChoice.Video and \
+                    #         not video_by_frame and model_data_type == LayerInputTypeChoice.Image:
+                    #     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                    #                                   error=str(exceptions.UsedDataDoesNotMatchBlockDataException(
+                    #                                       block.parameters.main.type.value, model_data_type
+                    #                                   )))
             else:
                 if not block.bind.up or not block.bind.down:
                     bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
@@ -123,14 +125,14 @@ class CascadeValidator:
                                                               error=str(exceptions.RequiredBindException(bind)))
 
                 if checked_block.data_type and model_data_type not in checked_block.data_type:
-                    bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
-                                                  error=str(
-                                                      exceptions.BindInappropriateDataTypeException(
-                                                          checked_block.data_type,
-                                                          model_data_type
-                                                      )
-                                                  ))
-
+                    # bind_errors = self._add_error(errors=bind_errors, block_id=block.id,
+                    #                               error=str(
+                    #                                   exceptions.BindInappropriateDataTypeException(
+                    #                                       checked_block.data_type,
+                    #                                       model_data_type
+                    #                                   )
+                    #                               ))
+                    pass
                 for block_id in block.bind.up:
                     if checked_block and checked_block != BlocksBindChoice.Model:
                         if checked_block.binds and (named_map.get(block_id) not in checked_block.binds):

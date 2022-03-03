@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model, model_from_json
 from tensorflow.keras import Model as KerasModel
 from tensorflow.keras.layers import Input
 
-from .common import yolo_decode
+from .common import yolo_decode, get_sources
 from .internal_out_blocks import ModelOutput
 from .main_blocks import BaseBlock, CascadeBlock
 
@@ -33,10 +33,12 @@ class BaseModel(BaseBlock):
         self.architecture_type = None
         self.model_architecture = None
         self.outs = {}
+        self.examples = 0
 
-    def set_path(self, model_path: str, save_path: str, weight_path: str):
+    def set_path(self, model_path: str, save_path: str, weight_path: str, examples: int):
         self.path = os.path.join(model_path, self.path, 'model')
         self.save_path = save_path
+        self.examples = examples
 
     def get_outputs(self):
         if not self.model_architecture:
@@ -130,31 +132,9 @@ class BaseModel(BaseBlock):
             config = json.load(cfg)
         return config
 
-    def __get_sources(self):
-        source = {}
-        step = 1
-        if 'Audio' in self.inputs.keys():
-            for i in range(1, 4):
-                source.update({
-                    str(i): {
-                        f'{i}_audio': [list(self.inputs.values())[0].execute()]
-                    }
-                })
-        else:
-            for type_, input_ in self.inputs.items():
-                if type_.lower() == 'cropimage':
-                    type_ = 'image'
-                result = input_.execute()
-                source.update({
-                    str(step): {
-                        f"{step}_{type_.lower()}": [result] if isinstance(result, str) else result
-                    }
-                })
-                step += 1
-        return source
-
     def execute(self):
-        source = self.__get_sources()
+        source = get_sources(self.inputs)
+        print("MODEL: ", source)
         if not self.model:
             self.__set_model()
         array_class = [param_.get('task').lower() for param_ in self.config.get('columns').get('1').values()][0]
@@ -301,12 +281,124 @@ class YoloModel(BaseModel):
         return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
 
 
+class ImageGANModel(BaseModel):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def __get_json_data(path_model_json, path_custom_obj_json):
+        with open(path_model_json) as json_file:
+            data = json.load(json_file)
+
+        with open(path_custom_obj_json) as json_file:
+            custom_dict = json.load(json_file)
+
+        return data, custom_dict
+
+    @staticmethod
+    def __set_custom_objects(custom_dict):
+        custom_object = {}
+        for k, v in custom_dict.items():
+            try:
+                package_ = "terra_ai.custom_objects"
+                if not importlib.util.find_spec(v, package=package_):
+                    package_ = "custom_objects"
+                custom_object[k] = getattr(importlib.import_module(f".{v}", package=package_), k)
+            except:
+                continue
+        return custom_object
+
+    def __get_dataset_config(self):
+        dataset_path = os.path.join(self.path, "dataset.json")
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(self.path, "dataset", "config.json")
+        with open(dataset_path) as cfg:
+            config = json.load(cfg)
+        return config
+
+    def __get_sources(self):
+        noise_shape = [128]
+        noise_shape.extend(list(self.model.inputs[0].shape[1:]))
+        print(noise_shape, self.model.inputs[0])
+        noise = tf.random.normal(noise_shape)
+        print(noise_shape)
+        return noise
+
+    def __set_architecture(self):
+        self.config = self.__get_dataset_config()
+        with open(os.path.join(os.path.split(self.path)[0], 'config.json'), 'r', encoding='utf-8') as m_conf:
+            train_config = json.load(m_conf).get('base')
+        self.architecture_type = train_config.get('architecture', {}).get('type', '')
+        self.model_architecture = self.architecture_type.lower()
+        self.outs = {out.data_type: out for out in ModelOutput().get(type_=self.architecture_type)}
+
+    def __set_model(self):
+        if not self.model_architecture:
+            self.__set_architecture()
+        self.model = self.__load_model()
+
+    def __load_model(self):
+        weight = None
+        model = None
+        custom_object = None
+        model_tf_format = False
+        for i in os.listdir(self.path):
+            if 'generator_weights.data' in i:
+                weight = i.split('.')[0]
+            if i == 'generator_json.trm':
+                model = i
+            if i[-4:] == '.trm' and 'custom_obj_json' in i:
+                custom_object = i
+        print("GAN: ", self.path, model, custom_object)
+        try:
+            model_data, custom_dict = self.__get_json_data(os.path.join(self.path, model),
+                                                           os.path.join(self.path, custom_object))
+        except Exception as e:
+            print(e)
+            raise e
+        custom_object = self.__set_custom_objects(custom_dict)
+
+        model = model_from_json(model_data, custom_objects=custom_object)
+        model.load_weights(os.path.join(self.path, weight))
+
+        return model
+
+    def get_main_params(self):
+        self.__set_architecture()
+        self.__set_model()
+        return self.model, self.__get_dataset_config()
+
+    def execute(self):
+        if not self.model:
+            self.model, self.config = self.get_main_params()
+
+        array = self.__get_sources()
+        result = np.array(self.model(array))
+
+        data = {
+            'examples': self.examples,
+            'array': array,
+            'model_predict': result,
+            'options': self.config,
+            'save_path': self.save_path,
+        }
+
+        return {out.data_type: out().execute(**data) for name, out in self.outs.items()}
+
+
 class Model(CascadeBlock):
     Model = BaseModel
     YoloModel = YoloModel
+    ImageGAN = ImageGANModel
 
     def get(self, type_, **kwargs):
-        model_type = 'YoloModel' if type_ == 'yolo' else type_
+        if type_ == 'yolo':
+            model_type = 'YoloModel'
+        elif type_ == 'imagegan':
+            model_type = 'ImageGAN'
+        else:
+            model_type = type_
 
         if kwargs:
             return self.__getattribute__(model_type)(**kwargs)
