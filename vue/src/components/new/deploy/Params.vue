@@ -112,7 +112,7 @@
 import Checkbox from '@/components/new/forms/Checkbox';
 import DAutocomplete from '@/components/new/forms/DAutocomplete';
 import ModuleList from '@/components/deploy/params/ModuleList';
-import TAutoFieldCascade from '@/components/new/cascades/TAutoFieldCascade';
+import TAutoFieldCascade from '@/components/new/blocks/TAutoFieldCascade';
 import { DEPLOY_ICONS_PASSWORD, DEPLOY_COLLAPS } from '@/components/deploy/config/const-params';
 
 export default {
