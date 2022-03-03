@@ -16,7 +16,7 @@
       type="text"
       :parse="parse"
       :name="name"
-      :key="name + getValue"
+      :key="name"
       :error="error"
       inline
       @change="change"
@@ -186,6 +186,7 @@ export default {
   },
   methods: {
     change({ value, name }) {
+      console.log('sdfsdf', value, name)
       this.valueIn = null;
       this.$emit('change', { id: this.id, value, name, root: this.root });
       this.$nextTick(() => {
