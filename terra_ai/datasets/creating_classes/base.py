@@ -677,7 +677,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
-                                  'col_type': type(data_to_pass).__name__,
+                                  'col_type': type(data_to_pass[0]).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
@@ -722,7 +722,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
-                                  'col_type': type(data_to_pass).__name__,
+                                  'col_type': type(data_to_pass[0]).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
