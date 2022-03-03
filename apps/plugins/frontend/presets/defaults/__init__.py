@@ -1,27 +1,44 @@
 from terra_ai.data.modeling.layers import Layer, types as layers_types
 from terra_ai.data.modeling.extra import LayerTypeChoice
-from terra_ai.data.training.extra import ArchitectureChoice
+from terra_ai.data.training.extra import ArchitectureChoice as ArchitectureChoiceData
 
-from ...utils import prepare_pydantic_field
-from .datasets import DataSetsColumnProcessing, DataSetsInput, DataSetsOutput
-from .modeling import ModelingLayerForm, ModelingLayersTypes
-from .cascades import CascadesBlockForm, CascadesBlocksTypes
-from .deploy import DeployTypeGroup, DeployServerGroup
+from apps.plugins.frontend.utils import prepare_pydantic_field
+from apps.plugins.frontend.choices import ArchitectureChoice
+from apps.plugins.frontend.presets.defaults.datasets import (
+    BlockDataForm,
+    BlockHandlerForm,
+    BlockInputForm,
+    BlockOutputForm,
+)
+from apps.plugins.frontend.presets.defaults.modeling import (
+    ModelingLayerForm,
+    ModelingLayersTypes,
+)
+from apps.plugins.frontend.presets.defaults.cascades import (
+    CascadesBlockForm,
+    CascadesBlocksTypes,
+)
+from apps.plugins.frontend.presets.defaults.deploy import (
+    DeployTypeGroup,
+    DeployServerGroup,
+)
 
 
 Defaults = {
     "datasets": {
-        "creation": {
-            "column_processing": DataSetsColumnProcessing,
-            "input": DataSetsInput,
-            "output": DataSetsOutput,
+        "blocks": {
+            "data": BlockDataForm,
+            "handler": BlockHandlerForm,
+            "input": BlockInputForm,
+            "output": BlockOutputForm,
         },
+        "architectures": ArchitectureChoice.values(),
     },
     "modeling": {
         "layer_form": ModelingLayerForm,
         "layers_types": ModelingLayersTypes,
     },
-    "training": {"architecture": ArchitectureChoice.Basic},
+    "training": {"architecture": ArchitectureChoiceData.Basic},
     "cascades": {
         "block_form": CascadesBlockForm,
         "blocks_types": CascadesBlocksTypes,

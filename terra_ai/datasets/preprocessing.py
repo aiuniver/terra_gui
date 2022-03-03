@@ -105,9 +105,9 @@ class CreatePreprocessing(object):
                 prep_path = os.path.join(self.dataset_path, 'preprocessing', str(put), f'{col_name}.gz')
                 if os.path.isfile(prep_path):
                     preprocess_object = joblib.load(prep_path)
-                    # if repr(preprocess_object) in ['MinMaxScaler()', 'StandardScaler()']:
-                    if 'clip' not in preprocess_object.__dict__.keys():
-                        preprocess_object.clip = False
+                    if repr(preprocess_object) in ['MinMaxScaler()', 'StandardScaler()']:
+                        if 'clip' not in preprocess_object.__dict__.keys():
+                            preprocess_object.clip = False
                     self.preprocessing[put].update([(col_name, preprocess_object)])
                 else:
                     self.preprocessing[put].update([(col_name, None)])
@@ -115,7 +115,7 @@ class CreatePreprocessing(object):
     def create_scaler(self, **options):  # array=None,
 
         scaler = None
-        if options['scaler'] != 'no_scaler':
+        if options.get('scaler') and options['scaler'] != 'no_scaler':
             if options['scaler'] == 'min_max_scaler':
                 scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
             elif options['scaler'] == 'standard_scaler':

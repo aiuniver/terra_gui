@@ -40,12 +40,16 @@ export default {
         const { data: res } = await axios({ method, url: '/api/v1' + url, data });
         if (res) {
           const { error, logs, success } = res;
-          // if (success) dispatch('messages/setMessage', '');
           if (error && !success) {
             dispatch('logging/setError', error);
             dispatch('settings/setOverlay', false);
           }
           if (logs && logs.length) dispatch('logging/setLogs', logs);
+          if (res.data?.message) {
+            dispatch('messages/setProgressMessage', res.data.message, { root: true });
+            dispatch('messages/setProgress', res.data.percent, { root: true });
+          }
+          if (res.data?.finished) dispatch('messages/resetProgress', '', { root: true });
         }
         return res;
       } catch (error) {

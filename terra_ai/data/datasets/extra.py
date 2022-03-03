@@ -14,8 +14,37 @@ class SourceModeChoice(str, Enum):
     "Использовать путь к архиву в папке Google-диска"
     URL = "URL"
     "Использовать ссылку на архив"
-    Terra = "Terra"
-    "Terra"
+    Dataset = "Dataset"
+    "Из загруженного датасета"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, SourceModeChoice))
+
+
+class LayerGroupChoice(str, Enum):
+    inputs = "inputs"
+    outputs = "outputs"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerGroupChoice))
+
+
+class LayerSelectTypeChoice(str, Enum):
+    table = "table"
+    folder = "folder"
+
+
+class LayerTypeChoice(str, Enum):
+    data = "data"
+    handler = "handler"
+    input = "input"
+    output = "output"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerTypeChoice))
 
 
 class LayerPrepareMethodChoice(str, Enum):
@@ -25,16 +54,32 @@ class LayerPrepareMethodChoice(str, Enum):
     word_to_vec = "word_to_vec"
 
 
-class LayerTransformerMethodChoice(str, Enum):
-    none = 'none'
-    enc_inp = "enc_inp"
-    dec_inp = "dec_inp"
-    dec_out = "dec_out"
+# class LayerTaskTypeChoice(str, Enum):
+#     timeseries = "timeseries"
+#     regression = "regression"
 
 
-class LayerTaskTypeChoice(str, Enum):
-    timeseries = "timeseries"
-    regression = "regression"
+class DatasetTaskTypeChoice(str, Enum):
+    ImageClassification = "ImageClassification"  # 1 вход, 1 выход
+    ImageSegmentation = "ImageSegmentation"  # 1 вход, 1 выход
+    # ImageObjectDetection = 'ImageObjectDetection'  # 1 вход, 1(3+3) выход(ов)
+    ImageGAN = "ImageGAN"
+    ImageCGAN = "ImageCGAN"
+    TextClassification = "TextClassification"  # 1 вход, 1 выход
+    TextSegmentation = "TextSegmentation"  # 1 вход, 1 выход
+    VideoClassification = "VideoClassification"  # 1 вход, 1 выход
+    VideoSegmentation = "VideoSegmentation"  # 1 вход, 1 выход
+    VideoTracker = "VideoTracker"  # 1 вход, 1 выход
+    AudioClassification = "AudioClassification"  # * вход, 1 выход
+    AudioSegmentation = "AudioSegmentation"  # * вход, 1 выход
+    DataframeClassification = "DataframeClassification"  # *вход(ов), * выход(ов)
+    DataframeRegression = "DataframeRegression"  # *вход(ов), * выход(ов)
+    Timeseries = "Timeseries"  # 1 вход, 1 выход
+    TimeseriesTrend = "TimeseriesTrend"  # 1 вход, 1 выход
+    YoloV3 = "YoloV3"  # 1 вход, 1(3+3) выход(ов)
+    YoloV4 = "YoloV4"  # 1 вход, 1(3+3) выход(ов)
+    Text2Speech = "Text2Speech"
+    Speech2Text = "Speech2Text"
 
 
 class LayerNetChoice(str, Enum):
@@ -138,6 +183,11 @@ class LayerImageFrameModeChoice(str, Enum):
     cut = "cut"
 
 
+class LayerTypeProcessingChoice(str, Enum):
+    categorical = "categorical"
+    ranges = "ranges"
+
+
 class LayerTypeProcessingClassificationChoice(str, Enum):
     categorical = "categorical"
     ranges = "ranges"
@@ -170,6 +220,12 @@ class LayerEncodingChoice(str, Enum):
     multi = "multi"
 
 
+class LayerColTypeChoice(str, Enum):
+    str = "str"
+    int = "int"
+    float = "float"
+
+
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"
@@ -191,8 +247,10 @@ class ColumnProcessingTypeChoice(str, Enum):
     Video = "Video"
     Scaler = "Scaler"
     Classification = "Classification"
+    ObjectDetection = "ObjectDetection"
     Regression = "Regression"
     Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
     Timeseries = "Timeseries"
     ImageGAN = "ImageGAN"
     ImageCGAN = "ImageCGAN"
@@ -200,6 +258,9 @@ class ColumnProcessingTypeChoice(str, Enum):
     Noise = "Noise"
     Discriminator = "Discriminator"
     Generator = "Generator"
+    Tracker = "Tracker"
+    Text2Speech = "Text2Speech"
+    Speech2Text = "Speech2Text"
     Transformer = "Transformer"
 
 
@@ -234,6 +295,8 @@ class LayerOutputTypeChoice(str, Enum):
     Timeseries = "Timeseries"
     TimeseriesTrend = "TimeseriesTrend"
     ObjectDetection = "ObjectDetection"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
     Raw = "Raw"
     Tracker = "Tracker"
     Speech2Text = "Speech2Text"
@@ -243,3 +306,65 @@ class LayerOutputTypeChoice(str, Enum):
     TextToImageGAN = "TextToImageGAN"
     Discriminator = "Discriminator"
     Generator = "Generator"
+
+
+class LayerHandlerChoice(str, Enum):
+    Audio = "Audio"
+    Classification = "Classification"
+    Discriminator = "Discriminator"
+    Generator = "Generator"
+    Image = "Image"
+    ImageCGAN = "ImageCGAN"
+    ImageGAN = "ImageGAN"
+    Noise = "Noise"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
+    Regression = "Regression"
+    Scaler = "Scaler"
+    Segmentation = "Segmentation"
+    Speech2Text = "Speech2Text"
+    Text = "Text"
+    Text2Speech = "Text2Speech"
+    TextSegmentation = "TextSegmentation"
+    TextTransformer = "TextTransformer"
+    TextToImageGAN = "TextToImageGAN"
+    Timeseries = "Timeseries"
+    TimeseriesTrend = "TimeseriesTrend"
+    Tracker = "Tracker"
+    Transformer = "Transformer"
+    Video = "Video"
+
+    @staticmethod
+    def inputs() -> list:
+        return [
+            LayerHandlerChoice.Image,
+            LayerHandlerChoice.Audio,
+            LayerHandlerChoice.Classification,
+            LayerHandlerChoice.Noise,
+            LayerHandlerChoice.Scaler,
+            LayerHandlerChoice.Text,
+            LayerHandlerChoice.Video,
+        ]
+
+    @staticmethod
+    def outputs() -> list:
+        return [
+            LayerHandlerChoice.Classification,
+            LayerHandlerChoice.Discriminator,
+            LayerHandlerChoice.Generator,
+            LayerHandlerChoice.ImageCGAN,
+            LayerHandlerChoice.ImageGAN,
+            LayerHandlerChoice.YoloV3,
+            LayerHandlerChoice.YoloV4,
+            LayerHandlerChoice.Regression,
+            LayerHandlerChoice.Segmentation,
+            LayerHandlerChoice.Speech2Text,
+            LayerHandlerChoice.Text2Speech,
+            LayerHandlerChoice.TextSegmentation,
+            LayerHandlerChoice.TextToImageGAN,
+            LayerHandlerChoice.Timeseries,
+            LayerHandlerChoice.TimeseriesTrend,
+            LayerHandlerChoice.Tracker,
+            LayerHandlerChoice.Transformer,
+            LayerHandlerChoice.TextTransformer,
+        ]

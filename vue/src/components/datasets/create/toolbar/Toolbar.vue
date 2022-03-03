@@ -1,6 +1,6 @@
 <template>
   <div class="d-create-toolbar">
-    <div class="d-create-toolbar__dataset">
+    <!-- <div class="d-create-toolbar__dataset">
       <div class="d-create-toolbar__item" @click="handleAction('add-dataset')">
         <d-svg name="folder-add" />
       </div>
@@ -13,34 +13,39 @@
       <div class="d-create-toolbar__item" @click="handleAction('delete-dataset')">
         <d-svg name="folder-remove" />
       </div>
-    </div>
+    </div> -->
     <div class="d-create-toolbar__workspace mt-10">
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'input' })">
-        <d-svg name="sloy-start-add" />
-      </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'middle' })">
-        <d-svg name="sloy-middle-add" />
-      </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'handler' })">
-        <d-svg name="sloy-handler-add" />
-      </div>
-      <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" @click="onAdd({ type: 'output' })">
-        <d-svg name="sloy-end-add" />
-      </div>
+      <template v-for="{ color, type, typeBlock } of filter">
+        <div class="d-create-toolbar__item d-create-toolbar__item--no-hover" :key="color" @click="onAdd({ type })">
+          <d-icon-layer v-bind="{ color, type, typeBlock }" />
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script>
 import { mapActions, mapGetters } from 'vuex';
+import { types } from '@/store/const/blocks';
 export default {
   name: 'd-toolbar',
+  data: () => ({
+    types: types,
+    toolbar: [
+      { id: 2, filter: ['data', 'handler', 'input'] },
+      { id: 3, filter: ['data', 'handler', 'output'] },
+    ],
+  }),
   computed: {
     ...mapGetters({
       getPagination: 'createDataset/getPagination',
     }),
     isActive() {
-      return Boolean(this.getPagination === 3);
+      return Boolean([2, 3].includes(this.getPagination));
+    },
+    filter() {
+      const filter = this.toolbar.find(i => i.id === this.getPagination)?.filter || [];
+      return this.types.filter(i => filter.includes(i.type));
     },
   },
   methods: {

@@ -1,5 +1,3 @@
-from terra_ai.settings import TERRA_PATH
-
 from apps.api import decorators
 from apps.api.base import BaseAPIView, BaseResponseSuccess
 from apps.api.common.serializers import ValidateDatasetModelSerializer
@@ -23,7 +21,7 @@ class ValidateDatasetModelAPIView(BaseAPIView):
         model = None
 
         if dataset_load:
-            datasets = self.terra_exchange("datasets_info", path=TERRA_PATH.datasets)
+            datasets = self.terra_exchange("datasets_info")
             dataset = datasets.get(dataset_load.get("group")).datasets.get(
                 dataset_load.get("alias")
             )

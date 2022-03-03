@@ -26,6 +26,7 @@ import TField from './forms/TField';
 import TAutoComplete from './new/forms/TAutoComplete';
 import TAutoCompleteTwo from './new/forms/TAutoCompleteTwo';
 import DDropdown from './forms/DDropdown';
+import DMultiSelect from './forms/DMultiSelect';
 
 
 
@@ -57,6 +58,7 @@ const components = [
   TAutoCompleteTwo,
   TField,
   DDropdown,
+  DMultiSelect
 ];
 
 import Vue from 'vue';

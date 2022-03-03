@@ -79,12 +79,15 @@ export default {
     async getApi() {
       const value = +this.qty;
       if (!value || value < 0 || value > 99) {
-        this.error = 'Значение должно быть от 1 до 99';
-        return;
+        this.error = 'Значение должно быть от 1 до 99'
+        return
       }
       if (this.loading) return;
-      const path = this.mixinFiles.find(item => item.id === this.id)?.value;
-      const mask_range = document.getElementsByName('mask_range')[0].value;
+      // const path = this.mixinFiles.find(item => item.id === this.id)?.value;
+      const path = this.$store.getters['create/getBlocks']
+        .filter(item => item.typeBlock === 'input')
+        .flatMap(item => item.parameters?.data || [])
+      const mask_range = +document.getElementsByName('mask_range')[0].value;
       if (!path || !mask_range) {
         const error = {
           [this.id]: {

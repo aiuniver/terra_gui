@@ -1,16 +1,20 @@
 <template>
   <div class="dataset-card-new" @click="onClick">
-    <div class="card-borders"></div>
+    <div :class="['card-borders', { 'card-borders--active': isActive }]"></div>
     <div class="dataset-card-new__wrapper">
       <p class="dataset-card-new__title">{{ dataset.name }}</p>
       <div class="dataset-card-new__info">
-        <p>login_name_user</p>
+        <p>{{ dataset.architecture }}</p>
         <div class="dataset-card-new__info--size">
-          <i class="ci-icon ci-image" />
-          <span>{{ dataset.size ? dataset.size.short.toFixed(2) + ' ' + dataset.size.unit : 'Предустановленный' }}</span>
+          <span>{{ group }}</span>
         </div>
       </div>
     </div>
+    <i 
+    v-if="dataset.group === 'custom'" 
+    class="t-icon icon-modeling-remove" 
+    @click.stop="deleteDataset" 
+    title="Удалить датасет"/>
   </div>
 </template>
 
@@ -21,12 +25,43 @@ export default {
     dataset: {
       type: Object,
       default: () => {},
+    }
+  },
+  computed: {
+    isActive() {
+      const { alias, group } = this.$store.getters['projects/getProject'].dataset || {}
+      return `${group}_${alias}` === this.dataset.id
     },
+    group() {
+      if (this.$store.getters['datasets/getGroups']) {
+        return this.$store.getters['datasets/getGroups'][this.dataset.group]
+      }
+      return ''
+    }
   },
   methods: {
     onClick() {
       this.$emit('click', this.dataset)
     },
+    deleteDataset() {
+      this.$Modal.confirm({
+        title: 'Внимание!',
+        content: 'Уверены, что хотите удалить этот датасет?',
+        width: 300,
+        callback: async action => {
+          if (action === 'confirm') {
+            this.$store.dispatch('settings/setOverlay', true)
+            await this.$store.dispatch('axios', { url: '/datasets/delete/', data: { 
+              group: this.dataset.group,
+              alias: this.dataset.alias
+             } })
+            await this.$store.dispatch('projects/get')
+            await this.$store.dispatch('datasets/get')
+            this.$store.dispatch('settings/setOverlay', false)
+          }
+        }
+      })
+    }
   },
 };
 </script>
@@ -42,8 +77,19 @@ export default {
   &:hover {
     background-color: #253848;
   }
+  .t-icon {
+    position: absolute;
+    right: 6px;
+    bottom: 30px;
+    width: 20px;
+    height: 20px;
+    filter: invert(.5);
+    &:hover {
+      filter: none;
+    }
+  }
   &__wrapper {
-    padding: 20px 15px 10px;
+    padding: 20px 12px 10px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -51,7 +97,7 @@ export default {
   }
   &__title {
     font-size: 14px;
-    line-height: 24px;
+    word-wrap: break-word;
   }
   &__info {
     color: #828282;
@@ -65,11 +111,11 @@ export default {
       margin-right: 9px;
     }
     &--size {
-      max-width: 100px;
+      max-width: 110px;
       text-overflow: ellipsis;
       overflow: hidden;
       white-space: nowrap;
-      margin-top: 10px;
+      margin-top: 5px;
       * {
         vertical-align: middle;
       }
@@ -85,5 +131,8 @@ export default {
   background-color: #65B9F4;
   clip-path: polygon(0% 0%, 0 40px, 100% 40px, 100% 95px, 0 95px, 0 100%, 15px 100%, 15px 130px, 80px 130px, 80px 100%, 100% 100%, 100% 0);
   z-index: -1;
+  &--active {
+    background-color: #3eba31;
+  }
 }
 </style>

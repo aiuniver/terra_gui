@@ -5,30 +5,33 @@
     @mouseover="onHover(true)"
     @mouseleave="onHover(false)"
   >
-    <div class="block__line-left"></div>
-    <div class="block__line-right"></div>
-    <div :class="['block__wrapper', `block__wrapper--${type}`]">
+    <div v-if="error" v-show="hover" class="block__error">
+      {{ error }}
+    </div>
+    <div v-show="hover" class="block__hover">
+      <template v-for="(item, i) of iconsFilter">
+        <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
+      </template>
+    </div>
+    <div class="block__line-left" :style="setColorLine"></div>
+    <div class="block__line-right" :style="setColorLine"></div>
+    <div :class="['block__wrapper', `block__wrapper--${type}`]" :style="setColor">
       <div class="block__header">
-        <div class="block__title text--bold">{{ type }} {{ id }}</div>
-        <div class="block__subtitle text--bold">22,28,1</div>
+        <div class="block__title text--bold">{{ id }}) {{ name || '' }}</div>
+        <div class="block__subtitle text--bold">{{ textSubtitle }}</div>
       </div>
-      <div class="block__inputs">
+      <div v-if="showTop" class="block__inputs">
         <div
-          v-for="(slot, index) in inputs"
-          :key="'input' + index"
           class="input inputSlot"
-          :class="{
-            active: slot.active,
-            'input--linking-active': linkingCheck && !linking,
-          }"
-          @mouseup="slotMouseUp($event, index)"
-          @mousedown="slotBreak($event, index)"
+          :class="{ 'input--linking-active': linkingCheck && !linking }"
+          @mouseup="slotMouseUp($event, 0)"
+          @mousedown="slotBreak($event, 0)"
         ></div>
       </div>
     </div>
     <div class="block__part">
-      <div class="block__point block__point--top"></div>
-      <div class="block__point block__point--bottom" @mousedown="slotMouseDown($event, 0)"></div>
+      <div v-if="showTop" class="block__point block__point--top" :style="setColor"></div>
+      <div v-if="showBottom" class="block__point block__point--bottom" :style="setColor" @mousedown="slotMouseDown($event, 0)"></div>
     </div>
   </div>
 </template>
@@ -44,6 +47,14 @@ export default {
     linkingCheck: {
       type: Object,
       default: () => ({}),
+    },
+    typeBlock: {
+      type: String,
+      default: '',
+    },
+    color: {
+      type: String,
+      default: '#6c7883',
     },
     name: {
       type: String,
@@ -61,21 +72,22 @@ export default {
       type: String,
       default: '',
     },
-    inputs: {
-      type: Array,
-      default: () => [],
-    },
-    outputs: {
-      type: Array,
-      default: () => [],
-    },
     options: {
+      type: Object,
+      default: () => ({}),
+    },
+    parameters: {
       type: Object,
       default: () => ({}),
     },
     error: {
       type: String,
       default: '',
+    },
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {},
     },
   },
   data: () => ({
@@ -98,10 +110,33 @@ export default {
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
         zIndex: this.selected || this.hover ? 10 : 1,
+        boxShadow: `0px 0px 4px ${this.color}75`,
       };
+    },
+    iconsFilter() {
+      return this.icons; // .filter(item => this.filter[this.type].includes(item.event));
+    },
+    textSubtitle() {
+      let test = '';
+      if (['data'].includes(this.type)) test = this?.parameters?.data?.join(' ,') || '';
+      if (['input', 'output'].includes(this.type)) test = '';
+      if (['handler'].includes(this.type)) test = this?.parameters?.type || '';
+      return test;
     },
     isError() {
       return Boolean(this.error);
+    },
+    setColor() {
+      return { backgroundColor: this.color };
+    },
+    setColorLine() {
+      return { backgroundColor: this.error ? '#ca5035' : this.color };
+    },
+    showTop() {
+      return ['output', 'middle'].includes(this.typeBlock);
+    },
+    showBottom() {
+      return ['input', 'middle'].includes(this.typeBlock);
     },
   },
   mounted() {
@@ -191,9 +226,9 @@ export default {
 </script>
 
 <style lang="scss">
-@import "@/assets/scss/variables/default.scss";
+@import '@/assets/scss/variables/default.scss';
 $ioFontSize: 14px;
-$circleSize: 10px;
+$circleSize: 15px;
 $circleNewColor: #00ff003b;
 $circleConnectedColor: #569dcf;
 $containCircle: 9px;
@@ -202,9 +237,11 @@ $bg-color: #0e1621;
 $borderBlock: 2px;
 
 .block {
+  user-select: none;
   position: absolute;
   background-color: $bg-color;
-
+  border-radius: 23px 4px 24px 4px;
+  // box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
   &__wrapper {
     position: relative;
     width: 140px;
@@ -239,9 +276,18 @@ $borderBlock: 2px;
   }
 
   &__title {
+    text-align: center;
+    height: 18px;
     font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 120px;
+    overflow: hidden;
   }
   &__subtitle {
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-size: 10px;
     color: #6c7883;
   }
@@ -358,63 +404,94 @@ $borderBlock: 2px;
       calc(100% - 1px) 30%
     );
   }
-  &--input {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-orange;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
-    border-radius: 23px 4px 24px 4px;
-    & .block__point--top {
-      display: none;
-    }
-  }
+  // &--input {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-orange;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-orange, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  //   & .block__point--top {
+  //     display: none;
+  //   }
+  // }
 
-  &--middle {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-green;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
-    border-radius: 23px 4px 24px 4px;
-  }
+  // &--middle {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-green;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-green, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  // }
 
-  &--handler {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-yello;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-yello, 0.75);
-    border-radius: 23px 4px 24px 4px;
-  }
+  // &--handler {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-yello;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-yello, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  // }
 
-  &--output {
-    & .block__point,
-    & .block__line-left,
-    & .block__line-right,
-    & .block__wrapper {
-      background-color: $color-pirple;
-    }
-    box-shadow: 0px 0px 4px transparentize($color-pirple, 0.75);
-    border-radius: 23px 4px 24px 4px;
-    & .block__point--bottom {
-      display: none;
-    }
-  }
+  // &--output {
+  //   & .block__point,
+  //   & .block__line-left,
+  //   & .block__line-right,
+  //   & .block__wrapper {
+  //     background-color: $color-pirple;
+  //   }
+  //   box-shadow: 0px 0px 4px transparentize($color-pirple, 0.75);
+  //   border-radius: 23px 4px 24px 4px;
+  //   & .block__point--bottom {
+  //     display: none;
+  //   }
+  // }
   &--error {
     .block__line-left,
     .block__line-right {
-      background-color: #CA5035;
+      background-color: #ca5035;
     }
     .block__title {
-      color: #CA5035;
+      color: #ca5035;
     }
+  }
+  &__hover {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background-color: #161f2c;
+    border-radius: 10px;
+    padding: 0 10px;
+    cursor: default;
+    i {
+      margin-left: 10px;
+      cursor: pointer;
+    }
+  }
+  &__error {
+    position: absolute;
+    top: 0;
+    right: calc(100% + 5px);
+    min-height: 100%;
+    width: 200px;
+    display: flex;
+    align-items: center;
+    background-color: #161f2c;
+    border-radius: 4px;
+    border: 1px solid #ca5035;
+    font-size: 12px;
+    padding: 0 10px;
+    cursor: default;
   }
 }
 </style>

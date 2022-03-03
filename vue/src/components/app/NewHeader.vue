@@ -3,7 +3,12 @@
     <div class="header__left">
       <d-dropdown>
         <template v-slot:activator="{ on }">
-          <img src="@/assets/images/logo.png" width="28" height="28" alt="Logo" v-on="on" />
+          <div v-on="on">
+            <img class="header__logo" src="@/assets/images/logo.png" width="28" height="28" alt="Logo" />
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 5.5L10 0.5L0 0.5L5 5.5Z" fill="#65B9F4" />
+            </svg>
+          </div>
         </template>
         <ul class="list">
           <template v-for="({ title, meta }, i) of menu">
@@ -31,7 +36,7 @@
           <i class="ci-icon ci-notification_outline" />
         </li>
         <li>
-          <i class="ci-icon ci-user_circle" @click="to('/new/profile')"/>
+          <i class="ci-icon ci-user_circle" @click="to('/profile')" />
         </li>
       </ul>
     </div>
@@ -98,6 +103,7 @@ export default {
 
 <style lang="scss" scoped>
 .header {
+  user-select: none;
   width: 100%;
   height: 52px;
   padding: 0 10px;
@@ -105,7 +111,10 @@ export default {
   align-items: center;
   border-bottom: 1px solid var(--color-border);
   background-color: #17212b;
-    z-index: 800;
+  z-index: 800;
+  &__logo {
+    margin-right: 5px;
+  }
   &__right {
     height: 100%;
     margin-left: auto;

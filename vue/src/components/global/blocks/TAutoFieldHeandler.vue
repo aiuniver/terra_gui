@@ -16,11 +16,13 @@
       type="text"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name"
       :error="error"
       inline
       @change="change"
       @cleanError="cleanError"
+      class="forms__manual"
+      :color-picker-size="{ x: 150, y: 150 }"
     />
     <t-segmentation-annotation
       v-if="type === 'segmentation_annotation'"
@@ -30,11 +32,12 @@
       type="text"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       inline
       @change="change"
       @cleanError="cleanError"
+      class="forms__annotation"
     />
     <t-segmentation-search
       v-if="type === 'segmentation_search'"
@@ -44,40 +47,41 @@
       type="text"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       inline
       @change="change"
       @cleanError="cleanError"
+      class="forms__search"
     />
-    <t-input
+    <TInput
       v-if="type === 'tuple'"
       :value="getValue"
       :label="label"
       type="text"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       inline
       @change="change"
       @cleanError="cleanError"
     />
-    <t-input
+    <TInput
       v-if="type === 'number' || type === 'text'"
       :value="getValue"
       :label="label"
       :type="type"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       :update="update"
       inline
       @change="change"
       @cleanError="cleanError"
     />
-    <t-checkbox
+    <Checkbox
       v-if="type === 'checkbox'"
       inline
       :value="getValue"
@@ -85,20 +89,20 @@
       type="checkbox"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :event="event"
       :error="error"
       @cleanError="cleanError"
       @change="change"
     />
-    <t-select
+    <Select
       v-if="type === 'select'"
       :value="getValue"
       :label="label"
       :lists="list"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       @cleanError="cleanError"
       @change="change"
@@ -110,7 +114,7 @@
       :lists="list"
       :parse="parse"
       :name="name"
-      :key="name + idKey"
+      :key="name + getValue"
       :error="error"
       @cleanError="cleanError"
       @change="change"
@@ -131,8 +135,17 @@
 </template>
 
 <script>
+import TInput from '@/components/new/forms/TInput';
+import Checkbox from '@/components/new/forms/Checkbox';
+import Select from '@/components/new/forms/Select';
+
 export default {
   name: 't-auto-field-handler',
+  components: {
+    TInput,
+    Checkbox,
+    Select
+  },
   props: {
     idKey: String,
     type: String,
@@ -173,6 +186,7 @@ export default {
   },
   methods: {
     change({ value, name }) {
+      console.log('sdfsdf', value, name)
       this.valueIn = null;
       this.$emit('change', { id: this.id, value, name, root: this.root });
       this.$nextTick(() => {
@@ -196,3 +210,44 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+@mixin inputStyles {
+  input.t-field__input {
+    width: 150px;
+    height: 30px;
+    border: 1px solid #65B9F4;
+    transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    &:focus {
+      background: rgba(101, 185, 244, 0.15);
+    }
+  }
+}
+.forms {
+  &__manual {
+    ::v-deep {
+      @include inputStyles();
+      .t-field__color-picker {
+        bottom: 19px;
+        border: 1px solid #65B9F4;
+        width: 100%;
+      }
+    }
+  }
+  &__search, &__annotation {
+    ::v-deep {
+      @include inputStyles();
+      button.t-field__button {
+        clip-path: polygon(0% 100%, 0% 17px, 12px 6px, 78px 6px, 84px 0%, 100% 0%, calc(100% - 8px) 21%, calc(100% - 8px) calc(100% - 14px), calc(100% - 22px) 100%);
+        color: #0e1621;
+        background-color: #65b9f4;
+        font-size: 16px;
+        border: unset;
+        flex: 0 0 150px;
+        height: 36px;
+        font-weight: 600;
+      }
+    }
+  }
+}
+</style>

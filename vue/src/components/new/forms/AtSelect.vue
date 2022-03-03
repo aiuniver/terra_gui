@@ -31,6 +31,7 @@
       <span
         class="at-select__selected"
         v-show="!showPlaceholder && !multiple && !filterable"
+        :title="selectedSingle"
         >{{ selectedSingle }}</span
       >
       <input
@@ -587,6 +588,7 @@ export default {
     top: 30px !important;
     border: 1px solid #65B9F4;
     border-top: none;
+    width: 100%;
   }
   &__selection {
     border: 1px solid #65B9F4;
@@ -598,8 +600,9 @@ export default {
   &--small {
     font-size: 14px;
     .at-select__selection {
+      line-height: 28px;
       height: 30px;
-      padding: 0 24px 0 5px;
+      padding: 0 26px 0 5px;
     }
   }
   &__arrow {

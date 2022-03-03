@@ -1,53 +1,33 @@
+import os
+import re
+
 from math import fsum
 from pathlib import Path
-from typing import Union, Optional, Any, Dict
-from pydantic import validator
-from pydantic.types import DirectoryPath
+from typing import Union, Optional, Any, Dict, List, Tuple
+from transliterate import slugify
+
+from pydantic import validator, DirectoryPath, PositiveInt, PrivateAttr
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
-from ... import settings as terra_ai_settings
-from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
-from ..types import (
-    confilepath,
-    confilename,
-    FilePathType,
+from terra_ai import settings as terra_ai_settings
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, IDMixinData
+from terra_ai.data.extra import FileManagerItem
+from terra_ai.data.types import (
+    AliasType,
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
 )
-from ..exceptions import (
-    ValueTypeException,
-    PartTotalException,
-    ListEmptyException,
-    ObjectDetectionQuantityLayersException,
-)
-from .extra import (
+from terra_ai.data.exceptions import ValueTypeException, PartTotalException
+from terra_ai.data.datasets.extra import (
     SourceModeChoice,
-    LayerInputTypeChoice,
-    LayerOutputTypeChoice,
+    LayerTypeChoice,
+    LayerGroupChoice,
     ColumnProcessingTypeChoice,
 )
-from .creations import column_processing
-from .tags import TagsList
-from . import creations
 
-
-class FilePathSourceData(BaseMixinData):
-    value: confilepath(ext="zip")
-    label: Optional[str]
-
-    @validator("label", allow_reuse=True, always=True)
-    def _validate_label(cls, value: str, values) -> str:
-        file_path = values.get("value")
-        if not file_path:
-            return value
-        return file_path.name.split(".zip")[0]
-
-
-class FilePathSourcesList(UniqueListMixin):
-    class Meta:
-        source = FilePathSourceData
-        identifier = "label"
+from terra_ai.data.datasets import creations
+from terra_ai.data.training.extra import ArchitectureChoice
 
 
 class SourceData(BaseMixinData):
@@ -55,19 +35,40 @@ class SourceData(BaseMixinData):
     Информация для загрузки исходников датасета
     """
 
-    mode: SourceModeChoice
-    "Режим загрузки исходных данных"
-    value: Union[confilepath(ext="zip"), HttpUrl, confilename(ext="zip")]
-    "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
+    mode: Optional[SourceModeChoice]
+    value: Optional[Union[HttpUrl, str]]
+    path: Optional[DirectoryPath]
+
+    _manager: FileManagerItem = PrivateAttr()
+
+    def __init__(self, **data):
+        _path = data.get("path")
+        if _path:
+            self._manager = FileManagerItem(path=_path)
+        else:
+            self._manager = None
+        super().__init__(**data)
+
+    @property
+    def manager(self) -> Optional[FileManagerItem]:
+        return self._manager
+
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update(
+            {"manager": self.manager.native().get("children") if self.manager else None}
+        )
+        return data
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl, str], values
-    ) -> Union[FilePathType, HttpUrl, str]:
+        cls, value: Union[HttpUrl, str], values
+    ) -> Union[HttpUrl, str]:
         mode = values.get("mode")
         if mode == SourceModeChoice.GoogleDrive:
-            if not isinstance(value, Path):
-                raise ValueTypeException(value, FilePathType)
+            if not isinstance(value, str):
+                raise ValueTypeException(value, str)
         if mode == SourceModeChoice.URL:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
@@ -109,6 +110,12 @@ class CreationInfoData(BaseMixinData):
         return value
 
 
+class CreationParametersData(BaseMixinData):
+
+    sources_paths: Optional[list]
+    names: Dict[str, list]
+
+
 class CreationInputData(IDMixinData):
     """
     Информация о `input`-слое
@@ -116,29 +123,31 @@ class CreationInputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    type: LayerInputTypeChoice
-    "Тип данных"
-    parameters: Any
-    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
+    parameters: Dict[str, Dict[str, list]]
+    "Параметры"
+    # type: #LayerInputTypeChoice
+    # "Тип данных"
+    # parameters: Any
+    # "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", pre=True)
-    def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-        if value not in list(LayerInputTypeChoice):
-            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        name = (
-            value
-            if isinstance(value, LayerInputTypeChoice)
-            else LayerInputTypeChoice(value)
-        ).name
-        type_ = getattr(
-            creations.layers.input, getattr(creations.layers.input.Layer, name)
-        )
-        cls.__fields__["parameters"].type_ = type_
-        return value
+    # @validator("type", pre=True)
+    # def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
+    #     if value not in list(LayerInputTypeChoice):
+    #         raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+    #     name = (
+    #         value
+    #         if isinstance(value, LayerInputTypeChoice)
+    #         else LayerInputTypeChoice(value)
+    #     ).name
+    #     type_ = getattr(
+    #         creations.layers.input, getattr(creations.layers.input.Layer, name)
+    #     )
+    #     cls.__fields__["parameters"].type_ = type_
+    #     return value
 
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+    # @validator("parameters", always=True)
+    # def _validate_parameters(cls, value: Any, values, field) -> Any:
+    #     return field.type_(**value or {})
 
 
 class CreationOutputData(IDMixinData):
@@ -148,29 +157,32 @@ class CreationOutputData(IDMixinData):
 
     name: ConstrainedLayerNameValue
     "Название"
-    type: LayerOutputTypeChoice
-    "Тип данных"
-    parameters: Any
-    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
+    parameters: Dict[str, Dict[str, list]]
+    "Параметры"
 
-    @validator("type", pre=True)
-    def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-        if value not in list(LayerOutputTypeChoice):
-            raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        name = (
-            value
-            if isinstance(value, LayerOutputTypeChoice)
-            else LayerOutputTypeChoice(value)
-        ).name
-        type_ = getattr(
-            creations.layers.output, getattr(creations.layers.output.Layer, name)
-        )
-        cls.__fields__["parameters"].type_ = type_
-        return value
+    # type: #LayerOutputTypeChoice
+    # "Тип данных"
+    # parameters: Any
+    # "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+    # @validator("type", pre=True)
+    # def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
+    #     if value not in list(LayerOutputTypeChoice):
+    #         raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+    #     name = (
+    #         value
+    #         if isinstance(value, LayerOutputTypeChoice)
+    #         else LayerOutputTypeChoice(value)
+    #     ).name
+    #     type_ = getattr(
+    #         creations.layers.output, getattr(creations.layers.output.Layer, name)
+    #     )
+    #     cls.__fields__["parameters"].type_ = type_
+    #     return value
+
+    # @validator("parameters", always=True)
+    # def _validate_parameters(cls, value: Any, values, field) -> Any:
+    #     return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):
@@ -203,74 +215,176 @@ class CreationOutputsList(UniqueListMixin):
         identifier = "id"
 
 
-class ColumnsProcessingData(BaseMixinData):
-    type: ColumnProcessingTypeChoice
+# class ColumnsProcessingData(BaseMixinData):
+#     type: ColumnProcessingTypeChoice
+#     parameters: Any
+#
+#     @validator("type", pre=True)
+#     def _validate_type(
+#         cls, value: ColumnProcessingTypeChoice
+#     ) -> ColumnProcessingTypeChoice:
+#         if not value:
+#             return value
+#         name = (
+#             value
+#             if isinstance(value, ColumnProcessingTypeChoice)
+#             else ColumnProcessingTypeChoice(value)
+#         ).name
+#         cls.__fields__["parameters"].type_ = getattr(
+#             column_processing, column_processing.ColumnProcessing[name].value
+#         )
+#         return value
+#
+#     @validator("parameters", always=True)
+#     def _validate_parameters(cls, value: Any, values, field) -> Any:
+#         return field.type_(**(value or {}))
+
+
+class LayerBindData(BaseMixinData):
+    up: List[PositiveInt] = []
+    down: List[PositiveInt] = []
+
+
+class CreationBlockData(IDMixinData):
+    name: str
+    type: LayerTypeChoice
+    removable: bool = False
+    bind: LayerBindData
+    position: Tuple[int, int]
     parameters: Any
 
+    def __init__(self, **data):
+        data.update({"parameters": {**data.get("parameters", {})}})
+        super().__init__(**data)
+
     @validator("type", pre=True)
-    def _validate_type(
-        cls, value: ColumnProcessingTypeChoice
-    ) -> ColumnProcessingTypeChoice:
-        if not value:
-            return value
+    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
+        if value not in list(LayerTypeChoice):
+            raise EnumMemberError(enum_values=list(LayerTypeChoice))
         name = (
-            value
-            if isinstance(value, ColumnProcessingTypeChoice)
-            else ColumnProcessingTypeChoice(value)
+            value if isinstance(value, LayerTypeChoice) else LayerTypeChoice(value)
         ).name
-        cls.__fields__["parameters"].type_ = getattr(
-            column_processing, column_processing.ColumnProcessing[name].value
-        )
+        type_ = getattr(creations.blocks.types, f"Block{name.title()}Parameters")
+        cls.__fields__["parameters"].required = True
+        cls.__fields__["parameters"].type_ = type_
         return value
 
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**(value or {}))
+        return field.type_(**value or {})
 
 
-class CreationData(AliasMixinData):
+class CreationBlockList(UniqueListMixin):
+    class Meta:
+        source = CreationBlockData
+        identifier = "id"
+
+
+class DatasetCreationArchitectureData(BaseMixinData):
+    inputs: CreationBlockList = CreationBlockList()
+    outputs: CreationBlockList = CreationBlockList()
+
+
+class CreationValidateBlocksData(BaseMixinData):
+    type: LayerGroupChoice
+    architecture: ArchitectureChoice
+    items: CreationBlockList
+
+
+class CreationVersionData(DatasetCreationArchitectureData):
+    """
+    Полная информация о создании версии датасета
+    Inputs:
+        alias: str - alias версии
+        name: str - название версии
+        datasets_path: pathlib.Path - путь к директории датасетов проекта (./TerraAI/datasets)
+        info: CreationInfoData - соотношение обучающей выборки к валидационной, а также его перемешивание
+        use_generator: bool - использовать генератор при обучении. По умолчанию: False
+        inputs: CreationInputsList - входные слои
+        outputs: CreationOutputsList - выходные слои
+    """
+
+    alias: Optional[AliasType]
+    name: Optional[str]
+    info: CreationInfoData = CreationInfoData()  # Train/Val split, shuffle
+
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        if not data:
+            data = {}
+        if data.get("name"):
+            data.update(
+                {
+                    "alias": data.get(
+                        "alias",
+                        re.sub(
+                            r"([\-]+)",
+                            "_",
+                            slugify(data.get("name", ""), language_code="ru"),
+                        ),
+                    )
+                }
+            )
+        if data.get("path") and data.get("alias"):
+            self._path = Path(
+                data.get("path"),
+                "versions",
+                f'{data.get("alias")}.{terra_ai_settings.DATASET_VERSION_EXT}',
+            )
+        super().__init__(**data)
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+
+class CreationData(BaseMixinData):
     """
     Полная информация о создании датасета
     """
 
-    name: str
-    "Название"
-    datasets_path: DirectoryPath
-    "Путь к директории датасетов проекта"
-    source_path: DirectoryPath
-    "Путь к директории с исходниками, полученный после их загрузки"
-    info: CreationInfoData = CreationInfoData()
-    "Информация о данных"
-    tags: TagsList = TagsList()
-    "Список тегов"
-    use_generator: bool = False
-    "Использовать генераторы"
-    columns_processing: Dict[str, ColumnsProcessingData] = {}
-    "Обработчики колонок"
-    inputs: CreationInputsList = CreationInputsList()
-    "`input`-слои"
-    outputs: CreationOutputsList = CreationOutputsList()
-    "`output`-слои"
+    alias: Optional[AliasType]
+    name: Optional[str]
+    source: SourceData = SourceData()
+    architecture: Optional[ArchitectureChoice]
+    tags: List[str] = []
+    first_creation: bool = True
+    stage: PositiveInt = 1
+    version: Optional[CreationVersionData]  # Optional больше сделано для дебаггинга
+
+    _path: Path = PrivateAttr()
+
+    def __init__(self, **data):
+        if data.get("name"):
+            data.update(
+                {
+                    "alias": data.get(
+                        "alias",
+                        re.sub(
+                            r"([\-]+)",
+                            "_",
+                            slugify(data.get("name", ""), language_code="ru"),
+                        ),
+                    )
+                }
+            )
+        if data.get("alias"):
+            self._path = Path(
+                terra_ai_settings.TERRA_PATH.datasets,
+                f'{data.get("alias")}.{terra_ai_settings.DATASET_EXT}',
+            )
+            os.makedirs(self._path, exist_ok=True)
+            if data.get("version"):
+                data.get("version").update({"path": self._path})
+        super().__init__(**data)
 
     @property
     def path(self) -> Path:
-        return Path(self.datasets_path, f"{self.alias}.{terra_ai_settings.DATASET_EXT}")
+        return self._path
 
-    @validator("inputs", "outputs")
-    def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
-        if not len(value):
-            raise ListEmptyException(type(value))
-        return value
-
-    @validator("outputs")
-    def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
-        if not value:
-            return value
-        is_object_detection = False
-        for layer in value:
-            if layer.type == LayerOutputTypeChoice.ObjectDetection:
-                is_object_detection = True
-                break
-        if is_object_detection and len(value) > 1:
-            raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
-        return value
+    @property
+    def frontend(self) -> dict:
+        data = self.native()
+        data.update({"source": self.source.frontend})
+        return data

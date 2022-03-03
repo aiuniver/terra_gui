@@ -1,4 +1,17 @@
 from enum import Enum
+from typing import List, Dict
+
+
+def get_values(enum_source) -> List[Dict[str, str]]:
+    return list(
+        map(
+            lambda item: {
+                "value": item.name,
+                "label": item.value,
+            },
+            enum_source,
+        )
+    )
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -22,7 +35,7 @@ class LayerOutputTypeChoice(str, Enum):
     Segmentation = "Сегментация изображений"
     TextSegmentation = "Сегментация текстов"
     ObjectDetection = "Обнаружение объектов"
-    Tracker = "Трекер (каскад)"
+    VideoTracker = "Трекер (каскад)"
     TrackerImages = "Изображения (каскад)"
     Text2Speech = "Генерация речи (каскад)"
     Speech2Text = "Распознавание речи (каскад)"
@@ -42,6 +55,10 @@ class LayerNetChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerNetChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerNetChoice)
+
 
 class LayerImageModeChoice(str, Enum):
     stretch = "Растянуть"
@@ -51,6 +68,10 @@ class LayerImageModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerImageModeChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerImageModeChoice)
 
 
 class LayerScalerChoice(str, Enum):
@@ -71,6 +92,10 @@ class LayerScalerDefaultChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerScalerDefaultChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerScalerDefaultChoice)
+
 
 class LayerScalerImageChoice(str, Enum):
     min_max_scaler = "MinMaxScaler"
@@ -81,6 +106,10 @@ class LayerScalerImageChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerScalerImageChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerScalerImageChoice)
+
 
 class LayerScalerVideoChoice(str, Enum):
     min_max_scaler = "MinMaxScaler"
@@ -89,6 +118,10 @@ class LayerScalerVideoChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerScalerVideoChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerScalerVideoChoice)
 
 
 class LayerScalerAudioChoice(str, Enum):
@@ -133,6 +166,10 @@ class LayerAudioModeChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerAudioModeChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerAudioModeChoice)
+
 
 class LayerAudioFillModeChoice(str, Enum):
     last_millisecond = "Последней миллисекундой"
@@ -141,6 +178,10 @@ class LayerAudioFillModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerAudioFillModeChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerAudioFillModeChoice)
 
 
 class LayerAudioParameterChoice(str, Enum):
@@ -159,6 +200,10 @@ class LayerAudioParameterChoice(str, Enum):
             map(lambda item: (item.name, item.value), LayerAudioParameterChoice)
         )
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerAudioParameterChoice)
+
 
 class LayerAudioResampleChoice(str, Enum):
     kaiser_best = "Kaiser best"
@@ -169,6 +214,10 @@ class LayerAudioResampleChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerAudioResampleChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerAudioResampleChoice)
+
 
 class LayerTextModeChoice(str, Enum):
     completely = "Целиком"
@@ -177,6 +226,10 @@ class LayerTextModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerTextModeChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerTextModeChoice)
 
 
 class LayerVideoFillModeChoice(str, Enum):
@@ -187,6 +240,10 @@ class LayerVideoFillModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerVideoFillModeChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerVideoFillModeChoice)
 
 
 class LayerVideoFrameModeChoice(str, Enum):
@@ -200,6 +257,10 @@ class LayerVideoFrameModeChoice(str, Enum):
             map(lambda item: (item.name, item.value), LayerVideoFrameModeChoice)
         )
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerVideoFrameModeChoice)
+
 
 class LayerVideoModeChoice(str, Enum):
     completely = "Целиком"
@@ -208,6 +269,10 @@ class LayerVideoModeChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerVideoModeChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerVideoModeChoice)
 
 
 class LayerPrepareMethodChoice(str, Enum):
@@ -219,6 +284,10 @@ class LayerPrepareMethodChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerPrepareMethodChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerPrepareMethodChoice)
 
 
 class LayerDataframeAlignBaseMethodChoice(str, Enum):
@@ -244,6 +313,10 @@ class LayerDefineClassesChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerDefineClassesChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerDefineClassesChoice)
+
 
 class LayerYoloVersionChoice(str, Enum):
     v3 = "V3"
@@ -252,6 +325,10 @@ class LayerYoloVersionChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
+
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerYoloVersionChoice)
 
 
 class LayerODDatasetTypeChoice(str, Enum):
@@ -266,49 +343,24 @@ class LayerODDatasetTypeChoice(str, Enum):
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerODDatasetTypeChoice))
 
+    @staticmethod
+    def values() -> list:
+        return get_values(LayerODDatasetTypeChoice)
 
-class LayerTypeProcessingClassificationChoice(str, Enum):
+
+class LayerTypeProcessingChoice(str, Enum):
     categorical = "По категориям"
     ranges = "По диапазонам"
 
     @staticmethod
     def items_tuple() -> list:
         return list(
-            map(
-                lambda item: (item.name, item.value),
-                LayerTypeProcessingClassificationChoice,
-            )
+            map(lambda item: (item.name, item.value), LayerTypeProcessingChoice)
         )
-
-
-class ColumnProcessingInputTypeChoice(str, Enum):
-    Image = "Изображения"
-    Text = "Текст"
-    Audio = "Аудио"
-    Video = "Видео"
-    Classification = "Уникальные"
-    Scaler = "Скейлер"
 
     @staticmethod
-    def items_tuple() -> list:
-        return list(
-            map(lambda item: (item.name, item.value), ColumnProcessingInputTypeChoice)
-        )
-
-
-class ColumnProcessingOutputTypeChoice(str, Enum):
-    Classification = "Классификация"
-    Regression = "Регрессия"
-    Segmentation = "Сегментация"
-    Timeseries = "Временные ряды"
-    ImageGAN = "ImageGAN"
-    Transformer = "Трансформер"
-
-    @staticmethod
-    def items_tuple() -> list:
-        return list(
-            map(lambda item: (item.name, item.value), ColumnProcessingOutputTypeChoice)
-        )
+    def values() -> list:
+        return get_values(LayerTypeProcessingChoice)
 
 
 class DeployTypePageChoice(str, Enum):
@@ -316,8 +368,12 @@ class DeployTypePageChoice(str, Enum):
     cascade = "Каскад"
 
     @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), DeployTypePageChoice))
+
+    @staticmethod
     def values() -> list:
-        return list(map(lambda item: item.name, DeployTypePageChoice))
+        return get_values(DeployTypePageChoice)
 
 
 class BlockFunctionGroupChoice(str, Enum):
@@ -342,3 +398,32 @@ class BlockFunctionTypeChoice(str, Enum):
     PostprocessBoxes = "Постобработка Yolo"
     PlotBboxes = "Наложение BBox на изображение"
     FilterClasses = "Фильтрация классов Service YoloV5"
+
+
+class ArchitectureChoice(str, Enum):
+    ImageClassification = "Классификация изображений"
+    ImageSegmentation = "Сегментация изображений"
+    ImageAutoencoder = "Автокодировщик изображений"
+    TextClassification = "Классификация текстов"
+    TextSegmentation = "Сегментация текстов"
+    TextTransformer = "Текстовый трансформер"
+    DataframeClassification = "Классификация табличных данных"
+    DataframeRegression = "Регрессия табличных данных"
+    Timeseries = "Временные ряды"
+    TimeseriesTrend = "Тренд временного ряда"
+    AudioClassification = "Классификация аудио"
+    VideoClassification = "Классификация видео"
+    VideoTracker = "Трекер для видео"
+    YoloV3 = "YoloV3"
+    YoloV4 = "YoloV4"
+    Speech2Text = "Озвучка текста (Speech-to-Text)"
+    Text2Speech = "Синтез речи (Text-to-Speech)"
+    ImageGAN = "Генеративно-состязательные НС на изображениях"
+    ImageCGAN = "Генеративно-состязательные НС с условием на изображениях"
+    # TextToImageGAN = "TextToImageGAN"
+    # ImageToImageGAN = "ImageToImageGAN"
+    # ImageSRGAN = "ImageSRGAN"
+
+    @staticmethod
+    def values() -> list:
+        return get_values(ArchitectureChoice)

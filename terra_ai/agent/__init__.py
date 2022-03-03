@@ -5,11 +5,21 @@ import pynvml
 import tensorflow
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from terra_ai import exceptions as terra_ai_exceptions
 from terra_ai import progress as terra_ai_progress
-from terra_ai.settings import DATASET_EXT, ASSETS_PATH, MODEL_EXT, PROJECT_PATH
+from terra_ai.logging import logger
+from terra_ai.settings import (
+    TERRA_PATH,
+    DATASET_CONFIG,
+    DATASET_EXT,
+    DATASET_VERSION_EXT,
+    DATASET_VERSION_CREATION_DATA,
+    ASSETS_PATH,
+    MODEL_EXT,
+    PROJECT_PATH,
+)
 from terra_ai.agent.exceptions import (
     CallMethodNotFoundException,
     MethodNotCallableException,
@@ -18,16 +28,16 @@ from terra_ai.agent.exceptions import (
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.projects.project import ProjectsInfoData, ProjectsList
 from terra_ai.data.datasets.dataset import (
-    DatasetsGroupsList,
+    DatasetVersionList,
+    DatasetCommonGroupList,
     DatasetData,
     DatasetLoadData,
-    CustomDatasetConfigData,
-    DatasetInfo,
 )
 from terra_ai.data.datasets.creation import (
     CreationData,
-    FilePathSourcesList,
+    CreationValidateBlocksData,
     SourceData,
+    DatasetCreationArchitectureData,
 )
 from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.modeling.model import (
@@ -37,7 +47,7 @@ from terra_ai.data.modeling.model import (
 )
 from terra_ai.data.modeling.extra import ModelGroupChoice, LayerTypeChoice
 from terra_ai.data.training.train import TrainingDetailsData
-from terra_ai.data.training.extra import StateStatusChoice, ArchitectureChoice
+from terra_ai.data.training.extra import StateStatusChoice
 from terra_ai.data.cascades.cascade import (
     CascadeDetailsData,
     CascadesList,
@@ -45,12 +55,14 @@ from terra_ai.data.cascades.cascade import (
 )
 from terra_ai.data.cascades.extra import BlockGroupChoice
 from terra_ai.data.deploy.tasks import DeployPageData
-from terra_ai.data.presets.datasets import DatasetsGroups
 from terra_ai.data.presets.models import ModelsGroups
+from terra_ai.data.presets.datasets import DatasetCreationArchitecture
 from terra_ai.project.loading import load as project_load
 from terra_ai.datasets import utils as datasets_utils
-from terra_ai.datasets.creating import CreateDataset
+from terra_ai.datasets.creating import CreateDataset, CreateVersion
+from terra_ai.datasets.validation import DatasetCreationValidate
 from terra_ai.datasets.loading import (
+    create_version,
     source as dataset_source,
     choice as dataset_choice,
     multiload as dataset_multiload,
@@ -123,60 +135,58 @@ class Exchange:
         """
         project_load(Path(dataset_path), Path(source), Path(target))
 
-    def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
+    def _call_datasets_info(self) -> DatasetCommonGroupList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
-        info = DatasetsGroupsList(DatasetsGroups)
-        for dirname in os.listdir(str(path.absolute())):
-            if dirname.endswith(DATASET_EXT):
-                try:
-                    dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                    info.get(DatasetGroupChoice.custom.name).datasets.append(
-                        DatasetData(**dataset_config.config)
-                    )
-                except Exception:
-                    pass
-        return info
+        return DatasetCommonGroupList()
+
+    def _call_datasets_versions(self, group: str, alias: str) -> DatasetVersionList:
+        """
+        Получение списка версий датасетов
+        """
+        return DatasetVersionList(group=group, alias=alias)
 
     def _call_dataset_choice(
-        self, custom_path: Path, group: str, alias: str, reset_model: bool = False
+        self, group: str, alias: str, version: str, reset_model: bool = False
     ):
         """
         Выбор датасета
         """
         dataset_choice(
             "dataset_choice",
-            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            DatasetLoadData(
+                path=TERRA_PATH.datasets, group=group, alias=alias, version=version
+            ),
             reset_model=reset_model,
         )
 
-    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
+    def _call_datasets_sources(self, path: str) -> List[Dict[str, str]]:
         """
         Получение списка исходников датасетов
         """
-        files = FilePathSourcesList()
+        files = []
         for filename in os.listdir(path):
-            if filename.endswith(".zip"):
-                filepath = Path(path, filename)
-                files.append({"value": filepath})
-        files.sort(key=lambda item: item.label)
+            filepath = Path(path, filename)
+            if filename.endswith(".zip") and filepath.is_file():
+                files.append({"value": filename[:-4], "label": filename[:-4]})
+        files.sort(key=lambda item: item.get("label"))
         return files
 
-    def _call_dataset_source_load(self, mode: str, value: str):
+    def _call_dataset_source_load(self, mode: str, value: str, **kwargs):
         """
         Загрузка исходников датасета
         """
-        dataset_source(SourceData(mode=mode, value=value))
+        dataset_source(SourceData(mode=mode, value=value), kwargs)
 
     def _call_dataset_source_segmentation_classes_auto_search(
-        self, path: Path, num_classes: int, mask_range: int
+        self, source: Path, path: List[str], num_classes: int, mask_range: int
     ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
         """
         return datasets_utils.get_classes_autosearch(
-            path, num_classes, mask_range
+            source, path, num_classes, mask_range
         ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
@@ -185,18 +195,94 @@ class Exchange:
         """
         return datasets_utils.get_classes_annotation(path).native()
 
+    def _call_dataset_create_version(
+        self, group: str, alias: str, version: Optional[str] = None
+    ):
+        """
+        Создание версии датасета
+        """
+        if group != DatasetGroupChoice.custom:
+            raise Exception(
+                "Невозможно создать версию датасета на основе Keras или Terra"
+            )
+        dataset_path = Path(
+            TERRA_PATH.datasets, f"{alias}.{DATASET_EXT}", DATASET_CONFIG
+        )
+        if not dataset_path.is_file():
+            raise Exception("Датасет не найден")
+        with open(dataset_path) as dataset_path_ref:
+            dataset_config = json.load(dataset_path_ref)
+        if version:
+            version_path = Path(
+                dataset_path.parent,
+                "versions",
+                f"{version}.{DATASET_VERSION_EXT}",
+                DATASET_VERSION_CREATION_DATA,
+            )
+            if not version_path.is_file():
+                raise Exception("Версия датасета не найдена")
+            with open(version_path) as version_path_ref:
+                version_config = json.load(version_path_ref)
+        else:
+            version_config = DatasetCreationArchitectureData(
+                **DatasetCreationArchitecture.get(dataset_config.get("architecture"))
+            ).native()
+        dataset_config.update(
+            {
+                "first_creation": False,
+                "stage": 2,
+                "version": version_config,
+            }
+        )
+        create_version(alias, dataset_config)
+
     def _call_dataset_create(self, creation_data: CreationData):
         """
         Создание датасета из исходников
         """
-        CreateDataset(creation_data)
+        if creation_data.first_creation:
+            creation_class = CreateDataset
+        else:
+            creation_class = CreateVersion
+        creation_class(creation_data)
 
-    def _call_dataset_delete(self, path: str, group: str, alias: str):
+    def _call_dataset_create_validate(
+        self, data: CreationValidateBlocksData
+    ) -> Dict[int, Optional[str]]:
+        """
+        Валидация создания датасета
+        """
+        return DatasetCreationValidate(
+            data.type, data.architecture, data.items
+        ).validate()
+
+    def _call_dataset_delete(self, group: str, alias: str):
         """
         Удаление датасета
         """
         if group == DatasetGroupChoice.custom:
-            shutil.rmtree(Path(path, f"{alias}.{DATASET_EXT}"), ignore_errors=True)
+            shutil.rmtree(
+                Path(TERRA_PATH.datasets, f"{alias}.{DATASET_EXT}"), ignore_errors=True
+            )
+        else:
+            raise terra_ai_exceptions.datasets.DatasetCanNotBeDeletedException(
+                alias, group
+            )
+
+    def _call_dataset_delete_version(self, group: str, alias: str, version: str):
+        """
+        Удаление датасета
+        """
+        if group == DatasetGroupChoice.custom:
+            shutil.rmtree(
+                Path(
+                    TERRA_PATH.datasets,
+                    f"{alias}.{DATASET_EXT}",
+                    "versions",
+                    f"{version}.{DATASET_VERSION_EXT}",
+                ),
+                ignore_errors=True,
+            )
         else:
             raise terra_ai_exceptions.datasets.DatasetCanNotBeDeletedException(
                 alias, group
@@ -238,7 +324,7 @@ class Exchange:
 
     def _call_model_validate(
         self, model: ModelDetailsData, dataset_data: DatasetData
-    ) -> tuple:
+    ) -> Dict[int, Optional[str]]:
         """
         Валидация модели
         """
@@ -397,10 +483,10 @@ class Exchange:
                 continue
             sources.update(
                 {
-                    block.id: DatasetInfo(
-                        alias=datasets_source[0].alias,
-                        group=datasets_source[0].group,
-                    ).dataset.sources
+                    # block.id: DatasetInfo(
+                    #     alias=datasets_source[0].alias,
+                    #     group=datasets_source[0].group,
+                    # ).dataset.sources
                 }
             )
         self(

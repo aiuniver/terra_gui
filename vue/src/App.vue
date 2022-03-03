@@ -1,14 +1,8 @@
 <template>
-  <div :class="['app', { 'app--new': isNew }]">
+  <div class="app app--new">
     <Overlay v-if="$store.state.settings.overlay" />
     <header>
-      <template v-if="isNew">
-        <NewHeader />
-      </template>
-      <template v-else>
-        <Header />
-        <Nav />
-      </template>
+      <Header />
     </header>
     <main>
       <router-view></router-view>
@@ -21,9 +15,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import Header from '@/components/app/Header';
-import NewHeader from '@/components/app/NewHeader';
-import Nav from '@/components/app/Nav';
+import Header from '@/components/app/NewHeader';
 import Footer from '@/components/app/Footer';
 import Overlay from './components/forms/Overlay';
 
@@ -31,8 +23,6 @@ export default {
   name: 'App',
   components: {
     Header,
-    NewHeader,
-    Nav,
     Footer,
     Overlay,
     // SaveProject: () => import('@/components/app/modal/SaveProject.vue'),
@@ -44,10 +34,6 @@ export default {
     ...mapGetters({
       project: 'projects/getProject',
     }),
-    isNew() {
-      const path = this?.$route?.fullPath || '';
-      return Boolean(path.includes('new') && process.env.NODE_ENV === 'development');
-    },
   },
   methods: {
     myEventHandler() {
@@ -74,7 +60,7 @@ export default {
   },
   async created() {
     await this.$store.dispatch('projects/get');
-    await this.$store.dispatch('datasets/get');
+    // await this.$store.dispatch('datasets/get');
     if (!this.project?.dataset) {
       // console.log(this.$route);
       if (this.$route.meta.access == false) {
@@ -96,6 +82,7 @@ export default {
         }
       }
     }
+    this.$store.commit('datasets/SET_RECENT', localStorage.getItem('recent') || '')
     window.addEventListener('resize', this.myEventHandler);
     // window.addEventListener('beforeunload', event => {
     //   this.handlerClose();
@@ -115,7 +102,7 @@ export default {
   flex-direction: column;
   header {
     flex: 0 0 92px;
-    z-index: 999;
+    z-index: 800;
   }
   main {
     height: calc(100% - 152px);

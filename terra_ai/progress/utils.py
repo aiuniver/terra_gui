@@ -20,6 +20,7 @@ def download(progress_name: str, title: str, url: HttpUrl) -> Path:
     try:
         response = requests.get(url, stream=True)
         if requests.status_codes.codes.get("ok") != response.status_code:
+            os.remove(file_destination)
             raise Exception(NOT_ZIP_FILE_URL % url)
         length = int(response.headers.get("Content-Length", 0))
         size = 0

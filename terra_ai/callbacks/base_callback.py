@@ -234,16 +234,16 @@ class FitCallback:
             self._start_time = time.time()
             if status != StateStatusChoice.addtrain:
                 self.batch = 1
-            if not self.dataset.data.use_generator:
-                if len(list(self.dataset.X['train'].values())[0]) % self.batch_size:
-                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size + 1
-                else:
-                    self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size
+            # if not self.dataset.data.use_generator:
+            if len(list(self.dataset.X['train'].values())[0]) % self.batch_size:
+                self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size + 1
             else:
-                if len(self.dataset.dataframe['train']) % self.batch_size:
-                    self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size + 1
-                else:
-                    self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+                self.num_batches = len(list(self.dataset.X['train'].values())[0]) // self.batch_size
+            # else:
+            #     if len(self.dataset.dataframe['train']) % self.batch_size:
+            #         self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size + 1
+            #     else:
+            #         self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
         except Exception as error:
             self.__stop_by_error(
                 StartNumBatchesMissing(

@@ -21,15 +21,15 @@ class TimeseriesCallback:
         method_name = 'get_x_array'
         try:
             inverse_x_val = {}
-            if not options.data.use_generator:
-                x_val = options.X.get("val")
-            else:
-                x_val = {}
-                for inp in options.data.inputs.keys():
-                    x_val[inp] = []
-                    for x_val_, _ in options.dataset['val'].batch(1):
-                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-                    x_val[inp] = np.array(x_val[inp])
+            # if not options.data.use_generator:
+            x_val = options.X.get("val")
+            # else:
+                # x_val = {}
+                # for inp in options.data.inputs.keys():
+                #     x_val[inp] = []
+                #     for x_val_, _ in options.dataset['val'].batch(1):
+                #         x_val[inp].extend(x_val_.get(f'{inp}').numpy())
+                #     x_val[inp] = np.array(x_val[inp])
             for inp in x_val.keys():
                 preprocess_dict = options.preprocessing.preprocessing.get(int(inp))
                 inverse_x = np.zeros_like(x_val.get(inp)[:, :, 0:1])
@@ -58,13 +58,13 @@ class TimeseriesCallback:
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
-                    if not options.data.use_generator:
-                        y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
-                    else:
-                        y_true[data_type][f"{out}"] = []
-                        for _, y_val in options.dataset[data_type].batch(1):
-                            y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                        y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                    # if not options.data.use_generator:
+                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                    # else:
+                    #     y_true[data_type][f"{out}"] = []
+                    #     for _, y_val in options.dataset[data_type].batch(1):
+                    #         y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                    #     y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
                     preprocess_dict = options.preprocessing.preprocessing.get(int(out))
                     inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, :, 0:1])
                     for i, column in enumerate(preprocess_dict.keys()):

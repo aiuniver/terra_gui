@@ -46,6 +46,7 @@ class ArchitectureChoice(str, Enum):
     Basic = "Basic"
     ImageClassification = "ImageClassification"
     ImageSegmentation = "ImageSegmentation"
+    ImageAutoencoder = "ImageAutoencoder"
     TextClassification = "TextClassification"
     TextSegmentation = "TextSegmentation"
     TextTransformer = "TextTransformer"
@@ -55,9 +56,9 @@ class ArchitectureChoice(str, Enum):
     TimeseriesTrend = "TimeseriesTrend"
     AudioClassification = "AudioClassification"
     VideoClassification = "VideoClassification"
+    VideoTracker = "VideoTracker"
     YoloV3 = "YoloV3"
     YoloV4 = "YoloV4"
-    Tracker = "Tracker"
     Speech2Text = "Speech2Text"
     Text2Speech = "Text2Speech"
     ImageGAN = "ImageGAN"
@@ -65,6 +66,10 @@ class ArchitectureChoice(str, Enum):
     TextToImageGAN = "TextToImageGAN"
     ImageToImageGAN = "ImageToImageGAN"
     ImageSRGAN = "ImageSRGAN"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ArchitectureChoice))
 
 
 class CheckpointIndicatorChoice(str, Enum):

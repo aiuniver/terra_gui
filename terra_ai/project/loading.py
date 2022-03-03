@@ -4,11 +4,11 @@ import shutil
 
 from pathlib import Path
 
-from .. import progress, settings
-from ..utils import get_tempfile
-from ..data.datasets.dataset import DatasetLoadData
-from ..datasets import loading as datasets_loading
-from ..progress import utils as progress_utils
+from terra_ai import progress, settings
+from terra_ai.utils import get_tempfile
+from terra_ai.data.datasets.dataset import DatasetLoadData
+from terra_ai.datasets import loading as datasets_loading
+from terra_ai.progress import utils as progress_utils
 
 
 PROJECT_LOAD_TITLE = "Загрузка проекта %s"

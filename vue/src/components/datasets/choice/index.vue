@@ -1,9 +1,5 @@
 <template>
   <div class="datasets">
-    <p class="datasets-type flex align-center">
-      <span class="mr-4">{{ list[selectedType] }}</span>
-      <d-svg name="file-blank-outline" v-if="selectedType === 1" />
-    </p>
 
     <div class="datasets-filter">
       <t-field label="">
@@ -30,11 +26,16 @@
       </div>
     </div>
 
-    <scrollbar style="justify-self: stretch">
+    <scrollbar style="justify-self: stretch" :ops="{ rail: { gutterOfSide: '0px' } }">
       <div v-if="display" class="datasets-cards">
-        <DatasetCard @click.native="selectDataset(item)" v-for="(item, idx) in sortedList" :key="idx" :dataset="item" @click="onChoice" />
+        <DatasetCard v-for="(item, idx) in sortedList" 
+        class="datasets-cards__item"
+        :key="idx" 
+        :dataset="item"
+        @click="$emit('choice', item)"
+        />
       </div>
-      <Table v-else :selectedType="selectedType" />
+      <Table v-else :selectedType="selectedType" :data="sortedList" @choice="$emit('choice', $event)" />
       <div class="datasets__empty" v-if="!sortedList.length">Не найдено</div>
     </scrollbar>
   </div>
@@ -44,6 +45,8 @@
 import DatasetCard from '@/components/datasets/choice/DatasetCard';
 import Table from '@/components/datasets/choice/Table';
 import { mapActions, mapGetters } from 'vuex';
+import options from './sortOptions';
+
 export default {
   name: 'Datasets',
   props: ['datasets', 'selectedType'],
@@ -55,56 +58,25 @@ export default {
     list: ['Недавние датасеты', 'Проектные датасеты', 'Датасеты Terra'],
     search: '',
     display: true,
-    sortIdx: 4,
     show: false,
-    selectedSort: {
-      title: 'По алфавиту от А до Я',
-      value: 'alphabet',
-      idx: 0,
-    },
-    options: [
-      {
-        title: 'По алфавиту от А до Я',
-        value: 'alphabet',
-        idx: 0,
-      },
-      {
-        title: 'По алфавиту от Я до А',
-        value: 'alphabet_reverse',
-        idx: 1,
-      },
-      {
-        title: 'Последние созданные',
-        value: 'last_created',
-        idx: 2,
-      },
-      {
-        title: 'Последние использованные',
-        value: 'last_used',
-        idx: 3,
-      },
-      {
-        title: 'Популярные',
-        value: 'popular',
-        idx: 4,
-      },
-      {
-        title: 'Последние добавленные',
-        value: 'last_added',
-        idx: 5,
-      },
-    ],
+    selectedSort: options[0],
+    options,
   }),
   computed: {
     ...mapGetters({
       project: 'projects/getProject',
     }),
     sortedList() {
-      const sortDatasets = this.datasets || [];
-      const search = this.search;
-      return sortDatasets
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .filter(i => {
+      const datasets = this.datasets || [];
+      const search = this.search.trim();
+      let sortedList = []
+      if (this.selectedSort.idx === 0) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name)) // от а до я
+      if (this.selectedSort.idx === 1) sortedList = datasets.sort((a, b) => b.name.localeCompare(a.name)) // от я до а
+      if (this.selectedSort.idx === 2) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 3) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 4) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      if (this.selectedSort.idx === 5) sortedList = datasets
+      return sortedList.filter(i => {
           return search ? i.name.toLowerCase().includes(search.toLowerCase()) : true;
         });
     },
@@ -114,7 +86,6 @@ export default {
       choice: 'datasets/choice',
     }),
     isLoaded(dataset) {
-      // console.log(this.project?.dataset?.alias)
       return this.project?.dataset?.alias === dataset.alias;
     },
     selectDataset(item) {
@@ -141,7 +112,6 @@ export default {
         })
         .then(res => {
           if (res) {
-            console.log(dataset);
             if (!dataset.training_available) return;
             if (!this.isLoaded(dataset)) {
               this.choice(dataset);
@@ -168,9 +138,10 @@ export default {
   gap: 30px;
   &-cards {
     display: flex;
-    gap: 20px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
+    &__item {
+      margin: 0 20px 20px 0;
+    }
   }
   &-type {
     font-size: 14px;
@@ -185,6 +156,9 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  &-header span {
+    white-space: nowrap;
+  }
   &-dropdown {
     position: absolute;
     top: calc(100% + 10px);
@@ -221,6 +195,10 @@ export default {
 .ci-tile {
   display: inline-block;
   border-radius: 4px;
+  cursor: pointer;
+  ::v-deep svg {
+    margin-bottom: 1.5px;
+  }
   &--selected {
     border: 1px solid $color-light-blue;
     &::v-deep svg {

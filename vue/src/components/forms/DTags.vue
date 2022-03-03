@@ -6,15 +6,14 @@
         <i class="d-tags__add--icon t-icon icon-tag-plus" @click="create"></i>
         <input type="text" class="d-tags__add--input" :disabled="tags.length >= 3" :placeholder="'Добавить'" @keypress.enter.prevent="create" />
       </button>
-      <template v-for="({ value }, i) in tags">
+      <template v-for="(name, i) in tags">
         <div class="d-tags__item mr-2" :key="'tag_' + i">
           <input
-            :value="value"
+            :value="name"
             :data-index="i"
-            name="[tags][][name]"
             type="text"
             class="d-tags__input"
-            :style="{ width: (value.length + 1) * 8 <= 90 ? (value.length + 1) * 8 + 'px' : '90px' }"
+            :style="{ width: (name.length + 1) * 12 <= 90 ? (name.length + 1) * 12 + 'px' : '90px' }"
             autocomplete="off"
             @input="change"
             @blur="blur"
@@ -70,7 +69,7 @@ export default {
       const el = this.$el.getElementsByClassName('d-tags__add--input')?.[0];
       console.log(el.value);
       if (el.value && el.value.length >= 3 && this.tags.length <= 3) {
-        this.tags.push({ value: el.value });
+        this.tags.push(el.value);
         this.tags = [...this.tags];
         el.value = '';
       }
@@ -79,7 +78,7 @@ export default {
       const index = e.target.dataset.index;
       console.log(index);
       if (e.target.value.length >= 3) {
-        this.tags[+index].value = e.target.value;
+        this.tags[+index].name = e.target.value;
       }
     },
     blur(e) {
@@ -156,7 +155,7 @@ export default {
       height: 12px;
       width: 12px;
       top: 40%;
-      right: 2px;
+      right: 5px;
       cursor: pointer;
       transform: rotate(45deg);
     }
@@ -170,7 +169,7 @@ export default {
     // margin-left: 10px;
     // border: none;
     // padding: 2px;
-    width: 60px;
+    // width: 60px;
     height: 40px;
     color: #a7bed3;
     font-size: 12px;

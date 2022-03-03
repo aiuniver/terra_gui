@@ -1,25 +1,44 @@
 <template>
   <div>
-    <template v-for="(data, index) of formsHandler">
-      <TAutoFieldHandler v-bind="data" :parameters="{}" :key="index" :idKey="'key_' + index" root @change="change" />
-    </template>
+    <t-field>
+      <d-input-text :value="name" @change="onChange"></d-input-text>
+    </t-field>
+    {{ selected }}
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-import TAutoFieldHandler from '@/components/new/blocks/TAutoFieldHandler';
-
+import { mapGetters, mapActions } from 'vuex';
 export default {
-  components: {
-    TAutoFieldHandler
+  components: {},
+  props: {
+    selected: {
+      type: Object,
+      default: () => ({}),
+    },
   },
   computed: {
     ...mapGetters({
-      getSelected: 'create/getSelected',
       getFileManager: 'createDataset/getFileManager',
       getDefault: 'create/getDefault',
     }),
+    parameters() {
+      return this?.selected?.parameters || {};
+    },
+    name() {
+      return this.selected?.name || '';
+    },
+  },
+  methods: {
+    ...mapActions({
+      setParameters: 'create/setParameters',
+      editBlock: 'create/editBlock',
+    }),
+    onChange({ value }) {
+      const block = { ...this.selected };
+      block.name = value;
+      this.editBlock(block);
+    },
   },
 };
 </script>

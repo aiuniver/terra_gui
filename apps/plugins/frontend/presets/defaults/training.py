@@ -655,7 +655,7 @@ Architectures = {
         **ArchitectureYoloForm,
         "yolo": ArchitectureGroupYoloV4,
     },
-    ArchitectureChoice.Tracker: {**ArchitectureBasicForm},
+    ArchitectureChoice.VideoTracker: {**ArchitectureBasicForm},
     ArchitectureChoice.ImageGAN: {**ArchitectureGANForm},
     ArchitectureChoice.ImageCGAN: {**ArchitectureGANForm},
     ArchitectureChoice.TextToImageGAN: {**ArchitectureGANForm},

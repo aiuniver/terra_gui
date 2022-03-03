@@ -1,65 +1,68 @@
 <template>
-  <div>
+  <div class="menu">
     <div class="menu-list">
-      <div @click="selectedType = 0" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 0 }]">
+      <div @click="select(1)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
         <d-svg name="clock" />
         <span>Недавние</span>
       </div>
-      <div @click="selectedType = 1" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 1 }]">
+      <div @click="select(2)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
         <d-svg name="file-outline" />
         <span>Проектные</span>
       </div>
-      <div @click="selectedType = 2" :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 2 }]">
+      <div @click="select(3)" 
+      :class="['menu-list__item', { 'menu-list__item--selected': selectedType === 3 }]">
         <d-svg name="world" />
         <span>Terra</span>
       </div>
     </div>
     <hr />
-    <div class="menu-categories">
-      <ul class="menu-categories__item">
-        <li>Изображения</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
+    <scrollbar :ops="{ rail: { gutterOfSide: '0px' } }">
+      <ul class="menu-categories" v-for="tag in tags" :key="tag.alias">
+        <p 
+        :class="{ 'menu-categories--selected': selectedTag.alias === tag.alias && selectedTag.group === tag.group }"
+        @click="$emit('tagClick', { type: 'group', alias: tag.alias, name: tag.name })">{{ tag.name }}</p>
+        <li
+        v-for="item in tag.items" :key="item"
+        :class="{ 'menu-categories--selected': selectedTag.alias === item && selectedTag.group === tag.alias }"
+        @click="$emit('tagClick', { type: 'tag', alias: item, group: tag.alias })"
+        class="menu-categories__item"
+        >{{ item }}</li>
       </ul>
-      <ul class="menu-categories__item">
-        <li>Видео</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
-      </ul>
-      <ul class="menu-categories__item">
-        <li>Текст</li>
-        <li>Машины</li>
-        <li>Круглые</li>
-        <li>Самолеты</li>
-        <li>Квадраты</li>
-      </ul>
-    </div>
+    </scrollbar>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'choice-menu',
-  data: () => ({
-    selectedType: 2,
-  }),
+  props: ['selectedType', 'selectedTag'],
   computed: {
     ...mapGetters({
-      datasets: 'datasets/getDatasets',
-      choiceDataset: 'datasets/choiceDataset',
-    }),
+      tags: 'datasets/getTags'
+    })
   },
+  methods: {
+    select(val) {
+      if (this.selectedType === val) return this.$emit('select', 0)
+      this.$emit('select', val)
+    }
+  }
 };
 </script>
 
 <style lang="scss">
 @import "@/assets/scss/variables/default.scss";
+
+.menu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .menu-list {
   &__item {
     display: flex;
@@ -75,11 +78,13 @@ export default {
     }
 
     &--selected {
-      background-color: $color-black;
+      background-color: #1E2734;
+      color: #65b9f4;
     }
 
     &:hover {
       color: #65b9f4;
+      background-color: #1E2734;
       .ci-world {
         background-color: #65b9f4;
       }
@@ -95,19 +100,24 @@ export default {
 
 .menu-categories {
   font-size: 14px;
-  padding-left: 20px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 15px;
+  &--selected, & > *:hover {
+    background: #1E2734;
+    color: #65B9F4 !important;
+  }
+  p {
+    font-weight: bold;
+    cursor: pointer;
+    padding-left: 20px;
+    font-size: 14px;
+  }
   &__item {
-    margin-bottom: 10px;
-    li {
-      &:first-child {
-        padding-bottom: 5px;
-        color: $color-white;
-        cursor: default;
-      }
-      color: $color-gray;
-      padding-top: 5px;
-      cursor: pointer;
-    }
+    padding-left: 20px;
+    color: $color-gray;
+    margin-top: 5px;
+    cursor: pointer;
   }
 }
 </style>

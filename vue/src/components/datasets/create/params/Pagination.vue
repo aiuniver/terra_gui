@@ -5,13 +5,13 @@
     </button>
     <div class="d-pagination__inner">
       <div class="d-pagination__list">
-        <div v-for="item of qty" :key="item" :class="['d-pagination__item', { 'd-pagination__item--active': isActive(item) }]"></div>
+        <div v-for="item of list.length" :key="item" :class="['d-pagination__item', { 'd-pagination__item--active': isActive(item) }]"></div>
       </div>
       <div class="d-pagination__title">
-        <span>{{ title }}</span>
+        <span>{{ getTitle }}</span>
       </div>
     </div>
-    <d-button style="width: 40%" color="secondary" direction="left" text="Далее" :disabled="isStatus" @click="$emit('next', $event)" />
+    <d-button style="width: 40%" color="secondary" direction="left" :text="getTextBtn" :disabled="isStatus" @click="onNext" />
   </div>
 </template>
 
@@ -20,13 +20,9 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'DPagination',
   props: {
-    qty: {
-      type: Number,
-      default: 4,
-    },
-    title: {
-      type: String,
-      default: '',
+    list: {
+      type: Array,
+      default: () => [],
     },
     value: {
       type: Number,
@@ -39,17 +35,27 @@ export default {
       project: 'createDataset/getProject',
     }),
     isDisabled() {
-      return this.value === 1;
+      return this.value === 1 || this.value === 2 && !this.project.firstCreation;
     },
     isStatus() {
-      // console.log(project)
-      if (this.value === 1 && (!(this?.project?.url || this?.project?.google) || !this?.project?.name || !this?.project?.version)) return true;
+      if (this.value === 1 && (!this?.project?.source.value || !this?.project?.name || !this?.project?.architecture)) return true;
+      if (this.value === 4 && !this?.project?.verName) return true;
       return false;
     },
+    getTitle() {
+      return this.list.find(i => i.id === this.value).title;
+    },
+    getTextBtn() {
+      return this.value === this.list.length ? 'Создать' : 'Далее';
+    }
   },
   methods: {
     isActive(value) {
       return this.value === value;
+    },
+    onNext(event) {
+      this.$emit('next', event);
+      if (this.value === this.list.length) this.$emit('create', event);
     },
   },
 };

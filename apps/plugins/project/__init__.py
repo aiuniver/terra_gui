@@ -16,7 +16,8 @@ from terra_ai.progress import utils as progress_utils
 from terra_ai.data.path import ProjectPathData
 from terra_ai.data.extra import HardwareAcceleratorData
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.datasets.dataset import DatasetData, DatasetInfo
+from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.datasets.creation import CreationData
 from terra_ai.data.deploy.tasks import DeployData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.training.train import TrainingDetailsData, DEFAULT_TRAINING_PATH_NAME
@@ -31,7 +32,8 @@ UNKNOWN_NAME = "NoName"
 
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
-    dataset_info: Optional[DatasetInfo]
+    dataset: Optional[DatasetData]
+    dataset_creation: CreationData = CreationData()
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
     training: TrainingDetailsData
     cascade: CascadeDetailsData = CascadeDetailsData(**EmptyCascadeDetailsData)
@@ -42,17 +44,7 @@ class Project(BaseMixinData):
             data["training"] = {}
         data["training"]["path"] = terra_ai_settings.PROJECT_PATH.training
 
-        _dataset = data.get("dataset")
-        if _dataset:
-            data["dataset_info"] = {
-                "alias": _dataset.get("alias"),
-                "group": _dataset.get("group"),
-            }
-
         super().__init__(**data)
-
-        if not self.dataset:
-            self.dataset_info = None
 
         defaults_data.modeling.set_layer_datatype(self.dataset)
         defaults_data.training = DefaultsTrainingData(
@@ -61,12 +53,6 @@ class Project(BaseMixinData):
         defaults_data.update_models(self.trainings)
 
         self.save_config()
-
-    @property
-    def dataset(self) -> Optional[DatasetData]:
-        if self.dataset_info:
-            return self.dataset_info.dataset
-        return None
 
     @property
     def hardware(self) -> HardwareAcceleratorData:
@@ -92,8 +78,10 @@ class Project(BaseMixinData):
         kwargs_keys = kwargs.keys()
         if "name" in kwargs_keys:
             self.name = kwargs.get("name")
-        if "dataset_info" in kwargs_keys:
-            self.dataset_info = kwargs.get("dataset_info")
+        if "dataset" in kwargs_keys:
+            self.dataset = kwargs.get("dataset")
+        if "dataset_creation" in kwargs_keys:
+            self.dataset_creation = kwargs.get("dataset_creation")
         if "model" in kwargs_keys:
             self.model = kwargs.get("model")
         if "training" in kwargs_keys:
@@ -219,7 +207,8 @@ class Project(BaseMixinData):
                         "group": _dataset.get("group"),
                     }
                 else:
-                    _dataset_info = _config.get("dataset_info", None)
+                    # _dataset_info = _config.get("dataset_info", None)
+                    pass
                 _model = _config.get("model", None)
                 _cascade = _config.get("cascade", None)
                 _training = utils.correct_training(
@@ -227,11 +216,13 @@ class Project(BaseMixinData):
                     ModelDetailsData(**(_model or EmptyModelDetailsData)),
                 )
                 _training["path"] = terra_ai_settings.PROJECT_PATH.training
+                # _dataset_info = DatasetInfo(**_dataset_info)
+                #     if _dataset_info
+                #     else None
+                _dataset_info = None
                 self._set_data(
                     name=_config.get("name", UNKNOWN_NAME),
-                    dataset_info=DatasetInfo(**_dataset_info)
-                    if _dataset_info
-                    else None,
+                    dataset_info=_dataset_info,
                     model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
                     training=TrainingDetailsData(**_training),
                     cascade=CascadeDetailsData(**(_cascade or EmptyCascadeDetailsData)),
@@ -257,11 +248,10 @@ class Project(BaseMixinData):
 
     def frontend(self):
         _data = self.native()
-        _data.pop("dataset_info")
         _data.update(
             {
-                "dataset": self.dataset.native() if self.dataset else None,
                 "deploy": self.deploy.presets if self.deploy else None,
+                "dataset_creation": self.dataset_creation.frontend,
             }
         )
         return json.dumps(_data)
@@ -270,8 +260,12 @@ class Project(BaseMixinData):
         self._set_data(name=name)
         self.save_config()
 
-    def set_dataset(self, info: DatasetInfo, reset_model: bool = False):
-        self._set_data(dataset_info=info)
+    def set_dataset_creation(self, data: Optional[CreationData] = None):
+        self._set_data(dataset_creation=data)
+        self.save_config()
+
+    def set_dataset(self, dataset: DatasetData, reset_model: bool = False):
+        self._set_data(dataset=dataset)
 
         if not self.model.inputs or not self.model.outputs or reset_model:
             self.model = self.dataset.model
@@ -316,7 +310,7 @@ class Project(BaseMixinData):
         self.save_config()
 
     def clear_dataset(self):
-        self._set_data(dataset_info=None)
+        self._set_data(dataset=None)
         shutil.rmtree(terra_ai_settings.PROJECT_PATH.datasets, ignore_errors=True)
         os.makedirs(terra_ai_settings.PROJECT_PATH.datasets, exist_ok=True)
         defaults_data.modeling.set_layer_datatype(self.dataset)

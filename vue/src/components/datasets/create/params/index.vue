@@ -1,49 +1,51 @@
 <template>
   <div class="params">
     <div class="params__body">
-      <div class="params__header">Данные</div>
+      <div class="params__header mb-2">{{ getComp.title }}</div>
       <scrollbar>
         <div class="params__inner">
-          <component :is="getComp.component" />
+          <component :is="getComp.component" :state="value" />
         </div>
       </scrollbar>
     </div>
     <div class="params__footer">
-      <Pagination :value="value" :title="getComp.title" @next="onNext" @prev="onPrev" />
+      <Pagination :value="value" :list="list" @next="onNext" @prev="onPrev" @create="onCreate" />
     </div>
   </div>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
+import { isError } from '@/store/const/create';
+import { mapActions } from 'vuex';
 import { debounce } from '@/utils/core/utils';
-import Preview from './Preview';
-import Settings from './settings/';
-import Download from './Download';
-import Helpers from './Helpers';
+import StateThree from './settings/';
+import StateOne from './StateOne';
+import StateFour from './StateFour';
 import Pagination from './Pagination';
 export default {
   components: {
-    Preview,
-    Settings,
-    Download,
+    StateOne,
+    StateThree,
     Pagination,
-    Helpers,
+    StateFour,
+  },
+  props: {
+    pagination: {
+      type: Number,
+      default: 1,
+    },
   },
   data: () => ({
-    debounce: null,
+    debounceSource: null,
+    debounceCreate: null,
     list: [
-      { id: 1, title: 'Download', component: 'download' },
-      { id: 2, title: 'Preview', component: 'Preview' },
-      { id: 3, title: 'Settings', component: 'settings' },
-      { id: 4, title: 'Helpers', component: 'helpers' },
+      { id: 1, title: 'Данные', component: 'state-one' },
+      { id: 2, title: 'Input', component: 'state-three' },
+      { id: 3, title: 'Output', component: 'state-three' },
+      { id: 4, title: 'Завершение', component: 'state-four' },
     ],
   }),
   computed: {
-    ...mapGetters({
-      select: 'createDataset/getSelectSource',
-      getPagination: 'createDataset/getPagination',
-    }),
     getComp() {
       return this.list.find(i => i.id === this.value);
     },
@@ -52,7 +54,7 @@ export default {
         this.setPagination(value);
       },
       get() {
-        return this.getPagination;
+        return this.pagination;
       },
     },
   },
@@ -60,48 +62,94 @@ export default {
     ...mapActions({
       setSourceLoad: 'createDataset/setSourceLoad',
       sourceLoadProgress: 'createDataset/sourceLoadProgress',
+      createLoadProgress: 'createDataset/createLoadProgress',
       setPagination: 'createDataset/setPagination',
+      create: 'createDataset/create',
+      datasetValidate: 'createDataset/datasetValidate',
       setOverlay: 'settings/setOverlay',
+      blockSelect: 'create/main',
     }),
-    onNext() {
-      if (this.value === 1) this.onDownload();
-      if (this.value < this.list.length) this.value = this.value + 1;
+    async onValidate(type) {
+      this.$store.dispatch('settings/setOverlay', true)
+      const errors = await this.datasetValidate(type)
+      this.$store.dispatch('settings/setOverlay', false)
+      return errors
+    },
+    async onNext() {
+      let errors = {};
+      if (this.value === 1) await this.onDownload();
+
+      if (this.value === 2) {
+        errors = await this.onValidate('inputs');
+      }
+      if (this.value === 3) {
+        errors = await this.onValidate('outputs');
+      }
+      if (!isError(errors) && this.value < this.list.length) this.value = this.value + 1;
     },
     onPrev() {
       if (this.value > 1) this.value = this.value - 1;
     },
-    async onProgress() {
+    async onSourceProgress() {
       const res = await this.sourceLoadProgress();
       if (!res?.data?.finished) {
-        this.debounce(true);
+        this.debounceSource(true);
       } else {
         this.setOverlay(false);
       }
     },
+    async onCreateProgress() {
+      const res = await this.createLoadProgress();
+      if (!res?.data?.finished) {
+        this.debounceCreate(true);
+      } else {
+        this.$router.push('/datasets');
+        this.setOverlay(false);
+      }
+    },
     async onDownload() {
-      const { mode, value } = this.select;
-      const success = await this.setSourceLoad({ mode, value });
+      const success = await this.setSourceLoad();
       if (success) {
         this.setOverlay(true);
-        this.debounce(true);
+        this.debounceSource(true);
+      }
+    },
+    async onCreate() {
+      const success = await this.create();
+      if (success) {
+        this.setOverlay(true);
+        this.debounceCreate(true);
       }
     },
   },
   created() {
-    this.debounce = debounce(status => {
+    this.debounceSource = debounce(status => {
       if (status) {
-        this.onProgress();
+        this.onSourceProgress();
+      }
+    }, 1000);
+    this.debounceCreate = debounce(status => {
+      if (status) {
+        this.onCreateProgress();
       }
     }, 1000);
   },
   beforeDestroy() {
-    this.debounce(false);
+    this.debounceSource(false);
+    this.debounceCreate(false);
+  },
+  watch: {
+    value(value, old) {
+      console.log(value, old);
+      this.blockSelect({ value, old });
+    },
   },
 };
 </script>
 
 <style lang="scss">
 .params {
+  user-select: none;
   position: relative;
   display: flex;
   flex-direction: column;

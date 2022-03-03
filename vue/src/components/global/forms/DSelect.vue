@@ -7,10 +7,12 @@
       v-model="input"
       v-bind="$attrs"
       autocomplete="off"
+      readonly
       :class="['d-input__input']"
       :type="type"
       :placeholder="placeholder"
       :disabled="isDisabled"
+      @click="expand"
     />
     <div class="d-input__btn">
       <!-- <div v-show="input && !isDisabled" class="d-input__btn--cleener">
@@ -81,7 +83,7 @@ export default {
     },
   },
   created() {
-    this.input = this.list[0]?.label;
+    // this.input = this.list[0]?.label;
   },
 };
 </script>

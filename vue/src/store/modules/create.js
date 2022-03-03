@@ -1,32 +1,114 @@
-import { Block } from '../const/blocks';
+import { createBlock, setLinks, getLinks, preloadBlock } from '../const/blocks';
 
 export default {
   namespaced: true,
   state: () => ({
-    blocks: [new Block({ id: 1 }), new Block({ id: 2, type: 'middle', position: [20, 20] }), new Block({ id: 3, type: 'handler', position: [40, 40] }), new Block({ id: 4, type: 'output', position: [60, 60] })],
+    inputs: [
+      // createBlock({ id: 1, type: 'data', position: [0, 0], bind: { up: [], down: [2, 3] } }),
+      // createBlock({ id: 2, type: 'handler', position: [0, 100], bind: { up: [1], down: [3] } }),
+      // createBlock({ id: 3, type: 'handler', position: [200, 100], bind: { up: [2, 1], down: [] } })
+    ],
+    outputs: [],
+    blocks: [],
     links: [],
     key: {},
-    creation: {},
+    // creation: {},
+    // default: {}
   }),
   mutations: {
+    SET_INPUT_AND_OUTPUT (state, { inputs, outputs, stage }) {
+      const input = preloadBlock(inputs, 'input');
+      const output = preloadBlock(outputs, 'output');
+      if ([2, 3].includes(stage)) {
+        state.blocks = stage === 2 ? [...input] : [...output]
+      }
+      state.inputs = input;
+      state.outputs = output;
+    },
     SET_BLOCKS (state, value) {
       state.blocks = value;
     },
     SET_LINKS (state, value) {
       state.links = value;
+      state.blocks = setLinks(state.blocks, value)
     },
     SET_KEY_EVENT (state, value) {
       state.key = value;
     },
-    SET_CREATION (state, value) {
-      state.creation = value;
+    // SET_DEFAULT (state, value) {
+    //   state.default = value;
+    // },
+    SET_OUTPUT (state, value) {
+      state.outputs = value;
+    },
+    SET_INTPUT (state, value) {
+      state.inputs = value;
     },
   },
   actions: {
     // BLOCKS____________________________________________________
-    add ({ commit, state: { blocks } }, { type, position }) {
+
+    main ({ commit, state: { blocks, inputs, outputs } }, { value, old }) {
+      if (value === 2 && old === 1) {
+        commit('SET_BLOCKS', [...inputs]);
+      }
+      if (value === 3 && old === 2) {
+
+        // commit('SET_INTPUT', [...blocks]);
+        // const data = blocks.filter(i => i.type === 'data').map(i => {
+        //   return { ...i, bind: { up: [], down: [] }, selected: false }
+        // })
+        // console.log(data)
+        // const newOutputs = outputs.filter(i => i.created !== 'input')
+        // commit('SET_BLOCKS', [...newOutputs]);
+        // data.forEach(b => {
+        //   dispatch('clone', b);
+        // })
+
+
+        commit('SET_INTPUT', [...blocks]);
+        commit('SET_BLOCKS', [...outputs]);
+      }
+      if (value === 4 && old === 3) {
+        commit('SET_OUTPUT', [...blocks]);
+        commit('SET_BLOCKS', []);
+      }
+      if (value === 3 && old === 4) {
+        commit('SET_BLOCKS', [...outputs]);
+      }
+      if (value === 2 && old === 3) {
+        commit('SET_OUTPUT', [...blocks]);
+        commit('SET_BLOCKS', [...inputs]);
+      }
+      if (value === 1 && old === 2) {
+        commit('SET_INTPUT', [...blocks]);
+        commit('SET_BLOCKS', []);
+      }
+    },
+
+    setParameters ({ commit, state: { blocks } }, { parameters, id }) {
+      console.log(parameters, id)
+      const newBlocks = blocks.map(i => {
+        if (i.id === id) {
+          i.parameters = parameters
+        }
+        return i
+      })
+      commit('SET_BLOCKS', [...newBlocks]);
+    },
+
+    editBlock ({ commit, state: { blocks } }, block) {
+      const newBlocks = blocks.map(i => {
+        return (i.id === block.id) ? block : i
+      })
+      commit('SET_BLOCKS', [...newBlocks]);
+    },
+
+    add ({ commit, state: { blocks }, rootState: { createDataset: { pagination } } }, { type, position }) {
+      const created = pagination === 2 ? 'input' : 'output'
+      console.log(created)
       const id = Math.max(0, ...blocks.map(o => o.id)) + 1;
-      const block = new Block({ id, type, position, selected: true })
+      const block = createBlock({ id, type, position, selected: true, created })
       commit('SET_BLOCKS', [...blocks, block]);
     },
 
@@ -51,10 +133,11 @@ export default {
 
     cloneAll ({ dispatch, state: { blocks } }) {
       const all = blocks.filter(b => b.selected)
+      dispatch('deselect');
       all.forEach(b => {
         dispatch('clone', b);
       })
-      dispatch('deselect');
+
     },
 
     select ({ commit, state: { blocks, key: { ctrlKey } } }, { id }) {
@@ -152,15 +235,14 @@ export default {
     },
   },
   getters: {
-    getDefault: ({ creation }) => (key) => creation[key] || [],
+    // getDefault: ({ creation }) => (key) => creation[key] || [],
     getBlocks: ({ blocks }) => blocks,
     getKeyEvent: ({ key }) => key,
-    getLinks: ({ links }) => links,
+    getLinks: ({ blocks }) => getLinks(blocks),
     getBlock: ({ blocks }) => id => {
       const index = blocks.findIndex(item => item.id == id);
       return blocks[index] || {};
     },
-    getSelectedLength: ({ blocks }) => blocks.filter(i => i.selected).length,
-    getSelected: ({ blocks }) => blocks.find(i => i.selected),
+    getSelected: ({ blocks }) => blocks.filter(i => i.selected),
   },
 };

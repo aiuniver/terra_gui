@@ -5,7 +5,7 @@ export default {
     inputData: [],
     errors: {},
     tableGroup: [],
-
+    groups: {},
     creation: {},
     datasets: [],
     filesSource: [],
@@ -16,6 +16,7 @@ export default {
     tags: [],
     tagsFilter: [],
     full: false,
+    recent: []
   }),
   mutations: {
     SET_TABLE_GROUP (state, value) {
@@ -57,6 +58,12 @@ export default {
     SET_SELECTED_INDEX (state, value) {
       state.selectedIndex = value;
     },
+    SET_GROUPS (state, value) {
+      state.groups = value
+    },
+    SET_RECENT (state, value) {
+      state.recent = value
+    }
   },
   actions: {
     async createDataset ({ commit, dispatch, state: { inputData, sourcePath, filesSource }, rootState: { tables: { saveCols, handlers } } }, data) {
@@ -135,11 +142,16 @@ export default {
       }
       return res
     },
-    async choice ({ dispatch }, dataset) {
-      // console.log(dataset)
+    async choice ({ dispatch, commit }, dataset) {
       await dispatch('trainings/resetAllTraining', {}, { root: true });
       dispatch('modeling/resetAll', {}, { root: true });
-      return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      const res = await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+      if (res.success) {
+        const recent = localStorage.getItem('recent') || ''
+        localStorage.setItem('recent', recent + `${dataset.group}_${dataset.alias}, `)
+        commit('SET_RECENT', localStorage.getItem('recent'))
+      }
+      return res
     },
     async deleteDataset ({ dispatch }, dataset) {
       const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
@@ -153,10 +165,13 @@ export default {
       dispatch('resetDatasets', {});
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
+    async versionProgress ({ dispatch }) {
+      return await dispatch('axios', { url: '/datasets/create/version/progress/' }, { root: true });
+    },
 
     async classesAnnotation ({ dispatch, state: { sourcePath } }) {
-      const data = { path: sourcePath }
-      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
+      const data = { path: sourcePath } // eslint-disable-line
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/' }, { root: true });
     },
     async classesAutosearch ({ dispatch }, data) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
@@ -173,34 +188,20 @@ export default {
     async validateDatasetOrModel ({ dispatch }, data) {
       return await dispatch('axios', { url: '/common/validate-dataset-model/', data }, { root: true });
     },
-    async get ({ dispatch, commit, rootState }) {
-      const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
-      if (!data) {
-        return;
-      }
-      let datasets = [];
-      let tags = [];
-      const selectDataset = rootState.projects.project.dataset?.alias;
-
-      data.forEach(function ({ datasets: preDataset, tags: preTags, alias }) {
-        const tempDataset = preDataset.map(dataset => {
-          return { ...dataset, group: alias, active: dataset.alias === selectDataset };
-        });
-        datasets = [...datasets, ...tempDataset];
-        const tempTags = preTags.filter(tag => {
-          const isTrue = tags.filter(({ alias }) => {
-            return alias === tag.alias;
-          });
-          return !isTrue.length;
-        });
-        tags = [...tags, ...tempTags];
-      });
-
-      tags = tags.map(tag => {
-        return { active: false, ...tag };
-      });
+    async get({ dispatch, commit }) {
+      const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true })
+      const datasets = []
+      data.datasets.forEach(item => {
+        item.datasets.forEach(dataset => {
+          datasets.push({
+            ...dataset,
+            group: item.alias
+          })
+        })
+      })
       commit('SET_DATASETS', datasets);
-      commit('SET_TAGS', tags);
+      commit('SET_GROUPS', data.groups)
+      commit('SET_TAGS', data.tags);
     },
     setSelect ({ commit, state: { datasets } }, dataset) {
       const data = datasets.map(item => {
@@ -328,16 +329,25 @@ export default {
     getTagsFilter ({ tagsFilter }) {
       return tagsFilter;
     },
-    getDatasets ({ datasets, tagsFilter }) {
-      if (!tagsFilter.length) {
-        return datasets;
-      }
-      return datasets.filter(({ tags }) => {
-        const index = tags.filter(({ alias }) => {
-          return tagsFilter.indexOf(alias) !== -1;
-        });
-        return index.length === tagsFilter.length;
-      });
+    // getDatasets ({ datasets, tagsFilter }) {
+    //   if (!tagsFilter.length) {
+    //     return datasets;
+    //   }
+    //   return datasets.filter(({ tags }) => {
+    //     const index = tags.filter(({ alias }) => {
+    //       return tagsFilter.indexOf(alias) !== -1;
+    //     });
+    //     return index.length === tagsFilter.length;
+    //   });
+    // },
+    getDatasets ({ datasets }) {
+      return datasets
     },
+    getGroups ({ groups }) {
+      return groups
+    },
+    getRecent ({ recent }) {
+      return recent
+    }
   },
 };

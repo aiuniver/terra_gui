@@ -10,9 +10,13 @@
       v-bind="block"
       :options="optionsForChild"
       :linkingCheck="tempLink"
+      :icons="icons"
+      :filter="filter"
+      :error="getError(block.id)"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
+      @clickIcons="onEventIcons(block, $event)"
       @select="blockSelect(block)"
       @position="position($event)"
     />
@@ -36,7 +40,12 @@ export default {
     // Net,
     // Menu,
   },
-  props: {},
+  props: {
+    pagination: {
+      type: Number,
+      default: 1,
+    },
+  },
   data: () => ({
     key: 1,
     save: [],
@@ -56,18 +65,30 @@ export default {
     linking: false,
     linkStart: null,
     inputSlotClassName: 'inputSlot',
+    icons: [
+      { icon: 'icon-modeling-copy-white', event: 'clone' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
   }),
   computed: {
     ...mapGetters({
       getKeyEvent: 'create/getKeyEvent',
       blocks: 'create/getBlocks',
       links: 'create/getLinks',
-      selectLength: 'create/getSelectedLength',
-      getPagination: 'createDataset/getPagination',
+      getSelected: 'create/getSelected',
+      errors: 'createDataset/getErrorsBlock',
     }),
+    filter() {
+      return {
+        data: ['clone', 'link', 'remove'],
+        middle: ['clone', 'link', 'remove'],
+        input: ['clone', 'link', 'remove'],
+        output: ['clone', 'link', 'remove'],
+      };
+    },
     isActive() {
-        console.log(this.getPagination)
-      return Boolean(this.getPagination === 3);
+      return Boolean([2, 3].includes(this.pagination));
     },
     keyEvent: {
       set(value) {
@@ -149,6 +170,7 @@ export default {
       'remove',
       'clone',
       'select',
+      'editBlock',
       'setKeyEvent',
       'deselect',
       'position',
@@ -157,11 +179,33 @@ export default {
       'updateLink',
       'removeLink',
     ]),
+    getError(id) {
+      return this.errors?.[id] || '';
+    },
+    onEventIcons(block, { event }) {
+      if (event === 'remove') this.onRemove();
+      if (event === 'clone') this.clone(block);
+      if (event === 'link') this.removeBlockLink(block);
+      console.log(event);
+    },
+    onRemove() {
+      // if (this.pagination === 3) {
+      //   if (!this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input').length) {
+      //     this.remove();
+      //     // console.log(this.blocks.filter(i => i.selected && i.type === 'data' && i.created === 'input'));
+      //   }
+      // } else {
+      this.remove();
+      // }
+    },
+    removeBlockLink(block) {
+      this.editBlock({ ...block, bind: { up: [], down: [] } });
+    },
     event(value) {
       this.menu = {};
       console.log(value);
       if (value === 'add') this.add({});
-      if (value === 'delete') this.remove();
+      if (value === 'delete') this.onRemove();
       if (value === 'clone') this.cloneAll();
       if (value === 'left') this.align('ArrowLeft');
       if (value === 'right') this.align('ArrowRight');
@@ -185,10 +229,9 @@ export default {
       this.keyEvent = event;
       const { code, ctrlKey, shiftKey } = event;
       const mouseIsOver = this.mouseIsOver;
-      console.log(event);
       if (event.type === 'keyup') {
         if (mouseIsOver && code === 'Delete') {
-          this.remove();
+          this.onRemove();
         }
         if (mouseIsOver && code === 'KeyA' && ctrlKey) {
           this.deselect(true);
@@ -208,7 +251,7 @@ export default {
         if (mouseIsOver && code === 'KeyX' && ctrlKey) {
           this.save = JSON.parse(JSON.stringify(this.blocks.filter(block => block.selected)));
           console.log(this.save);
-          this.remove();
+          this.onRemove();
         }
         if (mouseIsOver && code === 'KeyV' && ctrlKey) {
           this.deselect();
@@ -306,7 +349,7 @@ export default {
       let y = 0;
       x += block.position[0];
       y += block.position[1];
-      const { width = 0, heigth = 0 } = this.$refs?.['block_' + block.id]?.[0]?.getH() || {};
+      const { width = 150, heigth = 60 } = this.$refs?.['block_' + block.id]?.[0]?.getH() || {};
       if (isInput) {
         x += width / 2;
         y += -3;
@@ -461,7 +504,7 @@ export default {
     height: 100%;
     width: 100%;
     background-color: #0e1621b3;
-    z-index: 999;
+    z-index: 700;
   }
 }
 </style>

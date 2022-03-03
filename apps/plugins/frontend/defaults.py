@@ -24,14 +24,26 @@ from .presets.defaults.training import (
 )
 
 
+class DefaultsDatasetsCreationHandlerData(BaseMixinData):
+    inputs: List[Field]
+    outputs: List[Field]
+
+
 class DefaultsDatasetsCreationData(BaseMixinData):
-    column_processing: List[Field]
+    data: List[Field]
+    handler: DefaultsDatasetsCreationHandlerData
     input: List[Field]
     output: List[Field]
 
 
+class ArchitectureData(BaseMixinData):
+    value: str
+    label: str
+
+
 class DefaultsDatasetsData(BaseMixinData):
-    creation: DefaultsDatasetsCreationData
+    blocks: DefaultsDatasetsCreationData
+    architectures: List[ArchitectureData]
 
 
 class DefaultsModelingData(BaseMixinData):

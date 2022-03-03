@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple, Union, Dict, Any
 from pydantic import validator
-from pydantic.types import FilePath, DirectoryPath
+from pydantic.types import FilePath, DirectoryPath, PositiveInt
 from pydantic.color import Color
 
 from .mixins import BaseMixinData, UniqueListMixin
@@ -65,6 +65,11 @@ class HardwareAcceleratorData(BaseMixinData):
         if not __type:
             return value
         return HardwareAcceleratorColorChoice[__type.name]
+
+
+class FileLengthData(BaseMixinData):
+    train: PositiveInt
+    val: PositiveInt
 
 
 class FileSizeData(BaseMixinData):
