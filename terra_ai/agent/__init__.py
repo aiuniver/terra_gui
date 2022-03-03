@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from terra_ai import exceptions as terra_ai_exceptions
 from terra_ai import progress as terra_ai_progress
+from terra_ai.logging import logger
 from terra_ai.settings import (
     TERRA_PATH,
     DATASET_CONFIG,
@@ -243,6 +244,7 @@ class Exchange:
             creation_class = CreateDataset
         else:
             creation_class = CreateVersion
+        logger.info(f"Create dataset with class: {creation_class}")
         creation_class(creation_data)
 
     def _call_dataset_create_validate(
