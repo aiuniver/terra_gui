@@ -255,9 +255,8 @@ def _choice_from_custom(
             zip_destination,
         )
         os.remove(str(zip_filepath))  # Удаление архива version.zip
+        os.makedirs(str(destination), exist_ok=True)
         shutil.rmtree(str(destination), ignore_errors=True)
-        if not isinstance(destination, WindowsPath):
-            os.makedirs(str(destination), exist_ok=True)
         os.rename(str(zip_destination), str(destination))
         with open(Path(dataset_path.basepath, settings.DATASET_CONFIG)) as config_ref:
             dataset_config = json.load(config_ref)
