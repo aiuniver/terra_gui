@@ -24,9 +24,8 @@ class OptionsData(VideoScalerData):
 
     @validator("video_mode", allow_reuse=True)
     def _validate_video_mode(cls, value):
-        if value == LayerVideoModeChoice.completely:
-            cls.__fields__["max_frames"].required = True
-        elif value == LayerVideoModeChoice.length_and_step:
-            cls.__fields__["length"].required = True
-            cls.__fields__["step"].required = True
+        required_completely = value == LayerVideoModeChoice.completely
+        cls.__fields__["max_frames"].required = required_completely
+        cls.__fields__["length"].required = not required_completely
+        cls.__fields__["step"].required = not required_completely
         return value

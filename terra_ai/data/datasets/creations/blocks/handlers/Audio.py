@@ -25,9 +25,8 @@ class OptionsData(MinMaxScalerData):
 
     @validator("audio_mode")
     def _validate_audio_mode(cls, value):
-        if value == LayerAudioModeChoice.completely:
-            cls.__fields__["max_seconds"].required = True
-        elif value == LayerAudioModeChoice.length_and_step:
-            cls.__fields__["length"].required = True
-            cls.__fields__["step"].required = True
+        required_completely = value == LayerAudioModeChoice.completely
+        cls.__fields__["max_seconds"].required = required_completely
+        cls.__fields__["length"].required = not required_completely
+        cls.__fields__["step"].required = not required_completely
         return value
