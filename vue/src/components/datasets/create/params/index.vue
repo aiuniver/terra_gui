@@ -158,7 +158,7 @@ export default {
     height: 50px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid var(--color-border);
     padding: 0 20px;
   }
   &__inner {
@@ -170,7 +170,7 @@ export default {
     overflow: hidden;
   }
   &__footer {
-    border-top: 1px solid black;
+    border-top: 1px solid var(--color-border);
     flex: 0 0 70px;
     padding: 10px 20px;
   }

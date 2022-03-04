@@ -107,6 +107,7 @@ export default {
   main {
     height: calc(100% - 152px);
     flex: 1 1 auto;
+    background: #17212b;
   }
   footer {
     flex: 0 0 60px;

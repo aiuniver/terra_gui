@@ -23,15 +23,16 @@ class OptionsData(BaseOptionsData):
 
     @validator("text_mode")
     def _validate_text_mode(cls, value):
-        if value == LayerTextModeChoice.completely:
-            cls.__fields__["max_words"].required = True
-        elif value == LayerTextModeChoice.length_and_step:
-            cls.__fields__["length"].required = True
-            cls.__fields__["step"].required = True
+        required_completely = value == LayerTextModeChoice.completely
+        cls.__fields__["max_words"].required = required_completely
+        cls.__fields__["length"].required = not required_completely
+        cls.__fields__["step"].required = not required_completely
         return value
 
     @validator("prepare_method")
     def _validate_prepare_method(cls, value):
+        cls.__fields__["max_words_count"].required = False
+        cls.__fields__["word_to_vec_size"].required = False
         if value in [
             LayerPrepareMethodChoice.embedding,
             LayerPrepareMethodChoice.bag_of_words,

@@ -26,9 +26,9 @@ class MinMaxScalerData(BaseOptionsData):
 
     @validator("scaler")
     def _validate_scaler(cls, value):
-        if value == LayerScalerDefaultChoice.min_max_scaler:
-            cls.__fields__["min_scaler"].required = True
-            cls.__fields__["max_scaler"].required = True
+        required = value == LayerScalerDefaultChoice.min_max_scaler
+        cls.__fields__["min_scaler"].required = required
+        cls.__fields__["max_scaler"].required = required
         return value
 
 
@@ -39,12 +39,12 @@ class ImageScalerData(BaseOptionsData):
 
     @validator("scaler")
     def _validate_scaler(cls, value):
-        if value in (
+        required = value in (
             LayerScalerImageChoice.min_max_scaler,
             LayerScalerImageChoice.terra_image_scaler,
-        ):
-            cls.__fields__["min_scaler"].required = True
-            cls.__fields__["max_scaler"].required = True
+        )
+        cls.__fields__["min_scaler"].required = required
+        cls.__fields__["max_scaler"].required = required
         return value
 
 
@@ -55,7 +55,7 @@ class VideoScalerData(BaseOptionsData):
 
     @validator("scaler")
     def _validate_scaler(cls, value):
-        if value == LayerScalerVideoChoice.min_max_scaler:
-            cls.__fields__["min_scaler"].required = True
-            cls.__fields__["max_scaler"].required = True
+        required = value == LayerScalerVideoChoice.min_max_scaler
+        cls.__fields__["min_scaler"].required = required
+        cls.__fields__["max_scaler"].required = required
         return value

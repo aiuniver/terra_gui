@@ -677,7 +677,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
-                                  'col_type': type(data_to_pass).__name__,
+                                  'col_type': type(data_to_pass[0]).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
@@ -722,7 +722,7 @@ class MainTimeseriesClass(object):
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
                                   'dtype': str(array.dtype),
-                                  'col_type': type(data_to_pass).__name__,
+                                  'col_type': type(data_to_pass[0]).__name__,
                                   'shape': array.flatten().shape,
                                   'name': col_name,
                                   'task': camelize(parameters_to_pass.get('put_type')),
@@ -844,11 +844,12 @@ class PreprocessingTextClass(object):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
             for col_name, data in put.items():
-                if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                         LayerPrepareMethodChoice.bag_of_words]:
-                    preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                    preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+                if data.parameters['put_type'] == 'text':
+                    if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+                                                             LayerPrepareMethodChoice.bag_of_words]:
+                        preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+                    elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                        preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
 
         return preprocessing
 

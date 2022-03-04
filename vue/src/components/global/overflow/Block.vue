@@ -287,6 +287,7 @@ $borderBlock: 2px;
   &__subtitle {
     text-align: center;
     white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
     font-size: 10px;
     color: #6c7883;
@@ -308,6 +309,7 @@ $borderBlock: 2px;
     border-radius: 5px;
     color: #000;
     z-index: 3;
+    width: 100%;
   }
   &__inputs,
   &__outputs {

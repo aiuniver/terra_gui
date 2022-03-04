@@ -19,16 +19,22 @@
     </div>
     <hr />
     <scrollbar :ops="{ rail: { gutterOfSide: '0px' } }">
-      <ul class="menu-categories" v-for="tag in tags" :key="tag.alias">
+      <ul class="menu-categories" v-for="(tag, idx) in tags" :key="tag.alias">
         <p 
-        :class="{ 'menu-categories--selected': selectedTag.alias === tag.alias && selectedTag.group === tag.group }"
-        @click="$emit('tagClick', { type: 'group', alias: tag.alias, name: tag.name })">{{ tag.name }}</p>
-        <li
-        v-for="item in tag.items" :key="item"
-        :class="{ 'menu-categories--selected': selectedTag.alias === item && selectedTag.group === tag.alias }"
-        @click="$emit('tagClick', { type: 'tag', alias: item, group: tag.alias })"
-        class="menu-categories__item"
-        >{{ item }}</li>
+        :class="{ 'menu-categories--selected': selectedTag.alias === tag.alias && selectedTag.group === tag.group,
+          'menu-categories--selected-group': idx === selectedTag.idx
+        }"
+        @click="$emit('tagClick', { type: 'group', alias: tag.alias, name: tag.name, idx })">{{ tag.name }}</p>
+        <transition-group name="slide-fade">
+          <template v-if="idx === selectedTag.idx">
+            <li
+            v-for="item in tag.items" :key="item"
+            :class="{ 'menu-categories--selected': selectedTag.alias === item && selectedTag.group === tag.alias }"
+            @click="$emit('tagClick', { type: 'tag', alias: item, group: tag.alias, idx })"
+            class="menu-categories__item"
+            >{{ item }}</li>
+          </template>
+        </transition-group>
       </ul>
     </scrollbar>
   </div>
@@ -76,12 +82,10 @@ export default {
     span {
       margin-left: 15px;
     }
-
     &--selected {
       background-color: #1E2734;
       color: #65b9f4;
     }
-
     &:hover {
       color: #65b9f4;
       background-color: #1E2734;
@@ -102,22 +106,33 @@ export default {
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 15px;
-  &--selected, & > *:hover {
+  margin-bottom: 5px;
+  &--selected, &__item:hover, & p:hover {
     background: #1E2734;
     color: #65B9F4 !important;
   }
+  &--selected-group {
+    color: #65B9F4 !important;
+  }
   p {
-    font-weight: bold;
+    // font-weight: bold;
     cursor: pointer;
-    padding-left: 20px;
+    padding: 5px 10px 5px 20px;
     font-size: 14px;
   }
   &__item {
-    padding-left: 20px;
+    padding: 5px 0 5px 25px;
     color: $color-gray;
-    margin-top: 5px;
     cursor: pointer;
   }
+}
+
+.slide-fade-enter-active {
+  transition: all .3s ease;
+}
+
+.slide-fade-enter, .slide-fade-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
 }
 </style>
