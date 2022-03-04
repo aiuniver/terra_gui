@@ -26,7 +26,7 @@ LayerConfig = LayerConfigData(
             "value": 4,
             "validation": LayerValidationMethodChoice.minimal,
         },
-        "module": ModuleChoice.terra_custom_layers,
+        "module": ModuleChoice.terra_base_custom_layers,
         "module_type": ModuleTypeChoice.terra_layer,
     }
 )

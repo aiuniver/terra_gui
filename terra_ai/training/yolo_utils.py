@@ -716,8 +716,9 @@ def get_mAP(Yolo: Model, dataset: PrepareDataset, score_threshold: object = 0.05
         id_ground_truth = {}
         for index in range(len(dataset.dataframe.get("val"))):
 
-            true_bbox = dataset.dataframe.get("val").get('2_object_detection')[index]  # .split(' ')
-            tmp_im = load_img(os.path.join(dataset_path, dataset.dataframe.get("val").get('1_image')[index]))
+            true_bbox = dataset.dataframe.get("val").get('2_object_detection')[index]
+            tmp_im = load_img(os.path.join(dataset_path,
+                                           (dataset.dataframe.get("val").get('1_image')[index]).split(';')[0]))
             try:
                 bbox_data_gt = np.array(resize_bboxes(image_mode, true_bbox, tmp_im.width, tmp_im.height))
             except Exception:

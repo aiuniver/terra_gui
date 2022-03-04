@@ -271,7 +271,6 @@ class LayerInputTypeChoice(str, Enum):
     """
     Типы данных для `input`-слоев
     """
-
     Image = "Image"
     Text = "Text"
     Audio = "Audio"

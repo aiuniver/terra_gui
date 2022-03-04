@@ -78,7 +78,6 @@ class CreateArray(object):
         temp_array = {}
 
         instructions, preprocessing = self.get_array_params(dataset_path=dataset_path)
-
         for put_id, cols_names in instructions.items():
             temp_array[put_id] = {}
             concat_list = []

@@ -42,7 +42,6 @@ class ImageArray(Array):
         return instructions
 
     def create(self, source: str, **options):
-
         img = load_img(source)
         array = np.array(img)
 

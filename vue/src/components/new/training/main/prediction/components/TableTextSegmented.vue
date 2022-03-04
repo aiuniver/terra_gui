@@ -51,7 +51,7 @@ export default {
     },
     arrText() {
       let text = this.value.replaceAll(' ', '');
-      const arr = text.match(/(<[sp][0-9]>)+([^<\/>]+)(<\/[sp][0-9]>)+/g); // eslint-disable-line
+      const arr = text.match(/(<[spa][0-9]?>)+([^<\/>]+)(<\/[spa][0-9]?>)+/g); // eslint-disable-line
       return arr.map(item => {
         return this.convert(item);
       });
