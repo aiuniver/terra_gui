@@ -3,7 +3,7 @@
 
     <div class="datasets-filter">
       <t-field label="">
-        <d-input-text v-model="search" small />
+        <d-input-text v-model="search" small placeholder="Поиск" />
       </t-field>
 
       <div class="datasets-filter-sort">
@@ -59,7 +59,7 @@ export default {
     search: '',
     display: true,
     show: false,
-    selectedSort: options[0],
+    selectedSort: options[2],
     options,
   }),
   computed: {
@@ -72,10 +72,11 @@ export default {
       let sortedList = []
       if (this.selectedSort.idx === 0) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name)) // от а до я
       if (this.selectedSort.idx === 1) sortedList = datasets.sort((a, b) => b.name.localeCompare(a.name)) // от я до а
-      if (this.selectedSort.idx === 2) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
-      if (this.selectedSort.idx === 3) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
-      if (this.selectedSort.idx === 4) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
-      if (this.selectedSort.idx === 5) sortedList = datasets
+      // if (this.selectedSort.idx === 2) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      // if (this.selectedSort.idx === 3) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      // if (this.selectedSort.idx === 4) sortedList = datasets.sort((a, b) => a.name.localeCompare(b.name))
+      // if (this.selectedSort.idx === 5) sortedList = datasets
+      if (this.selectedSort.idx === 6) sortedList = datasets.sort(this.groupSort)
       return sortedList.filter(i => {
           return search ? i.name.toLowerCase().includes(search.toLowerCase()) : true;
         });
@@ -121,6 +122,11 @@ export default {
           }
         });
     },
+    groupSort(a, b) {
+      if (a.group === 'keras' && b.group === 'terra') return 1
+      if (b.group === 'keras' && a.group === 'terra') return -1
+      return a.group.localeCompare(b.group)
+    }
   },
 };
 </script>
@@ -169,6 +175,7 @@ export default {
     overflow: hidden;
     width: 220px;
     cursor: pointer;
+    box-shadow: 0 0 10px black;
     div {
       padding: 10px;
       &:hover {
