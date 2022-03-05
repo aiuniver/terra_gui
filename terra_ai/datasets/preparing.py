@@ -22,6 +22,7 @@ from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, 
 from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroups
 
 
+
 class PrepareDataset(object):
     """
     Класс для загрузки датасета.
