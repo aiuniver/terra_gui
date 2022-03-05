@@ -24,7 +24,7 @@ LayerConfig = LayerConfigData(
             "value": (2, 3, 4),
             "validation": LayerValidationMethodChoice.dependence_tuple3,
         },
-        "module": ModuleChoice.terra_custom_layers,
+        "module": ModuleChoice.terra_gan_custom_layers,
         "module_type": ModuleTypeChoice.terra_layer,
     }
 )

@@ -44,7 +44,7 @@ import { mapGetters } from 'vuex';
 import { debounce } from '@/utils/core/utils';
 import Input from '@/components/new/forms/Input.vue';
 import BlockInfo from '@/components/cascades/comp/Info.vue';
-import TAutoFieldCascade from '@/components/new/cascades/TAutoFieldCascade.vue';
+import TAutoFieldCascade from '@/components/new/blocks/TAutoFieldCascade.vue';
 
 export default {
   name: 'Params',

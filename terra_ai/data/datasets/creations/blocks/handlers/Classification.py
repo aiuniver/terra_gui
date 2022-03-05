@@ -21,6 +21,6 @@ class OptionsData(BaseOptionsData):
 
     @validator("type_processing")
     def _validate_type_processing(cls, value, values, field):
-        if value == LayerTypeProcessingChoice.ranges:
-            cls.__fields__["ranges"].required = True
+        required = value == LayerTypeProcessingChoice.ranges
+        cls.__fields__["ranges"].required = required
         return value
