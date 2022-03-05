@@ -155,10 +155,12 @@ class CreatePreprocessing(object):
         """
         tokenizer = Tokenizer(**{'num_words': options['max_words_count'],
                                  'filters': options['filters'],
-                                 'lower': False,
+                                 'lower': options['lower'],
                                  'split': ' ',
-                                 'char_level': False,
-                                 'oov_token': '<UNK>'})
+                                 'char_level': options['char_level'],
+                                 'oov_token': '<UNK>'
+                                 }
+                              )
         tokenizer.fit_on_texts(text_list)
 
         if not options['put'] in self.preprocessing.keys():
@@ -189,11 +191,13 @@ class CreatePreprocessing(object):
 
         """
         text_list = [elem.split(' ') for elem in text_list]
-        word2vec = Word2Vec(text_list, **{'size': options['word_to_vec_size'],
-                                          'window': 10,
-                                          'min_count': 1,
-                                          'workers': 10,
-                                          'iter': 10})
+        word2vec = Word2Vec(text_list, **{'size': options['size'],
+                                          'window': options['window'],
+                                          'min_count': options['min_count'],
+                                          'workers': options['workers'],
+                                          'iter': options['iter']
+                                          }
+                            )
 
         if not options['put'] in self.preprocessing.keys():
             self.preprocessing[options['put']] = {}

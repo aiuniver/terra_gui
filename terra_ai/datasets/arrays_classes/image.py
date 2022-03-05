@@ -30,12 +30,12 @@ class ImageArray(Array):
                                        'width': options['width'],
                                        'net': options['net'],
                                        'image_mode': options.get('image_mode', 'stretch'),
-                                       'scaler': options['scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'min_scaler': options['min_scaler'],
+                                       # 'scaler': options['scaler'],
+                                       # 'max_scaler': options['max_scaler'],
+                                       # 'min_scaler': options['min_scaler'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
-                                       'augmentation': options.get('augmentation')
+                                       # 'augmentation': options.get('augmentation')
                                        }
                         }
 

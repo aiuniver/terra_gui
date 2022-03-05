@@ -1,11 +1,11 @@
 from pydantic import PositiveInt
 
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData  # , ImageScalerData
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerImageFrameModeChoice
-from terra_ai.data.datasets.creations.blocks.extra import ImageScalerData
 
 
-class OptionsData(ImageScalerData):
-    width: PositiveInt
+class OptionsData(BaseOptionsData):  # ImageScalerData
     height: PositiveInt
+    width: PositiveInt
     net: LayerNetChoice
     image_mode: LayerImageFrameModeChoice

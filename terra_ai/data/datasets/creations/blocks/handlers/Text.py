@@ -10,11 +10,11 @@ class OptionsData(BaseOptionsData):
     max_words: Optional[PositiveInt]
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
-    prepare_method: LayerPrepareMethodChoice
-    max_words_count: Optional[PositiveInt]
-    word_to_vec_size: Optional[PositiveInt]
-    pymorphy: bool  # = False
-    filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
+    pymorphy: bool
+    # prepare_method: LayerPrepareMethodChoice
+    # max_words_count: Optional[PositiveInt]
+    # word_to_vec_size: Optional[PositiveInt]
+    # filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
 
     # Внутренние параметры
     deploy: Optional[bool] = False
@@ -30,13 +30,13 @@ class OptionsData(BaseOptionsData):
             cls.__fields__["step"].required = True
         return value
 
-    @validator("prepare_method")
-    def _validate_prepare_method(cls, value):
-        if value in [
-            LayerPrepareMethodChoice.embedding,
-            LayerPrepareMethodChoice.bag_of_words,
-        ]:
-            cls.__fields__["max_words_count"].required = True
-        elif value == LayerPrepareMethodChoice.word_to_vec:
-            cls.__fields__["word_to_vec_size"].required = True
-        return value
+    # @validator("prepare_method")
+    # def _validate_prepare_method(cls, value):
+    #     if value in [
+    #         LayerPrepareMethodChoice.embedding,
+    #         LayerPrepareMethodChoice.bag_of_words,
+    #     ]:
+    #         cls.__fields__["max_words_count"].required = True
+    #     elif value == LayerPrepareMethodChoice.word_to_vec:
+    #         cls.__fields__["word_to_vec_size"].required = True
+    #     return value
