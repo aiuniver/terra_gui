@@ -315,18 +315,18 @@ class PrepareDataset(object):
                         self.Y[put] = {}
                         self.service[put] = {}
                         for idx in hdf[put].keys():
-                            cur_idx = int(idx.split('_')[1])
-                            if cur_idx in self.data.version.inputs.keys():
+                            cur_idx = idx.split('_')[1]
+                            if int(cur_idx) in self.data.version.inputs.keys():
                                 self.X[put][cur_idx] = []
                                 for arr in hdf[put][idx].keys():
                                     self.X[put][cur_idx].append(hdf[put][idx][arr][()])
                                 self.X[put][cur_idx] = np.array(self.X[put][cur_idx])
-                            elif cur_idx in self.data.version.outputs.keys():
+                            elif int(cur_idx) in self.data.version.outputs.keys():
                                 self.Y[put][cur_idx] = []
                                 for arr in hdf[put][idx].keys():
                                     self.Y[put][cur_idx].append(hdf[put][idx][arr][()])
                                 self.Y[put][cur_idx] = np.array(self.Y[put][cur_idx])
-                            elif cur_idx in self.data.version.service.keys():
+                            elif int(cur_idx) in self.data.version.service.keys():
                                 self.service[put][cur_idx] = []
                                 for arr in hdf[put][idx].keys():
                                     self.service[put][cur_idx].append(hdf[put][idx][arr][()])

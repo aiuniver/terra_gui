@@ -142,22 +142,22 @@ class CreateVersion(object):
 
         progress.pool(name=VERSION_PROGRESS_NAME, message='Создание объектов обработки', percent=0)
 
-        for prep_type in ['numeric', 'text']:
-            self.preprocessing = getattr(architecture_class, f"create_{prep_type}_preprocessing")(
-                instructions=self.instructions,
-                preprocessing=self.preprocessing
-            )
-        for prep_type in ['numeric', 'text']:
-            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
-                put_data=self.instructions.inputs,
-                preprocessing=self.preprocessing,
-                sources_temp_directory=self.sources_temp_directory
-            )
-            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
-                put_data=self.instructions.outputs,
-                preprocessing=self.preprocessing,
-                sources_temp_directory=self.sources_temp_directory
-            )
+        # for prep_type in ['numeric', 'text']:
+        #     self.preprocessing = getattr(architecture_class, f"create_{prep_type}_preprocessing")(
+        #         instructions=self.instructions,
+        #         preprocessing=self.preprocessing
+        #     )
+        # for prep_type in ['numeric', 'text']:
+        #     self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+        #         put_data=self.instructions.inputs,
+        #         preprocessing=self.preprocessing,
+        #         sources_temp_directory=self.sources_temp_directory
+        #     )
+        #     self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+        #         put_data=self.instructions.outputs,
+        #         preprocessing=self.preprocessing,
+        #         sources_temp_directory=self.sources_temp_directory
+        #     )
 
         self.create_table(version_data)
 

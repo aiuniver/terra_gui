@@ -47,6 +47,25 @@ def multithreading_array(row, instructions):
             create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
                              f'{camelize(instructions[h]["put_type"])}Array')().create(
                 source=row[h], **instructions[h])
+            # prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+            #                 f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
+            #     create['instructions'], **create['parameters'])
+            full_array.append(create['instructions'])
+        except Exception:
+            progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
+            raise
+
+    return full_array
+
+
+def multithreading_preprocessing(array, instructions):
+
+    full_array = []
+    for h in range(len(row)):
+        try:
+            # create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+            #                  f'{camelize(instructions[h]["put_type"])}Array')().create(
+            #     source=row[h], **instructions[h])
             prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
                             f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
                 create['instructions'], **create['parameters'])
@@ -97,50 +116,110 @@ class BaseClass(object):
     @staticmethod
     def collect_data_to_pass(put_data, sources_temp_directory, put_idx):
 
-        data_to_pass = {}
-        parameters_to_pass = {}
+        def get_data(handler, put_data, put_idx):
 
+            data_to_pass = {}
+            parameters_to_pass = {}
+
+            for up_id in handler.bind.up:
+                data = put_data.get(up_id)
+                data_to_pass[put_idx] = {}
+                parameters_to_pass[put_idx] = {}
+                if data.parameters.type == LayerSelectTypeChoice.folder:
+                    collected_data = []
+                    for folder_name in data.parameters.data:
+                        current_path = Path(sources_temp_directory).joinpath(folder_name)  # sources_temp_directory
+                        for direct, folder, files_name in os.walk(current_path):
+                            if files_name:
+                                for file_name in sorted(files_name):
+                                    collected_data.append(os.path.join(current_path, file_name))
+                    print(collected_data[:5])
+                    print(handler.parameters.native())
+                    data_to_pass[put_idx].update(
+                        {f'{put_idx}_{data.name}': collected_data}
+                    )
+                    parameters_to_pass[put_idx].update(
+                        {f'{put_idx}_{data.name}': handler.parameters.native()})
+                elif data.parameters.type == LayerSelectTypeChoice.table:
+                    current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
+                    _, enc = autodetect_encoding(str(current_path), True)
+                    for column in data.parameters.data:
+                        collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
+                                                     engine='python', encoding=enc).loc[:, column] \
+                            .to_list()
+                        if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
+                            collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
+                                              in collected_data]
+                        print(collected_data[:5])
+                        print(handler.parameters.native())
+                        data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
+                        parameters_to_pass[put_idx].update(
+                            {f'{put_idx}_{column}': handler.parameters.native
+                            ()})
+
+            return data_to_pass, parameters_to_pass
+
+        full_data = {}
+        full_parameters = {}
         for layer in put_data:
             if layer.type in [LayerTypeChoice.input, LayerTypeChoice.output]:
                 put_idx += 1
-                data_to_pass[put_idx] = {}
-                parameters_to_pass[put_idx] = {}
-                for handler in put_data:
-                    if handler.id in layer.bind.up:
-                        for data in put_data:
-                            if data.id in handler.bind.up:
-                                if data.parameters.type == LayerSelectTypeChoice.folder:
-                                    collected_data = []
-                                    for folder_name in data.parameters.data:
-                                        current_path = Path(sources_temp_directory).joinpath(folder_name)
-                                        for direct, folder, files_name in os.walk(current_path):
-                                            if files_name:
-                                                for file_name in sorted(files_name):
-                                                    collected_data.append(os.path.join(current_path, file_name))
-                                    print(collected_data[:5])
-                                    print(handler.parameters.native())
-                                    data_to_pass[put_idx].update(
-                                        {f'{put_idx}_{data.name}': collected_data}
-                                    )
-                                    parameters_to_pass[put_idx].update(
-                                        {f'{put_idx}_{data.name}': handler.parameters.native()})
-                                elif data.parameters.type == LayerSelectTypeChoice.table:
-                                    current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
-                                    _, enc = autodetect_encoding(str(current_path), True)
-                                    for column in data.parameters.data:
-                                        collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
-                                                                     engine='python', encoding=enc).loc[:, column] \
-                                            .to_list()
-                                        if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
-                                            collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
-                                                              in collected_data]
-                                        print(collected_data[:5])
-                                        print(handler.parameters.native())
-                                        data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
-                                        parameters_to_pass[put_idx].update(
-                                            {f'{put_idx}_{column}': handler.parameters.native()})
+                full_data[put_idx] = {}
+                full_parameters[put_idx] = {}
+                for element_id in layer.bind.up:
+                    element = put_data.get(element_id)
+                    if element.type == LayerTypeChoice.preprocess:
+                        for handler_id in element.bind.up:
+                            handler = put_data.get(handler_id)
+                            data, parameters = get_data(handler, put_data, put_idx)
+                            full_data[put_idx].update(data[put_idx])
+                            full_parameters[put_idx].update(parameters[put_idx])
+                    elif element.type == LayerTypeChoice.handler:
+                        data, parameters = get_data(element, put_data, put_idx)
+                        full_data[put_idx].update(data[put_idx])
+                        full_parameters[put_idx].update(parameters[put_idx])
 
-        return data_to_pass, parameters_to_pass
+        # for layer in put_data:
+        #     if layer.type in [LayerTypeChoice.input, LayerTypeChoice.output]:
+        #         put_idx += 1
+        #         data_to_pass[put_idx] = {}
+        #         parameters_to_pass[put_idx] = {}
+        #         for handler in put_data:
+        #             if handler.id in layer.bind.up:
+        #                 for data in put_data:
+        #                     if data.id in handler.bind.up:
+        #                         if data.parameters.type == LayerSelectTypeChoice.folder:
+        #                             collected_data = []
+        #                             for folder_name in data.parameters.data:
+        #                                 current_path = Path(sources_temp_directory).joinpath(folder_name)
+        #                                 for direct, folder, files_name in os.walk(current_path):
+        #                                     if files_name:
+        #                                         for file_name in sorted(files_name):
+        #                                             collected_data.append(os.path.join(current_path, file_name))
+        #                             print(collected_data[:5])
+        #                             print(handler.parameters.native())
+        #                             data_to_pass[put_idx].update(
+        #                                 {f'{put_idx}_{data.name}': collected_data}
+        #                             )
+        #                             parameters_to_pass[put_idx].update(
+        #                                 {f'{put_idx}_{data.name}': handler.parameters.native()})
+        #                         elif data.parameters.type == LayerSelectTypeChoice.table:
+        #                             current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
+        #                             _, enc = autodetect_encoding(str(current_path), True)
+        #                             for column in data.parameters.data:
+        #                                 collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
+        #                                                              engine='python', encoding=enc).loc[:, column] \
+        #                                     .to_list()
+        #                                 if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
+        #                                     collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
+        #                                                       in collected_data]
+        #                                 print(collected_data[:5])
+        #                                 print(handler.parameters.native())
+        #                                 data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
+        #                                 parameters_to_pass[put_idx].update(
+        #                                     {f'{put_idx}_{column}': handler.parameters.native()})
+
+        return full_data, full_parameters
 
     @staticmethod
     def create_put_instructions(dictio, parameters, version_sources_path):
