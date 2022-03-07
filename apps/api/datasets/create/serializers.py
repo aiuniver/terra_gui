@@ -73,7 +73,7 @@ class ValidateBlockSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=tuple(LayerTypeChoice.values()))
     removable = serializers.BooleanField(default=False)
     bind = LayerBindSerializer()
-    position = serializers.ListSerializer(child=serializers.IntegerField())
+    position = serializers.ListSerializer(child=serializers.FloatField())
     parameters = serializers.DictField()
 
 
