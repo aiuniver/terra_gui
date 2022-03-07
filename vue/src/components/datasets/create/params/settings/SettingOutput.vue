@@ -1,6 +1,6 @@
 <template>
   <div>
-    <t-field>
+    <t-field label="Название">
       <d-input-text :value="name" @change="onChange"></d-input-text>
     </t-field>
     {{ selected }}

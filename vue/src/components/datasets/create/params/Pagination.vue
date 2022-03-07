@@ -1,10 +1,15 @@
 <template>
   <div class="d-pagination">
-    <button class="d-pagination__btn" :disabled="isDisabled" @click="$emit('prev', $event)">
-      <d-svg name="arrow-carret-left-longer-big" />
-    </button>
+    <div class="d-pagination__wrapper">
+      <button class="d-pagination__btn" @click="resetCreation" title="Сбросить создание">
+        <i class="ci-icon ci-undo"></i>
+      </button>
+      <button class="d-pagination__btn" :disabled="isDisabled" @click="$emit('prev', $event)">
+        <d-svg name="arrow-carret-left-longer-big" />
+      </button>
+    </div>
     <div class="d-pagination__inner">
-      <div class="d-pagination__list">
+      <div class="d-pagination__list" :class="{ 'version-creation': !project.firstCreation }">
         <div v-for="item of list.length" :key="item" :class="['d-pagination__item', { 'd-pagination__item--active': isActive(item) }]"></div>
       </div>
       <div class="d-pagination__title">
@@ -57,6 +62,9 @@ export default {
       this.$emit('next', event);
       if (this.value === this.list.length) this.$emit('create', event);
     },
+    resetCreation() {
+      console.log('reset creation')
+    }
   },
 };
 </script>
@@ -67,6 +75,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  &__wrapper {
+    display: flex;
+    gap: 10px;
+  }
   &__btn {
     background: $color-dark-gray;
     border-radius: 4px;
@@ -83,8 +95,12 @@ export default {
       box-shadow: 0px 0px 4px rgba(101, 185, 244, 0.2);
     }
     &:disabled {
-      opacity: 0.4;
+      opacity: 0;
       cursor: default;
+    }
+    .ci-undo {
+      font-size: 24px;
+      color: #6c7883;
     }
   }
   &__list {
@@ -93,6 +109,11 @@ export default {
     height: 10px;
     margin-bottom: 5px;
     align-items: center;
+    &.version-creation {
+      > div:first-child {
+        display: none;
+      }
+    }
   }
   &__item {
     background: $color-gray-blue;
