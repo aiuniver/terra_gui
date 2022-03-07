@@ -89,6 +89,7 @@ export default {
     },
     onPrev() {
       if (this.value > 1) this.value = this.value - 1;
+      this.$store.commit('createDataset/SET_ERRORS_BLOCK', {})
     },
     async onSourceProgress() {
       const res = await this.sourceLoadProgress();

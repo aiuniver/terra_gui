@@ -27,7 +27,7 @@ export default {
     outputs: []
   }),
   mutations: {
-    SER_ERRORS_BLOCK (state, value) {
+    SET_ERRORS_BLOCK (state, value) {
       state.errorsBlock = value;
     },
     SET_DEFAULT (state, value) {
@@ -121,7 +121,7 @@ export default {
         items: chnageType(blocks)
       }
       const res = await dispatch('axios', { url: '/datasets/create/validate/', data: struct }, { root: true });
-      commit('SER_ERRORS_BLOCK', res?.data || {})
+      commit('SET_ERRORS_BLOCK', res?.data || {})
       return res
     },
   },
