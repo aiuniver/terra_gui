@@ -30,54 +30,52 @@ class ImageArray(Array):
                                        'width': options['width'],
                                        'net': options['net'],
                                        'image_mode': options.get('image_mode', 'stretch'),
-                                       'scaler': options['scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'min_scaler': options['min_scaler'],
+                                       # 'scaler': options['scaler'],
+                                       # 'max_scaler': options['max_scaler'],
+                                       # 'min_scaler': options['min_scaler'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
-                                       'augmentation': options.get('augmentation')
+                                       # 'augmentation': options.get('augmentation')
                                        }
                         }
 
         return instructions
 
     def create(self, source: str, **options):
-        img = load_img(source)
-        array = np.array(img)
 
-        instructions = {'instructions': array,
-                        'parameters': options}
-
-        return instructions
-
-    def preprocess(self, array: np.ndarray, **options):
-
-        augm_data = None
-        if options.get('augmentation') and options.get('augm_data'):
-            array, augm_data = self.augmentation_image(image_array=array,
-                                                       coords=options['augm_data'],
-                                                       augmentation_dict=options['augmentation'])
-
-        frame_mode = options['image_mode'] if 'image_mode' in options.keys() else 'stretch'  # Временное решение
-
+        array = np.array(load_img(source, target_size=(options['height'], options['width'])))
+        # frame_mode = options['image_mode'] if 'image_mode' in options.keys() else 'stretch'  # Временное решение
         array = resize_frame(image_array=array,
                              target_shape=(options['height'], options['width']),
-                             frame_mode=frame_mode)
+                             frame_mode=options['image_mode'])
 
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
-        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-            if options['scaler'] == 'min_max_scaler':
-                orig_shape = array.shape
-                array = options['preprocess'].transform(array.reshape(-1, 1))
-                array = array.reshape(orig_shape).astype('float32')
-            elif options['scaler'] == 'terra_image_scaler':
-                array = options['preprocess'].transform(array)
 
-        if isinstance(augm_data, str):
-            return array, augm_data
-        else:
-            return array
+        # instructions = {'instructions': array,
+        #                 'parameters': options}
+
+        return array  # instructions
+
+    def preprocess(self, array: np.ndarray, preprocess):
+
+        # augm_data = None
+        # if options.get('augmentation') and options.get('augm_data'):
+        #     array, augm_data = self.augmentation_image(image_array=array,
+        #                                                coords=options['augm_data'],
+        #                                                augmentation_dict=options['augmentation'])
+
+        # if options['scaler'] == 'min_max_scaler':
+        orig_shape = array.shape
+        array = preprocess.transform(array.reshape(-1, 1))
+        array = array.reshape(orig_shape).astype('float32')
+        # elif options['scaler'] == 'terra_image_scaler':
+        #     array = options['preprocess'].transform(array)
+
+        # if isinstance(augm_data, str):
+        #     return array, augm_data
+        # else:
+        return array
 
     @staticmethod
     def augmentation_image(image_array, coords, augmentation_dict):

@@ -32,7 +32,8 @@ class ClassificationArray(Array):
 
         instructions = {'instructions': sources,
                         'parameters': {'classes_names': classes_names,
-                                       'one_hot_encoding': True,
+                                       # 'one_hot_encoding': True,
+                                       'encoding': 'ohe',
                                        'num_classes': len(classes_names),
                                        'cols_names': options['cols_names'],
                                        'put': options['put'],
@@ -70,11 +71,11 @@ class ClassificationArray(Array):
 
         index = np.array(index)
 
-        instructions = {'instructions': index,
-                        'parameters': options}
+        # instructions = {'instructions': index,
+        #                 'parameters': options}
 
-        return instructions
+        return index
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess):
 
         return array
