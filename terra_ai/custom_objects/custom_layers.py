@@ -17,5 +17,6 @@ terra_custom_layers = {
     "RGBNormalization": "normalization_custom_layers",
     "VAEDiscriminatorBlock": "gan_custom_layers",
     "PretrainedModel": "pretrained_custom_layers",
+    "NoiseGenerator": "normalization_custom_layers",
 }
 

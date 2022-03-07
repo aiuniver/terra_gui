@@ -712,6 +712,11 @@ class LayerPretrainedModelData(LayerMixinData):
     extra: types.PretrainedModel.ParametersExtraData = (types.PretrainedModel.ParametersExtraData())
 
 
+class LayerNoiseGeneratorData(LayerMixinData):
+    main: types.NoiseGenerator.ParametersMainData = types.NoiseGenerator.ParametersMainData()
+    extra: types.NoiseGenerator.ParametersExtraData = (types.NoiseGenerator.ParametersExtraData())
+
+
 class LayerPretrainedYOLOData(LayerMixinData):
     main: types.PretrainedYOLO.ParametersMainData = (
         types.PretrainedYOLO.ParametersMainData()

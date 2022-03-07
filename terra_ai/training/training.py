@@ -23,8 +23,9 @@ from terra_ai.exceptions.training import TooBigBatchSize, DatasetPrepareMissing,
     NoYoloParamsException, TrainingException
 from terra_ai.logging import logger
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel, GANTerraModel, ConditionalGANTerraModel, \
+from terra_ai.training.terra_gan_models import GANTerraModel, ConditionalGANTerraModel, \
     TextToImageGANTerraModel, ImageToImageGANTerraModel, ImageSRGANTerraModel
+from terra_ai.training.terra_models import BaseTerraModel, YoloTerraModel
 from terra_ai.callbacks.base_callback import FitCallback
 
 from terra_ai.callbacks import interactive

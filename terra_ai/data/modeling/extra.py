@@ -141,6 +141,7 @@ class LayerTypeChoice(str, Enum):
     ResnetBlock2D = "ResnetBlock2D"
     RGBNormalization = "RGBNormalization"
     VAEDiscriminatorBlock = "VAEDiscriminatorBlock"
+    NoiseGenerator = "NoiseGenerator"
 
     @staticmethod
     def values() -> list:

@@ -312,3 +312,13 @@ class CONVBlockConfigChoice(str, Enum):
     @staticmethod
     def values() -> list:
         return list(map(lambda item: item.value, CONVBlockConfigChoice))
+
+
+class NoiseTypeChoice(str, Enum):
+    uniform = "uniform"
+    normal = "normal"
+    truncated_normal = "truncated_normal"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingChoice))

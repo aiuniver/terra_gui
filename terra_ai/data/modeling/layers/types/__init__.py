@@ -154,4 +154,5 @@ from . import (
     RGBNormalization,
     VAEDiscriminatorBlock,
     PretrainedModel,
+    NoiseGenerator
 )

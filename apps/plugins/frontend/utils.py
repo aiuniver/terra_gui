@@ -23,7 +23,8 @@ from terra_ai.data.modeling.layers.extra import (
     ResblockActivationChoice,
     NormalizationChoice,
     MergeLayerChoice,
-    ConditionalMergeModeChoice,
+    ConditionalMergeModeChoice, NoiseTypeChoice,
+
 )
 
 from terra_ai.data.cascades.blocks.extra import (
@@ -67,6 +68,7 @@ SELECT_TYPES = [
     NormalizationChoice,
     MergeLayerChoice,
     ConditionalMergeModeChoice,
+    NoiseTypeChoice
 ]
 
 

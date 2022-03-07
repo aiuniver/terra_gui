@@ -219,5 +219,51 @@ class RGBNormalization(Layer):
         return input_shape
 
 
+class NoiseGenerator(Layer):
+
+    def __init__(self, noise_level, noise_type='uniform', mean: float = 0., stddev: float = 1.0,
+                 minval: float = 0., maxval: float = 1., **kwargs):
+
+        super(NoiseGenerator, self).__init__(**kwargs)
+        self.noise_type = noise_type  # 'uniform', 'normal', 'truncated_normal', 'zeros', 'ones'
+        self.noise_level = noise_level
+        self.mean = mean
+        self.stddev = stddev
+        self.minval = minval
+        self.maxval = maxval
+
+    def call(self, input_, training=False, **kwargs):
+
+        if not training:
+            return input_  # + tf.fill(input_.shape, self.mean)
+        else:
+            if self.noise_type == 'normal':
+                noise = tf.random.normal(mean=self.mean, stddev=self.stddev, shape=input_.shape)
+            elif self.noise_type == 'truncated_normal':
+                noise = tf.random.truncated_normal(mean=self.mean, stddev=self.stddev, shape=input_.shape)
+            elif self.noise_type == 'zeros':
+                noise = tf.zeros(shape=input_.shape)
+            elif self.noise_type == 'truncated_normal':
+                noise = tf.ones(shape=input_.shape)
+            else:
+                noise = tf.random.uniform(shape=input_.shape, minval=self.minval, maxval=self.maxval)
+            return input_ * (1 - self.noise_level) + noise * self.noise_level
+
+    def get_config(self):
+        config = {
+            'noise_type': self.noise_type,
+            'noise_level': self.noise_level,
+            'mean': self.mean,
+            'stdev': self.stdev,
+            'minval': self.minval,
+            'maxval': self.maxval,
+        }
+        base_config = super(NoiseGenerator, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
+
+
 if __name__ == "__main__":
     pass
