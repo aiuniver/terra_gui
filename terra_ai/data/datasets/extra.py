@@ -39,6 +39,7 @@ class LayerSelectTypeChoice(str, Enum):
 class LayerTypeChoice(str, Enum):
     data = "data"
     handler = "handler"
+    preprocess = "preprocess"
     input = "input"
     output = "output"
 
@@ -54,17 +55,11 @@ class LayerPrepareMethodChoice(str, Enum):
     word_to_vec = "word_to_vec"
 
 
-# class LayerTaskTypeChoice(str, Enum):
-#     timeseries = "timeseries"
-#     regression = "regression"
-
-
 class DatasetTaskTypeChoice(str, Enum):
     ImageClassification = "ImageClassification"  # 1 вход, 1 выход
     ImageSegmentation = "ImageSegmentation"  # 1 вход, 1 выход
-    # ImageObjectDetection = 'ImageObjectDetection'  # 1 вход, 1(3+3) выход(ов)
-    ImageGAN = "ImageGAN"
-    ImageCGAN = "ImageCGAN"
+    ImageGAN = "ImageGAN"  # 2 входа, 2 выхода
+    ImageCGAN = "ImageCGAN"  # 3 входа, 2 выхода
     TextClassification = "TextClassification"  # 1 вход, 1 выход
     TextSegmentation = "TextSegmentation"  # 1 вход, 1 выход
     VideoClassification = "VideoClassification"  # 1 вход, 1 выход
@@ -372,3 +367,11 @@ class LayerHandlerChoice(str, Enum):
             LayerHandlerChoice.TextTransformer,
             LayerHandlerChoice.Image,
         ]
+
+
+class LayerPreprocessChoice(str, Enum):
+    MinMaxScaler = "MinMaxScaler"
+    StandardScaler = "StandardScaler"
+    TerraImageScaler = "TerraImageScaler"
+    Tokenizer = "Tokenizer"
+    Word2Vec = "Word2Vec"

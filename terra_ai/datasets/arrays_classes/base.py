@@ -15,5 +15,5 @@ class Array(ABC):
         pass
 
     @abstractmethod
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess):
         pass

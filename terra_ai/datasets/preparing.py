@@ -5,6 +5,7 @@ import json
 import pandas as pd
 import tensorflow as tf
 import h5py
+import psutil
 
 from tensorflow.keras import utils
 from tensorflow.keras import datasets as load_keras_datasets
@@ -19,6 +20,7 @@ from terra_ai.data.datasets.extra import DatasetGroupChoice
 from terra_ai.data.presets.datasets import KerasInstructions
 from terra_ai.settings import DATASET_EXT, DATASET_CONFIG, DATASET_VERSION_EXT, DATASET_VERSION_CONFIG, TERRA_PATH
 from terra_ai.data.presets.datasets import DatasetsGroups, VersionsGroups
+
 
 
 class PrepareDataset(object):
@@ -38,9 +40,20 @@ class PrepareDataset(object):
 
         self.data = data
         self.dts_prepared = False
+        self.use_generator = False
         if self.data.group != DatasetGroupChoice.keras:
             self.dataset_version_paths_data = DatasetVersionPathsData(basepath=datasets_path)
             self.preprocessing = CreatePreprocessing(dataset_path=datasets_path)
+            for put_id in list(self.data.version.inputs.keys()) + list(self.data.version.outputs.keys()):
+                self.instructions[put_id] = {}
+                for instr_json in os.listdir(self.dataset_version_paths_data.instructions.joinpath('parameters')):
+                    idx, *name = os.path.splitext(instr_json)[0].split('_')
+                    name = '_'.join(name)
+                    if put_id == int(idx):
+                        with open(
+                                self.dataset_version_paths_data.instructions.joinpath('parameters', instr_json), 'r') \
+                                as instr:
+                            self.instructions[put_id].update([(f'{idx}_{name}', json.load(instr))])
 
     def __str__(self):
 
@@ -236,56 +249,95 @@ class PrepareDataset(object):
 
             self.preprocessing.load_preprocesses(self.data.version.columns)
 
-            with h5py.File(self.dataset_version_paths_data.arrays.joinpath('dataset.h5'), 'r') as hdf:
-                out_signature = [{}, {}]
+            size = 0
+            for data in list(self.data.inputs.values()) + list(self.data.outputs.values()):
+                coef = int(''.join([x for x in data.dtype if x.isdigit()])) // 8
+                size += np.prod(data.shape) * coef + 136
+            overall_size = size * self.data.version.length.train + size * self.data.version.length.val
 
-                for key in self.data.version.inputs:
-                    if f"train/id_{key}/1" in hdf:
-                        out_signature[0].update({str(key): tf.TensorSpec(shape=self.data.version.inputs[key].shape,
-                                                                         dtype=self.data.version.inputs[key].dtype)})
-                for key in self.data.version.outputs:
-                    if f"train/id_{key}/0" in hdf:
-                        out_signature[1].update({str(key): tf.TensorSpec(shape=self.data.version.outputs[key].shape,
-                                                                         dtype=self.data.version.outputs[key].dtype)})
+            if (psutil.virtual_memory().used + overall_size) / psutil.virtual_memory().total > 0.75:
 
-                if self.data.version.service:
-                    out_signature.append({})
-                    for key in self.data.version.service:
-                        if f"train/id_{key}_service/0" in hdf:
-                            out_signature[2].update({str(key): tf.TensorSpec(shape=self.data.version.service[key].shape,
-                                                                             dtype=self.data.version.service[key].dtype)})
+                with h5py.File(self.dataset_version_paths_data.arrays.joinpath('dataset.h5'), 'r') as hdf:
+                    out_signature = [{}, {}]
 
-                for split_g in ['train', 'val']:
-                    globals()[f'{split_g}_files_x'] = []
-                    globals()[f'{split_g}_files_y'] = []
-                    globals()[f'{split_g}_files_s'] = []
+                    for key in self.data.version.inputs:
+                        if f"train/id_{key}/1" in hdf:
+                            out_signature[0].update({str(key): tf.TensorSpec(shape=self.data.version.inputs[key].shape,
+                                                                             dtype=self.data.version.inputs[key].dtype)})
+                    for key in self.data.version.outputs:
+                        if f"train/id_{key}/0" in hdf:
+                            out_signature[1].update({str(key): tf.TensorSpec(shape=self.data.version.outputs[key].shape,
+                                                                             dtype=self.data.version.outputs[key].dtype)})
 
-                    for idx in range(len(self.dataframe[split_g])):
-                        globals()[f'{split_g}_files_x'].append(
-                            [f"{split_g}/id_{key}/{idx}" for key in self.data.version.inputs if
-                             f"{split_g}/id_{key}/{idx}" in hdf])
-                        globals()[f'{split_g}_files_y'].append(
-                            [f"{split_g}/id_{key}/{idx}" for key in self.data.version.outputs if
-                             f"{split_g}/id_{key}/{idx}" in hdf])
-                        globals()[f'{split_g}_files_s'].append(
-                            [f"{split_g}/id_{key}_service/{idx}" for key in self.data.version.service
-                             if self.data.version.service and f"{split_g}/id_{key}/{idx}" in hdf])
+                    if self.data.version.service:
+                        out_signature.append({})
+                        for key in self.data.version.service:
+                            if f"train/id_{key}_service/0" in hdf:
+                                out_signature[2].update({str(key): tf.TensorSpec(shape=self.data.version.service[key].shape,
+                                                                                 dtype=self.data.version.service[key].dtype)})
+
+                    for split_g in ['train', 'val']:
+                        globals()[f'{split_g}_files_x'] = []
+                        globals()[f'{split_g}_files_y'] = []
+                        globals()[f'{split_g}_files_s'] = []
+
+                        for idx in range(len(self.dataframe[split_g])):
+                            globals()[f'{split_g}_files_x'].append(
+                                [f"{split_g}/id_{key}/{idx}" for key in self.data.version.inputs if
+                                 f"{split_g}/id_{key}/{idx}" in hdf])
+                            globals()[f'{split_g}_files_y'].append(
+                                [f"{split_g}/id_{key}/{idx}" for key in self.data.version.outputs if
+                                 f"{split_g}/id_{key}/{idx}" in hdf])
+                            globals()[f'{split_g}_files_s'].append(
+                                [f"{split_g}/id_{key}_service/{idx}" for key in self.data.version.service
+                                 if self.data.version.service and f"{split_g}/id_{key}/{idx}" in hdf])
+
+                            globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
+                                                                  'outputs': globals()[f'{split_g}_files_y']}
+                            if self.data.version.service:
+                                globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])\
 
                         globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
                                                               'outputs': globals()[f'{split_g}_files_y']}
                         if self.data.version.service:
-                            globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])\
+                            globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])
 
-                    globals()[f"{split_g}_parameters"] = {'inputs': globals()[f'{split_g}_files_x'],
-                                                          'outputs': globals()[f'{split_g}_files_y']}
+                self.dataset['train'] = Dataset.from_generator(lambda: self.generator(**globals()[f"train_parameters"]),
+                                                               output_signature=tuple(out_signature))
+
+                self.dataset['val'] = Dataset.from_generator(lambda: self.generator(**globals()[f"val_parameters"]),
+                                                             output_signature=tuple(out_signature))
+                self.use_generator = True
+            else:
+                with h5py.File(Path.cwd().joinpath('dataset.h5'), 'r') as hdf:
+                    for put in hdf.keys():
+                        self.X[put] = {}
+                        self.Y[put] = {}
+                        self.service[put] = {}
+                        for idx in hdf[put].keys():
+                            cur_idx = idx.split('_')[1]
+                            if int(cur_idx) in self.data.version.inputs.keys():
+                                self.X[put][cur_idx] = []
+                                for arr in hdf[put][idx].keys():
+                                    self.X[put][cur_idx].append(hdf[put][idx][arr][()])
+                                self.X[put][cur_idx] = np.array(self.X[put][cur_idx])
+                            elif int(cur_idx) in self.data.version.outputs.keys():
+                                self.Y[put][cur_idx] = []
+                                for arr in hdf[put][idx].keys():
+                                    self.Y[put][cur_idx].append(hdf[put][idx][arr][()])
+                                self.Y[put][cur_idx] = np.array(self.Y[put][cur_idx])
+                            elif int(cur_idx) in self.data.version.service.keys():
+                                self.service[put][cur_idx] = []
+                                for arr in hdf[put][idx].keys():
+                                    self.service[put][cur_idx].append(hdf[put][idx][arr][()])
+                                self.service[put][cur_idx] = np.array(self.Y[put][cur_idx])
+
+                for split in ['train', 'val']:
                     if self.data.version.service:
-                        globals()[f"{split_g}_parameters"].update([('service', globals()[f'{split_g}_files_s'])])
-
-            self.dataset['train'] = Dataset.from_generator(lambda: self.generator(**globals()[f"train_parameters"]),
-                                                           output_signature=tuple(out_signature))
-
-            self.dataset['val'] = Dataset.from_generator(lambda: self.generator(**globals()[f"val_parameters"]),
-                                                         output_signature=tuple(out_signature))
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split],
+                                                                          self.service[split]))
+                    else:
+                        self.dataset[split] = Dataset.from_tensor_slices((self.X[split], self.Y[split]))
 
         self.dts_prepared = True
 
@@ -307,5 +359,5 @@ class PrepareDataset(object):
                     os.makedirs(folder_dir, exist_ok=True)
                     joblib.dump(obj, os.path.join(folder_dir, f'{col_name}.gz'))
 
-        with open(os.path.join(folder_path, DATASET_VERSION_CONFIG), 'w') as cfg:
+        with open(os.path.join(folder_path, DATASET_CONFIG), 'w') as cfg:
             json.dump(self.data.native(), cfg)

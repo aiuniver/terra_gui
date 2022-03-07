@@ -112,22 +112,30 @@ class CreatePreprocessing(object):
                 else:
                     self.preprocessing[put].update([(col_name, None)])
 
-    def create_scaler(self, **options):  # array=None,
+    @staticmethod
+    def create_min_max_scaler(options):
 
-        scaler = None
-        if options.get('scaler') and options['scaler'] != 'no_scaler':
-            if options['scaler'] == 'min_max_scaler':
-                scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
-            elif options['scaler'] == 'standard_scaler':
-                scaler = StandardScaler()
-            elif options['scaler'] == 'terra_image_scaler':
-                scaler = TerraImageScaler(shape=(options['height'], options['width']),
-                                          min_max=(options['min_scaler'], options['max_scaler']))
-        if not options['put'] in self.preprocessing.keys():
-            self.preprocessing[options['put']] = {}
-        self.preprocessing[options['put']].update([(options['cols_names'], scaler)])
+        scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
 
-    def create_tokenizer(self, text_list: list, **options):
+        return scaler
+
+    @staticmethod
+    def create_standard_scaler(options):  # array=None,
+
+        scaler = StandardScaler()
+
+        return scaler
+
+    @staticmethod
+    def create_terra_image_scaler(options):
+
+        scaler = TerraImageScaler(shape=(options['height'], options['width']),
+                                  min_max=(options['min_scaler'], options['max_scaler']))
+
+        return scaler
+
+    @staticmethod
+    def create_tokenizer(text_list: list, **options):
 
         """
 
@@ -155,17 +163,22 @@ class CreatePreprocessing(object):
         """
         tokenizer = Tokenizer(**{'num_words': options['max_words_count'],
                                  'filters': options['filters'],
-                                 'lower': False,
+                                 'lower': options['lower'],
                                  'split': ' ',
-                                 'char_level': False,
-                                 'oov_token': '<UNK>'})
+                                 'char_level': options['char_level'],
+                                 'oov_token': '<UNK>'
+                                 }
+                              )
         tokenizer.fit_on_texts(text_list)
 
-        if not options['put'] in self.preprocessing.keys():
-            self.preprocessing[options['put']] = {}
-        self.preprocessing[options['put']].update([(options['cols_names'], tokenizer)])
+        # if not options['put'] in self.preprocessing.keys():
+        #     self.preprocessing[options['put']] = {}
+        # self.preprocessing[options['put']].update([(options['cols_names'], tokenizer)])
 
-    def create_word2vec(self, text_list: list, **options):
+        return tokenizer
+
+    @staticmethod
+    def create_word2vec(text_list: list, **options):
 
         """
 
@@ -189,15 +202,19 @@ class CreatePreprocessing(object):
 
         """
         text_list = [elem.split(' ') for elem in text_list]
-        word2vec = Word2Vec(text_list, **{'size': options['word_to_vec_size'],
-                                          'window': 10,
-                                          'min_count': 1,
-                                          'workers': 10,
-                                          'iter': 10})
+        word2vec = Word2Vec(text_list, **{'size': options['size'],
+                                          'window': options['window'],
+                                          'min_count': options['min_count'],
+                                          'workers': options['workers'],
+                                          'iter': options['iter']
+                                          }
+                            )
 
-        if not options['put'] in self.preprocessing.keys():
-            self.preprocessing[options['put']] = {}
-        self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
+        # if not options['put'] in self.preprocessing.keys():
+        #     self.preprocessing[options['put']] = {}
+        # self.preprocessing[options['put']].update([(options['cols_names'], word2vec)])
+
+        return word2vec
 
     def inverse_data(self, options: dict):
         out_dict = {}
