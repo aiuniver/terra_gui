@@ -71,11 +71,11 @@ class ClassificationArray(Array):
 
         index = np.array(index)
 
-        instructions = {'instructions': index,
-                        'parameters': options}
+        # instructions = {'instructions': index,
+        #                 'parameters': options}
 
-        return instructions
+        return index
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess):
 
         return array

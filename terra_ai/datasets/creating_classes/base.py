@@ -13,6 +13,7 @@ from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetInputsData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerPrepareMethodChoice, LayerScalerImageChoice, \
     LayerSelectTypeChoice, LayerTypeChoice
 from terra_ai.datasets import arrays_classes
+from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.settings import VERSION_PROGRESS_NAME
 from terra_ai.datasets.data import InstructionsData, DataType, DatasetInstructionsData
 from terra_ai.datasets.utils import PATH_TYPE_LIST, get_od_names, get_image_size
@@ -39,18 +40,17 @@ def multithreading_instructions(one_path, params, dataset_folder, col_name, idx)
     return instruction
 
 
-def multithreading_array(row, instructions):
+def multithreading_array(row, instructions, preprocess):
 
     full_array = []
     for h in range(len(row)):
         try:
-            create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-                             f'{camelize(instructions[h]["put_type"])}Array')().create(
-                source=row[h], **instructions[h])
-            # prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-            #                 f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
-            #     create['instructions'], **create['parameters'])
-            full_array.append(create['instructions'])
+            array = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                            f'{camelize(instructions[h]["put_type"])}Array')().create(source=row[h], **instructions[h])
+            if preprocess:
+                array = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+                                f'{camelize(instructions[h]["put_type"])}Array')().preprocess(array, preprocess)
+            full_array.append(array)
         except Exception:
             progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
             raise
@@ -58,23 +58,23 @@ def multithreading_array(row, instructions):
     return full_array
 
 
-def multithreading_preprocessing(array, instructions):
-
-    full_array = []
-    for h in range(len(row)):
-        try:
-            # create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-            #                  f'{camelize(instructions[h]["put_type"])}Array')().create(
-            #     source=row[h], **instructions[h])
-            prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-                            f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
-                create['instructions'], **create['parameters'])
-            full_array.append(prepr)
-        except Exception:
-            progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
-            raise
-
-    return full_array
+# def multithreading_preprocessing(array, instructions):
+#
+#     full_array = []
+#     for h in range(len(row)):
+#         try:
+#             # create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+#             #                  f'{camelize(instructions[h]["put_type"])}Array')().create(
+#             #     source=row[h], **instructions[h])
+#             prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
+#                             f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
+#                 create['instructions'], **create['parameters'])
+#             full_array.append(prepr)
+#         except Exception:
+#             progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
+#             raise
+#
+#     return full_array
 
 
 def postprocess_timeseries(full_array):
@@ -116,18 +116,20 @@ class BaseClass(object):
     @staticmethod
     def collect_data_to_pass(put_data, sources_temp_directory, put_idx):
 
-        def get_data(handler, put_data, put_idx):
+        def get_data(handler, preprocess, tree, idx):
 
             data_to_pass = {}
             parameters_to_pass = {}
+            preprocess_to_pass = {}
 
             for up_id in handler.bind.up:
-                data = put_data.get(up_id)
-                data_to_pass[put_idx] = {}
-                parameters_to_pass[put_idx] = {}
-                if data.parameters.type == LayerSelectTypeChoice.folder:
+                data_obj = tree.get(up_id)
+                data_to_pass[idx] = {}
+                parameters_to_pass[idx] = {}
+                preprocess_to_pass[idx] = {}
+                if data_obj.parameters.type == LayerSelectTypeChoice.folder:
                     collected_data = []
-                    for folder_name in data.parameters.data:
+                    for folder_name in data_obj.parameters.data:
                         current_path = Path(sources_temp_directory).joinpath(folder_name)  # sources_temp_directory
                         for direct, folder, files_name in os.walk(current_path):
                             if files_name:
@@ -135,15 +137,16 @@ class BaseClass(object):
                                     collected_data.append(os.path.join(current_path, file_name))
                     print(collected_data[:5])
                     print(handler.parameters.native())
-                    data_to_pass[put_idx].update(
-                        {f'{put_idx}_{data.name}': collected_data}
+                    data_to_pass[idx].update(
+                        {f'{idx}_{data_obj.name}': collected_data}
                     )
-                    parameters_to_pass[put_idx].update(
-                        {f'{put_idx}_{data.name}': handler.parameters.native()})
-                elif data.parameters.type == LayerSelectTypeChoice.table:
-                    current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
+                    parameters_to_pass[idx].update(
+                        {f'{idx}_{data_obj.name}': handler.parameters.native()})
+                    preprocess_to_pass[put_idx].update({f'{put_idx}_{data_obj.name}': preprocess})
+                elif data_obj.parameters.type == LayerSelectTypeChoice.table:
+                    current_path = Path(sources_temp_directory).joinpath(data_obj.parameters.file)
                     _, enc = autodetect_encoding(str(current_path), True)
-                    for column in data.parameters.data:
+                    for column in data_obj.parameters.data:
                         collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
                                                      engine='python', encoding=enc).loc[:, column] \
                             .to_list()
@@ -152,77 +155,44 @@ class BaseClass(object):
                                               in collected_data]
                         print(collected_data[:5])
                         print(handler.parameters.native())
-                        data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
-                        parameters_to_pass[put_idx].update(
-                            {f'{put_idx}_{column}': handler.parameters.native
-                            ()})
+                        data_to_pass[idx].update({f'{idx}_{column}': collected_data})
+                        parameters_to_pass[idx].update(
+                            {f'{idx}_{column}': handler.parameters.native()}
+                        )
+                        preprocess_to_pass[put_idx].update({f'{put_idx}_{column}': preprocess})
 
-            return data_to_pass, parameters_to_pass
+            return data_to_pass, parameters_to_pass, preprocess_to_pass
 
         full_data = {}
         full_parameters = {}
+        full_preprocess = {}
         for layer in put_data:
             if layer.type in [LayerTypeChoice.input, LayerTypeChoice.output]:
                 put_idx += 1
                 full_data[put_idx] = {}
                 full_parameters[put_idx] = {}
+                full_preprocess[put_idx] = {}
                 for element_id in layer.bind.up:
                     element = put_data.get(element_id)
                     if element.type == LayerTypeChoice.preprocess:
                         for handler_id in element.bind.up:
                             handler = put_data.get(handler_id)
-                            data, parameters = get_data(handler, put_data, put_idx)
+                            data, parameters, preprocess = get_data(handler, element.parameters.native(),
+                                                                    put_data, put_idx)
                             full_data[put_idx].update(data[put_idx])
                             full_parameters[put_idx].update(parameters[put_idx])
+                            full_preprocess[put_idx].update(preprocess[put_idx])
                     elif element.type == LayerTypeChoice.handler:
-                        data, parameters = get_data(element, put_data, put_idx)
+                        data, parameters, preprocess = get_data(element, {},
+                                                                put_data, put_idx)
                         full_data[put_idx].update(data[put_idx])
                         full_parameters[put_idx].update(parameters[put_idx])
+                        full_preprocess[put_idx].update(preprocess[put_idx])
 
-        # for layer in put_data:
-        #     if layer.type in [LayerTypeChoice.input, LayerTypeChoice.output]:
-        #         put_idx += 1
-        #         data_to_pass[put_idx] = {}
-        #         parameters_to_pass[put_idx] = {}
-        #         for handler in put_data:
-        #             if handler.id in layer.bind.up:
-        #                 for data in put_data:
-        #                     if data.id in handler.bind.up:
-        #                         if data.parameters.type == LayerSelectTypeChoice.folder:
-        #                             collected_data = []
-        #                             for folder_name in data.parameters.data:
-        #                                 current_path = Path(sources_temp_directory).joinpath(folder_name)
-        #                                 for direct, folder, files_name in os.walk(current_path):
-        #                                     if files_name:
-        #                                         for file_name in sorted(files_name):
-        #                                             collected_data.append(os.path.join(current_path, file_name))
-        #                             print(collected_data[:5])
-        #                             print(handler.parameters.native())
-        #                             data_to_pass[put_idx].update(
-        #                                 {f'{put_idx}_{data.name}': collected_data}
-        #                             )
-        #                             parameters_to_pass[put_idx].update(
-        #                                 {f'{put_idx}_{data.name}': handler.parameters.native()})
-        #                         elif data.parameters.type == LayerSelectTypeChoice.table:
-        #                             current_path = Path(sources_temp_directory).joinpath(data.parameters.file)
-        #                             _, enc = autodetect_encoding(str(current_path), True)
-        #                             for column in data.parameters.data:
-        #                                 collected_data = pd.read_csv(current_path, sep=None, usecols=[column],
-        #                                                              engine='python', encoding=enc).loc[:, column] \
-        #                                     .to_list()
-        #                                 if decamelize(decamelize(handler.parameters.type)) in PATH_TYPE_LIST:
-        #                                     collected_data = [str(Path(sources_temp_directory).joinpath(Path(x))) for x
-        #                                                       in collected_data]
-        #                                 print(collected_data[:5])
-        #                                 print(handler.parameters.native())
-        #                                 data_to_pass[put_idx].update({f'{put_idx}_{column}': collected_data})
-        #                                 parameters_to_pass[put_idx].update(
-        #                                     {f'{put_idx}_{column}': handler.parameters.native()})
-
-        return full_data, full_parameters
+        return full_data, full_parameters, full_preprocess
 
     @staticmethod
-    def create_put_instructions(dictio, parameters, version_sources_path):
+    def create_put_instructions(dictio, parameters, preprocess, version_sources_path):
 
         put_instructions = {}
         tags = {}
@@ -254,7 +224,11 @@ class BaseClass(object):
 
                 column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
                 # '\/:*?"<>|'
-                instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
+                instructions_data = InstructionsData(
+                    instructions=instructions,
+                    parameters=result_params,
+                    preprocess=preprocess
+                )
                 if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                     instructions_data.parameters.update({'classes_names': list(set(classes_names))})
                     instructions_data.parameters.update({'num_classes': len(list(set(classes_names)))})
@@ -269,7 +243,7 @@ class BaseClass(object):
 
     def create_instructions(self, version_data, sources_temp_directory, version_paths_data):
 
-        inp_data, inp_parameters = self.collect_data_to_pass(
+        inp_data, inp_parameters, inp_preprocess = self.collect_data_to_pass(
             put_data=version_data.inputs,
             sources_temp_directory=sources_temp_directory,
             put_idx=0
@@ -278,10 +252,11 @@ class BaseClass(object):
         inputs, inp_tags = self.create_put_instructions(
             dictio=inp_data,
             parameters=inp_parameters,
+            preprocess=inp_preprocess,
             version_sources_path=version_paths_data.sources
         )
 
-        out_data, out_parameters = self.collect_data_to_pass(
+        out_data, out_parameters, out_preprocess = self.collect_data_to_pass(
             put_data=version_data.outputs,
             sources_temp_directory=sources_temp_directory,
             put_idx=len(inp_data)
@@ -290,6 +265,7 @@ class BaseClass(object):
         outputs, out_tags = self.create_put_instructions(
             dictio=out_data,
             parameters=out_parameters,
+            preprocess=out_preprocess,
             version_sources_path=version_paths_data.sources
         )
 
@@ -302,14 +278,14 @@ class BaseClass(object):
         return instructions, tags
 
     @staticmethod
-    def create_numeric_preprocessing(instructions, preprocessing):
+    def create_numeric_preprocessing(instructions):
 
-        return preprocessing
+        return {}
 
     @staticmethod
-    def create_text_preprocessing(instructions, preprocessing):
+    def create_text_preprocessing(instructions):
 
-        return preprocessing
+        return {}
 
     @staticmethod
     def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
@@ -334,11 +310,12 @@ class BaseClass(object):
                 if data.parameters["put_type"] in PATH_TYPE_LIST:
                     data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
                 options_to_pass = data.parameters.copy()
-                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                    prep = preprocessing.preprocessing.get(key).get(col_name)
-                    options_to_pass.update([('preprocess', prep)])
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                #     prep = preprocessing.preprocessing.get(key).get(col_name)
+                #     options_to_pass.update([('preprocess', prep)])
 
-                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                array = multithreading_array([data_to_pass], [options_to_pass], preprocess_to_pass)[0]
                 put_array.append(array)
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
@@ -402,11 +379,13 @@ class BaseClass(object):
                 if data.parameters["put_type"] in PATH_TYPE_LIST:
                     data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
                 options_to_pass = data.parameters.copy()
-                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                    prep = preprocessing.preprocessing.get(key).get(col_name)
-                    options_to_pass.update([('preprocess', prep)])
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                #     prep = preprocessing.preprocessing.get(key).get(col_name)
+                #     options_to_pass.update([('preprocess', prep)])
 
-                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                array = multithreading_array([data_to_pass], [options_to_pass], preprocess_to_pass)[0]
+
                 if not array.shape:
                     array = np.expand_dims(array, 0)
                 put_array.append(array)
@@ -494,16 +473,18 @@ class BaseClass(object):
                 data_to_pass = []
                 dict_to_pass = []
                 parameters_to_pass = {}
+                preprocess_to_pass = None
                 for i in range(0, len(dataframe[split])):
                     tmp_data = []
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
                         parameters_to_pass = data.parameters.copy()
+                        preprocess_to_pass = preprocessing.get(key).get(col_name)
                         if parameters_to_pass['put_type'] == 'noise':
                             continue
-                        if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                            parameters_to_pass.update([('preprocess',
-                                                        preprocessing.preprocessing.get(key).get(col_name))])
+                        # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
+                        #     parameters_to_pass.update([('preprocess',
+                        #                                 preprocessing.preprocessing.get(key).get(col_name))])
                         if parameters_to_pass['put_type'] in PATH_TYPE_LIST:
                             tmp_data.append(str(version_paths_data.sources.joinpath(dataframe[split].loc[i, col_name])))
                         else:
@@ -523,7 +504,7 @@ class BaseClass(object):
                 hdf[split].create_group(f'id_{key}')
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass, repeat(preprocess_to_pass))
                     for i, result in enumerate(results):
                         progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
                         array = np.concatenate(result, axis=0)
@@ -538,7 +519,7 @@ class ClassificationClass(object):
 
         self.y_cls = []
 
-    def create_put_instructions(self, dictio, parameters, version_sources_path):
+    def create_put_instructions(self, dictio, parameters, preprocess, version_sources_path):
 
         put_instructions = {}
         tags = {}
@@ -570,7 +551,11 @@ class ClassificationClass(object):
                         else:
                             if put_id == 1:
                                 self.y_cls += [Path(data[i]).parent.name for _ in range(len(result['instructions']))]
-                instructions_data = InstructionsData(instructions=instructions, parameters=result_params)
+                instructions_data = InstructionsData(
+                    instructions=instructions,
+                    parameters=result_params,
+                    preprocess=preprocess[put_id][col_name]
+                )
                 instructions_data.parameters.update({'put_type': decamelize(parameters[put_id][col_name]['type'])})
                 column_name = ','.join(col_name.split(':')) if ':' in col_name else col_name
                 if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
@@ -688,6 +673,7 @@ class YoloClass(object):
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
                         parameters_to_pass = data.parameters.copy()
+                        parameters_to_pass.update(data.preprocess['type'])
                         if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
                             prep = preprocessing.preprocessing.get(key).get(col_name)
                             parameters_to_pass.update([('preprocess', prep)])
@@ -881,24 +867,44 @@ class MainTimeseriesClass(object):
 
 class PreprocessingNumericClass(object):
 
+    # @staticmethod
+    # def create_numeric_preprocessing(instructions, preprocessing):
+    #
+    #     for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+    #         for col_name, data in put.items():
+    #             preprocessing.create_scaler(**data.parameters)
+    #
+    #     return preprocessing
+
     @staticmethod
-    def create_numeric_preprocessing(instructions, preprocessing):
+    def create_numeric_preprocessing(instructions):
 
-        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            for col_name, data in put.items():
-                preprocessing.create_scaler(**data.parameters)
+        preprocess = {}
+        merged_puts = instructions.inputs.copy()
+        merged_puts.update(instructions.outputs.items())
+        for put_id, data in merged_puts.items():
+            preprocess[put_id] = {}
+            for col_name, col_data in data.items():
+                if col_data.preprocess:
+                    preprocess[put_id].update(
+                        {col_name:
+                            getattr(CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+                                col_data.preprocess['options'])
+                         }
+                    )
 
-        return preprocessing
+        return preprocess
 
     @staticmethod
     def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
 
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
-                if 'scaler' in data.parameters and \
-                        data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
-                    progress.pool(VERSION_PROGRESS_NAME, message=f'Обучение {camelize(data.parameters["scaler"])}')
-                    for i in range(len(data.instructions)):
+                if data.preprocess:  # preprocessing.preprocessing[key][col_name]: #data.preprocess in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
+                    progress.pool(VERSION_PROGRESS_NAME, message=f'Обучение {data.preprocess["type"]} для {col_name}')
+                    data_length = len(data.instructions)
+                    progress_count = 0
+                    for i in range(data_length):
                         if data.parameters['put_type'] in PATH_TYPE_LIST:
                             data_to_pass = str(sources_temp_directory.joinpath(data.instructions[i]))
                         else:
@@ -906,31 +912,56 @@ class PreprocessingNumericClass(object):
 
                         array = getattr(getattr(arrays_classes, data.parameters["put_type"]),
                                         f'{camelize(data.parameters["put_type"])}Array')().create(
-                            source=data_to_pass, **data.parameters)['instructions']
+                            source=data_to_pass, **data.parameters)
 
-                        if data.parameters['scaler'] == LayerScalerImageChoice.terra_image_scaler:
+                        if decamelize(data.preprocess['type']) == LayerScalerImageChoice.terra_image_scaler:
                             preprocessing.preprocessing[key][col_name].fit(array)
                         else:
                             preprocessing.preprocessing[key][col_name].fit(array.reshape(-1, 1))
+                        progress_count += 1
+                        progress.pool(VERSION_PROGRESS_NAME,
+                                      message=f'Обучение {data.preprocess["type"]} для {col_name}',
+                                      percent=ceil((progress_count / data_length) * 100)
+                                      )
 
         return preprocessing
 
 
 class PreprocessingTextClass(object):
 
+    # @staticmethod
+    # def create_text_preprocessing(instructions, preprocessing):
+    #
+    #     for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
+    #         for col_name, data in put.items():
+    #             if data.parameters['put_type'] == 'text':
+    #                 if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+    #                                                          LayerPrepareMethodChoice.bag_of_words]:
+    #                     preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+    #                 elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+    #                     preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+    #
+    #     return preprocessing
+
     @staticmethod
-    def create_text_preprocessing(instructions, preprocessing):
+    def create_text_preprocessing(instructions):
 
-        for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            for col_name, data in put.items():
-                if data.parameters['put_type'] == 'text':
-                    if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                             LayerPrepareMethodChoice.bag_of_words]:
-                        preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                    elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                        preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+        preprocess = {}
+        merged_puts = instructions.inputs.copy()
+        merged_puts.update(instructions.outputs.items())
 
-        return preprocessing
+        for put_id, data in merged_puts.items():
+            preprocess[put_id] = {}
+            for col_name, col_data in data.items():
+                if col_data.preprocess:
+                    preprocess[put_id].update(
+                        {col_name: getattr(CreatePreprocessing,
+                                           f"create_{decamelize(col_data.preprocess['type'])}")(
+                            col_data.instructions, col_data.preprocess['options'])
+                         }
+                    )
+
+        return preprocess
 
     # @staticmethod
     # def fit_text_preprocessing(put_data, preprocessing):

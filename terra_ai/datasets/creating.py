@@ -16,7 +16,6 @@ import pandas as pd
 import json
 import shutil
 import zipfile
-import h5py
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from datetime import datetime
@@ -60,13 +59,24 @@ class CreateDataset(object):
                                   f"{TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT]))}",
                           percent=70)
             shutil.rmtree(TERRA_PATH.datasets.joinpath('.'.join([creation_data.alias, DATASET_EXT])))
-        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Копирование датасета в {TERRA_PATH.datasets}",
-                      percent=80)
+        progress.pool(
+            name=DATASET_PROGRESS_NAME,
+            message=f"Копирование датасета в {TERRA_PATH.datasets}",
+            percent=80
+        )
         shutil.move(str(self.dataset_paths_data.basepath), TERRA_PATH.datasets)
-        progress.pool(name=DATASET_PROGRESS_NAME, message=f"Удаление временной папки {self.temp_directory}", percent=95)
+        progress.pool(
+            name=DATASET_PROGRESS_NAME,
+            message=f"Удаление временной папки {self.temp_directory}",
+            percent=95
+        )
         shutil.rmtree(self.temp_directory)
-        progress.pool(name=DATASET_PROGRESS_NAME, message='Формирование датасета завершено',
-                      data=dataset_data, percent=100)
+        progress.pool(
+            name=DATASET_PROGRESS_NAME,
+            message='Формирование датасета завершено',
+            data=dataset_data,
+            percent=100
+        )
         logger.info(f'Создан датасет {creation_data.name}.')
 
         self.version = CreateVersion(creation_data=creation_data)
@@ -142,41 +152,40 @@ class CreateVersion(object):
 
         progress.pool(name=VERSION_PROGRESS_NAME, message='Создание объектов обработки', percent=0)
 
-        # for prep_type in ['numeric', 'text']:
-        #     self.preprocessing = getattr(architecture_class, f"create_{prep_type}_preprocessing")(
-        #         instructions=self.instructions,
-        #         preprocessing=self.preprocessing
-        #     )
-        # for prep_type in ['numeric', 'text']:
-        #     self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
-        #         put_data=self.instructions.inputs,
-        #         preprocessing=self.preprocessing,
-        #         sources_temp_directory=self.sources_temp_directory
-        #     )
-        #     self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
-        #         put_data=self.instructions.outputs,
-        #         preprocessing=self.preprocessing,
-        #         sources_temp_directory=self.sources_temp_directory
-        #     )
+        for prep_type in ['numeric', 'text']:
+            self.preprocessing.preprocessing.update(getattr(architecture_class, f"create_{prep_type}_preprocessing")(
+                instructions=self.instructions)
+            )
+        for prep_type in ['numeric', 'text']:
+            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+                put_data=self.instructions.inputs,
+                preprocessing=self.preprocessing,
+                sources_temp_directory=self.sources_temp_directory
+            )
+            self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
+                put_data=self.instructions.outputs,
+                preprocessing=self.preprocessing,
+                sources_temp_directory=self.sources_temp_directory
+            )
 
         self.create_table(version_data)
 
         self.inputs, inp_col = architecture_class.create_input_parameters(
             input_instr=self.instructions.inputs,
             version_data=version_data,
-            preprocessing=self.preprocessing,
+            preprocessing=self.preprocessing.preprocessing,
             version_paths_data=self.version_paths_data
         )
         self.outputs, out_col = architecture_class.create_output_parameters(
             output_instr=self.instructions.outputs,
             version_data=version_data,
-            preprocessing=self.preprocessing,
+            preprocessing=self.preprocessing.preprocessing,
             version_paths_data=self.version_paths_data
         )
         self.service = architecture_class.create_service_parameters(
             output_instr=self.instructions.outputs,
             version_data=version_data,
-            preprocessing=self.preprocessing,
+            preprocessing=self.preprocessing.preprocessing,
             version_paths_data=self.version_paths_data
         )
 
@@ -189,7 +198,7 @@ class CreateVersion(object):
             instructions=self.instructions,
             version_paths_data=self.version_paths_data,
             dataframe=self.dataframe,
-            preprocessing=self.preprocessing
+            preprocessing=self.preprocessing.preprocessing
         )
 
         progress.pool(name=VERSION_PROGRESS_NAME, message='Сохранение', percent=100)
