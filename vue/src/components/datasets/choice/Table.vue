@@ -8,7 +8,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(dataset, idx) in data" :key="'table_dataset_tr' + idx" @click="$emit('choice', dataset)">
+      <tr v-for="(dataset, idx) in data" :key="'table_dataset_tr' + idx" @click="$emit('choice', dataset)" :class="{ selected: isActive(dataset.id) }">
         <td v-for="({ value }, idx) in headers" :key="'table_dataset_td' + idx">
           <span v-if="value !== 'group'">{{ dataset[value] }}</span>
           <span v-else>{{ $store.getters['datasets/getGroups'][dataset[value]] }}</span>
@@ -38,26 +38,26 @@ export default {
         value: 'name',
         idx: 0,
       },
+      // {
+      //   title: 'Размер',
+      //   value: 'size',
+      //   idx: 1,
+      // },
       {
-        title: 'Размер',
-        value: 'size',
-        idx: 1,
-      },
-      {
-        title: 'Автор',
+        title: 'Группа',
         value: 'group',
         idx: 2,
       },
-      {
-        title: 'Последнее использование',
-        value: 'date',
-        idx: 3,
-      },
-      {
-        title: 'Создание',
-        value: 'alias',
-        idx: 4,
-      },
+      // {
+      //   title: 'Последнее использование',
+      //   value: 'date',
+      //   idx: 3,
+      // },
+      // {
+      //   title: 'Создание',
+      //   value: 'alias',
+      //   idx: 4,
+      // },
     ],
     sortId: 0,
     sortReverse: false,
@@ -70,6 +70,10 @@ export default {
       } else this.sortReverse = false;
 
       this.sortId = idx;
+    },
+    isActive(id) {
+      const { alias, group } = this.$store.getters['projects/getProject'].dataset || {}
+      return `${group}_${alias}` === id
     },
   },
   computed: {
@@ -98,7 +102,6 @@ export default {
 @mixin cell {
   // width: 25%;
   height: 35px;
-  cursor: pointer;
   padding: 0 10px;
   font-weight: 400;
   text-align: left;
@@ -118,10 +121,11 @@ table {
 }
 
 thead {
-  background-color: #0e1621;
+  background-color: #17212b;
   color: $color-gray;
   position: sticky;
   top: 0;
+  box-shadow: 0 0 3px black;
   th:not(:first-child) {
     width: 15%;
   }
@@ -132,6 +136,7 @@ thead {
 
 tbody {
   tr {
+    cursor: pointer;
     &:hover {
       background: #1E2734;
       color: #65B9F4;
@@ -140,7 +145,9 @@ tbody {
 }
 
 tr {
-
+  &.selected {
+    color: #3eba31;
+  }
   th,td {
     @include cell
   }

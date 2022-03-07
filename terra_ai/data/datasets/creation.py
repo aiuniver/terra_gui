@@ -250,7 +250,7 @@ class CreationBlockData(IDMixinData):
     type: LayerTypeChoice
     removable: bool = False
     bind: LayerBindData
-    position: Tuple[int, int]
+    position: Tuple[float, float]
     parameters: Any
 
     def __init__(self, **data):

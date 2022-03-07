@@ -152,9 +152,9 @@ export default {
     async stop() {
       this.stopLearning = true;
       const res = await this.$store.dispatch('trainings/stop', {});
-      if (res && res?.data?.progress) {
-        const { finished } = res.data.progress;
-        if (finished) {
+      if (res && res?.data?.state) {
+        const { status } = res.data.state;
+        if (status === 'stopped') {
           this.debounce(false);
           this.stopLearning = false;
         }

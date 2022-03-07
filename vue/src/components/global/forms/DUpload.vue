@@ -14,7 +14,7 @@
         <p>{{ error }}</p>
       </div>
       <input v-show="false" ref="file" type="file" @change="onInputFileChange" />
-      <label for="d-file-input">asd</label>
+      <label for="d-file-input"></label>
       <p class="d-upload-text mb-5">Загрузите файл простым переносом или по кнопке ниже</p>
       <d-button style="width: 100%" color="secondary" direction="left" @click="$refs.file.click()">
         Загрузить файл
