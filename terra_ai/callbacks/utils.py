@@ -789,13 +789,13 @@ def fill_table_front_structure(_id: int, graph_name: str, plot_data: list):
 def get_y_true(options, output_id):
     method_name = 'get_y_true'
     try:
-        # if not options.data.use_generator:
-        y_true = options.Y.get('val').get(f"{output_id}")
-        # else:
-        #     y_true = []
-        #     for _, y_val in options.dataset['val'].batch(1):
-        #         y_true.extend(y_val.get(f'{output_id}').numpy())
-        #     y_true = np.array(y_true)
+        if not options.use_generator:
+            y_true = options.Y.get('val').get(f"{output_id}")
+        else:
+            y_true = []
+            for _, y_val in options.dataset['val'].batch(1):
+                y_true.extend(y_val.get(f'{output_id}').numpy())
+            y_true = np.array(y_true)
         return y_true
     except Exception as error:
         raise exception.ErrorInModuleInMethodException(
@@ -931,4 +931,4 @@ def set_preset_count(len_array: int, preset_percent: int) -> int:
 def get_link_from_dataframe(dataframe, column, index):
     link = dataframe[column][index]
     link = link.split(";")[0]
-    return link
+    return f'sources/{link}'

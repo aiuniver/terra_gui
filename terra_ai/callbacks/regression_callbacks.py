@@ -22,15 +22,15 @@ class DataframeRegressionCallback:
         method_name = 'get_x_array'
         try:
             inverse_x_val = None
-            # if not options.data.use_generator:
-            x_val = options.X.get("val")
-            # else:
-            #     x_val = {}
-            #     for inp in options.data.inputs.keys():
-            #         x_val[inp] = []
-            #         for x_val_, _ in options.dataset['val'].batch(1):
-            #             x_val[inp].extend(x_val_.get(f'{inp}').numpy())
-            #         x_val[inp] = np.array(x_val[inp])
+            if not options.use_generator:
+                x_val = options.X.get("val")
+            else:
+                x_val = {}
+                for inp in options.data.inputs.keys():
+                    x_val[inp] = []
+                    for x_val_, _ in options.dataset['val'].batch(1):
+                        x_val[inp].extend(x_val_.get(f'{inp}').numpy())
+                    x_val[inp] = np.array(x_val[inp])
             return x_val, inverse_x_val
         except Exception as error:
             exc = exception.ErrorInClassInMethodException(
@@ -46,13 +46,13 @@ class DataframeRegressionCallback:
             inverse_y_true = {"train": {}, "val": {}}
             for data_type in y_true.keys():
                 for out in options.data.outputs.keys():
-                    # if not options.data.use_generator:
-                    y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
-                    # else:
-                    #     y_true[data_type][f"{out}"] = []
-                    #     for _, y_val in options.dataset[data_type].batch(1):
-                    #         y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
-                    #     y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
+                    if not options.use_generator:
+                        y_true[data_type][f"{out}"] = options.Y.get(data_type).get(f"{out}")
+                    else:
+                        y_true[data_type][f"{out}"] = []
+                        for _, y_val in options.dataset[data_type].batch(1):
+                            y_true[data_type][f"{out}"].extend(y_val.get(f'{out}').numpy())
+                        y_true[data_type][f"{out}"] = np.array(y_true[data_type][f"{out}"])
 
                     preprocess_dict = options.preprocessing.preprocessing.get(out)
                     inverse_y = np.zeros_like(y_true.get(data_type).get(f"{out}")[:, 0:1])

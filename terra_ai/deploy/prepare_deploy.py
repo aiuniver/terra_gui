@@ -80,7 +80,7 @@ class DeployCreator:
                     ).with_traceback(error.__traceback__)
 
                 try:
-                    if dataset.data.use_generator:
+                    if dataset.use_generator:
                         if "Yolo" in deploy_type:
                             predict = []
                             for inp, out, serv in dataset.dataset.get('val').batch(

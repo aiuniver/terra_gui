@@ -26,7 +26,7 @@ class GetAPIView(BaseAPIView):
         page = DeployPageData(**serializer.validated_data)
         datasets = []
         if page.type == DeployTypePageChoice.model:
-            _path = Path(PROJECT_PATH.training, page.name, "model", "dataset.json")
+            _path = Path(PROJECT_PATH.training, page.name, "model", "config.json")
             if not _path.is_file():
                 _path = Path(
                     PROJECT_PATH.training, page.name, "model", "dataset", "config.json"
