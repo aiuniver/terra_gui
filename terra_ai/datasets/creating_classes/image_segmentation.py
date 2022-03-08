@@ -8,7 +8,7 @@ class ImageSegmentationClass(PreprocessingNumericClass, BaseClass):
 
         version_data = kwargs['version_data']
 
-        width, height = 0, 0
+        width, height, image_mode = 0, 0, ''
         for inp_data in version_data.inputs:
             if inp_data.type == 'handler' and inp_data.parameters.type == 'Image':
                 width = inp_data.parameters.options.width

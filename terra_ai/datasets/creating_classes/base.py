@@ -10,7 +10,7 @@ from pathlib import Path
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetOutputsData, DatasetInputsData
-from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerPrepareMethodChoice, LayerScalerImageChoice, \
+from terra_ai.data.datasets.extra import LayerOutputTypeChoice, LayerScalerImageChoice, \
     LayerSelectTypeChoice, LayerTypeChoice
 from terra_ai.datasets import arrays_classes
 from terra_ai.datasets.preprocessing import CreatePreprocessing
@@ -40,7 +40,7 @@ def multithreading_instructions(one_path, params, dataset_folder, col_name, idx)
     return instruction
 
 
-def multithreading_array(row, instructions, preprocess):
+def multithreading_array(row, instructions, preprocess, preprocess_instructions):
 
     full_array = []
     for h in range(len(row)):
@@ -49,32 +49,15 @@ def multithreading_array(row, instructions, preprocess):
                             f'{camelize(instructions[h]["put_type"])}Array')().create(source=row[h], **instructions[h])
             if preprocess:
                 array = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-                                f'{camelize(instructions[h]["put_type"])}Array')().preprocess(array, preprocess)
+                                f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
+                    array, preprocess, **preprocess_instructions
+                )
             full_array.append(array)
         except Exception:
             progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
             raise
 
     return full_array
-
-
-# def multithreading_preprocessing(array, instructions):
-#
-#     full_array = []
-#     for h in range(len(row)):
-#         try:
-#             # create = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-#             #                  f'{camelize(instructions[h]["put_type"])}Array')().create(
-#             #     source=row[h], **instructions[h])
-#             prepr = getattr(getattr(arrays_classes, instructions[h]["put_type"]),
-#                             f'{camelize(instructions[h]["put_type"])}Array')().preprocess(
-#                 create['instructions'], **create['parameters'])
-#             full_array.append(prepr)
-#         except Exception:
-#             progress.pool(VERSION_PROGRESS_NAME, error='Ошибка создания массивов данных')
-#             raise
-#
-#     return full_array
 
 
 def postprocess_timeseries(full_array):
@@ -227,7 +210,7 @@ class BaseClass(object):
                 instructions_data = InstructionsData(
                     instructions=instructions,
                     parameters=result_params,
-                    preprocess=preprocess
+                    preprocess=preprocess[put_id][col_name]
                 )
                 if parameters[put_id][col_name]['type'] == LayerOutputTypeChoice.Classification:
                     instructions_data.parameters.update({'classes_names': list(set(classes_names))})
@@ -288,12 +271,12 @@ class BaseClass(object):
         return {}
 
     @staticmethod
-    def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
+    def fit_numeric_preprocessing(put_data, preprocessing, sources_directory):
 
         return preprocessing
 
     @staticmethod
-    def fit_text_preprocessing(put_data, preprocessing, sources_temp_directory):
+    def fit_text_preprocessing(put_data, preprocessing, sources_directory):
 
         return preprocessing
 
@@ -311,11 +294,9 @@ class BaseClass(object):
                     data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
                 options_to_pass = data.parameters.copy()
                 preprocess_to_pass = preprocessing[key].get(col_name)
-                # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                #     prep = preprocessing.preprocessing.get(key).get(col_name)
-                #     options_to_pass.update([('preprocess', prep)])
-
-                array = multithreading_array([data_to_pass], [options_to_pass], preprocess_to_pass)[0]
+                preprocess_parameters = data.preprocess.get('options')
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)[0]
                 put_array.append(array)
                 if options_to_pass.get('classes_names'):
                     classes_names = options_to_pass.get('classes_names')
@@ -380,11 +361,9 @@ class BaseClass(object):
                     data_to_pass = str(version_paths_data.sources.joinpath(data_to_pass))
                 options_to_pass = data.parameters.copy()
                 preprocess_to_pass = preprocessing[key].get(col_name)
-                # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                #     prep = preprocessing.preprocessing.get(key).get(col_name)
-                #     options_to_pass.update([('preprocess', prep)])
-
-                array = multithreading_array([data_to_pass], [options_to_pass], preprocess_to_pass)[0]
+                preprocess_parameters = data.preprocess.get('options')
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)[0]
 
                 if not array.shape:
                     array = np.expand_dims(array, 0)
@@ -474,17 +453,16 @@ class BaseClass(object):
                 dict_to_pass = []
                 parameters_to_pass = {}
                 preprocess_to_pass = None
+                preprocess_parameters = {}
                 for i in range(0, len(dataframe[split])):
                     tmp_data = []
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
                         parameters_to_pass = data.parameters.copy()
                         preprocess_to_pass = preprocessing.get(key).get(col_name)
+                        preprocess_parameters = data.preprocess.get('options')
                         if parameters_to_pass['put_type'] == 'noise':
                             continue
-                        # if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                        #     parameters_to_pass.update([('preprocess',
-                        #                                 preprocessing.preprocessing.get(key).get(col_name))])
                         if parameters_to_pass['put_type'] in PATH_TYPE_LIST:
                             tmp_data.append(str(version_paths_data.sources.joinpath(dataframe[split].loc[i, col_name])))
                         else:
@@ -504,7 +482,8 @@ class BaseClass(object):
                 hdf[split].create_group(f'id_{key}')
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass, repeat(preprocess_to_pass))
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass,
+                                           repeat(preprocess_to_pass), repeat(preprocess_parameters))
                     for i, result in enumerate(results):
                         progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
                         array = np.concatenate(result, axis=0)
@@ -570,6 +549,7 @@ class ClassificationClass(object):
                                                               LayerOutputTypeChoice.Text2Speech]:
                     instructions_data.instructions = ['no_data' for _ in range(len(self.y_cls))]
                 instructions_data.parameters.update({'cols_names': column_name})
+                print(instructions_data.instructions[:5])
                 print(instructions_data.parameters)
                 put_instructions[put_id].update({column_name: instructions_data})
                 tags[put_id].update({column_name: decamelize(parameters[put_id][col_name]['type'])})
@@ -610,7 +590,10 @@ class YoloClass(object):
                 data_to_pass = data.instructions[0]
                 options_to_pass = data.parameters.copy()
                 options_to_pass.update([('orig_x', 100), ('orig_y', 100)])
-                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                preprocess_parameters = data.preprocess.get('options')
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)[0]
                 classes_names = options_to_pass.get('classes_names')
                 for i in range(3):
                     col_parameters = {'datatype': DataType.get(len(array[i].shape), 'DIM'),
@@ -638,7 +621,10 @@ class YoloClass(object):
                 data_to_pass = data.instructions[0]
                 options_to_pass = data.parameters.copy()
                 options_to_pass.update([('orig_x', 100), ('orig_y', 100)])
-                array = multithreading_array([data_to_pass], [options_to_pass])[0]
+                preprocess_parameters = data.preprocess.get('options')
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)[0]
                 classes_names = options_to_pass.get('classes_names')
                 for i in range(3, 6):
                     put_parameters = {
@@ -668,15 +654,16 @@ class YoloClass(object):
                 data_to_pass = []
                 dict_to_pass = []
                 parameters_to_pass = {}
+                preprocess_to_pass = None
+                preprocess_parameters = {}
                 for i in range(0, len(dataframe[split])):
                     tmp_data = []
                     tmp_parameter_data = []
                     for col_name, data in put_data[key].items():
                         parameters_to_pass = data.parameters.copy()
-                        parameters_to_pass.update(data.preprocess['type'])
-                        if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                            prep = preprocessing.preprocessing.get(key).get(col_name)
-                            parameters_to_pass.update([('preprocess', prep)])
+                        # parameters_to_pass.update(data.preprocess['type'])
+                        preprocess_to_pass = preprocessing.get(key).get(col_name)
+                        preprocess_parameters = data.preprocess.get('options')
                         if parameters_to_pass['put_type'] in PATH_TYPE_LIST:
                             tmp_data.append(os.path.join(version_paths_data.sources, dataframe[split].loc[i, col_name]))
                         elif parameters_to_pass['put_type'] in [decamelize(LayerOutputTypeChoice.YoloV3),
@@ -685,7 +672,6 @@ class YoloClass(object):
                             height, width = get_image_size(
                                 version_paths_data.sources.joinpath(dataframe[split].iloc[i, 0])
                             )
-                            # height, width = dataframe[split].iloc[i, 0].split(';')[1].split(',')
                             parameters_to_pass.update([('orig_x', int(width)), ('orig_y', int(height))])
                         tmp_parameter_data.append(parameters_to_pass)
                     data_to_pass.append(tmp_data)
@@ -706,7 +692,8 @@ class YoloClass(object):
                     hdf[split].create_group(f'id_{key}')
 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass)
+                    results = executor.map(multithreading_array, data_to_pass, dict_to_pass,
+                                           repeat(preprocess_to_pass), repeat(preprocess_parameters))
                     for i, result in enumerate(results):
                         progress.pool(VERSION_PROGRESS_NAME, percent=ceil(i / len(data_to_pass) * 100))
                         if parameters_to_pass['put_type'] not in [decamelize(LayerOutputTypeChoice.YoloV3),
@@ -733,11 +720,11 @@ class MainTimeseriesClass(object):
             parameters_to_pass = {}
             for col_name, data in input_instr[key].items():
                 data_to_pass = data.instructions[:data.parameters['length']]
-                parameters_to_pass = data.parameters.copy()
-                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                    parameters_to_pass.update([('preprocess',
-                                                preprocessing.preprocessing.get(key).get(col_name))])
-                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                options_to_pass = data.parameters.copy()
+                preprocess_parameters = data.preprocess.get('options')
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)
                 array = postprocess_timeseries(array)
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
@@ -778,11 +765,11 @@ class MainTimeseriesClass(object):
             parameters_to_pass = {}
             for col_name, data in output_instr[key].items():
                 data_to_pass = data.instructions[:data.parameters['length']]
-                parameters_to_pass = data.parameters.copy()
-                if preprocessing.preprocessing.get(key) and preprocessing.preprocessing.get(key).get(col_name):
-                    parameters_to_pass.update([('preprocess',
-                                                preprocessing.preprocessing.get(key).get(col_name))])
-                array = multithreading_array([data_to_pass], [parameters_to_pass])
+                options_to_pass = data.parameters.copy()
+                preprocess_parameters = data.preprocess.get('options')
+                preprocess_to_pass = preprocessing[key].get(col_name)
+                array = multithreading_array([data_to_pass], [options_to_pass],
+                                             preprocess_to_pass, preprocess_parameters)
                 array = postprocess_timeseries(array)
                 put_array.append(array)
                 col_parameters = {'datatype': DataType.get(len(array.shape), 'DIM'),
@@ -867,15 +854,6 @@ class MainTimeseriesClass(object):
 
 class PreprocessingNumericClass(object):
 
-    # @staticmethod
-    # def create_numeric_preprocessing(instructions, preprocessing):
-    #
-    #     for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-    #         for col_name, data in put.items():
-    #             preprocessing.create_scaler(**data.parameters)
-    #
-    #     return preprocessing
-
     @staticmethod
     def create_numeric_preprocessing(instructions):
 
@@ -896,17 +874,17 @@ class PreprocessingNumericClass(object):
         return preprocess
 
     @staticmethod
-    def fit_numeric_preprocessing(put_data, preprocessing, sources_temp_directory):
+    def fit_numeric_preprocessing(put_data, preprocessing, sources_directory):
 
         for key in put_data.keys():
             for col_name, data in put_data[key].items():
-                if data.preprocess:  # preprocessing.preprocessing[key][col_name]: #data.preprocess in data.parameters and data.parameters['scaler'] not in [LayerScalerImageChoice.no_scaler, None]:
+                if data.preprocess:
                     progress.pool(VERSION_PROGRESS_NAME, message=f'Обучение {data.preprocess["type"]} для {col_name}')
                     data_length = len(data.instructions)
                     progress_count = 0
                     for i in range(data_length):
                         if data.parameters['put_type'] in PATH_TYPE_LIST:
-                            data_to_pass = str(sources_temp_directory.joinpath(data.instructions[i]))
+                            data_to_pass = str(sources_directory.joinpath(data.instructions[i]))
                         else:
                             data_to_pass = data.instructions[i]
 
@@ -929,20 +907,6 @@ class PreprocessingNumericClass(object):
 
 class PreprocessingTextClass(object):
 
-    # @staticmethod
-    # def create_text_preprocessing(instructions, preprocessing):
-    #
-    #     for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-    #         for col_name, data in put.items():
-    #             if data.parameters['put_type'] == 'text':
-    #                 if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-    #                                                          LayerPrepareMethodChoice.bag_of_words]:
-    #                     preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-    #                 elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-    #                     preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
-    #
-    #     return preprocessing
-
     @staticmethod
     def create_text_preprocessing(instructions):
 
@@ -954,12 +918,10 @@ class PreprocessingTextClass(object):
             preprocess[put_id] = {}
             for col_name, col_data in data.items():
                 if col_data.preprocess:
-                    preprocess[put_id].update(
-                        {col_name: getattr(CreatePreprocessing,
-                                           f"create_{decamelize(col_data.preprocess['type'])}")(
-                            col_data.instructions, col_data.preprocess['options'])
-                         }
-                    )
+                    preprocess[put_id].update({col_name: getattr(
+                        CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+                        col_data.instructions, col_data.preprocess['options'])
+                    })
 
         return preprocess
 

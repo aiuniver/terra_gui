@@ -17,10 +17,10 @@ class TrackerArray(Array):
 
     def create(self, source: Any, **options):
 
-        instructions = {'instructions': np.array([0], dtype=np.uint8),
-                        'parameters': options}
+        array = np.array([0], dtype=np.uint8)
 
-        return instructions
+        return array
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
+
         return array

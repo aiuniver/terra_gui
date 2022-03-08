@@ -138,14 +138,13 @@ class YoloV3Array(Array):
         label_sbbox, label_mbbox, label_lbbox = label
         sbboxes, mbboxes, lbboxes = bboxes_xywh
 
-        instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
-                                         np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
-                                         np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')],
-                        'parameters': options}
+        array = [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
+                 np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
+                 np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')]
 
-        return instructions
+        return array
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         return array
 

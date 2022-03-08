@@ -135,14 +135,14 @@ class CreatePreprocessing(object):
         return scaler
 
     @staticmethod
-    def create_tokenizer(text_list: list, **options):
+    def create_tokenizer(text_list: list, options):
 
         """
 
         Args:
             text_list: list
                 Список слов для обучения токенайзера.
-            **options: Параметры токенайзера:
+            options: Параметры токенайзера:
                        num_words: int
                            Количество слов для токенайзера.
                        filters: str
@@ -178,14 +178,14 @@ class CreatePreprocessing(object):
         return tokenizer
 
     @staticmethod
-    def create_word2vec(text_list: list, **options):
+    def create_word2vec(text_list: list, options):
 
         """
 
         Args:
             text_list: list
                 Список слов для обучения Word2Vec.
-            **options: Параметры Word2Vec:
+            options: Параметры Word2Vec:
                        size: int
                            Dimensionality of the word vectors.
                        window: int

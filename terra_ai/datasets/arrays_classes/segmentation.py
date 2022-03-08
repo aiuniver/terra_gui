@@ -50,21 +50,16 @@ class SegmentationArray(Array):
 
     def create(self, source: Any, **options):
 
-        img = load_img(source)  # , target_size=(options['height'], options['width']))
-        array = np.array(img)
-
-        instructions = {'instructions': array,
-                        'parameters': options}
-
-        return instructions
-
-    def preprocess(self, array: np.ndarray, **options):
-
+        array = np.array(load_img(source, target_size=(options['height'], options['width'])))
         array = resize_frame(image_array=array,
                              target_shape=(options['height'], options['width']),
                              frame_mode=options['image_mode'])
 
         array = self.image_to_ohe(array, **options)
+
+        return array
+
+    def preprocess(self, array: np.ndarray, **options):
 
         return array
 

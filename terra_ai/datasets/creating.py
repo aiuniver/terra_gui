@@ -16,6 +16,7 @@ import pandas as pd
 import json
 import shutil
 import zipfile
+import joblib
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from datetime import datetime
@@ -129,12 +130,10 @@ class CreateVersion(object):
         current_version = self.dataset_paths_data.versions.joinpath(f'{version_data.alias}.{DATASET_VERSION_EXT}')
         os.makedirs(current_version)
         self.version_paths_data = DatasetVersionPathsData(basepath=current_version)
-        with open(self.parent_dataset_paths_data.basepath.joinpath('config.json'), 'r') as cfg:
-            parent_architecture = json.load(cfg)['architecture']
 
         # Начало создания версии
-        architecture_class = getattr(getattr(creating_classes, decamelize(parent_architecture)),
-                                     parent_architecture + 'Class')()
+        architecture_class = getattr(getattr(creating_classes, decamelize(creation_data.architecture)),
+                                     creation_data.architecture + 'Class')()
 
         version_data = architecture_class.preprocess_version_data(
             version_data=version_data,
@@ -160,12 +159,12 @@ class CreateVersion(object):
             self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
                 put_data=self.instructions.inputs,
                 preprocessing=self.preprocessing,
-                sources_temp_directory=self.sources_temp_directory
+                sources_directory=self.version_paths_data.sources
             )
             self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
                 put_data=self.instructions.outputs,
                 preprocessing=self.preprocessing,
-                sources_temp_directory=self.sources_temp_directory
+                sources_directory=self.version_paths_data.sources
             )
 
         self.create_table(version_data)
@@ -202,7 +201,18 @@ class CreateVersion(object):
         )
 
         progress.pool(name=VERSION_PROGRESS_NAME, message='Сохранение', percent=100)
-        self.write_instructions_to_files()
+
+        self.write_instructions_to_files(
+            instructions=self.instructions,
+            dataframe=self.dataframe,
+            instructions_path=self.version_paths_data.instructions
+        )
+
+        self.write_preprocessing_to_files(
+            preprocessing=self.preprocessing.preprocessing,
+            preprocessing_path=self.version_paths_data.preprocessing
+        )
+
         zip_dataset(self.version_paths_data.basepath, os.path.join(self.dataset_paths_data.versions, 'version'))
         version_dir = self.parent_dataset_paths_data.versions.joinpath('.'.join([version_data.alias,
                                                                                  DATASET_VERSION_EXT]))
@@ -601,26 +611,35 @@ class CreateVersion(object):
     #                     del result
     #         hdf.close()
 
-    def write_instructions_to_files(self):
+    @staticmethod
+    def write_instructions_to_files(instructions, dataframe, instructions_path):
 
-        parameters_path = self.version_paths_data.instructions.joinpath('parameters')
-        os.makedirs(parameters_path, exist_ok=True)
+        os.makedirs(instructions_path.joinpath('parameters'), exist_ok=True)
 
-        for cols in self.instructions.inputs.values():
+        for cols in instructions.inputs.values():
             for col_name, data in cols.items():
-                with open(parameters_path.joinpath(f'{col_name}.json'), 'w') as cfg:
+                with open(instructions_path.joinpath('parameters', f'{col_name}.json'), 'w') as cfg:
                     json.dump(data.parameters, cfg)
 
-        for cols in self.instructions.outputs.values():
+        for cols in instructions.outputs.values():
             for col_name, data in cols.items():
-                with open(parameters_path.joinpath(f'{col_name}.json'), 'w') as cfg:
+                with open(instructions_path.joinpath('parameters', f'{col_name}.json'), 'w') as cfg:
                     json.dump(data.parameters, cfg)
 
-        tables_path = self.version_paths_data.instructions.joinpath('tables')
+        tables_path = instructions_path.joinpath('tables')
         os.makedirs(tables_path, exist_ok=True)
 
-        for key in self.dataframe.keys():
-            self.dataframe[key].to_csv(self.version_paths_data.instructions.joinpath('tables', f'{key}.csv'))
+        for key in dataframe.keys():
+            dataframe[key].to_csv(instructions_path.joinpath('tables', f'{key}.csv'))
+
+    @staticmethod
+    def write_preprocessing_to_files(preprocessing, preprocessing_path):
+
+        for put, proc in preprocessing.items():
+            for col_name, obj in proc.items():
+                if obj:
+                    os.makedirs(preprocessing_path.joinpath(str(put)))
+                    joblib.dump(obj, preprocessing_path.joinpath(str(put), f'{col_name}.gz'))
 
     def write_version_configure(self, version_data):
         """

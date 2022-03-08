@@ -8,10 +8,6 @@ class TimeseriesTrendArray(Array):
 
     def prepare(self, sources, dataset_folder=None, **options):
 
-        classes = []
-        trend_dict = {0: "Не изменился",
-                      1: "Вверх",
-                      2: "Вниз"}
         tmp = []
         depth = 1
         step = options['step']
@@ -36,8 +32,6 @@ class TimeseriesTrendArray(Array):
                 else:
                     tmp.append(2)
 
-        # for i in set(tmp):
-        #     classes.append(trend_dict[i])
         options['classes_names'] = ["Не изменился", "Вверх", "Вниз"]
         options['num_classes'] = 3  # len(classes)
 
@@ -48,7 +42,6 @@ class TimeseriesTrendArray(Array):
 
     def create(self, source: Any, **options):
 
-        # if options["trend"]:
         trend_dict = {0: "Не изменился",
                       1: "Вверх",
                       2: "Вниз"}
@@ -74,19 +67,13 @@ class TimeseriesTrendArray(Array):
                 array = 2
         idx = options['classes_names'].index(trend_dict[array])
         array = utils.to_categorical(idx, num_classes=options['num_classes'], dtype='uint8')
-        # else:
-        #     array = source
 
-        instructions = {'instructions': np.array(array),
-                        'parameters': options}
+        return array
 
-        return instructions
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
-    def preprocess(self, array: np.ndarray, **options):
-
-        if options['scaler'] not in ['no_scaler', None]:
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
+        orig_shape = array.shape
+        array = preprocess.transform(array.reshape(-1, 1))
+        array = array.reshape(orig_shape)
 
         return array

@@ -7,10 +7,10 @@ from terra_ai.data.datasets.extra import (
     LayerAudioFillModeChoice,
     LayerAudioResampleChoice,
 )
-from terra_ai.data.datasets.creations.blocks.extra import MinMaxScalerData
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 
 
-class OptionsData(MinMaxScalerData):
+class OptionsData(BaseOptionsData):
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice
     max_seconds: Optional[PositiveFloat] = 1

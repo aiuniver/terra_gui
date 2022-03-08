@@ -15,13 +15,11 @@ class RegressionArray(Array):
         return instructions
 
     def create(self, source: Any, **options):
-        instructions = {'instructions': np.array([source]),
-                        'parameters': options}
 
-        return instructions
+        return np.array([source])
 
-    def preprocess(self, array: np.ndarray, **options):
-        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('preprocess'):
-            array = options['preprocess'].transform(array.reshape(-1, 1))[0]
+    def preprocess(self, array: np.ndarray, preprocess, **options):
+
+        array = preprocess.transform(array.reshape(-1, 1))[0]
 
         return array

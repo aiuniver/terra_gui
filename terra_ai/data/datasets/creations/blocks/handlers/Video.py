@@ -1,15 +1,14 @@
 from typing import Optional
 from pydantic import validator, PositiveInt
-
+from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 from terra_ai.data.datasets.extra import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
 )
-from terra_ai.data.datasets.creations.blocks.extra import VideoScalerData
 
 
-class OptionsData(VideoScalerData):
+class OptionsData(BaseOptionsData):
     width: PositiveInt
     height: PositiveInt
     fill_mode: LayerVideoFillModeChoice

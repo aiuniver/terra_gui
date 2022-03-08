@@ -120,12 +120,10 @@ class TextSegmentationArray(Array):
                 array.append(tags)
         array = np.array(array, dtype='uint8')
 
-        instructions = {'instructions': array,
-                        'parameters': options}
+        return array
 
-        return instructions
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
-    def preprocess(self, array: np.ndarray, **options):
         return array
 
     @staticmethod

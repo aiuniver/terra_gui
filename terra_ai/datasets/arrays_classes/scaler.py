@@ -14,17 +14,18 @@ class ScalerArray(Array):
         return instructions
 
     def create(self, source: Any, **options):
-        instructions = {'instructions': np.array(source),
-                        'parameters': options}
 
-        return instructions
+        array = np.array(source)
 
-    def preprocess(self, array: np.ndarray, **options):
+        return array
+
+    def preprocess(self, array: np.ndarray, preprocess, **options):
+
         if array.shape != ():
             orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
+            array = preprocess.transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
         else:
-            array = options['preprocess'].transform(array.reshape(-1, 1))[0]
+            array = preprocess.transform(array.reshape(-1, 1))[0]
 
         return array

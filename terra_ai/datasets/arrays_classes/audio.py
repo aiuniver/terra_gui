@@ -76,9 +76,6 @@ class AudioArray(Array):
                                        'resample': options['resample'],
                                        'parameter': options['parameter'],
                                        'cols_names': options['cols_names'],
-                                       'scaler': options['scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'min_scaler': options['min_scaler'],
                                        'put': options['put']}}
 
         return instructions
@@ -114,15 +111,15 @@ class AudioArray(Array):
         if array.dtype == 'float64':
             array = array.astype('float32')
 
-        instructions = {'instructions': array,
-                        'parameters': options}
+        # instructions = {'instructions': array,
+        #                 'parameters': options}
 
-        return instructions
+        return array
 
     def preprocess(self, array: np.ndarray, **options):
 
-        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options.get('preprocess'):
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
+        orig_shape = array.shape
+        array = options['preprocess'].transform(array.reshape(-1, 1))
+        array = array.reshape(orig_shape)
+
         return array

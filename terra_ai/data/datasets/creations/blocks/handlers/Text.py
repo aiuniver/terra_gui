@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import validator, PositiveInt
 
-from terra_ai.data.datasets.extra import LayerTextModeChoice, LayerPrepareMethodChoice
+from terra_ai.data.datasets.extra import LayerTextModeChoice
 from terra_ai.data.datasets.creations.blocks.extra import BaseOptionsData
 
 
@@ -11,10 +11,10 @@ class OptionsData(BaseOptionsData):
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
     pymorphy: bool
+    filters: str
     # prepare_method: LayerPrepareMethodChoice
     # max_words_count: Optional[PositiveInt]
     # word_to_vec_size: Optional[PositiveInt]
-    # filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
 
     # Внутренние параметры
     deploy: Optional[bool] = False

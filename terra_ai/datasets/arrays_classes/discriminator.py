@@ -17,12 +17,12 @@ class DiscriminatorArray(Array):
     def create(self, source: Any = None, **options):
 
         if source is None:
-            source = np.array([1])
+            array = np.array([1])
 
-        instructions = {'instructions': source, 'parameters': options}
+        # instructions = {'instructions': source, 'parameters': options}
 
-        return instructions
+        return array
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         return array
