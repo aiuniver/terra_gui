@@ -252,6 +252,9 @@ class PrepareDataset(object):
             for data in list(self.data.inputs.values()) + list(self.data.outputs.values()):
                 coef = int(''.join([x for x in data.dtype if x.isdigit()])) // 8
                 size += np.prod(data.shape) * coef + 136
+            print('self.data.version.length.train', self.data.version.length.train)
+            print('self.data.version.length.val', self.data.version.length.val)
+            print('size', size)
             overall_size = size * self.data.version.length.train + size * self.data.version.length.val
 
             if (psutil.virtual_memory().used + overall_size) / psutil.virtual_memory().total > 0.75:

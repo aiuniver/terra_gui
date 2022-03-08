@@ -3,6 +3,7 @@ import json
 import os
 from typing import Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from pathlib import Path
@@ -115,7 +116,6 @@ class BaseTerraModel:
                 continue
         return custom_object
 
-
     def __get_json_data(self):
         with open(self.file_path_model_json) as json_file:
             data = json.load(json_file)
@@ -206,10 +206,16 @@ class BaseTerraModel:
             for epoch in range(current_epoch, end_epoch):
                 logger.debug(f"Эпоха {epoch + 1}")
                 self.callback.on_epoch_begin()
+
                 train_steps = 0
                 current_idx = 0
                 logger.debug(f"Эпоха {epoch + 1}: обучение на тренировочной выборке...")
                 for x_batch_train, y_batch_train in dataset.dataset.get('train').batch(params.base.batch):
+                    # logger.debug(f'x_batch_train.keys(): {x_batch_train.keys()}')
+                    # plt.imshow(x_batch_train['1'][1])
+                    # plt.show()
+                    # logger.debug(f'classes_names: {dataset.data.outputs[2].classes_names}')
+                    # logger.debug(f'y_batch_train: {y_batch_train["2"][1]}')
                     length = list(y_batch_train.values())[0].shape[0]
                     batch_weights = {}
                     for out in sample_weights.keys():

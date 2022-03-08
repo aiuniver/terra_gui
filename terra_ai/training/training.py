@@ -79,8 +79,10 @@ class GUINN:
                 self.deploy_type = self.dataset.data.architecture
 
             self.nn_name = "trained_model"
-
-            train_size = len(self.dataset.dataframe.get('train'))  # len(self.dataset.dataframe.get("train")) if self.dataset.use_generator else len(self.dataset.dataset.get('train'))
+            try:
+                train_size = len(self.dataset.dataframe.get('train'))  # len(self.dataset.dataframe.get("train")) if self.dataset.use_generator else len(self.dataset.dataset.get('train'))
+            except:
+                train_size = len(self.dataset.dataset.get('train'))
             if params.base.batch > train_size:
                 if params.state.status == "addtrain":
                     params.state.set("stopped")
