@@ -95,7 +95,6 @@ class TextSegmentationArray(Array):
                         'parameters': {'open_tags': options['open_tags'],
                                        'close_tags': options['close_tags'],
                                        'put': options['put'],
-                                       'prepare_method': options['prepare_method'],
                                        'cols_names': options['cols_names'],
                                        'num_classes': len(open_tags),
                                        'classes_names': open_tags,

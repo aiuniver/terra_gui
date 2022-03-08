@@ -261,12 +261,12 @@ class BaseClass(object):
         return instructions, tags
 
     @staticmethod
-    def create_numeric_preprocessing(instructions):
+    def create_numeric_preprocessing(put_id, col_name, col_data):
 
         return {}
 
     @staticmethod
-    def create_text_preprocessing(instructions):
+    def create_text_preprocessing(put_id, col_name, col_data):
 
         return {}
 
@@ -855,21 +855,22 @@ class MainTimeseriesClass(object):
 class PreprocessingNumericClass(object):
 
     @staticmethod
-    def create_numeric_preprocessing(instructions):
+    def create_numeric_preprocessing(put_id, col_name, col_data):
 
-        preprocess = {}
-        merged_puts = instructions.inputs.copy()
-        merged_puts.update(instructions.outputs.items())
-        for put_id, data in merged_puts.items():
-            preprocess[put_id] = {}
-            for col_name, col_data in data.items():
-                if col_data.preprocess:
-                    preprocess[put_id].update(
-                        {col_name:
-                            getattr(CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
-                                col_data.preprocess['options'])
-                         }
-                    )
+        preprocess = {put_id: {
+            col_name: getattr(CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+                col_data.preprocess['options'])
+        }
+        }
+        # merged_puts = instructions.inputs.copy()
+        # merged_puts.update(instructions.outputs.items())
+        # for put_id, data in merged_puts.items():
+        #     preprocess[put_id] = {}
+        #     for col_name, col_data in data.items():
+        #         if col_data.preprocess:
+        # preprocess[put_id].update(
+        #
+        # )
 
         return preprocess
 
@@ -908,20 +909,26 @@ class PreprocessingNumericClass(object):
 class PreprocessingTextClass(object):
 
     @staticmethod
-    def create_text_preprocessing(instructions):
+    def create_text_preprocessing(put_id, col_name, col_data):
 
-        preprocess = {}
-        merged_puts = instructions.inputs.copy()
-        merged_puts.update(instructions.outputs.items())
+        preprocess = {put_id: {
+            col_name: getattr(CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+                col_data.instructions, col_data.preprocess['options'])
+        }
+        }
 
-        for put_id, data in merged_puts.items():
-            preprocess[put_id] = {}
-            for col_name, col_data in data.items():
-                if col_data.preprocess:
-                    preprocess[put_id].update({col_name: getattr(
-                        CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
-                        col_data.instructions, col_data.preprocess['options'])
-                    })
+        # preprocess = {}
+        # merged_puts = instructions.inputs.copy()
+        # merged_puts.update(instructions.outputs.items())
+        #
+        # for put_id, data in merged_puts.items():
+        #     preprocess[put_id] = {}
+        #     for col_name, col_data in data.items():
+        #         if col_data.preprocess:
+        #             preprocess[put_id].update({col_name: getattr(
+        #                 CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+        #                 col_data.instructions, col_data.preprocess['options'])
+        #             })
 
         return preprocess
 

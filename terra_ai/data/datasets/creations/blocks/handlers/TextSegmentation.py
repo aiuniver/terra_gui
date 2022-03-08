@@ -10,7 +10,7 @@ class OptionsData(BaseOptionsData):
     close_tags: Optional[str]
 
     # Внутренние параметры
-    prepare_method: Optional[LayerPrepareMethodChoice]
+    # prepare_method: Optional[LayerPrepareMethodChoice]
     filters: Optional[str]
     text_mode: Optional[LayerTextModeChoice]
     max_words: Optional[PositiveInt]

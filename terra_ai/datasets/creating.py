@@ -151,10 +151,25 @@ class CreateVersion(object):
 
         progress.pool(name=VERSION_PROGRESS_NAME, message='Создание объектов обработки', percent=0)
 
-        for prep_type in ['numeric', 'text']:
-            self.preprocessing.preprocessing.update(getattr(architecture_class, f"create_{prep_type}_preprocessing")(
-                instructions=self.instructions)
-            )
+        merged_puts = self.instructions.inputs.copy()
+        merged_puts.update(self.instructions.outputs.items())
+        for put_id, data in merged_puts.items():
+            self.preprocessing.preprocessing[put_id] = {}
+            for col_name, col_data in data.items():
+                if col_data.preprocess.get('type'):
+                    function_name = ""
+                    if col_data.preprocess['type'] in ['MinMaxScaler', 'StandardScaler', 'TerraImageScaler']:
+                        function_name = "create_numeric_preprocessing"
+                    elif col_data.preprocess['type'] in ['Tokenizer', 'Word2Vec']:
+                        function_name = "create_text_preprocessing"
+                    self.preprocessing.preprocessing.update(
+                        getattr(architecture_class, function_name)(
+                            put_id=put_id,
+                            col_name=col_name,
+                            col_data=col_data
+                        )
+                    )
+
         for prep_type in ['numeric', 'text']:
             self.preprocessing = getattr(architecture_class, f"fit_{prep_type}_preprocessing")(
                 put_data=self.instructions.inputs,

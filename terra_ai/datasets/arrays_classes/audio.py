@@ -116,7 +116,7 @@ class AudioArray(Array):
 
         return array
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         orig_shape = array.shape
         array = options['preprocess'].transform(array.reshape(-1, 1))
