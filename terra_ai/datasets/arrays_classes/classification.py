@@ -76,6 +76,6 @@ class ClassificationArray(Array):
 
         return index
 
-    def preprocess(self, array: np.ndarray, preprocess):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         return array

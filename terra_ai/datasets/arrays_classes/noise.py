@@ -15,10 +15,11 @@ class NoiseArray(Array):
         return instructions
 
     def create(self, source: Any = None, **options):
-        interpolation_noise = tf_random.normal(shape=options['shape'])
-        instructions = {'instructions': interpolation_noise.numpy(), 'parameters': options}
 
-        return instructions
+        array = tf_random.normal(shape=options['shape']).numpy()
 
-    def preprocess(self, array: np.ndarray, **options):
+        return array
+
+    def preprocess(self, array: np.ndarray, preprocess, **options):
+
         return array

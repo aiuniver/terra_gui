@@ -72,15 +72,6 @@ class ObjectDetectionArray(Array):
 
         yolo_anchors = get_yolo_anchors(options['yolo'])
 
-        # if options['yolo'] == 'v3':
-        #     yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-        #                     [[30, 61], [62, 45], [59, 119]],
-        #                     [[116, 90], [156, 198], [373, 326]]]
-        # elif options['yolo'] == 'v4':
-        #     yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-        #                     [[36, 75], [76, 55], [72, 146]],
-        #                     [[142, 110], [192, 243], [459, 401]]]
-
         anchors = (np.array(yolo_anchors).T / strides).T
         max_bbox_per_scale = 100
         train_input_size = random.choice([train_input_sizes])
@@ -147,14 +138,13 @@ class ObjectDetectionArray(Array):
         label_sbbox, label_mbbox, label_lbbox = label
         sbboxes, mbboxes, lbboxes = bboxes_xywh
 
-        instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
-                                         np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
-                                         np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')],
-                        'parameters': options}
+        array = [np.array(label_sbbox, dtype='float32'), np.array(label_mbbox, dtype='float32'),
+                 np.array(label_lbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
+                 np.array(mbboxes, dtype='float32'), np.array(lbboxes, dtype='float32')]
 
-        return instructions
+        return array
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         return array
 

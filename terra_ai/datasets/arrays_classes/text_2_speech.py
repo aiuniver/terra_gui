@@ -16,10 +16,9 @@ class Text2SpeechArray(Array):
         return instructions
 
     def create(self, source: Any, **options):
-        instructions = {'instructions': np.array([0]),
-                        'parameters': options}
 
-        return instructions
+        return np.array([0])
 
-    def preprocess(self, array: np.ndarray, **options):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
+
         return array

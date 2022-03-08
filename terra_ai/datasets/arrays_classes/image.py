@@ -7,7 +7,7 @@ from PIL import UnidentifiedImageError
 from tensorflow.keras.preprocessing.image import load_img
 
 from terra_ai.datasets.utils import resize_frame
-from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerNetChoice
+from terra_ai.data.datasets.extra import LayerNetChoice
 from .base import Array
 
 
@@ -57,7 +57,7 @@ class ImageArray(Array):
 
         return array  # instructions
 
-    def preprocess(self, array: np.ndarray, preprocess):
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
         # augm_data = None
         # if options.get('augmentation') and options.get('augm_data'):

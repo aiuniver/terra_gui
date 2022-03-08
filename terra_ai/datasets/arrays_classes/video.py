@@ -1,11 +1,11 @@
 import os
 import cv2
 import numpy as np
-
+from pathlib import Path
 from typing import Any
 
 from terra_ai.datasets.utils import resize_frame
-from terra_ai.data.datasets.extra import LayerScalerVideoChoice, LayerVideoFillModeChoice, LayerVideoModeChoice
+from terra_ai.data.datasets.extra import LayerVideoFillModeChoice, LayerVideoModeChoice
 from .base import Array
 
 
@@ -94,9 +94,6 @@ class VideoArray(Array):
                                        'width': options['width'],
                                        'put': options['put'],
                                        'cols_names': options['cols_names'],
-                                       'min_scaler': options['min_scaler'],
-                                       'max_scaler': options['max_scaler'],
-                                       'scaler': options['scaler'],
                                        'frame_mode': options['frame_mode'],
                                        'fill_mode': options['fill_mode'],
                                        'video_mode': options['video_mode'],
@@ -118,6 +115,11 @@ class VideoArray(Array):
                     if not ret:
                         break
                     frame = frame[:, :, [2, 1, 0]]
+
+                    if frame.shape[:2] != (options['height'], options['width']):
+                        frame = resize_frame(image_array=frame,
+                                             target_shape=(options['height'], options['width']),
+                                             frame_mode=options['frame_mode'])
                     array.append(frame)
             finally:
                 cap.release()
@@ -126,26 +128,13 @@ class VideoArray(Array):
         else:
             array = source
 
-        instructions = {'instructions': array,
-                        'parameters': options}
+        return array
 
-        return instructions
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
-    def preprocess(self, array: np.ndarray, **options):
-
-        trgt_shape = (options['height'], options['width'])
-        resized_array = []
-        for i in range(len(array)):
-            if array[i].shape[1:-1] != trgt_shape:
-                resized_array.append(resize_frame(image_array=array[i],
-                                                  target_shape=trgt_shape,
-                                                  frame_mode=options['frame_mode']))
-        array = np.array(resized_array)
-
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options.get('preprocess'):
-            orig_shape = array.shape
-            array = options['preprocess'].transform(array.reshape(-1, 1))
-            array = array.reshape(orig_shape)
+        orig_shape = array.shape
+        array = preprocess.transform(array.reshape(-1, 1))
+        array = array.reshape(orig_shape)
 
         return array
 

@@ -1,6 +1,8 @@
 from terra_ai.data.datasets.extra import LayerPrepareMethodChoice
 from terra_ai.datasets.creating_classes.base import BaseClass
 from terra_ai.datasets.data import DatasetInstructionsData, InstructionsData
+from terra_ai.datasets.preprocessing import CreatePreprocessing
+from terra_ai.utils import decamelize
 
 
 class TextTransformerClass(BaseClass):
@@ -22,7 +24,7 @@ class TextTransformerClass(BaseClass):
 
     def create_instructions(self, version_data, sources_temp_directory, version_paths_data):
 
-        inp_data, inp_parameters = self.collect_data_to_pass(
+        inp_data, inp_parameters, inp_preprocess = self.collect_data_to_pass(
             put_data=version_data.inputs,
             sources_temp_directory=sources_temp_directory,
             put_idx=0
@@ -31,10 +33,11 @@ class TextTransformerClass(BaseClass):
         inputs, inp_tags = self.create_put_instructions(
             dictio=inp_data,
             parameters=inp_parameters,
+            preprocess=inp_preprocess,
             version_sources_path=version_paths_data.sources
         )
 
-        out_data, out_parameters = self.collect_data_to_pass(
+        out_data, out_parameters, out_preprocess = self.collect_data_to_pass(
             put_data=version_data.outputs,
             sources_temp_directory=sources_temp_directory,
             put_idx=len(inp_data) + 1  # ВНИМАНИЕ!
@@ -43,6 +46,7 @@ class TextTransformerClass(BaseClass):
         outputs, out_tags = self.create_put_instructions(
             dictio=out_data,
             parameters=out_parameters,
+            preprocess=out_preprocess,
             version_sources_path=version_paths_data.sources
         )
 
@@ -72,22 +76,41 @@ class TextTransformerClass(BaseClass):
         return instructions, tags
 
     @staticmethod
-    def create_text_preprocessing(instructions, preprocessing):
+    def create_text_preprocessing(instructions):
 
         # Обучаем токенайзер только на двух входных данных.
         # Токенайзер для выхода (3) будет такой же, что и для входа (2).
-        for put in list(instructions.inputs.values()):
-            for col_name, data in put.items():
-                if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
-                                                         LayerPrepareMethodChoice.bag_of_words]:
-                    preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
-                elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-                    preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+        # for put in list(instructions.inputs.values()):
+        #     for col_name, data in put.items():
+        #         if data.parameters['prepare_method'] in [LayerPrepareMethodChoice.embedding,
+        #                                                  LayerPrepareMethodChoice.bag_of_words]:
+        #             preprocessing.create_tokenizer(text_list=data.instructions, **data.parameters)
+        #         elif data.parameters['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+        #             preprocessing.create_word2vec(text_list=data.instructions, **data.parameters)
+        #         if data.parameters['put'] == 2:
+        #             prep = preprocessing.preprocessing[data.parameters['put']][col_name]
+        #
+        # for put in list(instructions.outputs.values()):
+        #     for col_name, data in put.items():
+        #         preprocessing.preprocessing[3] = {col_name: prep}
+
+        # return preprocessing
+
+        preprocess = {}
+        prep = None
+        for put_id, data in instructions.inputs.items():
+            preprocess[put_id] = {}
+            for col_name, col_data in data.items():
+                if col_data.preprocess:
+                    preprocess[put_id].update({col_name: getattr(
+                        CreatePreprocessing, f"create_{decamelize(col_data.preprocess['type'])}")(
+                        col_data.instructions, col_data.preprocess['options'])
+                    })
                 if data.parameters['put'] == 2:
-                    prep = preprocessing.preprocessing[data.parameters['put']][col_name]
+                    prep = preprocess[data.parameters['put']][col_name]
 
         for put in list(instructions.outputs.values()):
             for col_name, data in put.items():
-                preprocessing.preprocessing[3] = {col_name: prep}
+                preprocess[3] = {col_name: prep}
 
-        return preprocessing
+        return preprocess

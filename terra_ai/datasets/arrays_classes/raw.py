@@ -21,18 +21,16 @@ class RawArray(Array):
                 source = literal_eval(source)
             except:
                 pass
-            source = np.array([source])
+            array = np.array([source])
         elif isinstance(source, list):
-            source = np.array(source)
+            array = np.array(source)
         elif isinstance(source, pd.Series):
-            source = source.values
+            array = source.values
         else:
-            source = np.array([source])
+            array = np.array([source])
 
-        instructions = {'instructions': source,
-                        'parameters': options}
+        return array
 
-        return instructions
+    def preprocess(self, array: np.ndarray, preprocess, **options):
 
-    def preprocess(self, array: np.ndarray, **options):
         return array
