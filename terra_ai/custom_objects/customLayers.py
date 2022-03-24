@@ -1007,9 +1007,6 @@ class PSPBlock2D(Layer):
             'n_conv_layers': self.n_conv_layers,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
-            'strides': self.strides,
-            'dilation': self.dilation,
-            'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
             'dropout_layer': self.dropout_layer,
             'dropout_rate': self.dropout_rate
@@ -1150,18 +1147,18 @@ class UNETBlock2D(Layer):
             'n_pooling_branches': self.n_pooling_branches,
             'filters_coef': self.filters_coef,
             'n_conv_layers': self.n_conv_layers,
-            'activation': self.activation,
             'kernel_size': self.kernel_size,
-            'dropout_layer': self.dropout_layer,
-            'dropout_rate': self.dropout_rate,
             'kernel_initializer': self.kernel_initializer,
+            'activation': self.activation,
             'use_bias': self.use_bias,
+            'maxpooling': self.maxpooling,
+            'upsampling': self.upsampling,
             'use_activation_layer': self.use_activation_layer,
             'leaky_relu_layer': self.leaky_relu_layer,
             'leaky_relu_alpha': self.leaky_relu_alpha,
+            'dropout_layer': self.dropout_layer,
+            'dropout_rate': self.dropout_rate,
             'normalization': self.normalization,
-            'maxpooling': self.maxpooling,
-            'upsampling': self.upsampling,
             'kernel_regularizer': self.kernel_regularizer
         }
         base_config = super(UNETBlock2D, self).get_config()
