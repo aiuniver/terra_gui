@@ -252,9 +252,6 @@ class PSPBlock2D(Layer):
             'n_conv_layers': self.n_conv_layers,
             'activation': self.activation,
             'kernel_size': self.kernel_size,
-            'strides': self.strides,
-            'dilation': self.dilation,
-            'padding': self.padding,
             'batch_norm_layer': self.batch_norm_layer,
             'dropout_layer': self.dropout_layer,
             'dropout_rate': self.dropout_rate
