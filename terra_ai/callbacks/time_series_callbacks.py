@@ -2,7 +2,7 @@ import numpy as np
 
 from terra_ai.callbacks.utils import fill_graph_front_structure, fill_graph_plot_data, sort_dict, round_list, \
     get_y_true, get_distribution_histogram, get_autocorrelation_graphic, get_time_series_graphic, \
-    MAX_INTERMEDIATE_GRAPH_LENGTH
+    MAX_INTERMEDIATE_GRAPH_LENGTH, set_preset_count
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.training.extra import ExampleChoiceTypeChoice, BalanceSortedChoice
 from terra_ai.settings import MAX_GRAPH_LENGTH, CALLBACK_REGRESSION_TREASHOLD_VALUE, DEPLOY_PRESET_PERCENT
