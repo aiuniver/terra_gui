@@ -740,7 +740,7 @@ class LayerPretrainedYOLOData(LayerMixinData):
                 filepath = progress_utils.download(
                     "weight_load",
                     "Загрузка весов `{weight_filename}`",
-                    f"{settings.WEIGHT_STORAGE_URL}{weight_filename}",
+                    f"{settings.YANDEX_WEIGHT_STORAGE_URL}{weight_filename}",
                 )
                 shutil.move(filepath, value)
         self.weight_path = value
