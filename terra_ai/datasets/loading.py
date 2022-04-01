@@ -30,8 +30,7 @@ DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
 DATASET_CHOICE_TITLE = "Загрузка датасета `%s.%s`"
 DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета `%s.%s`"
-DATASET_CHOICE_TERRA_URL = f"{settings.GOOGLE_STORAGE_URL}DataSets/Numpy/"
-
+DATASET_CHOICE_TERRA_URL = f"{settings.YANDEX_STORAGE_URL}Numpy/"
 
 os.makedirs(settings.DATASETS_SOURCE_DIR, exist_ok=True)
 os.makedirs(settings.DATASETS_LOADED_DIR, exist_ok=True)
