@@ -28,7 +28,9 @@ TMP_DIR = Path(Path(__file__).parent.parent, "Usage")
 os.makedirs(TMP_DIR, exist_ok=True)
 
 GOOGLE_STORAGE_URL = "https://storage.googleapis.com/terra_ai/"
+YANDEX_STORAGE_URL = "https://storage.yandexcloud.net/terraai/"
 WEIGHT_STORAGE_URL = f"{GOOGLE_STORAGE_URL}neural_network/weights/"
+YANDEX_WEIGHT_STORAGE_URL = f"{YANDEX_STORAGE_URL}neural_network/weights/"
 WEIGHT_PATH = Path(TMP_DIR, "modeling", "weights")
 os.makedirs(WEIGHT_PATH, exist_ok=True)
 
