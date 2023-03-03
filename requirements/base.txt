@@ -1,5 +1,5 @@
 Django==3.2.9
-django-environ-2==2.3.0
+django-environ==0.10.0
 djangorestframework==3.12.4
 APScheduler==3.6.3
 pydantic==1.8.2
