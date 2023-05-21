@@ -23,7 +23,7 @@ ENV_FILE = BASE_DIR(".env")
 
 # Init environ
 env = environ.Env()
-env.read_env(ENV_FILE)
+env.read_env(ENV_FILE, overwrite=True)
 
 
 # Quick-start development settings - unsuitable for production
