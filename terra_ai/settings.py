@@ -18,7 +18,7 @@ try:
 except ImportError:
     settings_load()
     global_settings = GlobalSettings(
-        TERRA_PATH=os.environ.get("TERRA_PATH"),
+        TERRA_PATH=os.environ.get("TERRA_DIR_PATH"),
         PROJECT_PATH=os.environ.get("PROJECT_PATH"),
     )
 
