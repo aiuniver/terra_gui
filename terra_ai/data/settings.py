@@ -4,5 +4,5 @@ from dataclasses import dataclass
 
 @dataclass
 class GlobalSettings:
-    TERRA_PATH: Path
+    TERRA_DIR_PATH: Path
     PROJECT_PATH: Path

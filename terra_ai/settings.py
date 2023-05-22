@@ -18,7 +18,7 @@ try:
 except ImportError:
     settings_load()
     global_settings = GlobalSettings(
-        TERRA_PATH=os.environ.get("TERRA_DIR_PATH"),
+        TERRA_DIR_PATH=os.environ.get("TERRA_DIR_PATH"),
         PROJECT_PATH=os.environ.get("PROJECT_PATH"),
     )
 
@@ -37,12 +37,14 @@ os.makedirs(WEIGHT_PATH, exist_ok=True)
 # Terra paths
 TERRA_PATH = TerraPathData(
     **{
-        "base": Path(global_settings.TERRA_PATH).absolute(),
-        "sources": Path(global_settings.TERRA_PATH, "datasets", "sources").absolute(),
-        "datasets": Path(global_settings.TERRA_PATH, "datasets").absolute(),
-        "modeling": Path(global_settings.TERRA_PATH, "modeling").absolute(),
-        "training": Path(global_settings.TERRA_PATH, "training").absolute(),
-        "projects": Path(global_settings.TERRA_PATH, "projects").absolute(),
+        "base": Path(global_settings.TERRA_DIR_PATH).absolute(),
+        "sources": Path(
+            global_settings.TERRA_DIR_PATH, "datasets", "sources"
+        ).absolute(),
+        "datasets": Path(global_settings.TERRA_DIR_PATH, "datasets").absolute(),
+        "modeling": Path(global_settings.TERRA_DIR_PATH, "modeling").absolute(),
+        "training": Path(global_settings.TERRA_DIR_PATH, "training").absolute(),
+        "projects": Path(global_settings.TERRA_DIR_PATH, "projects").absolute(),
     }
 )
 

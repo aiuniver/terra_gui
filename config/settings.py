@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
 TERRA_AI_DATE_START = datetime.now()
 TERRA_AI_BASE_DIR = env.str("TERRA_AI_BASE_DIR", default="/")
 TERRA_API_URL = env.str("TERRA_API_URL")
-TERRA_PATH = Path(env.str("TERRA_DIR_PATH")).absolute()
+TERRA_DIR_PATH = Path(env.str("TERRA_DIR_PATH")).absolute()
 PROJECT_PATH = Path(env.str("PROJECT_PATH", default="./Project")).absolute()
 
 
