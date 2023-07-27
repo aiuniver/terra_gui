@@ -9,7 +9,7 @@ librosa==0.8.1
 google-api-python-client==1.12.8
 tensorflow-hub==0.12.0
 gensim==3.6.0
-psutil==5.4.8
+psutil==5.9.3
 numba==0.55.1
 requests==2.23.0
 ipython==7.23.1
